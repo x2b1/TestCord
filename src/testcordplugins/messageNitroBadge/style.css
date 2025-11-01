@@ -1,0 +1,16 @@
+:root{
+    /* stylelint-disable-next-line alpha-value-notation */
+    --vc-info-warning-background: hsl(var(--yellow-300-hsl)/0.1)
+}
+
+.vc-plugin-messageNitroBadge-notice {
+    font-size: 15px !important;
+    background-color: var(--vc-info-warning-background) !important;
+    color: var(--info-warning-foreground) !important;
+    border: 1px solid var(--info-warning-foreground) !important;
+    border-radius: 5px !important;
+    font-weight: bold;
+    padding: 6px 10px;
+    text-align: center;
+    margin-top: 10px;
+}
