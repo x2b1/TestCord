@@ -107,30 +107,28 @@ const PluginDefinitionNameMatcher =
  * @param {import("fs").Dirent} dirent
  */
 export async function resolvePluginName(base, dirent) {
-    const fullPath = join(base, dirent.name);
-    const content = dirent.isFile()
-        ? await readFile(fullPath, "utf-8")
-        : await (async () => {
-              for (const file of ["index.ts", "index.tsx"]) {
-                  try {
-                      return await readFile(join(fullPath, file), "utf-8");
-                  } catch {
-                      continue;
+    try {
+        const fullPath = join(base, dirent.name);
+        const content = dirent.isFile()
+            ? await readFile(fullPath, "utf-8")
+            : await (async () => {
+                  for (const file of ["index.ts", "index.tsx"]) {
+                      try {
+                          return await readFile(join(fullPath, file), "utf-8");
+                      } catch {
+                          continue;
+                      }
                   }
-              }
-              throw new Error(
-                  `Invalid plugin ${fullPath}: could not resolve entry point`
-              );
-          })();
+                  return null;
+              })();
 
-    return (
-        PluginDefinitionNameMatcher.exec(content)?.[3] ??
-        (() => {
-            throw new Error(
-                `Invalid plugin ${fullPath}: must contain definePlugin call with simple string name property as first property`
-            );
-        })()
-    );
+        if (!content) return null;
+
+        const match = PluginDefinitionNameMatcher.exec(content);
+        return match?.[3] ?? null;
+    } catch {
+        return null;
+    }
 }
 
 export async function exists(path) {
