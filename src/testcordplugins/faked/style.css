@@ -1,0 +1,18 @@
+/* Places the button in the user panel near mute/deafen controls */
+.vc-fake-voice-btn-container {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+.vc-fake-voice-btn-container button {
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Makes sure the icon is properly aligned */
+.vc-fake-voice-btn-container button > div > svg {
+    margin-right: 0;
+}

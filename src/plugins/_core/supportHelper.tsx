@@ -95,7 +95,7 @@ async function generateDebugInfoMessage() {
     })();
 
     const info = {
-        Equicord:
+        Testcord:
             `v${VERSION} • [${gitHashShort}](<https://github.com/Equicord/Equicord/commit/${gitHash}>)` +
             `${IS_EQUIBOP ? "" : SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
         Client: `${RELEASE_CHANNEL} ~ ${client}`,
@@ -149,28 +149,6 @@ function generatePluginList() {
         content += `**Enabled UserPlugins (${enabledUserPlugins.length}):**\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
     }
 
-    const user = UserStore.getCurrentUser();
-
-    if (enabledPlugins.length > 100 && !isAnyPluginDev(user.id)) {
-        Alerts.show({
-            title: "You are attempting to get support!",
-            body: <div>
-                <style>
-                    {'[class*="backdrop_"][style*="backdrop-filter"]{backdrop-filter:blur(16px) brightness(0.25) !important;}'}
-                </style>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
-                    <img src="https://media.tenor.com/QtGqjwBpRzwAAAAi/wumpus-dancing.gif" />
-                </div>
-                <Paragraph>Before you ask for help,</Paragraph>
-                <Paragraph>We do not handle support for users who use 100+ plugins</Paragraph>
-                <Paragraph>issue could be plugin confliction</Paragraph>
-                <Paragraph>try removing some plugins and see if it fixes!</Paragraph>
-            </div>
-        });
-
-        return `${user.username} has more than 100 plugins enabled, please reduce the number of enabled plugins to get support.`;
-    }
-
     return content;
 }
 
@@ -201,17 +179,13 @@ export default definePlugin({
 
     commands: [
         {
-            name: "equicord-debug",
-            description: "Send Equicord debug info",
-            // @ts-ignore
-            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
+            name: "testcord-debug",
+            description: "Send Testcord debug info",
             execute: async () => ({ content: await generateDebugInfoMessage() })
         },
         {
-            name: "equicord-plugins",
-            description: "Send Equicord plugin list",
-            // @ts-ignore
-            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
+            name: "testcord-plugins",
+            description: "Send Testcord plugin list",
             execute: () => {
                 const pluginList = generatePluginList();
                 return { content: typeof pluginList === "string" ? pluginList : "Unable to generate plugin list." };
@@ -343,14 +317,14 @@ export default definePlugin({
         }
 
         if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && equicordSupport) {
-            if (props.message.content.includes("/equicord-debug") || props.message.content.includes("/equicord-plugins")) {
+            if (props.message.content.includes("/testcord-debug") || props.message.content.includes("/testcord-plugins")) {
                 buttons.push(
                     <Button
                         key="vc-dbg"
                         color={Button.Colors.PRIMARY}
                         onClick={async () => sendMessage(props.channel.id, { content: await generateDebugInfoMessage() })}
                     >
-                        Run /equicord-debug
+                        Run /testcord-debug
                     </Button>,
                     <Button
                         key="vc-plg-list"
@@ -362,7 +336,7 @@ export default definePlugin({
                             }
                         }}
                     >
-                        Run /equicord-plugins
+                        Run /testcord-plugins
                     </Button>
                 );
             }
