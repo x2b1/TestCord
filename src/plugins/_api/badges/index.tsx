@@ -242,5 +242,10 @@ export default definePlugin({
                 return TestCordDonorModal();
             },
         } satisfies ProfileBadge));
+    },
+
+    // Alias for backward compatibility
+    getEquicordDonorBadges: function (userId: string) {
+        return this.getTestCordDonorBadges(userId);
     }
 });

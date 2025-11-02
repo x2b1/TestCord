@@ -136,9 +136,13 @@ export default definePlugin({
 
     // find gifs and add da btn
     scanAndAttach() {
-        const imgs = Array.from(document.querySelectorAll("img[src*='.gif']"));
+        // More specific selector to avoid server icons and other non-GIF images
+        const imgs = Array.from(document.querySelectorAll("img[src*='.gif']:not([src*='guilds']):not([src*='avatars']):not([class*='guild'])"));
         for (const img of imgs) {
-            const wrapper = img.closest(".image-2tk21A, .imageContainer-2wCq4N, .imageWrapper-2bJf5f") || img.parentElement;
+            // Skip if this looks like a server icon or avatar
+            if ((img as HTMLImageElement).src.includes("/guilds/") || (img as HTMLImageElement).src.includes("/avatars/") || img.classList.contains("guildIcon")) continue;
+
+            const wrapper = img.closest(".image-2tk21A, .imageContainer-2wCq4N, .imageWrapper-2bJf5f, .embedMedia-1mdW, .attachment-1PZZB") || img.parentElement;
             if (!wrapper) continue;
             if (wrapper.querySelector(`.${BUTTON_CLASS}`)) continue;
 
