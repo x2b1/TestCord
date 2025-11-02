@@ -1,42 +1,42 @@
 # Server Pinner Plugin
 
-Un plugin Discord qui permet d'épingler des serveurs directement depuis le menu contextuel.
+A Discord plugin that allows pinning servers directly from the context menu.
 
-## Fonctionnalités
+## Features
 
-- **Épinglage rapide** : Clic droit sur un serveur pour l'épingler/dépingler
-- **Sauvegarde persistante** : Les serveurs épinglés sont sauvegardés entre les sessions
-- **Notifications** : Notifications optionnelles lors des actions
-- **Catégorie dédiée** : (À venir) Les serveurs épinglés apparaîtront dans une catégorie séparée
+- **Quick pinning** : Right-click on a server to pin/unpin it
+- **Persistent storage** : Pinned servers are saved between sessions
+- **Notifications** : Optional notifications during actions
+- **Dedicated category** : (Coming soon) Pinned servers will appear in a separate category
 
-## Utilisation
+## Usage
 
-1. **Épingler un serveur** :
-   - Faites un clic droit sur un serveur dans la liste des serveurs
-   - Sélectionnez "📌 Épingler ce serveur"
-   - Le serveur sera ajouté à votre liste d'épinglés
+1. **Pin a server** :
+   - Right-click on a server in the server list
+   - Select "📌 Pin this server"
+   - The server will be added to your pinned list
 
-2. **Dépingler un serveur** :
-   - Faites un clic droit sur un serveur épinglé
-   - Sélectionnez "📌 Dépingler ce serveur"
-   - Le serveur sera retiré de votre liste d'épinglés
+2. **Unpin a server** :
+   - Right-click on a pinned server
+   - Select "📌 Unpin this server"
+   - The server will be removed from your pinned list
 
-## Paramètres
+## Settings
 
-- **Activer le plugin** : Active/désactive complètement le plugin
-- **Afficher les notifications** : Montre des notifications lors des actions d'épinglage
-- **Serveurs épinglés** : Liste interne des serveurs épinglés (format JSON)
+- **Enable plugin** : Completely enables/disables the plugin
+- **Show notifications** : Shows notifications during pinning actions
+- **Pinned servers** : Internal list of pinned servers (JSON format)
 
-## À venir
+## Coming Soon
 
-- **Catégorie dédiée** : Création automatique d'une catégorie "Serveurs épinglés" en haut de la liste
-- **Réorganisation automatique** : Les serveurs épinglés seront automatiquement placés en premier
+- **Dedicated category** : Automatic creation of a "Pinned Servers" category at the top of the list
+- **Automatic reorganization** : Pinned servers will be automatically placed first
 
-## Auteur
+## Author
 
 - **Bash** (ID: 1327483363518582784)
 
-## Dépendances
+## Dependencies
 
 - ContextMenuAPI
 

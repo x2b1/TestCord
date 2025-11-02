@@ -1,46 +1,46 @@
 # Token Display Plugin
 
-Ce plugin ajoute une commande slash `/mytoken` qui permet d'afficher le token du compte Discord en cours d'utilisation.
+This plugin adds a slash command `/mytoken` that allows you to display the token of the currently logged-in Discord account.
 
-## Fonctionnalités
+## Features
 
-- **Commande slash `/mytoken`** : Affiche le token du compte connecté
-- **Réponse privée** : Le token est affiché uniquement pour vous (ephemeral)
-- **Paramètres configurables** :
-  - Activer/désactiver la commande
-  - Autoriser l'utilisation dans les messages privés (DMs)
+- **Slash command `/mytoken`**: Displays the connected account's token
+- **Private response**: The token is displayed only for you (ephemeral)
+- **Configurable settings**:
+  - Enable/disable the command
+  - Allow usage in private messages (DMs)
 
 ## Installation
 
-1. Placez le dossier `@token` dans votre répertoire de plugins Vencord
-2. Redémarrez Vencord ou rechargez les plugins
-3. Activez le plugin dans les paramètres
+1. Place the `@token` folder in your Vencord plugins directory
+2. Restart Vencord or reload the plugins
+3. Enable the plugin in the settings
 
-## Utilisation
+## Usage
 
-1. Tapez `/mytoken` dans n'importe quel canal Discord
-2. Le token de votre compte sera affiché dans une réponse privée
-3. ⚠️ **Important** : Ne partagez jamais votre token avec d'autres personnes !
+1. Type `/mytoken` in any Discord channel
+2. Your account's token will be displayed in a private response
+3. ⚠️ **Important**: Never share your token with other people!
 
-## Paramètres
+## Settings
 
-- **Activer la commande /mytoken** : Active ou désactive la commande
-- **Permettre l'utilisation dans les DMs** : Autorise l'utilisation de la commande dans les messages privés
+- **Enable /mytoken command**: Enables or disables the command
+- **Allow usage in DMs**: Permits the command to be used in private messages
 
-## Sécurité
+## Security
 
-- Le token est affiché uniquement pour vous (réponse ephemeral)
-- Un avertissement de sécurité est inclus dans la réponse
-- La commande peut être désactivée à tout moment
+- The token is displayed only for you (ephemeral response)
+- A security warning is included in the response
+- The command can be disabled at any time
 
-## Dépannage
+## Troubleshooting
 
-Si la commande ne fonctionne pas :
-1. Vérifiez que le plugin est activé
-2. Assurez-vous d'être connecté à Discord
-3. Vérifiez les paramètres du plugin
-4. Redémarrez Vencord si nécessaire
+If the command doesn't work:
+1. Check that the plugin is enabled
+2. Make sure you're connected to Discord
+3. Check the plugin settings
+4. Restart Vencord if necessary
 
-## Avertissement
+## Warning
 
-Ce plugin affiche des informations sensibles (token d'authentification). Utilisez-le avec précaution et ne partagez jamais votre token avec d'autres personnes.
+This plugin displays sensitive information (authentication token). Use it with caution and never share your token with other people.

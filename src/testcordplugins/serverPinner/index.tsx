@@ -5,32 +5,31 @@
  */
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
+import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
-import { findStoreLazy, findByPropsLazy } from "@webpack";
-import { GuildStore, Menu, UserStore } from "@webpack/common";
+import { Menu } from "@webpack/common";
 import { Guild } from "discord-types/general";
 
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Activer le plugin Server Pinner",
+        description: "Enable Server Pinner plugin",
         default: true
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
-        description: "Afficher les notifications lors des actions",
+        description: "Show notifications during actions",
         default: true
     },
     pinnedServers: {
         type: OptionType.STRING,
-        description: "Liste des serveurs épinglés (format JSON)",
+        description: "List of pinned servers (JSON format)",
         default: "[]"
     }
 });
 
-// Fonction de log avec préfixe
+// Logging function with prefix
 function log(message: string, level: "info" | "warn" | "error" = "info") {
     const timestamp = new Date().toLocaleTimeString();
     const prefix = `[ServerPinner ${timestamp}]`;
@@ -47,53 +46,53 @@ function log(message: string, level: "info" | "warn" | "error" = "info") {
     }
 }
 
-// Fonction pour obtenir la liste des serveurs épinglés
+// Function to get the list of pinned servers
 function getPinnedServers(): string[] {
     try {
         const pinned = JSON.parse(settings.store.pinnedServers);
         return Array.isArray(pinned) ? pinned : [];
     } catch (error) {
-        log(`Erreur lors du parsing des serveurs épinglés: ${error}`, "error");
+        log(`Error parsing pinned servers: ${error}`, "error");
         return [];
     }
 }
 
-// Fonction pour sauvegarder la liste des serveurs épinglés
+// Function to save the list of pinned servers
 function savePinnedServers(pinnedServers: string[]) {
     try {
         settings.store.pinnedServers = JSON.stringify(pinnedServers);
-        log(`Serveurs épinglés sauvegardés: ${pinnedServers.length} serveur(s)`);
+        log(`Pinned servers saved: ${pinnedServers.length} server(s)`);
     } catch (error) {
-        log(`Erreur lors de la sauvegarde des serveurs épinglés: ${error}`, "error");
+        log(`Error saving pinned servers: ${error}`, "error");
     }
 }
 
-// Fonction pour vérifier si un serveur est épinglé
+// Function to check if a server is pinned
 function isServerPinned(guildId: string): boolean {
     const pinnedServers = getPinnedServers();
     return pinnedServers.includes(guildId);
 }
 
-// Fonction pour épingler un serveur
+// Function to pin a server
 function pinServer(guildId: string) {
     const pinnedServers = getPinnedServers();
     if (!pinnedServers.includes(guildId)) {
-        pinnedServers.unshift(guildId); // Ajouter au début pour l'ordre
+        pinnedServers.unshift(guildId); // Add to beginning for order
         savePinnedServers(pinnedServers);
 
-        log(`Serveur ${guildId} épinglé`);
+        log(`Server ${guildId} pinned`);
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📌 Serveur épinglé",
-                body: "Le serveur a été ajouté aux serveurs épinglés",
+                title: "📌 Server pinned",
+                body: "The server has been added to pinned servers",
                 icon: undefined
             });
         }
     }
 }
 
-// Fonction pour dépingler un serveur
+// Function to unpin a server
 function unpinServer(guildId: string) {
     const pinnedServers = getPinnedServers();
     const index = pinnedServers.indexOf(guildId);
@@ -101,19 +100,19 @@ function unpinServer(guildId: string) {
         pinnedServers.splice(index, 1);
         savePinnedServers(pinnedServers);
 
-        log(`Serveur ${guildId} dépinglé`);
+        log(`Server ${guildId} unpinned`);
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📌 Serveur dépinglé",
-                body: "Le serveur a été retiré des serveurs épinglés",
+                title: "📌 Server unpinned",
+                body: "The server has been removed from pinned servers",
                 icon: undefined
             });
         }
     }
 }
 
-// Patch du menu contextuel des serveurs
+// Patch for server context menu
 const ServerContextMenuPatch: NavContextMenuPatchCallback = (children, { guild }: { guild: Guild; }) => {
     if (!settings.store.enabled || !guild) return;
 
@@ -125,7 +124,7 @@ const ServerContextMenuPatch: NavContextMenuPatchCallback = (children, { guild }
             <Menu.MenuSeparator />,
             <Menu.MenuItem
                 id="vc-toggle-server-pin"
-                label={isPinned ? "📌 Dépingler ce serveur" : "📌 Épingler ce serveur"}
+                label={isPinned ? "📌 Unpin this server" : "📌 Pin this server"}
                 action={() => {
                     if (isPinned) {
                         unpinServer(guild.id);
@@ -140,7 +139,7 @@ const ServerContextMenuPatch: NavContextMenuPatchCallback = (children, { guild }
 
 export default definePlugin({
     name: "Server Pinner",
-    description: "Permet d'épingler des serveurs via le menu contextuel. La catégorie dédiée sera ajoutée dans une future mise à jour.",
+    description: "Allows pinning servers via the context menu. The dedicated category will be added in a future update.",
     authors: [{
         name: "Bash",
         id: 1327483363518582784n
@@ -153,23 +152,23 @@ export default definePlugin({
     },
 
     start() {
-        log("🚀 Plugin Server Pinner démarré");
+        log("🚀 Server Pinner plugin started");
 
         const pinnedCount = getPinnedServers().length;
         if (pinnedCount > 0) {
-            log(`${pinnedCount} serveur(s) épinglé(s) chargé(s)`);
+            log(`${pinnedCount} server(s) pinned loaded`);
         }
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📌 Server Pinner activé",
-                body: "Clic droit sur un serveur pour l'épingler",
+                title: "📌 Server Pinner enabled",
+                body: "Right-click on a server to pin it",
                 icon: undefined
             });
         }
     },
 
     stop() {
-        log("🛑 Plugin Server Pinner arrêté");
+        log("🛑 Server Pinner plugin stopped");
     }
 });
