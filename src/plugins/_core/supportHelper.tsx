@@ -287,7 +287,7 @@ export default definePlugin({
     renderMessageAccessory(props) {
         const buttons = [] as JSX.Element[];
 
-        const testCordSupport = isTestCordGuild(props.message.author.id);
+        const testCordSupport = isTestCordGuild(props.channel.id);
 
         const shouldAddUpdateButton =
             !IS_UPDATER_DISABLED
