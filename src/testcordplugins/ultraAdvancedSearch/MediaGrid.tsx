@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ChannelStore, MessageStore, UserStore, RestAPI } from "@webpack/common";
-import { classNameFactory } from "@api/Styles";
-import { Avatar } from "@webpack/common";
 import { DataStore } from "@api/index";
+import { classNameFactory } from "@api/Styles";
+import { ChannelStore, RestAPI, UserStore } from "@webpack/common";
+import { Avatar } from "@webpack/common";
 import { useMemo } from "@webpack/common";
 import type { Channel, Message, User } from "discord-types/general";
 
@@ -63,16 +63,16 @@ interface MediaGridProps {
     selectedIndex: number;
 }
 
-// Fonction pour créer une URL de thumbnail optimisée
+// Function to create an optimized thumbnail URL
 function createThumbnailUrl(url: string, isVideo: boolean = false): string {
     if (!url || url.endsWith("#")) return url;
 
     try {
         const urlObj = new URL(url);
 
-        // Pour les images, utiliser la taille appropriée pour les thumbnails
+        // For images, use appropriate size for thumbnails
         if (!isVideo && urlObj.hostname.includes("discord")) {
-            // Discord CDN/proxy - ajouter des paramètres de taille pour les thumbnails
+            // Discord CDN/proxy - add size parameters for thumbnails
             urlObj.searchParams.set("width", "300");
             urlObj.searchParams.set("height", "300");
             return urlObj.toString();
@@ -84,7 +84,7 @@ function createThumbnailUrl(url: string, isVideo: boolean = false): string {
     }
 }
 
-// Fonction pour extraire les URLs multimédias d'un message
+// Function to extract media URLs from a message
 export function getMediaUrls(message: Message | any): Array<{ url: string; type: "image" | "video" | "embed" | "sticker"; thumbnailUrl?: string; }> {
     const urls: Array<{ url: string; type: "image" | "video" | "embed" | "sticker"; thumbnailUrl?: string; }> = [];
 
@@ -154,19 +154,19 @@ export function getMediaUrls(message: Message | any): Array<{ url: string; type:
     return urls;
 }
 
-// Fonction pour charger tous les médias avec pagination API (sans limite)
+// Function to load all media with API pagination (no limit)
 export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: number): Promise<any[]> {
     const allMessages: any[] = [];
     let before: string | null = null;
     const limit = 100;
     const delayBetweenRequests = Math.max(apiRequestDelay || 200, 500);
 
-    // Charger d'abord depuis le cache pour voir combien on a déjà
+    // First load from cache to see how many we already have
     const cacheKey = `ultra-search-media-${channelId}`;
     try {
         const cached = await DataStore.get(cacheKey) as MediaCache | null | undefined;
         if (cached && cached.messages && cached.messages.length > 0) {
-            // Utiliser le dernier message ID comme point de départ
+            // Use the last message ID as starting point
             const lastMessage = cached.messages[cached.messages.length - 1];
             before = lastMessage.id || lastMessage.message_id || null;
             console.log(`[Ultra Advanced Search] Reprise depuis le message ${before}`);
@@ -180,7 +180,7 @@ export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: nu
 
     while (page <= maxPages) {
         try {
-            // Délai entre les requêtes pour éviter les rate limits
+            // Delay between requests to avoid rate limits
             if (page > 1) {
                 await new Promise(resolve => setTimeout(resolve, delayBetweenRequests));
             }
@@ -198,7 +198,7 @@ export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: nu
                 break;
             }
 
-            // Filtrer uniquement les messages avec médias
+            // Filter only messages with media
             const mediaMessages = response.body.filter((msg: any) => {
                 return msg.attachments?.length > 0 ||
                     msg.embeds?.length > 0 ||
@@ -207,13 +207,13 @@ export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: nu
             });
 
             allMessages.push(...mediaMessages);
-            console.log(`[Ultra Advanced Search] Page ${page}: ${mediaMessages.length} messages médias chargés (${allMessages.length} au total)`);
+            console.log(`[Ultra Advanced Search] Page ${page}: ${mediaMessages.length} media messages loaded (${allMessages.length} total)`);
 
-            // Préparer pour la prochaine page
+            // Prepare for next page
             before = response.body[response.body.length - 1]?.id;
             if (!before) break;
 
-            // Si on a moins de messages que la limite, on a atteint la fin
+            // If we have fewer messages than the limit, we've reached the end
             if (response.body.length < limit) break;
 
             page++;
@@ -226,7 +226,7 @@ export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: nu
     return allMessages;
 }
 
-// Fonction pour charger tous les médias depuis les DMs avec pagination API et persistance infinie
+// Function to load all media from DMs with API pagination and infinite persistence
 export async function searchMediaMessages(
     channelId: string,
     query: string,
@@ -237,7 +237,7 @@ export async function searchMediaMessages(
     const results: SearchResult[] = [];
     const channel = ChannelStore.getChannel(channelId);
     if (!channel) {
-        console.log(`[Ultra Advanced Search] Canal ${channelId} introuvable`);
+        console.log(`[Ultra Advanced Search] Channel ${channelId} not found`);
         return results;
     }
 
@@ -259,17 +259,17 @@ export async function searchMediaMessages(
 
     if (cached && cached.messages && cached.messages.length > 0) {
         // Utiliser le cache existant
-        console.log(`[Ultra Advanced Search] Utilisation du cache pour ${channelId} (${cached.messages.length} messages)`);
+        console.log(`[Ultra Advanced Search] Using cache for ${channelId} (${cached.messages.length} messages)`);
         allMediaMessages = cached.messages;
     }
 
-    // Si cacheOnly est false, charger depuis l'API aussi (en arrière-plan)
+    // If cacheOnly is false, also load from API (in background)
     if (!cacheOnly && (!cached || !cached.messages || cached.messages.length === 0)) {
-        // Charger depuis l'API avec pagination
-        console.log(`[Ultra Advanced Search] Chargement des médias depuis l'API pour ${channelId}`);
+        // Load from API with pagination
+        console.log(`[Ultra Advanced Search] Loading media from API for ${channelId}`);
         const apiMessages = await loadAllMediaFromAPI(channelId, apiRequestDelay);
 
-        // Fusionner avec le cache existant (éviter les doublons)
+        // Merge with existing cache (avoid duplicates)
         if (apiMessages.length > 0) {
             const existingIds = new Set(allMediaMessages.map(m => m.id || m.message_id));
             for (const msg of apiMessages) {
@@ -280,24 +280,24 @@ export async function searchMediaMessages(
                 }
             }
 
-            // Sauvegarder dans le cache persistant (cache infini)
+            // Save to persistent cache (infinite cache)
             try {
                 await DataStore.set(cacheKey, {
                     channelId,
                     messages: allMediaMessages,
                     lastUpdated: Date.now()
                 } as MediaCache);
-                console.log(`[Ultra Advanced Search] Cache sauvegardé pour ${channelId} (${allMediaMessages.length} messages)`);
+                console.log(`[Ultra Advanced Search] Cache saved for ${channelId} (${allMediaMessages.length} messages)`);
             } catch (error) {
-                console.error("[Ultra Advanced Search] Erreur lors de la sauvegarde du cache:", error);
+                console.error("[Ultra Advanced Search] Error saving cache:", error);
             }
         }
     }
 
-    // Rechercher dans les messages médias (même sans requête, on affiche tous les médias)
-    console.log(`[Ultra Advanced Search] Recherche dans ${allMediaMessages.length} messages médias`);
+    // Search in media messages (even without query, we display all media)
+    console.log(`[Ultra Advanced Search] Searching in ${allMediaMessages.length} media messages`);
 
-    // Extraire et sauvegarder les items multimédias dans le cache dédié (séparé du cache messages)
+    // Extract and save media items in dedicated cache (separate from message cache)
     const mediaItems: Array<{
         url: string;
         thumbnailUrl?: string;
@@ -315,18 +315,18 @@ export async function searchMediaMessages(
             msg.stickers?.length > 0;
 
         if (hasMedia) {
-            // Si pas de requête, afficher tous les médias. Sinon, filtrer par contenu
+            // If no query, display all media. Otherwise, filter by content
             const contentMatch = !query || !query.trim() || msg.content?.includes(query);
 
             if (contentMatch) {
-                // Utiliser le message du cache directement (déjà formaté)
+                // Use the message from cache directly (already formatted)
                 results.push({
                     message: msg as any as Message,
                     channel,
                     matchType: "attachment"
                 });
 
-                // Extraire les URLs multimédias pour le cache dédié (images, vidéos, GIFs)
+                // Extract media URLs for dedicated cache (images, videos, GIFs)
                 const mediaUrls = getMediaUrls(msg);
                 const userId = msg.author?.id || msg.author_id;
 
@@ -345,14 +345,14 @@ export async function searchMediaMessages(
         }
     }
 
-    // Sauvegarder le cache des items multimédias (images, vidéos, GIFs) - CACHE SÉPARÉ
+    // Save media items cache (images, videos, GIFs) - SEPARATE CACHE
     if (mediaItems.length > 0 && !cacheOnly) {
         const mediaItemsCacheKey = `ultra-search-media-items-${channelId}`;
         try {
             const existingCache = await DataStore.get(mediaItemsCacheKey) as MediaItemsCache | null | undefined;
             const existingItems = existingCache?.items || [];
 
-            // Fusionner avec les items existants (éviter les doublons)
+            // Merge with existing items (avoid duplicates)
             const existingUrls = new Set(existingItems.map(item => `${item.messageId}-${item.url}`));
             const newItems = mediaItems.filter(item => !existingUrls.has(`${item.messageId}-${item.url}`));
 
@@ -362,18 +362,18 @@ export async function searchMediaMessages(
                     items: [...existingItems, ...newItems],
                     lastUpdated: Date.now()
                 } as MediaItemsCache);
-                console.log(`[Ultra Advanced Search] Cache items multimédias sauvegardé pour ${channelId} (${existingItems.length + newItems.length} items)`);
+                console.log(`[Ultra Advanced Search] Media items cache saved for ${channelId} (${existingItems.length + newItems.length} items)`);
             }
         } catch (error) {
-            console.error("[Ultra Advanced Search] Erreur lors de la sauvegarde du cache items multimédias:", error);
+            console.error("[Ultra Advanced Search] Error saving media items cache:", error);
         }
     }
 
-    console.log(`[Ultra Advanced Search] ${results.length} résultats médias trouvés pour ${channelId}`);
+    console.log(`[Ultra Advanced Search] ${results.length} media results found for ${channelId}`);
     return results;
 }
 
-// Fonction pour obtenir l'URL de l'avatar
+// Function to get avatar URL
 function getAvatarURL(user: User | null, channel: Channel): string | null {
     if (!user) return null;
     try {
@@ -384,18 +384,18 @@ function getAvatarURL(user: User | null, channel: Channel): string | null {
     }
 }
 
-// Composant MediaGrid optimisé avec useMemo
+// Optimized MediaGrid component with useMemo
 export function MediaGrid({ displayedResults, navigateToMessage, setSelectedIndex, selectedIndex }: MediaGridProps) {
-    // Utiliser useMemo pour éviter de recalculer les médias à chaque render
+    // Use useMemo to avoid recalculating media on every render
     const mediaItems = useMemo(() => {
         const items: Array<{ url: string; type: "image" | "video" | "embed" | "sticker"; thumbnailUrl?: string; message: Message | any; channel: Channel; user: User | null; }> = [];
 
-        // Collecter tous les médias depuis les résultats affichés
+        // Collect all media from displayed results
         for (const result of displayedResults) {
-            const message = result.message;
+            const { message } = result;
             const user = result.user || UserStore.getUser(message.author?.id || (message as any).author_id);
 
-            // Si le résultat a déjà les infos de média (depuis le cache items), les utiliser directement
+            // If the result already has media info (from items cache), use it directly
             if (result.mediaInfo) {
                 items.push({
                     url: result.mediaInfo.url,
@@ -406,7 +406,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
                     user
                 });
             } else {
-                // Sinon, extraire les médias depuis le message
+                // Otherwise, extract media from the message
                 const mediaUrls = getMediaUrls(message);
                 for (const media of mediaUrls) {
                     items.push({
@@ -419,14 +419,14 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
             }
         }
 
-        console.log(`[Ultra Advanced Search] Total médias à afficher: ${items.length}`);
+        console.log(`[Ultra Advanced Search] Total media to display: ${items.length}`);
         return items;
     }, [displayedResults]);
 
     if (mediaItems.length === 0) {
         return (
             <div className={cl("no-results")}>
-                <span>Aucun média trouvé</span>
+                <span>No media found</span>
             </div>
         );
     }
@@ -464,7 +464,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
                                             objectPosition: "center"
                                         }}
                                         loading="lazy"
-                                        onError={(e) => {
+                                        onError={e => {
                                             (e.target as HTMLImageElement).style.display = "none";
                                         }}
                                     />
@@ -482,7 +482,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
                                         objectPosition: "center"
                                     }}
                                     loading="lazy"
-                                    onError={(e) => {
+                                    onError={e => {
                                         (e.target as HTMLImageElement).style.display = "none";
                                     }}
                                 />

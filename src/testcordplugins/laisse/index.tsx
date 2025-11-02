@@ -5,12 +5,12 @@
  */
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
-import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { Menu, React, VoiceStateStore, RestAPI, SelectedGuildStore, Constants } from "@webpack/common";
+import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { User, VoiceState } from "@vencord/discord-types";
+import { findByPropsLazy, findStoreLazy } from "@webpack";
+import { Constants, Menu, React, RestAPI, SelectedGuildStore, VoiceStateStore } from "@webpack/common";
 
 type TLeashedUserInfo = {
     userId: string;
@@ -34,29 +34,29 @@ const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Activer le plugin laisse"
+        description: "Enable the laisse plugin"
     },
     onlyWhenInVoice: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Ne déplacer l'utilisateur que quand vous êtes dans un canal vocal"
+        description: "Only move the user when you are in a voice channel"
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Afficher les notifications lors des déplacements"
+        description: "Show notifications during moves"
     }
 });
 
-// Fonction pour déplacer un utilisateur vers un canal vocal
+// Function to move a user to a voice channel
 async function moveUserToVoiceChannel(userId: string, channelId: string): Promise<void> {
     const guildId = SelectedGuildStore.getGuildId();
     if (!guildId) {
-        throw new Error("Aucun serveur sélectionné");
+        throw new Error("No server selected");
     }
 
     try {
-        // Utiliser l'API Discord pour déplacer l'utilisateur
+        // Use Discord API to move the user
         await RestAPI.patch({
             url: Constants.Endpoints.GUILD_MEMBER(guildId, userId),
             body: {
@@ -67,12 +67,12 @@ async function moveUserToVoiceChannel(userId: string, channelId: string): Promis
         if (settings.store.showNotifications) {
             const user = UserStore.getUser(userId);
             showNotification({
-                title: "laisse - Succès",
-                body: `${user?.username || "L'utilisateur"} a été déplacé vers votre canal vocal`
+                title: "laisse - Success",
+                body: `${user?.username || "The user"} has been moved to your voice channel`
             });
         }
     } catch (error) {
-        console.error("laisse: Erreur API Discord:", error);
+        console.error("laisse: Discord API error:", error);
         throw error;
     }
 }
@@ -86,7 +86,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
         <Menu.MenuSeparator />,
         <Menu.MenuCheckboxItem
             id="laisse-leash-user"
-            label="laisse - Accrocher l'utilisateur"
+            label="laisse - Hook the user"
             checked={checked}
             action={() => {
                 if (leashedUserInfo?.userId === user.id) {
@@ -94,7 +94,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                     setChecked(false);
                     showNotification({
                         title: "laisse",
-                        body: `L'utilisateur ${user.username} n'est plus accroché`
+                        body: `User ${user.username} is no longer hooked`
                     });
                     return;
                 }
@@ -106,7 +106,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
                 setChecked(true);
                 showNotification({
                     title: "laisse",
-                    body: `L'utilisateur ${user.username} est maintenant accroché à vous`
+                    body: `User ${user.username} is now hooked to you`
                 });
             }}
         />
@@ -115,7 +115,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
 
 export default definePlugin({
     name: "laisse",
-    description: "Accroche un utilisateur à vous en le déplaçant automatiquement dans le canal vocal où vous allez",
+    description: "Hook a user to you by automatically moving them to the voice channel you join",
     authors: [{ name: "Bash", id: 1327483363518582784n }],
     settings,
     contextMenus: {
@@ -128,41 +128,41 @@ export default definePlugin({
             const myId = UserStore.getCurrentUser().id;
             const myCurrentChannelId = SelectedChannelStore.getVoiceChannelId();
 
-            // Vérifier si on doit seulement agir quand on est en vocal
+            // Check if we should only act when in voice
             if (settings.store.onlyWhenInVoice && !myCurrentChannelId) return;
 
             for (const voiceState of voiceStates) {
-                // Détecter quand l'utilisateur actuel change de canal vocal
+                // Detect when the current user changes voice channel
                 if (voiceState.userId === myId && voiceState.channelId !== myLastChannelId) {
                     myLastChannelId = voiceState.channelId;
 
-                    // Si on a un utilisateur accroché et qu'on rejoint un canal vocal
+                    // If we have a hooked user and join a voice channel
                     if (voiceState.channelId && leashedUserInfo.userId) {
                         const leashedUserVoiceState = VoiceStateStore.getVoiceStateForUser(leashedUserInfo.userId);
 
-                        // Si l'utilisateur accroché est dans un canal vocal différent
+                        // If the hooked user is in a different voice channel
                         if (leashedUserVoiceState && leashedUserVoiceState.channelId !== voiceState.channelId) {
                             try {
-                                // Essayer de déplacer l'utilisateur accroché vers notre canal
-                                // Note: Cette fonctionnalité nécessite des permissions de modération
+                                // Try to move the hooked user to our channel
+                                // Note: This feature requires moderation permissions
                                 const user = UserStore.getUser(leashedUserInfo.userId);
 
                                 if (settings.store.showNotifications) {
                                     showNotification({
                                         title: "laisse",
-                                        body: `Tentative de déplacement de ${user?.username || "l'utilisateur"} vers votre canal vocal`
+                                        body: `Attempting to move ${user?.username || "the user"} to your voice channel`
                                     });
                                 }
 
-                                // Utiliser l'API Discord pour déplacer l'utilisateur
+                                // Use Discord API to move the user
                                 await moveUserToVoiceChannel(leashedUserInfo.userId, voiceState.channelId);
 
                             } catch (error) {
-                                console.error("laisse: Erreur lors du déplacement:", error);
+                                console.error("laisse: Error during move:", error);
                                 if (settings.store.showNotifications) {
                                     showNotification({
-                                        title: "laisse - Erreur",
-                                        body: "Impossible de déplacer l'utilisateur (permissions insuffisantes)"
+                                        title: "laisse - Error",
+                                        body: "Unable to move the user (insufficient permissions)"
                                     });
                                 }
                             }

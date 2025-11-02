@@ -1,28 +1,33 @@
-# TODO: Change xcinstaller from Equicord to TestCord
+# Translation Task: French Plugins to English
 
-## Files to Edit
-- constants.go: Update URLs, UserAgent
-- gui.go: Update title, labels, messages
-- patcher.go: Update BaseDir, EquicordDirectory
-- app_asar.go: Update variable names if any
-- install.sh: Update download URL, remove Chrome extension message
-- README.md: Update all references
-- Other files if needed (e.g., cli.go, github_downloader.go)
+## Overview
+Translate all French text in plugins within `src/testcordplugins` to English. This includes descriptions, settings, notifications, logs, and comments.
 
-## Changes
-- Replace "Equicord" with "TestCord"
-- Replace "equicord" with "testcord"
-- Update GitHub repos: Equicord/Equicord -> x2b1/testcord, Equicord/Equilotl -> x2b1/xcinstaller
-- Update installer name: Equilotl -> TestCordInstaller
-- Update BaseDir: Equicord -> TestCord
-- Update EquicordDirectory: equicord.asar -> testcord.asar
-- Remove Chrome extension URL since no extension
+## Identified French Plugins
+- abreviation/index.tsx (fully French)
+- accroche/index.tsx (fully French)
+- laisse/index.tsx (fully French)
+- ultraAdvancedSearch/ (French comments and strings)
+- [More to identify by reading files]
 
 ## Steps
-1. Edit constants.go
-2. Edit gui.go
-3. Edit patcher.go
-4. Edit app_asar.go
-5. Edit install.sh
-6. Edit README.md
-7. Test build
+1. Identify all plugins with French content by reading main files.
+2. For each plugin, translate:
+   - Plugin name (if French)
+   - Description
+   - Settings descriptions
+   - Notification messages
+   - Log messages
+   - Comments
+3. Edit files with translations.
+4. Verify translations are accurate and plugins function.
+
+## Progress
+- [x] Create TODO.md
+- [x] Identify all French plugins
+- [x] Translate abreviation
+- [x] Translate ultraAdvancedSearch (styles.css, SearchModal.tsx, MediaGrid.tsx, index.tsx)
+- [ ] Translate accroche
+- [ ] Translate laisse
+- [ ] Translate other plugins
+- [ ] Final verification

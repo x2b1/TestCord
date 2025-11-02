@@ -4,61 +4,61 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
-import { showNotification } from "@api/Notifications";
 import { addMessagePreSendListener, MessageSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
+import { showNotification } from "@api/Notifications";
+import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Activer le plugin Abreviation",
+        description: "Enable the Abbreviation plugin",
         default: true
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
-        description: "Afficher les notifications lors de l'expansion",
+        description: "Show notifications when expanding abbreviations",
         default: false
     },
     caseSensitive: {
         type: OptionType.BOOLEAN,
-        description: "Respecter la casse des abréviations",
+        description: "Respect case sensitivity for abbreviations",
         default: false
     },
     debugMode: {
         type: OptionType.BOOLEAN,
-        description: "Mode débogage (logs détaillés)",
+        description: "Debug mode (detailed logs)",
         default: false
     },
     toggleKeybind: {
         type: OptionType.STRING,
-        description: "Raccourci clavier pour activer/désactiver le plugin (ex: ctrl+shift+a)",
+        description: "Keyboard shortcut to toggle the plugin (e.g.: ctrl+shift+a)",
         default: "ctrl+shift+a"
     },
     showToggleNotification: {
         type: OptionType.BOOLEAN,
-        description: "Afficher une notification lors du toggle via keybind",
+        description: "Show notification when toggling via keybind",
         default: true
     },
     abbreviations: {
         type: OptionType.STRING,
-        description: "Abréviations (format: abrév1=texte complet1|abrév2=texte complet2)",
+        description: "Abbreviations (format: abbr1=full text1|abbr2=full text2)",
         default: "btw=by the way|omg=oh my god|brb=be right back|afk=away from keyboard|imo=in my opinion|tbh=to be honest|lol=laughing out loud|wtf=what the f*ck|nvm=never mind|thx=thanks|pls=please|u=you|ur=your|bc=because|rn=right now|irl=in real life|fyi=for your information|asap=as soon as possible|ttyl=talk to you later|gtg=got to go|idk=I don't know|ikr=I know right|smh=shaking my head|dm=direct message|gm=good morning|gn=good night|gl=good luck|hf=have fun|wp=well played|gg=good game|ez=easy|op=overpowered|nerf=reduce power|buff=increase power|meta=most effective tactics available|fdp=fils de pute"
     },
     customAbbreviations: {
         type: OptionType.STRING,
-        description: "Abréviations personnalisées (même format que ci-dessus)",
+        description: "Custom abbreviations (same format as above)",
         default: ""
     }
 });
 
-// État du plugin (peut être différent du setting pour le toggle temporaire)
+// Plugin state (can be different from setting for temporary toggle)
 let isPluginActive = true;
 
-// Fonction de log avec préfixe
+// Function to log with prefix
 function log(message: string, level: "info" | "warn" | "error" = "info") {
     const timestamp = new Date().toLocaleTimeString();
-    const prefix = `[Abreviation ${timestamp}]`;
+    const prefix = `[Abbreviation ${timestamp}]`;
 
     switch (level) {
         case "warn":
@@ -72,30 +72,30 @@ function log(message: string, level: "info" | "warn" | "error" = "info") {
     }
 }
 
-// Log de débogage
+// Debug log
 function debugLog(message: string) {
     if (settings.store.debugMode) {
         log(`🔍 ${message}`, "info");
     }
 }
 
-// Fonction pour parser un keybind
+// Function to parse a keybind
 function parseKeybind(keybind: string): { ctrl: boolean; shift: boolean; alt: boolean; key: string; } {
-    const parts = keybind.toLowerCase().split('+');
+    const parts = keybind.toLowerCase().split("+");
     const result = {
         ctrl: false,
         shift: false,
         alt: false,
-        key: ''
+        key: ""
     };
 
     for (const part of parts) {
         const trimmed = part.trim();
-        if (trimmed === 'ctrl' || trimmed === 'control') {
+        if (trimmed === "ctrl" || trimmed === "control") {
             result.ctrl = true;
-        } else if (trimmed === 'shift') {
+        } else if (trimmed === "shift") {
             result.shift = true;
-        } else if (trimmed === 'alt') {
+        } else if (trimmed === "alt") {
             result.alt = true;
         } else {
             result.key = trimmed;
@@ -105,29 +105,29 @@ function parseKeybind(keybind: string): { ctrl: boolean; shift: boolean; alt: bo
     return result;
 }
 
-// Fonction pour toggle l'état du plugin
+// Function to toggle the plugin state
 function togglePlugin() {
     isPluginActive = !isPluginActive;
 
-    const status = isPluginActive ? "activé" : "désactivé";
+    const status = isPluginActive ? "enabled" : "disabled";
     const emoji = isPluginActive ? "✅" : "❌";
 
     log(`${emoji} Plugin ${status} via keybind`);
 
     if (settings.store.showToggleNotification) {
         showNotification({
-            title: `${emoji} Abreviation ${status}`,
-            body: isPluginActive ? "Les abréviations seront expansées" : "Les abréviations ne seront plus expansées",
+            title: `${emoji} Abbreviation ${status}`,
+            body: isPluginActive ? "Abbreviations will be expanded" : "Abbreviations will no longer be expanded",
             icon: undefined
         });
     }
 }
 
-// Gestionnaire d'événements clavier
+// Keyboard event handler
 function handleKeyDown(event: KeyboardEvent) {
     const keybind = parseKeybind(settings.store.toggleKeybind);
 
-    // Vérifier si le keybind correspond
+    // Check if the keybind matches
     if (
         event.ctrlKey === keybind.ctrl &&
         event.shiftKey === keybind.shift &&
@@ -140,16 +140,16 @@ function handleKeyDown(event: KeyboardEvent) {
     }
 }
 
-// Parseur d'abréviations
+// Abbreviations parser
 function parseAbbreviations(abbreviationsString: string): Map<string, string> {
     const abbrevMap = new Map<string, string>();
 
     if (!abbreviationsString.trim()) return abbrevMap;
 
-    const pairs = abbreviationsString.split('|');
+    const pairs = abbreviationsString.split("|");
 
     for (const pair of pairs) {
-        const [abbrev, expansion] = pair.split('=');
+        const [abbrev, expansion] = pair.split("=");
         if (abbrev && expansion) {
             const key = settings.store.caseSensitive ? abbrev.trim() : abbrev.trim().toLowerCase();
             abbrevMap.set(key, expansion.trim());
@@ -159,18 +159,18 @@ function parseAbbreviations(abbreviationsString: string): Map<string, string> {
     return abbrevMap;
 }
 
-// Fonction pour obtenir toutes les abréviations
+// Function to get all abbreviations
 function getAllAbbreviations(): Map<string, string> {
     const defaultAbbrevs = parseAbbreviations(settings.store.abbreviations);
     const customAbbrevs = parseAbbreviations(settings.store.customAbbreviations);
 
-    // Fusionner les deux maps (les personnalisées ont la priorité)
+    // Merge the two maps (custom ones have priority)
     const combined = new Map([...defaultAbbrevs, ...customAbbrevs]);
 
     return combined;
 }
 
-// Fonction pour expandre les abréviations dans un texte
+// Function to expand abbreviations in text
 function expandAbbreviations(text: string): { newText: string; expansions: Array<{ abbrev: string; expansion: string; }>; } {
     if (!text.trim()) {
         return { newText: text, expansions: [] };
@@ -179,26 +179,26 @@ function expandAbbreviations(text: string): { newText: string; expansions: Array
     const abbreviations = getAllAbbreviations();
     const expansions: Array<{ abbrev: string; expansion: string; }> = [];
 
-    // Diviser le texte en mots, en préservant les espaces et la ponctuation
+    // Split text into words, preserving spaces and punctuation
     const words = text.split(/(\s+)/);
 
     for (let i = 0; i < words.length; i++) {
         const word = words[i];
 
-        // Ignorer les espaces
+        // Ignore spaces
         if (/^\s+$/.test(word)) continue;
 
-        // Extraire le mot sans ponctuation pour la vérification
-        const cleanWord = word.replace(/[^\w]/g, '');
+        // Extract word without punctuation for checking
+        const cleanWord = word.replace(/[^\w]/g, "");
         if (!cleanWord) continue;
 
-        // Vérifier si c'est une abréviation
+        // Check if it's an abbreviation
         const searchKey = settings.store.caseSensitive ? cleanWord : cleanWord.toLowerCase();
         const expansion = abbreviations.get(searchKey);
 
         if (expansion) {
-            // Préserver la ponctuation originale
-            const punctuation = word.replace(cleanWord, '');
+            // Preserve original punctuation
+            const punctuation = word.replace(cleanWord, "");
             words[i] = expansion + punctuation;
 
             expansions.push({
@@ -206,19 +206,19 @@ function expandAbbreviations(text: string): { newText: string; expansions: Array
                 expansion: expansion
             });
 
-            debugLog(`Expansion trouvée: "${cleanWord}" → "${expansion}"`);
+            debugLog(`Expansion found: "${cleanWord}" → "${expansion}"`);
         }
     }
 
     return {
-        newText: words.join(''),
+        newText: words.join(""),
         expansions: expansions
     };
 }
 
-// Listener pour les messages avant envoi
+// Listener for messages before sending
 const messagePreSendListener: MessageSendListener = (channelId, messageObj, extra) => {
-    // Vérifier si le plugin est activé (état global ET état temporaire)
+    // Check if the plugin is enabled (global state AND temporary state)
     if (!settings.store.enabled || !isPluginActive) {
         return;
     }
@@ -233,7 +233,7 @@ const messagePreSendListener: MessageSendListener = (channelId, messageObj, extr
     if (expansions.length > 0) {
         messageObj.content = newText;
 
-        log(`✨ ${expansions.length} expansion(s) effectuée(s)`);
+        log(`✨ ${expansions.length} expansion(s) performed`);
 
         for (const { abbrev, expansion } of expansions) {
             log(`   "${abbrev}" → "${expansion}"`);
@@ -242,7 +242,7 @@ const messagePreSendListener: MessageSendListener = (channelId, messageObj, extr
         if (settings.store.showNotifications) {
             const expansionText = expansions.map(e => `"${e.abbrev}" → "${e.expansion}"`).join(", ");
             showNotification({
-                title: "📝 Abreviation",
+                title: "📝 Abbreviation",
                 body: `Expansions: ${expansionText}`,
                 icon: undefined
             });
@@ -251,8 +251,8 @@ const messagePreSendListener: MessageSendListener = (channelId, messageObj, extr
 };
 
 export default definePlugin({
-    name: "Abreviation",
-    description: "Transforme automatiquement des abréviations en texte complet lors de l'envoi de messages",
+    name: "Abbreviation",
+    description: "Automatically transforms abbreviations into full text when sending messages",
     authors: [{
         name: "Bash",
         id: 1327483363518582784n
@@ -261,45 +261,45 @@ export default definePlugin({
     settings,
 
     start() {
-        log("🚀 Plugin Abreviation démarré");
+        log("🚀 Abbreviation plugin started");
 
-        // Réinitialiser l'état actif
+        // Reset active state
         isPluginActive = settings.store.enabled;
 
         const abbreviations = getAllAbbreviations();
-        log(`📚 ${abbreviations.size} abréviations chargées`);
-        log(`⌨️ Keybind configuré: ${settings.store.toggleKeybind}`);
+        log(`📚 ${abbreviations.size} abbreviations loaded`);
+        log(`⌨️ Keybind configured: ${settings.store.toggleKeybind}`);
 
-        // Ajouter le listener pour les messages avant envoi
+        // Add listener for messages before sending
         addMessagePreSendListener(messagePreSendListener);
 
-        // Ajouter le listener pour les événements clavier
-        document.addEventListener('keydown', handleKeyDown, true);
+        // Add listener for keyboard events
+        document.addEventListener("keydown", handleKeyDown, true);
 
-        debugLog(`Mode débogage: ${settings.store.debugMode ? "ACTIVÉ" : "DÉSACTIVÉ"}`);
+        debugLog(`Debug mode: ${settings.store.debugMode ? "ENABLED" : "DISABLED"}`);
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📝 Abreviation activé",
-                body: `${abbreviations.size} abréviations disponibles. Toggle: ${settings.store.toggleKeybind}`,
+                title: "📝 Abbreviation enabled",
+                body: `${abbreviations.size} abbreviations available. Toggle: ${settings.store.toggleKeybind}`,
                 icon: undefined
             });
         }
     },
 
     stop() {
-        log("🛑 Plugin Abreviation arrêté");
+        log("🛑 Abbreviation plugin stopped");
 
-        // Retirer les listeners
+        // Remove listeners
         removeMessagePreSendListener(messagePreSendListener);
-        document.removeEventListener('keydown', handleKeyDown, true);
+        document.removeEventListener("keydown", handleKeyDown, true);
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📝 Abreviation désactivé",
-                body: "Plugin arrêté",
+                title: "📝 Abbreviation disabled",
+                body: "Plugin stopped",
                 icon: undefined
             });
         }
     }
-}); 
+});
