@@ -114,7 +114,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
 };
 
 export default definePlugin({
-    name: "laisse",
+    name: "Leash",
     description: "Hook a user to you by automatically moving them to the voice channel you join",
     authors: [{ name: "Bash", id: 1327483363518582784n }],
     settings,
