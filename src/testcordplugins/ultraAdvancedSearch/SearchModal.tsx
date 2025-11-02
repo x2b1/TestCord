@@ -8,8 +8,8 @@ import { DataStore } from "@api/index";
 import { classNameFactory } from "@api/Styles";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
 import { Channel, Message, User } from "@vencord/discord-types";
-import { Avatar, ChannelStore, MessageStore, NavigationRouter, RestAPI, TabBar, TextInput, UserStore } from "@webpack/common";
-import { React, useCallback, useEffect, useRef, useState } from "@webpack/common";
+import { findStoreLazy } from "@webpack";
+import { Avatar, ChannelStore, MessageStore, NavigationRouter, React, RestAPI, TabBar, TextInput, useCallback, useEffect, useRef, UserStore, useState } from "@webpack/common";
 
 import { settings } from "./index";
 import { MediaGrid, MediaItemsCache, searchMediaMessages } from "./MediaGrid";
@@ -568,7 +568,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                 }
             }
         } catch (error) {
-            console.error("Erreur lors de la recherche:", error);
+            console.error("Error during search:", error);
             setStats({ total: 0, displayed: 0, loading: false });
         } finally {
             setLoading(false);
@@ -1061,7 +1061,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         />
                         {loadingMore && (
                             <div className={cl("loading-more")} style={{ padding: "12px", textAlign: "center" }}>
-                                <span>Chargement...</span>
+                                <span>Loading...</span>
                             </div>
                         )}
                         {displayedResults.length < allResults.length && !loadingMore && (
