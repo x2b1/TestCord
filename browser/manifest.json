@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
     "minimum_chrome_version": "111",
-    "name": "Equicord Web",
+    "name": "TestCord Web",
     "description": "The other cutest Discord mod now in your browser",
-    "author": "Equicord",
-    "homepage_url": "https://github.com/Equicord/Equicord",
+    "author": "TestCord",
+    "homepage_url": "https://github.com/x2b1/testcord",
     "icons": {
         "128": "icon.png"
     },

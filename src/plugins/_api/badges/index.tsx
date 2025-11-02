@@ -28,10 +28,10 @@ import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
-import { EquicordDonorModal, VencordDonorModal } from "./modals";
+import { TestCordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
-const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
+const TESTCORD_CONTRIBUTOR_BADGE = "https://testcord.org/assets/favicon.png";
 
 const ContributorBadge: ProfileBadge = {
     description: "Vencord Contributor",
@@ -41,9 +41,9 @@ const ContributorBadge: ProfileBadge = {
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId))
 };
 
-const EquicordContributorBadge: ProfileBadge = {
-    description: "Equicord Contributor",
-    image: EQUICORD_CONTRIBUTOR_BADGE,
+const TestCordContributorBadge: ProfileBadge = {
+    description: "TestCord Contributor",
+    image: TESTCORD_CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
     shouldShow: ({ userId }) => shouldShowEquicordContributorBadge(userId),
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
@@ -56,7 +56,7 @@ const EquicordContributorBadge: ProfileBadge = {
 };
 
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
-let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let TestCordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;
@@ -67,10 +67,10 @@ async function loadBadges(url: string, noCache = false) {
 
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const equicordBadges = await loadBadges("https://equicord.org/badges.json", noCache);
+    const testcordBadges = await loadBadges("https://testcord.org/badges.json", noCache);
 
     DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    TestCordDonorBadges = testcordBadges;
 }
 
 let intervalId: any;
@@ -145,8 +145,8 @@ export default definePlugin({
         return DonorBadges;
     },
 
-    get EquicordDonorBadges() {
-        return EquicordDonorBadges;
+    get TestCordDonorBadges() {
+        return TestCordDonorBadges;
     },
 
     toolboxActions: {
@@ -160,7 +160,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge],
+    userProfileBadges: [ContributorBadge, TestCordContributorBadge],
 
     async start() {
         await loadAllBadges();
@@ -224,8 +224,8 @@ export default definePlugin({
         } satisfies ProfileBadge));
     },
 
-    getEquicordDonorBadges(userId: string) {
-        return EquicordDonorBadges[userId]?.map(badge => ({
+    getTestCordDonorBadges(userId: string) {
+        return TestCordDonorBadges[userId]?.map(badge => ({
             image: badge.badge,
             description: badge.tooltip,
             position: BadgePosition.START,
@@ -239,7 +239,7 @@ export default definePlugin({
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
-                return EquicordDonorModal();
+                return TestCordDonorModal();
             },
         } satisfies ProfileBadge));
     }

@@ -19,7 +19,7 @@
 import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
 
 import { copyToClipboard } from "./clipboard";
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { EQUICORD_HELPERS, GUILD_ID, SUPPORT_CHANNEL_ID, TestCordDevsById, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
@@ -94,10 +94,15 @@ export const isMobile = navigator.userAgent.includes("Mobi");
 export const isPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id);
 export const shouldShowContributorBadge = (id: string) => isPluginDev(id) && VencordDevsById[id].badge !== false;
 
-export const isEquicordPluginDev = (id: string) => Object.hasOwn(EquicordDevsById, id);
-export const shouldShowEquicordContributorBadge = (id: string) => isEquicordPluginDev(id) && EquicordDevsById[id].badge !== false;
+export const isTestCordPluginDev = (id: string) => Object.hasOwn(TestCordDevsById, id);
+export const shouldShowEquicordContributorBadge = (id: string) => isTestCordPluginDev(id) && TestCordDevsById[id].badge !== false;
 
-export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id);
+// Aliases for backward compatibility
+export const isEquicordGuild = isTestCordGuild;
+export const isEquicordPluginDev = isTestCordPluginDev;
+export const isEquicordSupport = isTestCordSupport;
+
+export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(TestCordDevsById, id);
 
 export function pluralise(amount: number, singular: string, plural = singular + "s") {
     return amount === 1 ? `${amount} ${singular}` : `${amount} ${plural}`;
@@ -119,7 +124,7 @@ export function tryOrElse<T>(func: () => T, fallback: T): T {
     }
 }
 
-export function isEquicordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
+export function isTestCordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
     if (!id) return false;
 
     if (isGuildId) return id === GUILD_ID;
@@ -134,7 +139,7 @@ export function isSupportChannel(channelId: string | null | undefined): boolean 
     return channelId === SUPPORT_CHANNEL_ID;
 }
 
-export function isEquicordSupport(userId: string | null | undefined): boolean {
+export function isTestCordSupport(userId: string | null | undefined): boolean {
     if (!userId) return false;
 
     const member = GuildMemberStore.getMember(GUILD_ID, userId);

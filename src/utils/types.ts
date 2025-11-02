@@ -189,7 +189,7 @@ export interface PluginDef {
     renderChatBarButton?: ChatBarButtonFactory;
 
     /**
-     * A Vencord plugin that is modified for extra features in Equicord
+     * A Vencord plugin that is modified for extra features in TestCord
      */
     isModified?: boolean;
 }

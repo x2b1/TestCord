@@ -26,7 +26,7 @@ export function waitForComponent<T extends React.ComponentType<any> = React.Comp
     if (IS_REPORTER) lazyWebpackSearchHistory.push(["waitForComponent", Array.isArray(filter) ? filter : [filter]]);
 
     let myValue: T = function () {
-        const error = new Error(`Equicord could not find the ${name} Component`);
+        const error = new Error(`TestCord could not find the ${name} Component`);
         logger.error(error);
 
         if (IS_DEV) throw error;

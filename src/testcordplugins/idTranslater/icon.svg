@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <!-- Flèche de traduction/conversion -->
+    <path d="M8 4L4 8L8 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M4 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Lignes représentant le texte/ID -->
+    <rect x="2" y="14" width="20" height="2" rx="1" fill="currentColor" opacity="0.3"/>
+    <rect x="2" y="17" width="16" height="2" rx="1" fill="currentColor" opacity="0.3"/>
+    
+    <!-- Symbole @ représentant la mention -->
+    <path d="M18 14C18 14.5523 18.4477 15 19 15H20C20.5523 15 21 14.5523 21 14V12C21 11.4477 20.5523 11 20 11H19C18.4477 11 18 11.4477 18 12V14Z" fill="currentColor" opacity="0.6"/>
+    <circle cx="19.5" cy="13" r="1" fill="currentColor"/>
+</svg>
+

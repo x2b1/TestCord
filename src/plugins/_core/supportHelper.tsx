@@ -31,7 +31,7 @@ import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUIBOP_CONTRIB_ROLE_ID, EQUICORD
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
-import { isAnyPluginDev, isEquicordSupport, isSupportChannel, tryOrElse } from "@utils/misc";
+import { isAnyPluginDev, isSupportChannel, tryOrElse } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
@@ -212,9 +212,9 @@ export default definePlugin({
                         </div>
                         <Paragraph>Before you ask for help,</Paragraph>
                         <Paragraph>Check for updates and if this</Paragraph>
-                        <Paragraph>issue could be caused by Equicord!</Paragraph>
+                        <Paragraph>issue could be caused by TestCord!</Paragraph>
                     </div>,
-                    confirmText: "Go to Equicord Support",
+                    confirmText: "Go to TestCord Support",
                     onConfirm() {
                         clicked = true;
                         VencordNative.native.openExternal("https://equicord.org/discord");
@@ -233,7 +233,7 @@ export default definePlugin({
                     return Alerts.show({
                         title: "Hold on!",
                         body: <div>
-                            <Paragraph>You are using an outdated version of Equicord! Chances are, your issue is already fixed.</Paragraph>
+                            <Paragraph>You are using an outdated version of TestCord! Chances are, your issue is already fixed.</Paragraph>
                             <Paragraph className={Margins.top8}>
                                 Please first update before asking for support!
                             </Paragraph>
@@ -256,7 +256,7 @@ export default definePlugin({
                     body: <div>
                         <Paragraph>You are using an externally updated TestCord version, the ability to help you here may be limited.</Paragraph>
                         <Paragraph className={Margins.top8}>
-                            Please join the <Link href="https://equicord.org/discord">Equicord Server</Link> for support,
+                            Please join the <Link href="https://equicord.org/discord">TestCord Server</Link> for support,
                             or if this issue persists on Vencord, continue on.
                         </Paragraph>
                     </div>
@@ -270,7 +270,7 @@ export default definePlugin({
                         <Paragraph>You are using a custom build of TestCord, which we do not provide support for!</Paragraph>
 
                         <Paragraph className={Margins.top8}>
-                            We only provide support for <Link href="https://github.com/Equicord/Equicord">official builds</Link>.
+                            We only provide support for <Link href="https://github.com/Equicord/Equicord">official TestCord builds</Link>.
                             Either <Link href="https://github.com/Equicord/Equilotl">switch to an official build</Link> or figure your issue out yourself.
                         </Paragraph>
 
@@ -287,11 +287,11 @@ export default definePlugin({
     renderMessageAccessory(props) {
         const buttons = [] as JSX.Element[];
 
-        const equicordSupport = isEquicordSupport(props.message.author.id);
+        const testCordSupport = isTestCordGuild(props.message.author.id);
 
         const shouldAddUpdateButton =
             !IS_UPDATER_DISABLED
-            && ((isSupportChannel(props.channel.id) && equicordSupport))
+            && ((isSupportChannel(props.channel.id) && testCordSupport))
             && props.message.content?.includes("update");
 
         if (shouldAddUpdateButton) {
@@ -316,7 +316,7 @@ export default definePlugin({
             );
         }
 
-        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && equicordSupport) {
+        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && testCordSupport) {
             if (props.message.content.includes("/testcord-debug") || props.message.content.includes("/testcord-plugins")) {
                 buttons.push(
                     <Button
@@ -341,7 +341,7 @@ export default definePlugin({
                 );
             }
 
-            if (equicordSupport) {
+            if (testCordSupport) {
                 const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
                 if (match) {
                     buttons.push(

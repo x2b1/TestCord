@@ -50,7 +50,7 @@ export async function importSettings(data: string) {
     }
 
     if (!("settings" in parsed || "quickCss" in parsed || "dataStore" in parsed)) {
-        throw new Error("Invalid Settings. Is this even an Equicord Settings file?");
+        throw new Error("Invalid Settings. Is this even a TestCord Settings file?");
     }
 }
 
@@ -98,7 +98,7 @@ export async function downloadSettingsBackup(type: BackupType, { minify }: { min
             throw new Error("Invalid backup type");
     }
 
-    const filename = `equicord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
+    const filename = `testcord-${type}-backup-${moment().format("YYYY-MM-DD")}.json`;
     const data = new TextEncoder().encode(backup);
 
     if (IS_DISCORD_DESKTOP) {
@@ -125,7 +125,7 @@ export async function uploadSettingsBackup(showToast = true): Promise<void> {
     if (IS_DISCORD_DESKTOP) {
         const [file] = await DiscordNative.fileManager.openFiles({
             filters: [
-                { name: "Equicord Settings Backup", extensions: ["json"] },
+                { name: "TestCord Settings Backup", extensions: ["json"] },
                 { name: "all", extensions: ["*"] }
             ]
         });
