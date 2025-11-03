@@ -1,7 +1,7 @@
 {
     "name": "testcord",
     "private": "true",
-    "version": "1.13.4",
+    "version": "1.13.5",
     "description": "The other cutest Discord client mod",
     "homepage": "https://github.com/x2b1/testcord#readme",
     "bugs": {
