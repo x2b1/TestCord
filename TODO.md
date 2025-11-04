@@ -29,7 +29,7 @@ Translate all French strings (logs, comments, settings descriptions) to English 
 - [x] Create TODO.md
 - [x] Read and translate antiDeco/index.ts
 - [x] Read and translate antiGroup/index.tsx
-- [ ] Read and translate antiStereo/index.tsx
+- [x] Read and translate antiStereo/index.ts
 - [ ] Read and translate audioCenter/index.tsx
 - [ ] Read and translate audioLimiter/index.tsx
 - [ ] Read and translate autoDeco/index.tsx

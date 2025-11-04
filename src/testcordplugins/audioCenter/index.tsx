@@ -4,73 +4,73 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
-import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { React, MediaEngineStore, FluxDispatcher, Forms, Select, Slider, Button } from "@webpack/common";
+import { definePluginSettings } from "@api/Settings";
 import { identity } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy } from "@webpack";
+import { Button, FluxDispatcher, Forms, React, Select } from "@webpack/common";
 
 const configModule = findByPropsLazy("getOutputVolume");
 
 const settings = definePluginSettings({
-    // Paramètres du mixeur audio
+    // Audio mixer parameters
     enabled: {
         type: OptionType.BOOLEAN,
         default: false,
-        description: "Activer le centre audio"
+        description: "Enable audio center"
     },
     primaryDevice: {
         type: OptionType.COMPONENT,
         component: () => <PrimaryDeviceSelector />,
-        description: "Périphérique audio principal (microphone)"
+        description: "Primary audio device (microphone)"
     },
     secondaryDevice: {
         type: OptionType.COMPONENT,
         component: () => <SecondaryDeviceSelector />,
-        description: "Périphérique audio secondaire (musique, etc.)"
+        description: "Secondary audio device (music, etc.)"
     },
     primaryVolume: {
         type: OptionType.SLIDER,
         default: 100,
-        description: "Volume du périphérique principal (%)",
+        description: "Primary device volume (%)",
         markers: [0, 25, 50, 75, 100],
         stickToMarkers: false
     },
     secondaryVolume: {
         type: OptionType.SLIDER,
         default: 50,
-        description: "Volume du périphérique secondaire (%)",
+        description: "Secondary device volume (%)",
         markers: [0, 25, 50, 75, 100],
         stickToMarkers: false
     },
 
-    // Paramètres du périphérique virtuel
+    // Virtual device parameters
     virtualDeviceName: {
         type: OptionType.STRING,
-        default: "AudioCenter - Sortie Virtuelle",
-        description: "Nom du périphérique virtuel"
+        default: "AudioCenter - Virtual Output",
+        description: "Virtual device name"
     },
     autoSetAsOutput: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Définir automatiquement comme périphérique de sortie Discord"
+        description: "Automatically set as Discord output device"
     },
 
 
-    // Paramètres généraux
+    // General parameters
     showNotifications: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Afficher les notifications"
+        description: "Show notifications"
     }
 });
 
-// Variables globales
+// Global variables
 let selectedPrimaryDevice = "";
 let selectedSecondaryDevice = "";
 
-// État du mixeur audio
+// Audio mixer state
 interface AudioMixerState {
     isActive: boolean;
     audioContext: AudioContext | null;
@@ -93,10 +93,10 @@ let mixerState: AudioMixerState = {
     mixedStream: null
 };
 
-// État du périphérique virtuel
+// Virtual device state
 let virtualOutputDevice = {
     id: "audioCenter-virtual-output",
-    name: "AudioCenter - Sortie Virtuelle",
+    name: "AudioCenter - Virtual Output",
     isActive: false,
     audioContext: null as AudioContext | null,
     destination: null as MediaStreamAudioDestinationNode | null,
@@ -104,53 +104,53 @@ let virtualOutputDevice = {
 };
 
 
-// ==================== FONCTIONS UTILITAIRES ====================
+// ==================== UTILITY FUNCTIONS ====================
 
-// Fonction pour injecter le périphérique virtuel dans Discord
+// Function to inject the virtual device into Discord
 function injectVirtualDevice() {
     try {
-        console.log("AudioCenter: Injection du périphérique virtuel...");
+        console.log("AudioCenter: Injecting virtual device...");
 
-        // Intercepter la fonction getInputDevices de Discord
+        // Intercept Discord's getInputDevices function
         if (configModule && configModule.getInputDevices) {
             const originalGetInputDevices = configModule.getInputDevices.bind(configModule);
 
             configModule.getInputDevices = () => {
                 const originalDevices = originalGetInputDevices();
 
-                // Ajouter le périphérique virtuel à la liste Discord
+                // Add the virtual device to the Discord list
                 const virtualDevice = {
-                    id: 'virtual-audio-center',
-                    name: 'AudioCenter - Mixeur Virtuel',
-                    type: 'audioinput'
+                    id: "virtual-audio-center",
+                    name: "AudioCenter - Virtual Mixer",
+                    type: "audioinput"
                 };
 
-                // Créer un nouvel objet avec le périphérique virtuel ajouté
+                // Create a new object with the virtual device added
                 const devicesWithVirtual = {
                     ...originalDevices,
-                    'virtual-audio-center': virtualDevice
+                    "virtual-audio-center": virtualDevice
                 };
 
-                console.log("AudioCenter: Périphérique virtuel ajouté à la liste Discord");
+                console.log("AudioCenter: Virtual device added to Discord list");
 
                 return devicesWithVirtual;
             };
 
-            console.log("AudioCenter: configModule.getInputDevices intercepté avec succès");
+            console.log("AudioCenter: configModule.getInputDevices intercepted successfully");
         } else {
-            console.error("AudioCenter: configModule ou getInputDevices non disponible");
+            console.error("AudioCenter: configModule or getInputDevices not available");
         }
 
-        // Intercepter le dispatcher Discord pour gérer la sélection du périphérique virtuel
+        // Intercept Discord dispatcher to handle virtual device selection
         if (FluxDispatcher && FluxDispatcher.dispatch) {
             const originalDispatch = FluxDispatcher.dispatch.bind(FluxDispatcher);
 
             FluxDispatcher.dispatch = (action: any) => {
-                // Si c'est une sélection de périphérique d'entrée virtuel
-                if (action.type === "AUDIO_SET_INPUT_DEVICE" && action.id === 'virtual-audio-center') {
-                    console.log("AudioCenter: Périphérique virtuel sélectionné");
+                // If it's a virtual input device selection
+                if (action.type === "AUDIO_SET_INPUT_DEVICE" && action.id === "virtual-audio-center") {
+                    console.log("AudioCenter: Virtual device selected");
 
-                    // Démarrer le mixage si pas déjà actif
+                    // Start mixing if not already active
                     if (!mixerState.isActive && selectedPrimaryDevice && selectedSecondaryDevice) {
                         startAudioMixing();
                     }
@@ -160,45 +160,45 @@ function injectVirtualDevice() {
             };
         }
 
-        // Ajouter les patches nécessaires
+        // Add necessary patches
         patchDiscordComponents();
         addDirectPatch();
         createGlobalFunction();
 
-        console.log("AudioCenter: Périphérique virtuel injecté avec succès");
+        console.log("AudioCenter: Virtual device injected successfully");
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de l'injection du périphérique virtuel dans Discord:", error);
+        console.error("AudioCenter: Error injecting virtual device into Discord:", error);
     }
 }
 
-// Fonction pour patcher les composants Discord
+// Function to patch Discord components
 function patchDiscordComponents() {
     try {
-        console.log("AudioCenter: Patch des composants Discord...");
+        console.log("AudioCenter: Patching Discord components...");
 
-        // Utiliser une approche plus directe en interceptant les modules Discord
+        // Use a more direct approach by intercepting Discord modules
         const { findByPropsLazy } = Vencord.Webpack;
 
-        // Chercher le module qui contient les fonctions de gestion des périphériques
+        // Find the module that contains device management functions
         const AudioDeviceModule = findByPropsLazy("getInputDevices", "getOutputDevices");
         if (AudioDeviceModule) {
-            // Intercepter getInputDevices si ce n'est pas déjà fait
+            // Intercept getInputDevices if not already done
             if (AudioDeviceModule.getInputDevices && AudioDeviceModule.getInputDevices !== configModule.getInputDevices) {
                 const originalGetInputDevices = AudioDeviceModule.getInputDevices.bind(AudioDeviceModule);
 
                 AudioDeviceModule.getInputDevices = () => {
                     const devices = originalGetInputDevices();
 
-                    // Ajouter le périphérique virtuel
+                    // Add the virtual device
                     const virtualDevice = {
-                        id: 'virtual-audio-center',
-                        name: 'AudioCenter - Mixeur Virtuel',
-                        type: 'audioinput'
+                        id: "virtual-audio-center",
+                        name: "AudioCenter - Virtual Mixer",
+                        type: "audioinput"
                     };
 
                     const devicesWithVirtual = {
                         ...devices,
-                        'virtual-audio-center': virtualDevice
+                        "virtual-audio-center": virtualDevice
                     };
 
                     return devicesWithVirtual;
@@ -206,21 +206,22 @@ function patchDiscordComponents() {
             }
         }
 
-        console.log("AudioCenter: Composants Discord patchés");
+        console.log("AudioCenter: Discord components patched");
     } catch (error) {
-        console.error("AudioCenter: Erreur lors du patch des composants Discord:", error);
+        console.error("AudioCenter: Error patching Discord components:", error);
     }
 }
 
-// Fonction pour ajouter un patch direct
+// Function to add a direct patch
 function addDirectPatch() {
     try {
-        console.log("AudioCenter: Ajout d'un patch direct...");
+        console.log("AudioCenter: Adding direct patch...");
 
-        // Utiliser l'API de patch de Vencord
-        const { addPatch } = Vencord.Patcher;
+        // Use Vencord's patch API
+        // @ts-expect-error
+        const { addPatch } = Vencord.Api.Patcher || Vencord.Patcher;
 
-        // Patcher directement les composants de sélection de périphériques
+        // Directly patch device selection components
         addPatch({
             plugin: "AudioCenter",
             patches: [
@@ -234,75 +235,75 @@ function addDirectPatch() {
             ]
         });
 
-        console.log("AudioCenter: Patch direct ajouté");
+        console.log("AudioCenter: Direct patch added");
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de l'ajout du patch direct:", error);
+        console.error("AudioCenter: Error adding direct patch:", error);
     }
 }
 
-// Fonction pour créer une fonction globale
+// Function to create a global function
 function createGlobalFunction() {
     try {
-        console.log("AudioCenter: Création d'une fonction globale...");
+        console.log("AudioCenter: Creating global function...");
 
-        // Créer une fonction globale que Discord peut utiliser
+        // Create a global function that Discord can use
         (window as any).getInputDevicesWithVirtual = () => {
             const originalDevices = configModule.getInputDevices();
 
             const virtualDevice = {
-                id: 'virtual-audio-center',
-                name: 'AudioCenter - Mixeur Virtuel',
-                type: 'audioinput'
+                id: "virtual-audio-center",
+                name: "AudioCenter - Virtual Mixer",
+                type: "audioinput"
             };
 
             const devicesWithVirtual = {
                 ...originalDevices,
-                'virtual-audio-center': virtualDevice
+                "virtual-audio-center": virtualDevice
             };
 
             return devicesWithVirtual;
         };
 
-        console.log("AudioCenter: Fonction globale créée");
+        console.log("AudioCenter: Global function created");
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de la création de la fonction globale:", error);
+        console.error("AudioCenter: Error creating global function:", error);
     }
 }
 
-// Fonction pour obtenir la liste des périphériques audio d'entrée
+// Function to get the list of input audio devices
 function getInputDevices() {
     try {
-        console.log("AudioCenter: Tentative d'obtention des périphériques d'entrée...");
+        console.log("AudioCenter: Attempting to get input devices...");
         const devices = Object.values(configModule.getInputDevices());
-        console.log("AudioCenter: Périphériques d'entrée obtenus:", devices.length);
-        console.log("AudioCenter: Périphériques détaillés:", devices);
+        console.log("AudioCenter: Input devices obtained:", devices.length);
+        console.log("AudioCenter: Detailed devices:", devices);
 
         return devices;
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de l'obtention des périphériques d'entrée:", error);
+        console.error("AudioCenter: Error getting input devices:", error);
         return [];
     }
 }
 
-// ==================== PÉRIPHÉRIQUE VIRTUEL ====================
+// ==================== VIRTUAL DEVICE ====================
 
-// Fonction pour créer le périphérique virtuel d'entrée
+// Function to create the virtual input device
 async function createVirtualInputDevice() {
     try {
-        console.log("AudioCenter: Début de création du périphérique virtuel d'entrée...");
+        console.log("AudioCenter: Starting creation of virtual input device...");
 
         const audioContext = new AudioContext();
-        console.log("AudioCenter: Contexte audio créé:", audioContext.state);
+        console.log("AudioCenter: Audio context created:", audioContext.state);
 
         const destination = audioContext.createMediaStreamDestination();
-        console.log("AudioCenter: Destination créée:", destination);
+        console.log("AudioCenter: Destination created:", destination);
 
         const gainNode = audioContext.createGain();
         gainNode.gain.value = 1.0;
-        console.log("AudioCenter: Nœud de gain créé avec valeur:", gainNode.gain.value);
+        console.log("AudioCenter: Gain node created with value:", gainNode.gain.value);
 
         gainNode.connect(destination);
-        console.log("AudioCenter: Gain connecté à la destination");
+        console.log("AudioCenter: Gain connected to destination");
 
         virtualOutputDevice = {
             ...virtualOutputDevice,
@@ -312,119 +313,119 @@ async function createVirtualInputDevice() {
             gainNode
         };
 
-        // Créer un stream d'entrée virtuel
+        // Create a virtual input stream
         const virtualInputStream = destination.stream;
-        console.log("AudioCenter: Stream d'entrée virtuel créé:", virtualInputStream);
+        console.log("AudioCenter: Virtual input stream created:", virtualInputStream);
 
-        // Exposer le stream comme périphérique d'entrée via une API personnalisée
+        // Expose the stream as an input device via a custom API
         if (window.navigator && window.navigator.mediaDevices) {
-            // Créer une fonction personnalisée pour obtenir le stream virtuel
+            // Create a custom function to get the virtual stream
             const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
 
-            navigator.mediaDevices.getUserMedia = async (constraints) => {
-                console.log("AudioCenter: getUserMedia appelé avec:", constraints);
+            navigator.mediaDevices.getUserMedia = async constraints => {
+                console.log("AudioCenter: getUserMedia called with:", constraints);
 
-                // Si c'est une demande pour le périphérique virtuel
-                if (constraints.audio && typeof constraints.audio === 'object' &&
-                    constraints.audio.deviceId === 'virtual-audio-center') {
-                    console.log("AudioCenter: Retour du stream virtuel");
+                // If it's a request for the virtual device
+                if (constraints.audio && typeof constraints.audio === "object" &&
+                    constraints.audio.deviceId === "virtual-audio-center") {
+                    console.log("AudioCenter: Returning virtual stream");
                     return virtualInputStream;
                 }
 
-                // Sinon, utiliser la fonction originale
+                // Otherwise, use the original function
                 return originalGetUserMedia(constraints);
             };
         }
 
-        console.log("AudioCenter: Périphérique virtuel d'entrée créé avec succès");
+        console.log("AudioCenter: Virtual input device created successfully");
         return { audioContext, destination, gainNode, virtualInputStream };
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de la création du périphérique virtuel d'entrée:", error);
+        console.error("AudioCenter: Error creating virtual input device:", error);
         throw error;
     }
 }
 
-// Fonction pour définir le périphérique virtuel comme sortie Discord
+// Function to set the virtual device as Discord output
 function setVirtualDeviceAsOutput() {
     try {
-        console.log("AudioCenter: Tentative de définition du périphérique virtuel comme sortie...");
+        console.log("AudioCenter: Attempting to set virtual device as output...");
 
         if (!virtualOutputDevice.isActive || !virtualOutputDevice.destination) {
-            console.error("AudioCenter: Périphérique virtuel non actif ou destination manquante");
+            console.error("AudioCenter: Virtual device not active or destination missing");
             return;
         }
 
         const virtualStream = virtualOutputDevice.destination.stream;
-        console.log("AudioCenter: Stream virtuel obtenu:", virtualStream);
+        console.log("AudioCenter: Virtual stream obtained:", virtualStream);
 
         const audioElement = new Audio();
         audioElement.srcObject = virtualStream;
-        console.log("AudioCenter: Élément audio créé avec stream virtuel");
+        console.log("AudioCenter: Audio element created with virtual stream");
 
         audioElement.play().then(() => {
-            console.log("AudioCenter: Stream virtuel en cours de lecture");
+            console.log("AudioCenter: Virtual stream playing");
         }).catch(error => {
-            console.error("AudioCenter: Erreur lors de la lecture du stream:", error);
+            console.error("AudioCenter: Error playing stream:", error);
         });
 
-        console.log("AudioCenter: Capacités du navigateur:");
-        console.log("- setSinkId support (HTMLAudioElement):", 'setSinkId' in HTMLAudioElement.prototype);
-        console.log("- setSinkId support (AudioContext):", 'setSinkId' in AudioContext.prototype);
+        console.log("AudioCenter: Browser capabilities:");
+        console.log("- setSinkId support (HTMLAudioElement):", "setSinkId" in HTMLAudioElement.prototype);
+        console.log("- setSinkId support (AudioContext):", "setSinkId" in AudioContext.prototype);
 
-        if ('setSinkId' in HTMLAudioElement.prototype) {
-            console.log("AudioCenter: Tentative de définition du sinkId...");
+        if ("setSinkId" in HTMLAudioElement.prototype) {
+            console.log("AudioCenter: Attempting to set sinkId...");
             // @ts-expect-error
             audioElement.setSinkId(virtualOutputDevice.id).then(() => {
-                console.log("AudioCenter: SinkId défini avec succès");
+                console.log("AudioCenter: SinkId set successfully");
             }).catch(error => {
-                console.error("AudioCenter: Erreur lors de la définition du sinkId:", error);
+                console.error("AudioCenter: Error setting sinkId:", error);
             });
         }
 
-        if (virtualOutputDevice.audioContext && 'setSinkId' in AudioContext.prototype) {
-            console.log("AudioCenter: Tentative de définition du sinkId sur le contexte audio...");
+        if (virtualOutputDevice.audioContext && "setSinkId" in AudioContext.prototype) {
+            console.log("AudioCenter: Attempting to set sinkId on audio context...");
             // @ts-expect-error
             virtualOutputDevice.audioContext.setSinkId(virtualOutputDevice.id).then(() => {
-                console.log("AudioCenter: SinkId défini sur le contexte audio avec succès");
+                console.log("AudioCenter: SinkId set on audio context successfully");
             }).catch(error => {
-                console.error("AudioCenter: Erreur lors de la définition du sinkId sur le contexte audio:", error);
+                console.error("AudioCenter: Error setting sinkId on audio context:", error);
             });
         }
 
-        console.log("AudioCenter: Périphérique virtuel défini comme sortie");
+        console.log("AudioCenter: Virtual device set as output");
 
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Périphérique virtuel défini comme sortie Discord"
+                body: "Virtual device set as Discord output"
             });
         }
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de la définition du périphérique virtuel:", error);
+        console.error("AudioCenter: Error setting virtual device:", error);
     }
 }
 
-// ==================== MIXEUR AUDIO ====================
+// ==================== AUDIO MIXER ====================
 
-// Fonction pour créer le contexte audio et mixer les sources
+// Function to create the audio context and mix the sources
 async function createAudioMixer(primaryDeviceId: string, secondaryDeviceId: string) {
     try {
-        console.log("AudioCenter: Début de création du mixeur...");
+        console.log("AudioCenter: Starting mixer creation...");
 
         await createVirtualInputDevice();
 
         if (!virtualOutputDevice.isActive || !virtualOutputDevice.audioContext) {
-            throw new Error("Impossible de créer le périphérique virtuel");
+            throw new Error("Unable to create virtual device");
         }
 
-        const audioContext = virtualOutputDevice.audioContext;
-        console.log("AudioCenter: Contexte audio du périphérique virtuel utilisé:", audioContext.state);
+        const { audioContext } = virtualOutputDevice;
+        console.log("AudioCenter: Virtual device audio context used:", audioContext.state);
 
         const primaryGain = audioContext.createGain();
         const secondaryGain = audioContext.createGain();
-        console.log("AudioCenter: Nœuds de gain créés");
+        console.log("AudioCenter: Gain nodes created");
 
-        console.log("AudioCenter: Demande d'accès aux périphériques audio...");
+        console.log("AudioCenter: Requesting access to audio devices...");
         const primaryStream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 deviceId: primaryDeviceId,
@@ -433,7 +434,7 @@ async function createAudioMixer(primaryDeviceId: string, secondaryDeviceId: stri
                 autoGainControl: false
             }
         });
-        console.log("AudioCenter: Stream principal obtenu:", primaryStream);
+        console.log("AudioCenter: Primary stream obtained:", primaryStream);
 
         const secondaryStream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -443,29 +444,29 @@ async function createAudioMixer(primaryDeviceId: string, secondaryDeviceId: stri
                 autoGainControl: false
             }
         });
-        console.log("AudioCenter: Stream secondaire obtenu:", secondaryStream);
+        console.log("AudioCenter: Secondary stream obtained:", secondaryStream);
 
         const primarySource = audioContext.createMediaStreamSource(primaryStream);
         const secondarySource = audioContext.createMediaStreamSource(secondaryStream);
-        console.log("AudioCenter: Sources audio créées");
+        console.log("AudioCenter: Audio sources created");
 
         primarySource.connect(primaryGain);
         secondarySource.connect(secondaryGain);
-        console.log("AudioCenter: Sources connectées aux nœuds de gain");
+        console.log("AudioCenter: Sources connected to gain nodes");
 
         primaryGain.connect(virtualOutputDevice.gainNode!);
         secondaryGain.connect(virtualOutputDevice.gainNode!);
-        console.log("AudioCenter: Nœuds de gain connectés au périphérique virtuel");
+        console.log("AudioCenter: Gain nodes connected to virtual device");
 
         primaryGain.gain.value = settings.store.primaryVolume / 100;
         secondaryGain.gain.value = settings.store.secondaryVolume / 100;
-        console.log("AudioCenter: Volumes configurés:", {
+        console.log("AudioCenter: Volumes configured:", {
             primary: primaryGain.gain.value,
             secondary: secondaryGain.gain.value
         });
 
         if (settings.store.autoSetAsOutput) {
-            console.log("AudioCenter: Définition automatique comme sortie activée");
+            console.log("AudioCenter: Auto set as output enabled");
             setVirtualDeviceAsOutput();
         }
 
@@ -480,73 +481,73 @@ async function createAudioMixer(primaryDeviceId: string, secondaryDeviceId: stri
         };
 
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de la création du mixer:", error);
+        console.error("AudioCenter: Error creating mixer:", error);
         throw error;
     }
 }
 
-// Fonction pour démarrer le mixage
+// Function to start mixing
 async function startAudioMixing() {
-    console.log("AudioCenter: Tentative de démarrage du mixage...");
+    console.log("AudioCenter: Attempting to start mixing...");
 
     if (mixerState.isActive) {
-        console.log("AudioCenter: Le mixage est déjà actif");
+        console.log("AudioCenter: Mixing is already active");
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Le mixage audio est déjà actif"
+                body: "Audio mixing is already active"
             });
         }
         return;
     }
 
     if (!selectedPrimaryDevice || !selectedSecondaryDevice) {
-        console.error("AudioCenter: Périphériques non sélectionnés");
+        console.error("AudioCenter: Devices not selected");
         if (settings.store.showNotifications) {
             showNotification({
-                title: "AudioCenter - Erreur",
-                body: "Veuillez sélectionner les deux périphériques audio"
+                title: "AudioCenter - Error",
+                body: "Please select both audio devices"
             });
         }
         return;
     }
 
     try {
-        console.log("AudioCenter: Création du mixeur...");
+        console.log("AudioCenter: Creating mixer...");
         const mixer = await createAudioMixer(selectedPrimaryDevice, selectedSecondaryDevice);
 
         mixerState = {
             isActive: true,
             ...mixer
         };
-        console.log("AudioCenter: État du mixeur mis à jour:", mixerState);
+        console.log("AudioCenter: Mixer state updated:", mixerState);
 
-        console.log("AudioCenter: Mixage démarré avec succès");
+        console.log("AudioCenter: Mixing started successfully");
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Mixage audio démarré avec succès"
+                body: "Audio mixing started successfully"
             });
         }
 
     } catch (error) {
-        console.error("AudioCenter: Erreur lors du démarrage:", error);
+        console.error("AudioCenter: Error starting:", error);
         if (settings.store.showNotifications) {
             showNotification({
-                title: "AudioCenter - Erreur",
-                body: "Impossible de démarrer le mixage audio"
+                title: "AudioCenter - Error",
+                body: "Unable to start audio mixing"
             });
         }
     }
 }
 
-// Fonction pour arrêter le mixage
+// Function to stop mixing
 function stopAudioMixing() {
     if (!mixerState.isActive) {
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Le mixage audio n'est pas actif"
+                body: "Audio mixing is not active"
             });
         }
         return;
@@ -580,19 +581,19 @@ function stopAudioMixing() {
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Mixage audio arrêté"
+                body: "Audio mixing stopped"
             });
         }
 
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de l'arrêt:", error);
+        console.error("AudioCenter: Error stopping:", error);
     }
 }
 
 
-// ==================== FONCTIONS D'ARRÊT ====================
+// ==================== STOP FUNCTIONS ====================
 
-// Fonction pour arrêter le périphérique virtuel
+// Function to stop the virtual device
 function stopVirtualOutputDevice() {
     try {
         if (virtualOutputDevice.audioContext) {
@@ -601,106 +602,113 @@ function stopVirtualOutputDevice() {
 
         virtualOutputDevice = {
             id: "audioCenter-virtual-output",
-            name: "AudioCenter - Sortie Virtuelle",
+            name: "AudioCenter - Virtual Output",
             isActive: false,
             audioContext: null,
             destination: null,
             gainNode: null
         };
 
-        console.log("AudioCenter: Périphérique virtuel arrêté");
+        console.log("AudioCenter: Virtual device stopped");
     } catch (error) {
-        console.error("AudioCenter: Erreur lors de l'arrêt du périphérique virtuel:", error);
+        console.error("AudioCenter: Error stopping virtual device:", error);
     }
 }
 
 // ==================== DIAGNOSTIC ====================
 
-// Fonction de diagnostic complet
+// Full diagnostic function
 async function runFullDiagnostic() {
-    console.log("=== DIAGNOSTIC AUDIO CENTER COMPLET ===");
+    console.log("=== AUDIO CENTER FULL DIAGNOSTIC ===");
 
     try {
-        // 1. Vérifier les capacités du navigateur
-        console.log("1. Vérification des capacités du navigateur:");
+        // 1. Check browser capabilities
+        console.log("1. Browser capabilities check:");
         console.log("- User Agent:", navigator.userAgent);
         console.log("- navigator.mediaDevices:", !!navigator.mediaDevices);
         console.log("- getUserMedia support:", !!navigator.mediaDevices?.getUserMedia);
         console.log("- AudioContext support:", !!window.AudioContext || !!window.webkitAudioContext);
         console.log("- MediaStreamAudioDestinationNode support:", !!window.MediaStreamAudioDestinationNode);
-        console.log("- setSinkId support (HTMLAudioElement):", 'setSinkId' in HTMLAudioElement.prototype);
-        console.log("- setSinkId support (AudioContext):", 'setSinkId' in AudioContext.prototype);
-        console.log("- Périphérique virtuel injecté:", navigator.mediaDevices?.enumerateDevices?.toString().includes('virtual-audio-center') || false);
+        console.log("- setSinkId support (HTMLAudioElement):", "setSinkId" in HTMLAudioElement.prototype);
+        console.log("- setSinkId support (AudioContext):", "setSinkId" in AudioContext.prototype);
+        console.log("- Virtual device injected:", navigator.mediaDevices?.enumerateDevices?.toString().includes("virtual-audio-center") || false);
 
-        // 2. Vérifier les permissions
-        console.log("2. Vérification des permissions:");
+        const constraints = navigator.mediaDevices.getSupportedConstraints();
+        if (constraints) {
+            console.log("- Supported constraints:", constraints);
+        } else {
+            console.log("- No supported constraints available");
+        }
+
+        // 2. Check permissions
+        console.log("2. Permissions check:");
         if (navigator.permissions) {
             try {
-                const micPermission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-                console.log("- Permission microphone:", micPermission.state);
+                const micPermission = await navigator.permissions.query({ name: "microphone" as PermissionName });
+                console.log("- Microphone permission:", micPermission.state);
             } catch (error) {
-                console.error("- Erreur permission microphone:", error);
+                console.error("- Microphone permission error:", error);
             }
         }
 
-        // 3. Lister les périphériques système
-        console.log("3. Périphériques système:");
+        // 3. List system devices
+        console.log("3. System devices:");
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
             try {
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                console.log("- Nombre total de périphériques:", devices.length);
+                console.log("- Total devices:", devices.length);
 
-                const audioInputs = devices.filter(d => d.kind === 'audioinput');
-                const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+                const audioInputs = devices.filter(d => d.kind === "audioinput");
+                const audioOutputs = devices.filter(d => d.kind === "audiooutput");
 
-                console.log("- Périphériques d'entrée audio:", audioInputs.length);
+                console.log("- Audio input devices:", audioInputs.length);
                 audioInputs.forEach((device, index) => {
-                    console.log(`  ${index}: ${device.label || 'Sans nom'} (${device.deviceId})`);
+                    console.log(`  ${index}: ${device.label || "Unnamed"} (${device.deviceId})`);
                 });
 
-                console.log("- Périphériques de sortie audio:", audioOutputs.length);
+                console.log("- Audio output devices:", audioOutputs.length);
                 audioOutputs.forEach((device, index) => {
-                    console.log(`  ${index}: ${device.label || 'Sans nom'} (${device.deviceId})`);
+                    console.log(`  ${index}: ${device.label || "Unnamed"} (${device.deviceId})`);
                 });
             } catch (error) {
-                console.error("- Erreur lors de l'énumération des périphériques:", error);
+                console.error("- Error enumerating devices:", error);
             }
         }
 
-        // 4. Vérifier Discord configModule
-        console.log("4. Module de configuration Discord:");
+        // 4. Check Discord configModule
+        console.log("4. Discord configModule:");
         console.log("- configModule:", configModule);
-        console.log("- getInputDevices disponible:", typeof configModule.getInputDevices);
-        console.log("- getOutputDevices disponible:", typeof configModule.getOutputDevices);
-        console.log("- getInputDeviceId disponible:", typeof configModule.getInputDeviceId);
-        console.log("- getOutputDeviceId disponible:", typeof configModule.getOutputDeviceId);
+        console.log("- getInputDevices available:", typeof configModule.getInputDevices);
+        console.log("- getOutputDevices available:", typeof configModule.getOutputDevices);
+        console.log("- getInputDeviceId available:", typeof configModule.getInputDeviceId);
+        console.log("- getOutputDeviceId available:", typeof configModule.getOutputDeviceId);
 
-        // 5. Test de création d'un contexte audio
-        console.log("5. Test de création d'un contexte audio:");
+        // 5. Test audio context creation
+        console.log("5. Audio context creation test:");
         try {
             const testContext = new AudioContext();
-            console.log("- Contexte audio créé avec succès");
-            console.log("- État:", testContext.state);
+            console.log("- Audio context created successfully");
+            console.log("- State:", testContext.state);
             console.log("- Sample rate:", testContext.sampleRate);
             console.log("- Base latency:", testContext.baseLatency);
 
             const testDestination = testContext.createMediaStreamDestination();
-            console.log("- Destination créée avec succès");
+            console.log("- Destination created successfully");
             console.log("- Stream:", testDestination.stream);
             console.log("- Tracks:", testDestination.stream.getAudioTracks());
 
             const testGain = testContext.createGain();
-            console.log("- Nœud de gain créé avec succès");
-            console.log("- Valeur de gain:", testGain.gain.value);
+            console.log("- Gain node created successfully");
+            console.log("- Gain value:", testGain.gain.value);
 
             testContext.close();
-            console.log("- Contexte de test fermé");
+            console.log("- Test context closed");
         } catch (error) {
-            console.error("- Erreur lors du test du contexte audio:", error);
+            console.error("- Error testing audio context:", error);
         }
 
-        // 6. Test d'accès aux périphériques
-        console.log("6. Test d'accès aux périphériques:");
+        // 6. Test device access
+        console.log("6. Device access test:");
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             try {
                 const testStream = await navigator.mediaDevices.getUserMedia({
@@ -710,53 +718,60 @@ async function runFullDiagnostic() {
                         autoGainControl: false
                     }
                 });
-                console.log("- Accès au microphone réussi");
+                console.log("- Microphone access successful");
                 testStream.getTracks().forEach(track => track.stop());
             } catch (error) {
-                console.log("- Permissions microphone non accordées (normal)");
+                console.log("- Microphone permissions not granted (normal)");
             }
         }
 
-        console.log("=== FIN DU DIAGNOSTIC ===");
+        // 7. Check mixer state
+        console.log("7. Mixer state check:");
+        console.log("- Mixer active:", mixerState.isActive);
+        console.log("- Virtual device active:", virtualOutputDevice.isActive);
+        console.log("- Primary device selected:", selectedPrimaryDevice);
+        console.log("- Secondary device selected:", selectedSecondaryDevice);
+
+        console.log("=== END OF DIAGNOSTIC ===");
 
         if (settings.store.showNotifications) {
             showNotification({
                 title: "AudioCenter",
-                body: "Diagnostic complet terminé - Vérifiez la console pour les détails"
+                body: "Full diagnostic completed - Check console for details"
             });
         }
 
     } catch (error) {
-        console.error("Erreur lors du diagnostic:", error);
+        console.error("Error during diagnostic:", error);
         if (settings.store.showNotifications) {
             showNotification({
-                title: "AudioCenter - Erreur",
-                body: "Erreur lors du diagnostic - Vérifiez la console"
+                title: "AudioCenter - Error",
+                body: "Error during diagnostic - Check console"
             });
         }
     }
 }
 
-// ==================== COMPOSANTS REACT ====================
+// ==================== REACT COMPONENTS ====================
 
-// Composant de sélection du périphérique principal
+// Primary device selector component
 function PrimaryDeviceSelector() {
     const [devices, setDevices] = React.useState<any[]>([]);
 
     React.useEffect(() => {
         function loadDevices() {
             try {
-                console.log("AudioCenter: Chargement des périphériques pour le sélecteur principal...");
+                console.log("AudioCenter: Loading devices for primary selector...");
                 const inputDevices = getInputDevices();
                 setDevices(inputDevices);
-                console.log("AudioCenter: Périphériques chargés dans le sélecteur principal:", inputDevices.length);
+                console.log("AudioCenter: Devices loaded in primary selector:", inputDevices.length);
 
                 if (!selectedPrimaryDevice && inputDevices.length > 0) {
                     selectedPrimaryDevice = inputDevices[0].id;
-                    console.log("AudioCenter: Périphérique principal par défaut défini:", selectedPrimaryDevice);
+                    console.log("AudioCenter: Default primary device set:", selectedPrimaryDevice);
                 }
             } catch (error) {
-                console.error("AudioCenter: Erreur lors du chargement des périphériques:", error);
+                console.error("AudioCenter: Error loading devices:", error);
             }
         }
 
@@ -772,31 +787,31 @@ function PrimaryDeviceSelector() {
             serialize={identity}
             isSelected={value => value === selectedPrimaryDevice}
             select={id => {
-                console.log("AudioCenter: Périphérique principal sélectionné:", id);
+                console.log("AudioCenter: Primary device selected:", id);
                 selectedPrimaryDevice = id;
             }}
         />
     );
 }
 
-// Composant de sélection du périphérique secondaire
+// Secondary device selector component
 function SecondaryDeviceSelector() {
     const [devices, setDevices] = React.useState<any[]>([]);
 
     React.useEffect(() => {
         function loadDevices() {
             try {
-                console.log("AudioCenter: Chargement des périphériques pour le sélecteur secondaire...");
+                console.log("AudioCenter: Loading devices for secondary selector...");
                 const inputDevices = getInputDevices();
                 setDevices(inputDevices);
-                console.log("AudioCenter: Périphériques chargés dans le sélecteur secondaire:", inputDevices.length);
+                console.log("AudioCenter: Devices loaded in secondary selector:", inputDevices.length);
 
                 if (!selectedSecondaryDevice && inputDevices.length > 1) {
                     selectedSecondaryDevice = inputDevices[1].id;
-                    console.log("AudioCenter: Périphérique secondaire par défaut défini:", selectedSecondaryDevice);
+                    console.log("AudioCenter: Default secondary device set:", selectedSecondaryDevice);
                 }
             } catch (error) {
-                console.error("AudioCenter: Erreur lors du chargement des périphériques:", error);
+                console.error("AudioCenter: Error loading devices:", error);
             }
         }
 
@@ -812,14 +827,14 @@ function SecondaryDeviceSelector() {
             serialize={identity}
             isSelected={value => value === selectedSecondaryDevice}
             select={id => {
-                console.log("AudioCenter: Périphérique secondaire sélectionné:", id);
+                console.log("AudioCenter: Secondary device selected:", id);
                 selectedSecondaryDevice = id;
             }}
         />
     );
 }
 
-// Composant d'affichage du statut
+// Status display component
 function StatusDisplay() {
     const [mixerActive, setMixerActive] = React.useState(mixerState.isActive);
     const [virtualActive, setVirtualActive] = React.useState(virtualOutputDevice.isActive);
@@ -841,7 +856,7 @@ function StatusDisplay() {
             borderRadius: "4px",
             border: "1px solid #40444b"
         }}>
-            <Forms.FormTitle>Statut des composants</Forms.FormTitle>
+            <Forms.FormTitle>Component Status</Forms.FormTitle>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -852,7 +867,7 @@ function StatusDisplay() {
                         backgroundColor: mixerActive ? "#43b581" : "#ed4245"
                     }} />
                     <span style={{ fontSize: "12px", color: "#b9bbbe" }}>
-                        Mixeur Audio
+                        Audio Mixer
                     </span>
                 </div>
 
@@ -864,7 +879,7 @@ function StatusDisplay() {
                         backgroundColor: virtualActive ? "#43b581" : "#ed4245"
                     }} />
                     <span style={{ fontSize: "12px", color: "#b9bbbe" }}>
-                        Périphérique Virtuel
+                        Virtual Device
                     </span>
                 </div>
             </div>
@@ -872,30 +887,30 @@ function StatusDisplay() {
     );
 }
 
-// ==================== PLUGIN PRINCIPAL ====================
+// ==================== MAIN PLUGIN ====================
 
 export default definePlugin({
     name: "AudioCenter",
-    description: "Centre audio complet : mixage, périphérique virtuel, limitation et diagnostic",
+    description: "Complete audio center: mixing, virtual device, limiting and diagnostic",
     authors: [{ name: "Bash", id: 1327483363518582784n }],
     settings,
 
     settingsAboutComponent: () => (
         <div>
             <h3>AudioCenter</h3>
-            <p>Centre audio complet qui combine toutes les fonctionnalités audio en un seul plugin.</p>
-            <p><strong>Fonctionnalités:</strong></p>
+            <p>Complete audio center that combines all audio functionalities in one plugin.</p>
+            <p><strong>Features:</strong></p>
             <ul>
-                <li>🎵 <strong>Mixeur Audio</strong> : Mixe deux sources audio en temps réel</li>
-                <li>🔊 <strong>Périphérique Virtuel</strong> : Crée un périphérique de sortie virtuel</li>
-                <li>🔍 <strong>Diagnostic</strong> : Outil de diagnostic intégré</li>
+                <li>🎵 <strong>Audio Mixer</strong> : Mixes two audio sources in real time</li>
+                <li>🔊 <strong>Virtual Device</strong> : Creates a virtual output device</li>
+                <li>🔍 <strong>Diagnostic</strong> : Integrated diagnostic tool</li>
             </ul>
-            <p><strong>Avantages:</strong></p>
+            <p><strong>Advantages:</strong></p>
             <ul>
-                <li>Tout centralisé en un seul plugin</li>
-                <li>Interface unifiée et intuitive</li>
-                <li>Logs détaillés pour le débogage</li>
-                <li>Compatible avec tous les périphériques audio</li>
+                <li>Everything centralized in one plugin</li>
+                <li>Unified and intuitive interface</li>
+                <li>Detailed logs for debugging</li>
+                <li>Compatible with all audio devices</li>
             </ul>
         </div>
     ),
@@ -904,15 +919,15 @@ export default definePlugin({
         <div style={{ padding: "20px" }}>
             <h2 style={{ marginBottom: "20px" }}>AudioCenter</h2>
             <p style={{ marginBottom: "20px", color: "#b9bbbe" }}>
-                Centre audio complet qui combine mixage, périphérique virtuel et diagnostic.
-                Toutes les fonctionnalités audio sont maintenant centralisées dans ce plugin.
+                Complete audio center that combines mixing, virtual device and diagnostic.
+                All audio functionalities are now centralized in this plugin.
             </p>
 
             <StatusDisplay />
 
-            {/* Contrôles du mixeur */}
+            {/* Mixer controls */}
             <div style={{ marginTop: "20px" }}>
-                <Forms.FormTitle>Contrôles du Mixeur</Forms.FormTitle>
+                <Forms.FormTitle>Mixer Controls</Forms.FormTitle>
                 <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                     <Button
                         onClick={startAudioMixing}
@@ -926,7 +941,7 @@ export default definePlugin({
                             cursor: mixerState.isActive ? "not-allowed" : "pointer"
                         }}
                     >
-                        Démarrer le mixage
+                        Start mixing
                     </Button>
 
                     <Button
@@ -941,7 +956,7 @@ export default definePlugin({
                             cursor: !mixerState.isActive ? "not-allowed" : "pointer"
                         }}
                     >
-                        Arrêter le mixage
+                        Stop mixing
                     </Button>
                 </div>
             </div>
@@ -963,7 +978,7 @@ export default definePlugin({
                         marginTop: "10px"
                     }}
                 >
-                    Lancer le diagnostic complet
+                    Run full diagnostic
                 </Button>
             </div>
 
@@ -977,45 +992,45 @@ export default definePlugin({
             }}>
                 <h3 style={{ marginBottom: "10px", color: "#ffffff" }}>Instructions:</h3>
                 <ol style={{ color: "#b9bbbe", paddingLeft: "20px" }}>
-                    <li>Sélectionnez vos périphériques d'entrée dans les paramètres ci-dessus</li>
-                    <li>Ajustez les volumes selon vos besoins</li>
-                    <li>Démarrez le mixage pour commencer</li>
-                    <li>Utilisez le diagnostic en cas de problème</li>
+                    <li>Select your input devices in the settings above</li>
+                    <li>Adjust volumes as needed</li>
+                    <li>Start mixing to begin</li>
+                    <li>Use diagnostic if there's a problem</li>
                 </ol>
             </div>
         </div>
     ),
 
     start() {
-        console.log("AudioCenter: Plugin démarré");
+        console.log("AudioCenter: Plugin started");
 
-        // Injecter le périphérique virtuel dans la liste des périphériques
+        // Inject the virtual device into the device list
         injectVirtualDevice();
 
-        console.log("AudioCenter: Vérification des permissions audio...");
+        console.log("AudioCenter: Checking audio permissions...");
 
-        // Vérifier les permissions
+        // Check permissions
         if (navigator.permissions) {
-            navigator.permissions.query({ name: 'microphone' as PermissionName }).then(result => {
-                console.log("AudioCenter: Permission microphone:", result.state);
+            navigator.permissions.query({ name: "microphone" as PermissionName }).then(result => {
+                console.log("AudioCenter: Microphone permission:", result.state);
             }).catch(error => {
-                console.error("AudioCenter: Erreur lors de la vérification des permissions microphone:", error);
+                console.error("AudioCenter: Error checking microphone permissions:", error);
             });
         }
 
-        // Vérifier les capacités du navigateur
-        console.log("AudioCenter: Capacités du navigateur:");
+        // Check browser capabilities
+        console.log("AudioCenter: Browser capabilities:");
         console.log("- navigator.mediaDevices:", !!navigator.mediaDevices);
         console.log("- getUserMedia support:", !!navigator.mediaDevices?.getUserMedia);
         console.log("- AudioContext support:", !!window.AudioContext || !!window.webkitAudioContext);
         console.log("- MediaStreamAudioDestinationNode support:", !!window.MediaStreamAudioDestinationNode);
 
-        // Lister les périphériques disponibles
+        // List available devices
         if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
             navigator.mediaDevices.enumerateDevices().then(devices => {
-                console.log("AudioCenter: Périphériques système détectés:", devices.length);
+                console.log("AudioCenter: System devices detected:", devices.length);
                 devices.forEach((device, index) => {
-                    console.log(`AudioCenter: Périphérique système ${index}:`, {
+                    console.log(`AudioCenter: System device ${index}:`, {
                         deviceId: device.deviceId,
                         kind: device.kind,
                         label: device.label,
@@ -1023,7 +1038,7 @@ export default definePlugin({
                     });
                 });
             }).catch(error => {
-                console.error("AudioCenter: Erreur lors de l'énumération des périphériques:", error);
+                console.error("AudioCenter: Error enumerating devices:", error);
             });
         }
 
@@ -1032,6 +1047,6 @@ export default definePlugin({
     stop() {
         stopAudioMixing();
         stopVirtualOutputDevice();
-        console.log("AudioCenter: Plugin arrêté");
+        console.log("AudioCenter: Plugin stopped");
     }
 });
