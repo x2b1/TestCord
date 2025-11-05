@@ -6,14 +6,24 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { makeRange } from "@utils/types";
-import { clearableDebounce, debounce } from "@shared/debounce";
+import { debounce } from "@shared/debounce";
 import { Devs } from "@utils/constants";
 import { humanFriendlyJoin } from "@utils/text";
+import { makeRange } from "@utils/types";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { ChannelStore, GuildMemberStore, Menu, RelationshipStore, SelectedChannelStore, Toasts, UserStore } from "@webpack/common";
+
+function clearableDebounce(func: Function, delay: number) {
+    let timeout: NodeJS.Timeout;
+    const debounced = (...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delay);
+    };
+    const cancel = () => clearTimeout(timeout);
+    return [debounced, cancel];
+}
 
 const { toggleSelfMute } = findByPropsLazy("toggleSelfMute");
 

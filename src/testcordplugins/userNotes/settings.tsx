@@ -8,7 +8,8 @@ import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import {Alerts, Button, showToast, ToastType} from "@webpack/common";
+import { Alerts, Button, showToast } from "@webpack/common";
+import { Toasts } from "@webpack/common/utils";
 
 import { clearUserNotes, transferUserNotes } from "./data";
 
@@ -61,12 +62,12 @@ export default definePluginSettings({
                 }).then(async r => {
                     r.json().then(resularUsersNotes => {
                         transferUserNotes(resularUsersNotes);
-                        showToast("Successfully transferred notes from Discord", ToastType.SUCCESS);
+                        showToast("Successfully transferred notes from Discord", Toasts.Type.SUCCESS);
                     }).catch(() => {
-                        showToast("Unable to retrieve regular notes from Discord", ToastType.FAILURE);
+                        showToast("Unable to retrieve regular notes from Discord", Toasts.Type.FAILURE);
                     });
                 }).catch(() => {
-                    showToast("Unable to retrieve regular notes from Discord", ToastType.FAILURE);
+                    showToast("Unable to retrieve regular notes from Discord", Toasts.Type.FAILURE);
                 });
             }}>
                 Transfer existing regular notes from Discord
@@ -86,7 +87,7 @@ export default definePluginSettings({
                     cancelText: "Cancel",
                     onConfirm: () => {
                         clearUserNotes();
-                        showToast("Successfully cleared", ToastType.SUCCESS);
+                        showToast("Successfully cleared", Toasts.Type.SUCCESS);
                     },
                 })}
             >
