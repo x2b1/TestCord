@@ -18,21 +18,21 @@ const SettingsShortcutsElement = () => (
             color={Button.Colors.PRIMARY}
             onClick={openMicrophoneSettingsModal}
         >
-            {"Better Microphone Ayarları"}
+            {"Better Microphone Settings"}
         </Button>
         <Button
             size={Button.Sizes.SMALL}
             color={Button.Colors.PRIMARY}
             onClick={openScreenshareModal}
         >
-            {"Better Screenshare Ayarları"}
+            {"Better Screenshare Settings"}
         </Button>
     </div>
 );
 
 export default definePlugin({
     name: "SettingsShortcuts",
-    description: "Discord ayarlarına Better Microphone ve Better Screenshare kısayol butonları ekler.",
+    description: "Adds Better Microphone and Better Screenshare shortcut buttons to Discord settings.",
     authors: [Devs.feelslove],
     start() {
         const customSettingsSections = (

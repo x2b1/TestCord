@@ -1,4 +1,35 @@
-import { Channel, MessageJSON, UserJSON } from "discord-types/general";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2025 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+// Minimal local re-declarations to remove external type dependency
+export interface UserJSON {
+    id: string;
+    username: string;
+    avatar: string | null;
+    discriminator: string;
+}
+
+export interface MessageJSON {
+    id: string;
+    channel_id: string;
+    guild_id?: string;
+    content: string;
+    author: UserJSON;
+    attachments?: { id: string; filename: string }[];
+    type?: number;
+}
+
+export interface Channel {
+    id: string;
+    guild_id?: string;
+    name?: string;
+    type?: number;
+    ownerId?: string;
+    parent_id?: string;
+}
 
 export interface MessageUpdatePayload {
     type: string;

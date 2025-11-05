@@ -1,0 +1,47 @@
+.vc-serverprofileforward-footer {
+    margin-top: 3px;
+
+    svg {
+        width: 12px !important;
+    }
+
+    .vc-serverprofileforward-footer-text {
+        font-weight: 400;
+        font-size: 14px;
+        color: var(--text-low-contrast);
+    }
+
+    .vc-serverprofileforward-guild-icon {
+        margin-top: 0;
+        margin-bottom: 0;
+        position: absolute;
+        border-radius: 4px;
+        width: 16px;
+    }
+
+    .vc-serverprofileforward-footer-element {
+        &:hover {
+            .vc-serverprofileforward-footer-text {
+                color: var(--interactive-hover);
+            }
+
+            svg path {
+                fill: var(--interactive-hover) !important;
+            }
+
+            background-color: var(--background-modifier-hover);
+            cursor: pointer;
+        }
+
+        &:first-of-type {
+            margin-left: 0;
+        }
+
+        align-items: center;
+        align-self: flex-start;
+        display: inline-flex;
+        padding: 1px 0;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+}

@@ -1,14 +1,25 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
 import { ModalSize } from "@utils/modal";
 import { Card, Forms, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
-import { SelectOption } from "@webpack/types";
 
 import {
     ProfilableStore,
@@ -23,7 +34,9 @@ import {
 import { Styles } from "../../philsPluginLibrary/styles";
 import { MicrophoneProfile, MicrophoneStore } from "../stores";
 
-const simpleVoiceBitrates: readonly SelectOption[] = [
+type Option<T> = { label: string; value: T; };
+
+const simpleVoiceBitrates: readonly Option<number>[] = [
     {
         label: "Normal",
         value: 96
@@ -136,14 +149,12 @@ export const MicrophoneSettingsModal = (props: MicrophoneSettingsModalProps) => 
             flex={0.2}
             switchEnabled
             switchProps={{
-                checked: (channelsEnabled && channels === 2) ?? false,
+                checked: Boolean(channelsEnabled && channels === 2),
                 disabled: isSaving,
-                onChange: status => {
-                    setChannelsEnabled(status); 
-                    if (status) setChannels(2);
-            }
-        }}                
-    />
+                onChange: status => { setChannelsEnabled(status); setChannels(2); }
+            }}>
+        </SettingsModalCard>;
+
     const settingsCardVoiceBitrate =
         <SettingsModalCard
             title="Audio Bitrate"

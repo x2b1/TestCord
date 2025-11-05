@@ -1,9 +1,10 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2024 sadan
+ * Copyright (c) 2024 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { makeContextItem } from "./components";
@@ -14,12 +15,7 @@ export default definePlugin({
     settings,
     name: "CustomFolderIcons",
     description: "Customize folder icons with any png",
-    authors: [
-    {
-        name: "sadan",
-        id: 521819891141967883n
-    }
-    ],
+    authors: [Devs.sadan],
     patches: [
         {
             find: ".expandedFolderIconWrapper",
@@ -35,12 +31,12 @@ export default definePlugin({
             menuItems.push(makeContextItem(props));
         }
     },
-    shouldReplace(props: any): boolean{
+    shouldReplace(props: any): boolean {
         return !!((settings.store.folderIcons as folderIconsData)?.[props.folderNode.id]?.url);
     },
-    replace(props: any){
+    replace(props: any) {
         const folderSettings = (settings.store.folderIcons as folderIconsData);
-        if (folderSettings && folderSettings[props.folderNode.id]){
+        if (folderSettings && folderSettings[props.folderNode.id]) {
             const data = folderSettings[props.folderNode.id];
             return (
                 <div

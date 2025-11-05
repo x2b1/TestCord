@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ApplicationCommandInputType, ApplicationCommandOptionType, Argument, CommandContext, findOption, sendBotMessage } from "@api/Commands";
+import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import { DataStore } from "@api/index";
+import { addMessageAccessory } from "@api/MessageAccessories";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Parser, React, Text } from "@webpack/common";
@@ -58,7 +59,7 @@ const subscribers = new Set<() => void>();
 function subscribe(callback: () => void) {
     subscribers.add(callback);
     return () => subscribers.delete(callback);
-};
+}
 
 function Flag({ id }: { id: string; }) {
     const flag = React.useSyncExternalStore(subscribe, () => userFlags.get(id));
@@ -77,7 +78,7 @@ function Flag({ id }: { id: string; }) {
 
 export default definePlugin({
     name: "UserFlags",
-    description: `Add "flags" to users that will always show under their messages`,
+    description: "Add \"flags\" to users that will always show under their messages",
     authors: [Devs.nin0dev],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {
@@ -89,9 +90,9 @@ export default definePlugin({
                 userFlags = new Map<string, Flag>(savedFlags);
             }
         }
-    },
-    renderMessageAccessory: (props: Record<string, any>) => {
-        return <Flag id={props.message.author.id} />;
+        addMessageAccessory("flag", (props: Record<string, any>) => (
+            <Flag id={props.message.author.id} />
+        ), 4);
     },
     commands: [
         {
@@ -124,7 +125,7 @@ export default definePlugin({
                     required: true
                 },
             ],
-            execute: async (args: Argument[], ctx: CommandContext) => {
+            execute: async (args, ctx) => {
                 const user = findOption(args, "user", "");
                 const type = findOption<FlagType>(args, "type", FlagType.INFO);
                 const text = findOption(args, "message", "");
@@ -152,7 +153,7 @@ export default definePlugin({
                     required: true
                 }
             ],
-            execute: async (args: Argument[], ctx: CommandContext) => {
+            execute: async (args, ctx) => {
                 const user = findOption(args, "user", "");
                 userFlags.delete(user);
                 subscribers.forEach(cb => cb());
@@ -165,4 +166,3 @@ export default definePlugin({
         }
     ]
 });
-

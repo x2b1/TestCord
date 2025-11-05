@@ -1,14 +1,26 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 import { Flex } from "@components/Flex";
 import { React } from "@webpack/common";
 import { Settings } from "Vencord";
 
-import { SettingsModalCard, SettingsModalCardItem } from "../../philsPluginLibrary";
+import { findChildren, SettingsModalCard, SettingsModalCardItem } from "../../philsPluginLibrary";
 import Plugin from "..";
 import { AudioSourceSelect, OpenScreenshareSettingsButton } from "../components";
 import { PluginInfo } from "../constants";
@@ -46,8 +58,31 @@ const ReplacedStreamSettings = () => {
     );
 };
 
-export function replacedSubmitFunction(fn) { // This is used to hook over the new OnSubmit function instead of implementing an OnClick function
-    return (...args) => {
+export function replacedScreenshareModalSettingsContentType(oldType: (...args: any[]) => any, thisContext: any, functionArguments: any) {
+    const { hideDefaultSettings } = Settings.plugins[PluginInfo.PLUGIN_NAME];
+    const oldTypeResult = Reflect.apply(oldType, thisContext, functionArguments);
+
+    if (hideDefaultSettings)
+        oldTypeResult.props.children = oldTypeResult.props.children.filter(c => !c?.props?.selectedFPS);
+    oldTypeResult.props.children.push(<ReplacedStreamSettings />);
+
+    return oldTypeResult;
+}
+
+export function replacedScreenshareModalComponent(oldComponent: (...args: any[]) => any, thisContext: any, functionArguments: any) {
+    const oldComponentResult = Reflect.apply(oldComponent, thisContext, functionArguments);
+
+    const { children } = findChildren(oldComponentResult, (c: any) => (c as any)?.props?.selectedFPS !== undefined);
+    const oldContentType = children.type;
+
+    children.type = function () {
+        return replacedScreenshareModalSettingsContentType(oldContentType, this, arguments);
+    };
+
+    const { children: buttonsChildren } = findChildren(oldComponentResult, (c: any) => Boolean((c as any)?.props?.justify) && Array.isArray((c as any)?.props?.children) && (c as any).props.children.length === 3);
+    const [submitBtn] = buttonsChildren.props.children;
+
+    submitBtn.props.onClick = () => {
         const { screensharePatcher, screenshareAudioPatcher } = Plugin;
 
         if (screensharePatcher) {
@@ -58,20 +93,7 @@ export function replacedSubmitFunction(fn) { // This is used to hook over the ne
 
         if (screenshareAudioPatcher)
             screenshareAudioPatcher.forceUpdateTransportationOptions();
-        return fn(...args);
     };
-}
 
-export function GoLivePanelWrapper({ children }: { children: React.JSX.Element; }) {
-    if (!children)
-        return;
-
-    const { hideDefaultSettings } = Settings.plugins[PluginInfo.PLUGIN_NAME];
-    if (hideDefaultSettings)
-        return <ReplacedStreamSettings />;
-
-    children.props.children.push(<ReplacedStreamSettings />);
-
-    return children;
-
+    return oldComponentResult;
 }

@@ -1,5 +1,12 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2025 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 // stolen from https://github.com/Syncxv/vc-message-logger-enhanced/blob/master/utils/index.ts
 import { Logger } from "@utils/Logger";
+
 import { settings } from "./index";
 
 
@@ -36,7 +43,7 @@ export function convertSnakeCaseToCamelCase(obj: any): any {
         const value = convertSnakeCaseToCamelCase(obj[key]);
         return { ...newObj, [camelCaseKey]: value };
     }, {} as any);
-};
+}
 
 const logger = new Logger("Stalker");
 

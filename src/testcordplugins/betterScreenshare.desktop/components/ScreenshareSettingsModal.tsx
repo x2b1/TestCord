@@ -1,14 +1,25 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
 import { ModalSize, openModalLazy } from "@utils/modal";
 import { Button, Card, Forms, React, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
-import { SelectOption } from "@webpack/types";
 
 import { MicrophoneSettingsModal } from "../../betterMicrophone.desktop/components";
 import {
@@ -28,7 +39,9 @@ import { Styles } from "../../philsPluginLibrary/styles";
 import { PluginInfo } from "../constants";
 import { ScreenshareAudioProfile, ScreenshareAudioStore, ScreenshareProfile, ScreenshareStore } from "../stores";
 
-const simpleResolutions: readonly (SelectOption & { value: types.Resolution; })[] = [
+type Option<T> = { label: string; value: T; };
+
+const simpleResolutions: readonly (Option<types.Resolution>)[] = [
     {
         label: "480p",
         value: {
@@ -66,7 +79,7 @@ const simpleResolutions: readonly (SelectOption & { value: types.Resolution; })[
     }
 ] as const;
 
-const simpleVideoBitrates: readonly SelectOption[] = [
+const simpleVideoBitrates: readonly Option<number>[] = [
     {
         label: "Low",
         value: 2500
@@ -178,10 +191,7 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
                 <Select
                     isDisabled={!resolutionEnabled || isSaving}
                     options={simpleResolutions}
-                    select={(value: types.Resolution) => {
-                        setWidth(value.width);
-                        setHeight(value.height);
-                        }}
+                    select={(value: types.Resolution) => { setWidth(value.width); setHeight(value.height); }}
                     isSelected={(value: types.Resolution) => width === value.width && height === value.height}
                     serialize={() => ""} />
             </SettingsModalCardItem>
@@ -347,7 +357,9 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
                                     {...props_} />;
                         });
                 }}
-                children={"Open"} />
+            >
+                {"Open"}
+            </Button>
         </SettingsModalCardItem>;
 
     const settingsCardAudio =

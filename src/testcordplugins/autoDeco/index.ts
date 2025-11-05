@@ -1,5 +1,9 @@
 import definePlugin, { OptionType } from "@utils/types";
-import { NavContextMenuPatchCallback, addContextMenuPatch, removeContextMenuPatch } from "@api/ContextMenu";
+import {
+  NavContextMenuPatchCallback,
+  addContextMenuPatch,
+  removeContextMenuPatch,
+} from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
@@ -12,94 +16,106 @@ const UserStore = findStoreLazy("UserStore");
 const SelectedChannelStore = findStoreLazy("SelectedChannelStore");
 
 const settings = definePluginSettings({
-    enabled: {
-        type: OptionType.BOOLEAN,
-        default: true,
-        description: "Activer AutoDeco"
-    }
+  enabled: {
+    type: OptionType.BOOLEAN,
+    default: true,
+    description: "Enable AutoDeco",
+  },
 });
 
 let targetUserId: string | null = null;
 let lastProcessedStates: Map<string, string | null> = new Map();
 
-const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { user }: { user: User; }) => {
-    const currentUser = UserStore.getCurrentUser();
-    if (!user || user.id === currentUser.id) return;
-    const [checked, setChecked] = React.useState(targetUserId === user.id);
-    children.push(
-        React.createElement(Menu.MenuSeparator, {}),
-        React.createElement(Menu.MenuCheckboxItem, {
-            id: "autodeco-context",
-            label: checked ? "Désactiver AutoDeco" : "Activer AutoDeco",
-            checked,
-            action: () => {
-                if (checked) {
-                    targetUserId = null;
-                    setChecked(false);
-                    showNotification({ title: "AutoDeco", body: `AutoDeco désactivé pour ${user.username}` });
-                } else {
-                    targetUserId = user.id;
-                    setChecked(true);
-                    showNotification({ title: "AutoDeco", body: `AutoDeco activé pour ${user.username}` });
-                }
-            }
-        })
-    );
+const UserContextMenuPatch: NavContextMenuPatchCallback = (
+  children,
+  { user }: { user: User }
+) => {
+  const currentUser = UserStore.getCurrentUser();
+  if (!user || user.id === currentUser.id) return;
+  const [checked, setChecked] = React.useState(targetUserId === user.id);
+  children.push(
+    React.createElement(Menu.MenuSeparator, {}),
+    React.createElement(Menu.MenuCheckboxItem, {
+      id: "autodeco-context",
+      label: checked ? "Disable AutoDeco" : "Enable AutoDeco",
+      checked,
+      action: () => {
+        if (checked) {
+          targetUserId = null;
+          setChecked(false);
+          showNotification({
+            title: "AutoDeco",
+            body: `AutoDeco disabled for ${user.username}`,
+          });
+        } else {
+          targetUserId = user.id;
+          setChecked(true);
+          showNotification({
+            title: "AutoDeco",
+            body: `AutoDeco enabled for ${user.username}`,
+          });
+        }
+      },
+    })
+  );
 };
 
 export default definePlugin({
-    name: "AutoDeco",
-    description: "Se déconnecte automatiquement du canal vocal lorsqu'un utilisateur spécifique rejoint",
-    authors: [{ name: "Bash", id: 1327483363518582784n }],
-    settings,
-    contextMenus: {
-        "user-context": UserContextMenuPatch
-    },
-    flux: {
-        async VOICE_STATE_UPDATES({ voiceStates }) {
-            if (!targetUserId || !settings.store.enabled) return;
-            const currentUserId = UserStore.getCurrentUser().id;
-            const currentChannelId = SelectedChannelStore.getVoiceChannelId();
+  name: "AutoDeco",
+  description:
+    "Automatically disconnects from voice channel when a specific user joins",
+  authors: [{ name: "Bash", id: 1327483363518582784n }],
+  settings,
+  contextMenus: {
+    "user-context": UserContextMenuPatch,
+  },
+  flux: {
+    async VOICE_STATE_UPDATES({ voiceStates }) {
+      if (!targetUserId || !settings.store.enabled) return;
+      const currentUserId = UserStore.getCurrentUser().id;
+      const currentChannelId = SelectedChannelStore.getVoiceChannelId();
 
-            for (const state of voiceStates) {
-                if (state.userId === targetUserId) {
-                    const previousChannelId = lastProcessedStates.get(state.userId);
+      for (const state of voiceStates) {
+        if (state.userId === targetUserId) {
+          const previousChannelId = lastProcessedStates.get(state.userId);
 
-                    // Vérifier si l'utilisateur vient de rejoindre notre canal vocal
-                    if (
-                        state.channelId &&
-                        currentChannelId &&
-                        state.channelId === currentChannelId &&
-                        previousChannelId !== currentChannelId
-                    ) {
-                        // L'utilisateur cible vient de rejoindre le même canal vocal que nous
-                        console.log("AutoDeco: Déconnexion automatique déclenchée", {
-                            targetUser: state.user?.username,
-                            channelId: state.channelId,
-                            currentChannelId,
-                            previousChannelId
-                        });
+          // Check if the user just joined our voice channel
+          if (
+            state.channelId &&
+            currentChannelId &&
+            state.channelId === currentChannelId &&
+            previousChannelId !== currentChannelId
+          ) {
+            // Target user just joined the same voice channel as us
+            console.log("AutoDeco: Automatic disconnection triggered", {
+              targetUser: state.user?.username,
+              channelId: state.channelId,
+              currentChannelId,
+              previousChannelId,
+            });
 
-                        // Utiliser FluxDispatcher pour se déconnecter (plus fiable)
-                        FluxDispatcher.dispatch({
-                            type: "VOICE_CHANNEL_SELECT",
-                            channelId: null
-                        });
-                        showNotification({
-                            title: "AutoDeco",
-                            body: `Déconnexion automatique : ${state.user?.username || "Utilisateur"} a rejoint votre canal vocal`
-                        });
-                    }
+            // Use FluxDispatcher to disconnect (more reliable)
+            FluxDispatcher.dispatch({
+              type: "VOICE_CHANNEL_SELECT",
+              channelId: null,
+            });
+            showNotification({
+              title: "AutoDeco",
+              body: `Automatic disconnection: ${
+                state.user?.username || "User"
+              } joined your voice channel`,
+            });
+          }
 
-                    // Mettre à jour l'état précédent
-                    lastProcessedStates.set(state.userId, state.channelId);
-                }
-            }
+          // Update previous state
+          lastProcessedStates.set(state.userId, state.channelId);
         }
+      }
     },
-    start() { },
-    stop() {
-        targetUserId = null;
-        lastProcessedStates.clear();
-    }
+  },
+  start() {},
+  stop() {
+    targetUserId = null;
+    lastProcessedStates.clear();
+  },
 });

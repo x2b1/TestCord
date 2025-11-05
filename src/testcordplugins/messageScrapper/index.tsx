@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { ChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
+import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { showItemInFolder } from "@utils/native";
-import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
-import { Button, ChannelStore, Constants, ContextMenuApi, GuildChannelStore, GuildStore, Menu, MessageActions, React, RelationshipStore, RestAPI, Toasts, UserStore } from "@webpack/common";
-import { ChatBarButton } from "@api/ChatButtons";
+import { Button, Card, ChannelStore, Constants, ContextMenuApi, GuildStore, Menu, MessageActions, React, RelationshipStore, RestAPI, Toasts, UserStore } from "@webpack/common";
+import { IpcEvents } from "@shared/IpcEvents";
 
 type DeletedLogItem = {
     channelId: string;
@@ -21,8 +22,16 @@ type DeletedLogItem = {
     messageId: string;
     timestamp: string;
     content: string;
-    attachments?: Array<{ filename?: string; url: string; content_type?: string; }>
+    attachments?: Array<{ filename?: string; url: string; content_type?: string; }>;
 };
+
+type WhitelistMode = "dm" | "server" | null;
+
+// Global state to track the modal and process
+let currentModalKey: string | null = null;
+let isProcessRunning = false;
+let shouldStopProcess = false;
+let currentProgressRef: { current: any; } | null = null;
 
 const settings = definePluginSettings({
     whitelist: {
@@ -30,24 +39,14 @@ const settings = definePluginSettings({
         description: "Comma-separated user IDs to keep (whitelist)",
         default: ""
     },
-    includeGuilds: {
-        type: OptionType.BOOLEAN,
-        description: "Also delete your messages in servers",
-        default: true
-    },
-    includeGroupDMs: {
-        type: OptionType.BOOLEAN,
-        description: "Also delete messages in Group DMs (non-whitelisted participants)",
-        default: false
+    whitelistMode: {
+        type: OptionType.STRING,
+        description: "Whitelist mode: 'dm' or 'server'",
+        default: ""
     },
     selectedGuilds: {
         type: OptionType.STRING,
-        description: "Comma-separated guild IDs to process",
-        default: ""
-    },
-    selectedChannels: {
-        type: OptionType.STRING,
-        description: "Comma-separated channel IDs to whitelist (keep messages)",
+        description: "Comma-separated guild IDs to process (when mode is server)",
         default: ""
     },
     lastLogFilePath: {
@@ -95,7 +94,7 @@ async function wait(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function fetchAllMessages(channelId: string, throttleMs = 250): Promise<Message[]> {
+async function fetchAllMessages(channelId: string, throttleMs = 250, onProgress?: (count: number) => void): Promise<Message[]> {
     const result: Message[] = [] as any;
     let before: string | undefined = undefined;
 
@@ -110,8 +109,8 @@ async function fetchAllMessages(channelId: string, throttleMs = 250): Promise<Me
         if (!batch.length) break;
         result.push(...batch);
         before = batch[batch.length - 1].id;
+        if (onProgress) onProgress(result.length);
         if (batch.length < 100) break;
-        // be gentle to avoid rate limits
         await wait(throttleMs);
     }
 
@@ -122,27 +121,27 @@ function FriendTag({ id, onRemove }: { id: string; onRemove: (id: string) => voi
     const user = UserStore.getUser(id);
     if (!user) return null as any;
     return (
-        <div style={{ 
-            display: "inline-flex", 
-            alignItems: "center", 
-            gap: 8, 
-            padding: "6px 10px", 
-            background: "var(--background-modifier-hover)", 
-            borderRadius: 8, 
-            marginRight: 8, 
+        <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 10px",
+            background: "var(--background-modifier-hover)",
+            borderRadius: 8,
+            marginRight: 8,
             marginBottom: 8,
             border: "1px solid var(--background-modifier-accent)",
             transition: "all 0.2s ease"
         }}>
             <img src={user.getAvatarURL?.(undefined, 20, false)} width={20} height={20} style={{ borderRadius: "50%" }} />
             <span style={{ color: "var(--text-normal)", fontWeight: 500 }}>{(user as any).globalName || user.username}</span>
-            <button 
-                aria-label="remove" 
-                onClick={() => onRemove(id)} 
-                style={{ 
-                    background: "transparent", 
-                    border: 0, 
-                    cursor: "pointer", 
+            <button
+                aria-label="remove"
+                onClick={() => onRemove(id)}
+                style={{
+                    background: "transparent",
+                    border: 0,
+                    cursor: "pointer",
                     color: "var(--interactive-normal)",
                     fontSize: "16px",
                     fontWeight: "bold",
@@ -150,11 +149,11 @@ function FriendTag({ id, onRemove }: { id: string; onRemove: (id: string) => voi
                     borderRadius: "4px",
                     transition: "all 0.2s ease"
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={e => {
                     e.currentTarget.style.background = "var(--background-modifier-accent)";
                     e.currentTarget.style.color = "var(--text-danger)";
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={e => {
                     e.currentTarget.style.background = "transparent";
                     e.currentTarget.style.color = "var(--interactive-normal)";
                 }}
@@ -163,245 +162,250 @@ function FriendTag({ id, onRemove }: { id: string; onRemove: (id: string) => voi
     );
 }
 
-function SettingsRow({ label, right }: { label: string; right: React.ReactNode; }) {
-    return (
-        <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            justifyContent: "space-between", 
-            padding: "12px 0",
-            borderBottom: "1px solid var(--background-modifier-accent)"
-        }}>
-            <div style={{ 
-                color: "var(--text-normal)", 
-                fontWeight: 500,
-                fontSize: "14px"
-            }}>{label}</div>
-            <div>{right}</div>
-        </div>
-    );
+function formatTime(seconds: number): string {
+    if (seconds < 60) return `${Math.floor(seconds)}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}m ${secs}s`;
 }
 
-function ServerSelectionModal({ modalProps }: { modalProps: ModalProps; }) {
-    const [selectedGuilds, setSelectedGuilds] = React.useState<string[]>(parseCsv(settings.store.selectedGuilds));
-    const [selectedChannels, setSelectedChannels] = React.useState<string[]>(parseCsv(settings.store.selectedChannels));
-    const [currentGuild, setCurrentGuild] = React.useState<string | null>(null);
+function ProgressModal({ modalProps, onClose, progressRef, onStop }: { modalProps: ModalProps; onClose: () => void; progressRef: { current: any; }; onStop: () => void; }) {
+    const [totalMessages, setTotalMessages] = React.useState(0);
+    const [processedMessages, setProcessedMessages] = React.useState(0);
+    const [deletedCount, setDeletedCount] = React.useState(0);
+    const [failedCount, setFailedCount] = React.useState(0);
+    const [logs, setLogs] = React.useState<Array<{ time: string; message: string; type: "success" | "error" | "info" | "timeout"; }>>([]);
+    const [isRunning, setIsRunning] = React.useState(true);
+    const [estimatedTime, setEstimatedTime] = React.useState(0);
+    const [timeoutCount, setTimeoutCount] = React.useState(0);
+    const [lastTimeoutTime, setLastTimeoutTime] = React.useState<number | null>(null);
+    const startTimeRef = React.useRef<number>(Date.now());
+    const deletedTimesRef = React.useRef<number[]>([]); // Track deletion times for better averaging
+    const lastUpdateTimeRef = React.useRef<number>(Date.now());
 
-    const guilds = Object.values(GuildStore.getGuilds?.() || {} as Record<string, any>);
-    const channels = currentGuild ? GuildChannelStore.getChannels?.(currentGuild)?.SELECTABLE || [] : [];
+    const addLog = (message: string, type: "success" | "error" | "info" | "timeout" = "info") => {
+        const time = new Date().toLocaleTimeString();
+        setLogs(prev => [...prev.slice(-99), { time, message, type }]);
+    };
 
-    function saveServerSelection() {
-        settings.store.selectedGuilds = selectedGuilds.join(",");
-        settings.store.selectedChannels = selectedChannels.join(",");
-        modalProps.onClose();
-    }
+    const scrollToBottom = () => {
+        const logContainer = document.getElementById("message-scrapper-logs");
+        if (logContainer) {
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    };
 
-    function toggleGuild(guildId: string) {
-        setSelectedGuilds(prev => 
-            prev.includes(guildId) 
-                ? prev.filter(id => id !== guildId)
-                : [...prev, guildId]
-        );
-    }
+    React.useEffect(() => {
+        scrollToBottom();
+    }, [logs]);
 
-    function toggleChannel(channelId: string) {
-        setSelectedChannels(prev => 
-            prev.includes(channelId) 
-                ? prev.filter(id => id !== channelId)
-                : [...prev, channelId]
-        );
-    }
+    const calculateEstimatedTime = React.useCallback(() => {
+        const remaining = totalMessages - processedMessages;
+        if (remaining <= 0) {
+            setEstimatedTime(0);
+            return;
+        }
+        
+        // Calculate average deletions per second from recent history (last 30 deletions)
+        const now = Date.now();
+        const recentTimes = deletedTimesRef.current.filter(t => now - t < 30000); // Last 30 seconds
+        if (recentTimes.length >= 2) {
+            const timeSpan = (recentTimes[recentTimes.length - 1] - recentTimes[0]) / 1000; // in seconds
+            const deletions = recentTimes.length;
+            if (timeSpan > 0) {
+                const deletionsPerSecond = deletions / timeSpan;
+                const estimated = remaining / deletionsPerSecond;
+                setEstimatedTime(estimated);
+                return;
+            }
+        }
+        
+        // Fallback: use overall rate if we have enough data
+        const totalElapsed = (now - startTimeRef.current) / 1000;
+        if (totalElapsed > 0 && deletedCount > 0) {
+            const overallRate = deletedCount / totalElapsed;
+            if (overallRate > 0) {
+                setEstimatedTime(remaining / overallRate);
+            }
+        }
+    }, [totalMessages, processedMessages, deletedCount]);
+
+    React.useEffect(() => {
+        calculateEstimatedTime();
+    }, [processedMessages, calculateEstimatedTime]);
+
+    // Expose functions to parent via ref
+    React.useImperativeHandle(progressRef as any, () => ({
+        setTotalMessages,
+        incrementProcessed: () => setProcessedMessages(p => p + 1),
+        incrementDeleted: () => {
+            setDeletedCount(d => d + 1);
+            const now = Date.now();
+            deletedTimesRef.current.push(now);
+            // Keep only last 100 deletion times to avoid memory issues
+            if (deletedTimesRef.current.length > 100) {
+                deletedTimesRef.current = deletedTimesRef.current.slice(-100);
+            }
+            lastUpdateTimeRef.current = now;
+        },
+        incrementFailed: () => setFailedCount(f => f + 1),
+        addLog,
+        handleTimeout: () => {
+            setTimeoutCount(c => c + 1);
+            setLastTimeoutTime(Date.now());
+            addLog("⚠️ Rate limit timeout detected. Increasing delay...", "timeout");
+        },
+        finish: () => {
+            setIsRunning(false);
+            addLog("✅ Process completed!", "success");
+        }
+    }));
+
+    const progressPercent = totalMessages > 0 ? (processedMessages / totalMessages) * 100 : 0;
 
     return (
-        <ModalRoot {...modalProps}>
+        <ModalRoot {...modalProps} size={ModalSize.LARGE}>
             <ModalHeader>
-                <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                    <h2 style={{ margin: 0 }}>Sunucu ve Kanal Seçimi</h2>
-                    <div style={{ flex: 1 }} />
-                    <ModalCloseButton onClick={modalProps.onClose} />
+                <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 16 }}>
+                    <h2 style={{ margin: 0, flex: 1 }}>Messages Scrapper - Progress</h2>
+                    {!isRunning && <ModalCloseButton onClick={onClose} />}
                 </div>
             </ModalHeader>
-            <ModalContent>
-                <div style={{ 
-                    marginBottom: 16, 
-                    color: "var(--text-normal)", 
-                    fontWeight: 600,
-                    fontSize: "16px"
-                }}>Hangi sunuculardaki mesajlarınızı işlemek istiyorsunuz?</div>
-                
-                <div style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: "1fr 1fr", 
-                    gap: "16px",
-                    height: "400px"
-                }}>
-                    {/* Sunucu Listesi */}
-                    <div style={{ 
-                        background: "var(--background-secondary)",
-                        borderRadius: "8px",
-                        border: "1px solid var(--background-modifier-accent)",
-                        padding: "12px"
-                    }}>
-                        <div style={{ 
-                            marginBottom: 12, 
-                            color: "var(--text-normal)", 
-                            fontWeight: 600,
-                            fontSize: "14px"
-                        }}>Sunucular</div>
-                        <div style={{ 
-                            maxHeight: "320px", 
-                            overflow: "auto",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "8px"
-                        }}>
-                            {guilds.map((guild: any) => (
-                                <div 
-                                    key={guild.id}
-                                    style={{ 
-                                        display: "flex", 
-                                        alignItems: "center", 
-                                        padding: "8px 12px", 
-                                        borderRadius: 6, 
-                                        gap: 12,
-                                        background: selectedGuilds.includes(guild.id) ? "var(--brand-experiment)" : "var(--background-modifier-hover)",
-                                        color: selectedGuilds.includes(guild.id) ? "var(--white-500)" : "var(--text-normal)",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s ease"
-                                    }}
-                                    onClick={() => {
-                                        toggleGuild(guild.id);
-                                        setCurrentGuild(guild.id);
-                                    }}
-                                >
-                                    <img 
-                                        src={guild.getIconURL?.({ size: 32 })} 
-                                        width={32} 
-                                        height={32} 
-                                        style={{ borderRadius: "50%" }} 
-                                    />
-                                    <div style={{ flex: 1, fontWeight: 500 }}>{guild.name}</div>
-                                    {selectedGuilds.includes(guild.id) && (
-                                        <div style={{ fontSize: "18px" }}>✓</div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+            <ModalContent style={{ padding: "20px", minHeight: "500px", display: "flex", flexDirection: "column", gap: 16 }}>
+                {/* Stats Cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                    <Card style={{ padding: "16px", background: "var(--background-secondary)" }}>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>Total Messages</div>
+                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-normal)" }}>{totalMessages}</div>
+                    </Card>
+                    <Card style={{ padding: "16px", background: "var(--background-secondary)" }}>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>Deleted</div>
+                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--green-360)" }}>{deletedCount}</div>
+                    </Card>
+                    <Card style={{ padding: "16px", background: "var(--background-secondary)" }}>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>Failed</div>
+                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--status-danger)" }}>{failedCount}</div>
+                    </Card>
+                    <Card style={{ padding: "16px", background: "var(--background-secondary)" }}>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: 4 }}>Progress</div>
+                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-normal)" }}>{Math.round(progressPercent)}%</div>
+                    </Card>
+                </div>
 
-                    {/* Kanal Listesi */}
-                    <div style={{ 
-                        background: "var(--background-secondary)",
-                        borderRadius: "8px",
-                        border: "1px solid var(--background-modifier-accent)",
-                        padding: "12px"
+                {/* Progress Bar */}
+                <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ color: "var(--text-normal)", fontWeight: 500 }}>Progress</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "14px" }}>
+                            {processedMessages} / {totalMessages}
+                        </span>
+                    </div>
+                    <div style={{
+                        width: "100%",
+                        height: "24px",
+                        background: "var(--background-modifier-accent)",
+                        borderRadius: "12px",
+                        overflow: "hidden"
                     }}>
-                        <div style={{ 
-                            marginBottom: 12, 
-                            color: "var(--text-normal)", 
-                            fontWeight: 600,
-                            fontSize: "14px"
-                        }}>
-                            {currentGuild ? "Kanallar" : "Önce bir sunucu seçin"}
-                        </div>
-                        <div style={{ 
-                            maxHeight: "320px", 
-                            overflow: "auto",
+                        <div style={{
+                            width: `${progressPercent}%`,
+                            height: "100%",
+                            background: "var(--brand-experiment)",
+                            transition: "width 0.3s ease",
                             display: "flex",
-                            flexDirection: "column",
-                            gap: "8px"
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--white-500)",
+                            fontSize: "12px",
+                            fontWeight: "bold"
                         }}>
-                            {currentGuild && channels.map(channel => {
-                                const ch = channel.channel || channel;
-                                return (
-                                    <div 
-                                        key={ch.id}
-                                        style={{ 
-                                            display: "flex", 
-                                            alignItems: "center", 
-                                            padding: "8px 12px", 
-                                            borderRadius: 6, 
-                                            gap: 12,
-                                            background: selectedChannels.includes(ch.id) ? "var(--brand-experiment)" : "var(--background-modifier-hover)",
-                                            color: selectedChannels.includes(ch.id) ? "var(--white-500)" : "var(--text-normal)",
-                                            cursor: "pointer",
-                                            transition: "all 0.2s ease"
-                                        }}
-                                        onClick={() => toggleChannel(ch.id)}
-                                    >
-                                        <div style={{ 
-                                            width: 32, 
-                                            height: 32, 
-                                            borderRadius: "50%", 
-                                            background: "var(--background-modifier-accent)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontSize: "16px"
-                                        }}>#</div>
-                                        <div style={{ flex: 1, fontWeight: 500 }}>{ch.name}</div>
-                                        {selectedChannels.includes(ch.id) && (
-                                            <div style={{ fontSize: "18px" }}>✓</div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            {!currentGuild && (
-                                <div style={{ 
-                                    padding: "20px",
-                                    textAlign: "center",
-                                    color: "var(--text-muted)", 
-                                    fontStyle: "italic"
-                                }}>Sunucu seçin</div>
-                            )}
+                            {progressPercent > 5 && `${Math.round(progressPercent)}%`}
                         </div>
                     </div>
                 </div>
 
-                <div style={{ 
-                    marginTop: 16,
-                    padding: "12px",
-                    background: "var(--background-modifier-hover)",
-                    borderRadius: "8px",
-                    border: "1px solid var(--background-modifier-accent)"
-                }}>
-                    <div style={{ 
-                        color: "var(--text-normal)", 
-                        fontWeight: 500,
-                        fontSize: "14px",
-                        marginBottom: 8
-                    }}>ℹ️ Bilgi:</div>
-                    <div style={{ 
-                        color: "var(--text-muted)", 
-                        fontSize: "13px",
-                        lineHeight: "1.4"
-                    }}>
-                        Seçilen kanallardaki mesajlarınız korunacak, diğer kanallardaki mesajlarınız silinecektir.
+                {/* Time Info */}
+                <div style={{ display: "flex", gap: 24, fontSize: "14px" }}>
+                    <div>
+                        <span style={{ color: "var(--text-muted)" }}>Estimated Time: </span>
+                        <span style={{ color: "var(--text-normal)", fontWeight: 500 }}>
+                            {estimatedTime > 0 ? formatTime(estimatedTime) : "Calculating..."}
+                        </span>
+                    </div>
+                    {timeoutCount > 0 && (
+                        <div>
+                            <span style={{ color: "var(--text-muted)" }}>Timeouts: </span>
+                            <span style={{ color: "var(--status-warning)", fontWeight: 500 }}>{timeoutCount}</span>
+                            {lastTimeoutTime && (
+                                <span style={{ color: "var(--text-muted)", marginLeft: 8, fontSize: "12px" }}>
+                                    (Last: {formatTime((Date.now() - lastTimeoutTime) / 1000)} ago)
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Logs */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "200px" }}>
+                    <div style={{ marginBottom: 8, color: "var(--text-normal)", fontWeight: 500 }}>Logs</div>
+                    <div
+                        id="message-scrapper-logs"
+                        style={{
+                            flex: 1,
+                            background: "var(--background-secondary)",
+                            borderRadius: "8px",
+                            padding: "12px",
+                            overflow: "auto",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            maxHeight: "300px"
+                        }}
+                    >
+                        {logs.length === 0 && (
+                            <div style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Waiting for logs...</div>
+                        )}
+                        {logs.map((log, idx) => (
+                            <div
+                                key={idx}
+                                style={{
+                                    marginBottom: "4px",
+                                    color: log.type === "error" ? "var(--status-danger)" :
+                                        log.type === "success" ? "var(--green-360)" :
+                                            log.type === "timeout" ? "var(--status-warning)" :
+                                                "var(--text-normal)",
+                                    wordBreak: "break-word"
+                                }}
+                            >
+                                <span style={{ color: "var(--text-muted)", marginRight: 8 }}>[{log.time}]</span>
+                                {log.message}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </ModalContent>
             <ModalFooter>
-                <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    width: "100%",
-                    gap: "12px"
-                }}>
-                    <Button 
-                        onClick={modalProps.onClose}
+                <div style={{ display: "flex", gap: 12, width: "100%", justifyContent: "space-between" }}>
+                    <Button
+                        onClick={onStop}
+                        disabled={!isRunning}
+                        color={Button.Colors.RED}
                         style={{
-                            background: "var(--background-modifier-hover)",
-                            color: "var(--text-normal)",
-                            border: "1px solid var(--background-modifier-accent)"
+                            background: isRunning ? "var(--button-danger-background)" : "var(--background-modifier-hover)",
+                            color: isRunning ? "var(--white-500)" : "var(--text-muted)"
                         }}
-                    >İptal</Button>
-                    <Button 
-                        onClick={saveServerSelection}
+                    >
+                        Stop
+                    </Button>
+                    <Button
+                        onClick={onClose}
+                        disabled={isRunning}
                         style={{
-                            background: "var(--brand-experiment)",
-                            color: "var(--white-500)"
+                            background: isRunning ? "var(--background-modifier-hover)" : "var(--brand-experiment)",
+                            color: isRunning ? "var(--text-muted)" : "var(--white-500)"
                         }}
-                    >Kaydet</Button>
+                    >
+                        {isRunning ? "Processing..." : "Close"}
+                    </Button>
                 </div>
             </ModalFooter>
         </ModalRoot>
@@ -410,9 +414,11 @@ function ServerSelectionModal({ modalProps }: { modalProps: ModalProps; }) {
 
 function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
     const [query, setQuery] = React.useState("");
-    const [wl, setWl] = React.useState<string[]>(getWhitelist());
-    const [includeGuilds, setIncludeGuilds] = React.useState<boolean>(settings.store.includeGuilds);
-    const [includeGroupDMs, setIncludeGroupDMs] = React.useState<boolean>(settings.store.includeGroupDMs);
+    const [wl, setWl] = React.useState<string[]>([]);
+    const [mode, setMode] = React.useState<WhitelistMode>(null);
+    const [selectedGuilds, setSelectedGuilds] = React.useState<string[]>([]);
+    const progressRef = React.useRef<any>(null);
+    const [isRunning, setIsRunning] = React.useState(false);
 
     const friendIds = RelationshipStore.getFriendIDs?.() ?? [];
     const dms = ChannelStore.getSortedPrivateChannels().filter(c => c.isDM?.());
@@ -429,18 +435,36 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
             .slice(0, 25);
     }, [query, wl, friendIds, dms]);
 
+    const guilds = Object.values(GuildStore.getGuilds?.() || {} as Record<string, any>);
+
+    const stopProcess = React.useCallback(() => {
+        shouldStopProcess = true;
+        if (currentProgressRef?.current) {
+            currentProgressRef.current.addLog("⏹️ Stopping process...", "info");
+        }
+    }, []);
+
     function save() {
         setWhitelist(wl);
-        settings.store.includeGuilds = includeGuilds;
-        settings.store.includeGroupDMs = includeGroupDMs;
+        settings.store.whitelistMode = mode || "";
+        settings.store.selectedGuilds = selectedGuilds.join(",");
         modalProps.onClose();
     }
 
     async function start() {
-        // persist
+        if (isProcessRunning) {
+            Toasts.show({ id: Toasts.genId(), type: Toasts.Type.FAILURE, message: "Process is already running" });
+            return;
+        }
+
         setWhitelist(wl);
-        settings.store.includeGuilds = includeGuilds;
-        settings.store.includeGroupDMs = includeGroupDMs;
+        settings.store.whitelistMode = mode || "";
+        settings.store.selectedGuilds = selectedGuilds.join(",");
+
+        if (!mode) {
+            Toasts.show({ id: Toasts.genId(), type: Toasts.Type.FAILURE, message: "Please select a mode (DM or Server)" });
+            return;
+        }
 
         const whitelistSet = new Set(wl);
         const myId = UserStore.getCurrentUser()?.id;
@@ -449,81 +473,129 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
             return;
         }
 
-        // Build target channel list
-        const dmChannels = ChannelStore.getSortedPrivateChannels()
-            .filter(c => typeof c.isDM === "function" ? c.isDM() : c.type === 1)
-            .filter(c => {
-                const recipientId = c.recipients?.[0];
-                return recipientId && !whitelistSet.has(recipientId);
-            });
+        // Reset stop flag
+        shouldStopProcess = false;
+        isProcessRunning = true;
+        setIsRunning(true);
+        currentProgressRef = progressRef;
 
-        const groupDmChannels = includeGroupDMs ? ChannelStore.getSortedPrivateChannels()
-            .filter(c => typeof c.isGroupDM === "function" ? c.isGroupDM() : c.type === 3)
-            .filter(c => {
-                const recips: string[] = (c.recipients || []).filter((id: string) => id !== myId);
-                return recips.length > 0 && !recips.some(id => whitelistSet.has(id));
-            }) : [];
-
-        const guildTextChannels: any[] = [];
-        if (includeGuilds) {
-            const selectedGuildIds = parseCsv(settings.store.selectedGuilds);
-            const selectedChannelIds = parseCsv(settings.store.selectedChannels);
-            
-            if (selectedGuildIds.length > 0) {
-                // Sadece seçilen sunuculardaki kanalları işle
-                for (const guildId of selectedGuildIds) {
-                    const info: any = GuildChannelStore.getChannels?.(guildId);
-                    const selectable = info?.SELECTABLE || [];
-                    for (const item of selectable) {
-                        const ch = item.channel || item; // compat
-                        // 0 = GUILD_TEXT, 11/12 = threads, include threads too
-                        if ([0, 11, 12].includes(ch?.type)) {
-                            // Eğer kanal whitelist'te değilse silinecek kanallara ekle
-                            if (!selectedChannelIds.includes(ch.id)) {
-                                guildTextChannels.push(ch);
-                            }
-                        }
+        // Open progress modal
+        const progressModalKey = openModal((props: ModalProps) => (
+            <ProgressModal
+                modalProps={props}
+                progressRef={progressRef}
+                onStop={stopProcess}
+                onClose={() => {
+                    if (!isProcessRunning) {
+                        if (progressModalKey) closeModal(progressModalKey);
+                        setIsRunning(false);
+                        modalProps.onClose();
                     }
-                }
-            } else {
-                // Eski davranış: tüm sunuculardaki kanalları işle
-                const guilds = Object.values(GuildStore.getGuilds?.() || {} as Record<string, any>);
-                for (const g of guilds) {
-                    const guild = g as any;
-                    const info: any = GuildChannelStore.getChannels?.(guild.id);
-                    const selectable = info?.SELECTABLE || [];
-                    for (const item of selectable) {
-                        const ch = item.channel || item; // compat
-                        // 0 = GUILD_TEXT, 11/12 = threads, include threads too
-                        if ([0, 11, 12].includes(ch?.type)) guildTextChannels.push(ch);
+                }}
+            />
+        ));
+
+        const progress = progressRef.current;
+        if (!progress) return;
+
+        // Build target channel list
+        const targets: any[] = [];
+
+        if (mode === "dm") {
+            const dmChannels = ChannelStore.getSortedPrivateChannels()
+                .filter(c => typeof c.isDM === "function" ? c.isDM() : c.type === 1)
+                .filter(c => {
+                    const recipientId = c.recipients?.[0];
+                    return recipientId && !whitelistSet.has(recipientId);
+                });
+            targets.push(...dmChannels);
+        } else if (mode === "server") {
+            if (selectedGuilds.length === 0) {
+                progress.addLog("⚠️ No servers selected!", "error");
+                progress.finish();
+                return;
+            }
+
+            const { GuildChannelStore } = await import("@webpack/common");
+            for (const guildId of selectedGuilds) {
+                const info: any = GuildChannelStore.getChannels?.(guildId);
+                const selectable = info?.SELECTABLE || [];
+                for (const item of selectable) {
+                    const ch = item.channel || item;
+                    if ([0, 11, 12].includes(ch?.type)) {
+                        targets.push(ch);
                     }
                 }
             }
         }
 
-        const targets = [...dmChannels, ...groupDmChannels, ...guildTextChannels];
         if (!targets.length) {
-            Toasts.show({ id: Toasts.genId(), type: Toasts.Type.MESSAGE, message: "No channels to process." });
-            modalProps.onClose();
+            progress.addLog("⚠️ No channels to process.", "error");
+            progress.finish();
             return;
         }
 
-        Toasts.show({ id: Toasts.genId(), type: Toasts.Type.MESSAGE, message: `Processing ${targets.length} channels...` });
+        progress.addLog(`📋 Processing ${targets.length} channels...`, "info");
 
-        const deleted: DeletedLogItem[] = [];
-        let deletedCount = 0, failedCount = 0;
-
-        // conservative delays to avoid rate limits
-        const perDeleteDelayMs = 900 + Math.floor(Math.random() * 300);
+        // Count total messages first
+        let totalMsgCount = 0;
+        progress.addLog("🔍 Counting messages...", "info");
 
         for (const ch of targets) {
             try {
-                const messages = await fetchAllMessages(ch.id);
+                const messages = await fetchAllMessages(ch.id, 250, count => {
+                    // Update progress during counting
+                });
                 const toDelete = messages.filter((m: any) => m?.author?.id === myId);
+                totalMsgCount += toDelete.length;
+            } catch (e) {
+                progress.addLog(`❌ Failed to count messages in channel ${ch.id}: ${e}`, "error");
+            }
+        }
+
+        progress.setTotalMessages(totalMsgCount);
+        progress.addLog(`✅ Found ${totalMsgCount} messages to delete`, "success");
+
+        if (totalMsgCount === 0) {
+            progress.finish();
+            return;
+        }
+
+        const deleted: DeletedLogItem[] = [];
+        let processedCount = 0;
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        // Adaptive delay - starts conservative, increases on timeout
+        const baseDelayMs = 1000;
+        let currentDelayMs = baseDelayMs;
+
+        for (const ch of targets) {
+            if (shouldStopProcess) {
+                progress.addLog("⏹️ Process stopped by user", "info");
+                break;
+            }
+
+            try {
+                const messages = await fetchAllMessages(ch.id, 250);
+                const toDelete = messages.filter((m: any) => m?.author?.id === myId);
+
                 for (const m of toDelete) {
+                    if (shouldStopProcess) {
+                        progress.addLog("⏹️ Process stopped by user", "info");
+                        break;
+                    }
+
                     try {
-                        await MessageActions.deleteMessage(ch.id, m.id);
+                        // Use RestAPI.del for reliable message deletion
+                        await RestAPI.del({
+                            url: `${Constants.Endpoints.MESSAGES(ch.id)}/${m.id}`
+                        });
                         deletedCount++;
+                        processedCount++;
+                        progress.incrementDeleted();
+                        progress.incrementProcessed();
+
                         deleted.push({
                             channelId: ch.id,
                             guildId: ch.guild_id ?? null,
@@ -531,36 +603,63 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
                             isGuild: !!ch.guild_id,
                             messageId: m.id,
                             timestamp: String(m.timestamp),
-                            content: String(m.content ?? ""),
+                            content: String(m.content ?? "").substring(0, 100),
                             attachments: (m.attachments || []).map((a: any) => ({ filename: a.filename, url: a.url, content_type: a.content_type }))
                         });
-                        await wait(perDeleteDelayMs);
-                    } catch {
+
+                        progress.addLog(`✅ Deleted message from ${ch.name || "channel"}`, "success");
+
+                        // Use adaptive delay
+                        await wait(currentDelayMs);
+
+                        // Gradually reduce delay if no timeouts
+                        if (currentDelayMs > baseDelayMs) {
+                            currentDelayMs = Math.max(baseDelayMs, currentDelayMs - 50);
+                        }
+                    } catch (e: any) {
+                        if (shouldStopProcess) break;
+
                         failedCount++;
-                        // on 429 or generic error, slow down
-                        await wait(perDeleteDelayMs + 1500);
+                        processedCount++;
+                        progress.incrementFailed();
+                        progress.incrementProcessed();
+
+                        if (e?.status === 429 || e?.code === 429 || e?.message?.includes("429")) {
+                            progress.handleTimeout();
+                            // Increase delay significantly on timeout
+                            currentDelayMs = Math.min(5000, currentDelayMs * 2);
+                            progress.addLog(`⏱️ Rate limit hit. Increasing delay to ${Math.round(currentDelayMs)}ms`, "timeout");
+                            await wait(currentDelayMs * 2); // Extra wait on timeout
+                        } else {
+                            progress.addLog(`❌ Failed to delete message: ${e?.message || "Unknown error"}`, "error");
+                            await wait(currentDelayMs);
+                        }
                     }
                 }
-                // light pause between channels
-                await wait(500);
-            } catch {
-                // ignore channel fetch errors
+
+                if (shouldStopProcess) break;
+                await wait(500); // Light pause between channels
+            } catch (e: any) {
+                if (shouldStopProcess) break;
+                progress.addLog(`❌ Failed to fetch messages from channel: ${e?.message || "Unknown error"}`, "error");
             }
         }
 
-        // Build and save log
+        // Mark process as stopped
+        isProcessRunning = false;
+        setIsRunning(false);
+
+        // Save log
         const runId = new Date().toISOString().replace(/[:.]/g, "-");
         const body = {
             runId,
-            startedAt: runId,
+            startedAt: new Date().toISOString(),
             finishedAt: new Date().toISOString(),
             userId: myId,
-            includeGuilds,
-            includeGroupDMs,
+            mode,
             whitelist: wl,
-            selectedGuilds: parseCsv(settings.store.selectedGuilds),
-            selectedChannels: parseCsv(settings.store.selectedChannels),
-            stats: { deleted: deletedCount, failed: failedCount, channels: targets.length },
+            selectedGuilds: mode === "server" ? selectedGuilds : [],
+            stats: { deleted: deletedCount, failed: failedCount, channels: targets.length, total: totalMsgCount },
             deleted
         };
 
@@ -571,9 +670,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
                 const savedPath = await (window as any).DiscordNative.fileManager.saveWithDialog(data, filename, "application/json");
                 if (savedPath) {
                     settings.store.lastLogFilePath = savedPath;
-                    Toasts.show({ id: Toasts.genId(), type: Toasts.Type.SUCCESS, message: `Saved log: ${filename}` });
-                } else {
-                    Toasts.show({ id: Toasts.genId(), type: Toasts.Type.FAILURE, message: "Log save canceled" });
+                    progress.addLog(`💾 Log saved: ${filename}`, "success");
                 }
             } else {
                 const blob = new Blob([JSON.stringify(body, null, 2)], { type: "application/json" });
@@ -583,211 +680,332 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
                 a.download = filename;
                 a.click();
                 URL.revokeObjectURL(url);
-                Toasts.show({ id: Toasts.genId(), type: Toasts.Type.SUCCESS, message: `Downloaded log: ${filename}` });
+                progress.addLog(`💾 Log downloaded: ${filename}`, "success");
             }
-        } catch {
-            Toasts.show({ id: Toasts.genId(), type: Toasts.Type.FAILURE, message: "Failed to save log" });
+        } catch (e) {
+            progress.addLog(`❌ Failed to save log: ${e}`, "error");
         }
 
-        Toasts.show({ id: Toasts.genId(), type: failedCount ? Toasts.Type.FAILURE : Toasts.Type.SUCCESS, message: `Done. Deleted ${deletedCount}${failedCount ? `, failed ${failedCount}` : ""}.` });
-        modalProps.onClose();
+        if (shouldStopProcess) {
+            progress.addLog(`⏹️ Stopped! Deleted: ${deletedCount}, Failed: ${failedCount}`, "info");
+        } else {
+            progress.addLog(`✅ Completed! Deleted: ${deletedCount}, Failed: ${failedCount}`, "success");
+        }
+        progress.finish();
+        shouldStopProcess = false;
     }
 
     return (
-        <ModalRoot {...modalProps}>
+        <ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
             <ModalHeader>
-                <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 12 }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style={{ color: "var(--text-normal)" }}>
+                        <path fill="currentColor" d="M9 3h6a1 1 0 0 1 1 1v1h4v2H4V5h4V4a1 1 0 0 1 1-1Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Z" />
+                    </svg>
                     <h2 style={{ margin: 0 }}>Messages Scrapper</h2>
                     <div style={{ flex: 1 }} />
                     <ModalCloseButton onClick={modalProps.onClose} />
                 </div>
             </ModalHeader>
-            <ModalContent>
-                <div style={{ 
-                    marginBottom: 12, 
-                    color: "var(--text-normal)", 
-                    fontWeight: 600,
-                    fontSize: "14px"
-                }}>Whitelist (kept users):</div>
-                <div style={{ 
-                    display: "flex", 
-                    flexWrap: "wrap",
-                    minHeight: "40px",
-                    padding: "8px",
-                    background: "var(--background-secondary)",
-                    borderRadius: "8px",
-                    border: "1px solid var(--background-modifier-accent)"
-                }}>
-                    {wl.map(id => <FriendTag key={id} id={id} onRemove={(idToRemove: string) => setWl(wl.filter(x => x !== idToRemove))} />)}
-                    {wl.length === 0 && (
-                        <div style={{ 
-                            color: "var(--text-muted)", 
-                            fontStyle: "italic",
-                            alignSelf: "center"
-                        }}>No users in whitelist</div>
-                    )}
-                </div>
-                <div style={{ 
-                    marginTop: 16, 
-                    marginBottom: 8,
-                    color: "var(--text-normal)", 
-                    fontWeight: 600,
-                    fontSize: "14px"
-                }}>Add from your friends/DMs</div>
-                <input
-                    placeholder="Search users by name"
-                    value={query}
-                    onChange={e => setQuery((e.target as HTMLInputElement).value)}
-                    style={{ 
-                        width: "100%", 
-                        padding: "10px 12px", 
-                        borderRadius: 8, 
-                        border: "1px solid var(--background-modifier-accent)",
-                        background: "var(--input-background)",
-                        color: "var(--text-normal)",
-                        fontSize: "14px",
-                        outline: "none",
-                        transition: "border-color 0.2s ease"
-                    }}
-                    onFocus={(e) => {
-                        e.target.style.borderColor = "var(--brand-experiment)";
-                    }}
-                    onBlur={(e) => {
-                        e.target.style.borderColor = "var(--background-modifier-accent)";
-                    }}
-                />
-                <div style={{ 
-                    marginTop: 12, 
-                    maxHeight: 200, 
-                    overflow: "auto",
-                    background: "var(--background-secondary)",
-                    borderRadius: "8px",
-                    border: "1px solid var(--background-modifier-accent)"
-                }}>
-                    {candidateIds.map((id: string) => {
-                        const u: any = id ? UserStore.getUser(id) : null;
-                        const label = (u?.globalName || u?.username || id || "Unknown") as string;
-                        const avatar = u?.getAvatarURL?.(undefined, 32, false);
-                        return (
-                            <div key={id} style={{ 
-                                display: "flex", 
-                                alignItems: "center", 
-                                padding: "12px", 
-                                borderRadius: 6, 
-                                gap: 12,
-                                borderBottom: "1px solid var(--background-modifier-accent)",
-                                transition: "background-color 0.2s ease"
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = "var(--background-modifier-hover)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = "transparent";
-                            }}>
-                                {avatar && <img src={avatar} width={32} height={32} style={{ borderRadius: "50%" }} />}
-                                <div style={{ 
-                                    flex: 1, 
-                                    color: "var(--text-normal)",
-                                    fontWeight: 500,
-                                    fontSize: "14px"
-                                }}>{label}</div>
-                                <Button 
-                                    size={Button.Sizes.SMALL} 
-                                    onClick={() => setWl(uniq([...wl, id]))} 
-                                    disabled={!id}
-                                    style={{
-                                        background: "var(--brand-experiment)",
-                                        color: "var(--white-500)"
-                                    }}
-                                >Add</Button>
-                            </div>
-                        );
-                    })}
-                    {candidateIds.length === 0 && (
-                        <div style={{ 
-                            padding: "20px",
-                            textAlign: "center",
-                            color: "var(--text-muted)", 
-                            fontStyle: "italic"
-                        }}>No matches found</div>
-                    )}
-                </div>
-                <div style={{ 
-                    marginTop: 20,
-                    background: "var(--background-secondary)",
-                    borderRadius: "8px",
-                    border: "1px solid var(--background-modifier-accent)",
-                    padding: "16px"
-                }}>
-                    <div style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "space-between", 
-                        padding: "12px 0",
-                        borderBottom: "1px solid var(--background-modifier-accent)"
-                    }}>
-                        <div style={{ 
-                            color: "var(--text-normal)", 
-                            fontWeight: 500,
-                            fontSize: "14px"
-                        }}>Sunucu ve Kanal Seçimi</div>
-                        <Button 
-                            size={Button.Sizes.SMALL} 
-                            onClick={() => openModal(props => <ServerSelectionModal modalProps={props} />)}
-                            style={{
-                                background: "var(--brand-experiment)",
-                                color: "var(--white-500)"
-                            }}
-                        >Sunucu Seç</Button>
+            <ModalContent style={{ padding: "20px" }}>
+                {/* Mode Selection */}
+                <div style={{ marginBottom: 20 }}>
+                    <div style={{ marginBottom: 12, color: "var(--text-normal)", fontWeight: 600, fontSize: "14px" }}>
+                        Select Mode
                     </div>
-                    <SettingsRow label="Include server channels" right={<Button size={Button.Sizes.SMALL} onClick={() => setIncludeGuilds(!includeGuilds)} style={{ background: includeGuilds ? "var(--brand-experiment)" : "var(--background-modifier-hover)", color: includeGuilds ? "var(--white-500)" : "var(--text-normal)" }}>{includeGuilds ? "Enabled" : "Disabled"}</Button>} />
-                    <SettingsRow label="Include Group DMs" right={<Button size={Button.Sizes.SMALL} onClick={() => setIncludeGroupDMs(!includeGroupDMs)} style={{ background: includeGroupDMs ? "var(--brand-experiment)" : "var(--background-modifier-hover)", color: includeGroupDMs ? "var(--white-500)" : "var(--text-normal)" }}>{includeGroupDMs ? "Enabled" : "Disabled"}</Button>} />
+                    <div style={{ display: "flex", gap: 12 }}>
+                        <Button
+                            onClick={() => setMode("dm")}
+                            style={{
+                                flex: 1,
+                                background: mode === "dm" ? "var(--brand-experiment)" : "var(--background-modifier-hover)",
+                                color: mode === "dm" ? "var(--white-500)" : "var(--text-normal)"
+                            }}
+                        >
+                            DM Messages
+                        </Button>
+                        <Button
+                            onClick={() => setMode("server")}
+                            style={{
+                                flex: 1,
+                                background: mode === "server" ? "var(--brand-experiment)" : "var(--background-modifier-hover)",
+                                color: mode === "server" ? "var(--white-500)" : "var(--text-normal)"
+                            }}
+                        >
+                            Server Messages
+                        </Button>
+                    </div>
+                    {mode === "server" && (
+                        <div style={{ marginTop: 12 }}>
+                            <div style={{ marginBottom: 8, color: "var(--text-normal)", fontWeight: 500, fontSize: "13px" }}>
+                                Select Servers
+                            </div>
+                            <div style={{
+                                maxHeight: "150px",
+                                overflow: "auto",
+                                background: "var(--background-secondary)",
+                                borderRadius: "8px",
+                                border: "1px solid var(--background-modifier-accent)",
+                                padding: "8px"
+                            }}>
+                                {guilds.map((guild: any) => (
+                                    <div
+                                        key={guild.id}
+                                        onClick={() => {
+                                            setSelectedGuilds(prev =>
+                                                prev.includes(guild.id)
+                                                    ? prev.filter(id => id !== guild.id)
+                                                    : [...prev, guild.id]
+                                            );
+                                        }}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            padding: "8px",
+                                            borderRadius: "4px",
+                                            cursor: "pointer",
+                                            background: selectedGuilds.includes(guild.id)
+                                                ? "var(--brand-experiment-20a)"
+                                                : "transparent",
+                                            marginBottom: "4px"
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedGuilds.includes(guild.id)}
+                                            onChange={() => { }}
+                                            style={{ cursor: "pointer" }}
+                                        />
+                                        <img
+                                            src={guild.getIconURL?.({ size: 24 })}
+                                            width={24}
+                                            height={24}
+                                            style={{ borderRadius: "50%" }}
+                                        />
+                                        <span style={{ color: "var(--text-normal)", fontSize: "13px" }}>{guild.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Whitelist */}
+                <div style={{ marginBottom: 20 }}>
+                    <div style={{ marginBottom: 12, color: "var(--text-normal)", fontWeight: 600, fontSize: "14px" }}>
+                        Whitelist (kept users):
+                    </div>
+                    <div style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        minHeight: "40px",
+                        padding: "8px",
+                        background: "var(--background-secondary)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--background-modifier-accent)"
+                    }}>
+                        {wl.map(id => (
+                            <FriendTag key={id} id={id} onRemove={idToRemove => {
+                                setWl(wl.filter(x => x !== idToRemove));
+                            }} />
+                        ))}
+                        {wl.length === 0 && (
+                            <div style={{ color: "var(--text-muted)", fontStyle: "italic", alignSelf: "center" }}>
+                                No users in whitelist
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Search */}
+                <div style={{ marginBottom: 20 }}>
+                    <div style={{ marginBottom: 8, color: "var(--text-normal)", fontWeight: 500, fontSize: "13px" }}>
+                        Add from your friends/DMs
+                    </div>
+                    <input
+                        placeholder="Search users by name"
+                        value={query}
+                        onChange={e => setQuery((e.target as HTMLInputElement).value)}
+                        style={{
+                            width: "100%",
+                            padding: "10px 12px",
+                            borderRadius: 8,
+                            border: "1px solid var(--background-modifier-accent)",
+                            background: "var(--input-background)",
+                            color: "var(--text-normal)",
+                            fontSize: "14px",
+                            outline: "none",
+                            transition: "border-color 0.2s ease"
+                        }}
+                        onFocus={e => {
+                            e.target.style.borderColor = "var(--brand-experiment)";
+                        }}
+                        onBlur={e => {
+                            e.target.style.borderColor = "var(--background-modifier-accent)";
+                        }}
+                    />
+                    <div style={{
+                        marginTop: 8,
+                        maxHeight: 150,
+                        overflow: "auto",
+                        background: "var(--background-secondary)",
+                        borderRadius: "8px",
+                        border: "1px solid var(--background-modifier-accent)"
+                    }}>
+                        {candidateIds.map((id: string) => {
+                            const u: any = id ? UserStore.getUser(id) : null;
+                            const label = (u?.globalName || u?.username || id || "Unknown") as string;
+                            const avatar = u?.getAvatarURL?.(undefined, 32, false);
+                            return (
+                                <div
+                                    key={id}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "10px 12px",
+                                        gap: 12,
+                                        borderBottom: "1px solid var(--background-modifier-accent)",
+                                        cursor: "pointer",
+                                        transition: "background-color 0.2s ease"
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = "var(--background-modifier-hover)";
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = "transparent";
+                                    }}
+                                    onClick={() => setWl(uniq([...wl, id]))}
+                                >
+                                    {avatar && <img src={avatar} width={32} height={32} style={{ borderRadius: "50%" }} />}
+                                    <div style={{ flex: 1, color: "var(--text-normal)", fontWeight: 500, fontSize: "14px" }}>
+                                        {label}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {candidateIds.length === 0 && query && (
+                            <div style={{ padding: "20px", textAlign: "center", color: "var(--text-muted)", fontStyle: "italic" }}>
+                                No matches found
+                            </div>
+                        )}
+                    </div>
                 </div>
             </ModalContent>
             <ModalFooter>
-                <div style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    width: "100%",
-                    gap: "12px"
-                }}>
-                    <Button 
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", gap: "12px" }}>
+                    <Button
                         onClick={save}
                         style={{
                             background: "var(--background-modifier-hover)",
                             color: "var(--text-normal)",
                             border: "1px solid var(--background-modifier-accent)"
                         }}
-                    >Save</Button>
-                    <Button 
-                        color={Button.Colors.RED} 
+                    >
+                        Save
+                    </Button>
+                    <Button
+                        color={Button.Colors.RED}
                         onClick={start}
+                        disabled={isRunning || !mode || (mode === "server" && selectedGuilds.length === 0)}
                         style={{
-                            background: "var(--button-danger-background)",
-                            color: "var(--white-500)"
+                            background: isRunning ? "var(--background-modifier-hover)" : "var(--button-danger-background)",
+                            color: isRunning ? "var(--text-muted)" : "var(--white-500)"
                         }}
-                    >Start</Button>
+                    >
+                        {isRunning ? "Running..." : "Start"}
+                    </Button>
                 </div>
             </ModalFooter>
         </ModalRoot>
     );
 }
 
+async function openMessageScrapperModal() {
+    // If modal is already open, close it first
+    if (currentModalKey) {
+        closeModal(currentModalKey);
+        currentModalKey = null;
+    }
+
+    // Reset process state
+    isProcessRunning = false;
+    shouldStopProcess = false;
+    currentProgressRef = null;
+
+    // If desktop, open in separate window instead of modal
+    if (IS_DISCORD_DESKTOP) {
+        try {
+            const { ipcRenderer } = await import("electron");
+            await ipcRenderer.invoke(IpcEvents.OPEN_MESSAGE_SCRAPPER_WINDOW);
+            return; // Don't open modal in main window
+        } catch (e) {
+            console.error("Failed to open message scrapper window:", e);
+            // Fall through to open modal as fallback
+        }
+    }
+
+    // Open new modal (web or fallback)
+    currentModalKey = openModal((props: ModalProps) => (
+        <WhitelistModal
+            modalProps={{
+                ...props,
+                onClose: () => {
+                    // Reset on close
+                    if (!isProcessRunning) {
+                        isProcessRunning = false;
+                        shouldStopProcess = false;
+                        currentProgressRef = null;
+                        currentModalKey = null;
+                    }
+                    props.onClose();
+                }
+            }}
+        />
+    ));
+}
+
+function stopMessageScrapper() {
+    if (isProcessRunning) {
+        shouldStopProcess = true;
+        Toasts.show({ id: Toasts.genId(), type: Toasts.Type.MESSAGE, message: "Stopping Message Scrapper..." });
+    } else {
+        Toasts.show({ id: Toasts.genId(), type: Toasts.Type.FAILURE, message: "No process running" });
+    }
+}
+
+const handleOpenMessageScrapper = () => {
+    openMessageScrapperModal();
+};
+
 export default definePlugin({
     name: "MessagesScrapper",
-    description: "Delete your own messages in DMs and servers except whitelisted users. Logs each run to JSON.",
+    description: "Delete your own messages in DMs or servers with a beautiful progress interface. Logs each run to JSON.",
     authors: [Devs.feelslove],
     settings,
+    start() {
+        // Listen for custom event from separate window
+        window.addEventListener("vencord:openMessageScrapper", handleOpenMessageScrapper);
+    },
+    stop() {
+        window.removeEventListener("vencord:openMessageScrapper", handleOpenMessageScrapper);
+    },
     renderChatBarButton: ({ isMainChat }) => {
         if (!isMainChat) return null;
         return (
             <ChatBarButton
                 tooltip="Messages Scrapper"
-                onClick={() => openModal(props => <WhitelistModal modalProps={props} />)}
+                onClick={openMessageScrapperModal}
                 onContextMenu={e =>
                     ContextMenuApi.openContextMenu(e, () => (
                         <Menu.Menu navId="pc-messages-scrapper-menu" onClose={ContextMenuApi.closeContextMenu} aria-label="Messages Scrapper">
-                            <Menu.MenuItem id="pc-messages-scrapper-open" label="Open Messages Scrapper" action={() => openModal(props => <WhitelistModal modalProps={props} />)} />
+                            <Menu.MenuItem id="pc-messages-scrapper-open" label="Open Messages Scrapper" action={openMessageScrapperModal} />
+                            <Menu.MenuItem
+                                id="pc-messages-scrapper-stop"
+                                label="Stop"
+                                action={stopMessageScrapper}
+                                disabled={!isProcessRunning}
+                            />
                         </Menu.Menu>
                     ))
                 }

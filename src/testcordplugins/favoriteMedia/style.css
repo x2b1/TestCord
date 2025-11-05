@@ -1,0 +1,4 @@
+/* stylelint-disable selector-class-pattern */
+.originalLink-Azwuo9:not([href$="gif"]) + div + div > .gifTag-1TvtGO {
+    display: none;
+}

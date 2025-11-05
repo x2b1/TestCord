@@ -1,6 +1,6 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Copyright (c) 2024 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -11,8 +11,8 @@ import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { SnowflakeUtils, Tooltip } from "@webpack/common";
-import { User } from "discord-types/general";
+import { User } from "@vencord/discord-types";
+import { SnowflakeUtils, Tooltip, UserStore } from "@webpack/common";
 
 
 
@@ -40,11 +40,12 @@ const checkUser = (user: User, indType: string) => {
 };
 
 const badge: ProfileBadge = {
-    component: (props: ProfileBadge & BadgeUserArgs & { user: User }) => checkUser(props.user, "badges"),
+    component: u => checkUser(UserStore.getUser(u.userId), "badges"),
     position: BadgePosition.START,
     shouldShow: _ => true,
     key: "newuser-indicator"
 };
+
 
 const settings = definePluginSettings({
     badges: {
@@ -71,10 +72,8 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "NewUserIndicator",
-    description: "Adds an indicator that shows if a user's account has been created recently",
-    authors: [
-        Devs.Ven,
-    ],
+    description: "Adds a indicator if users account is created recently",
+    authors: [Devs.None,],
     patches: [],
     settings,
     start() {

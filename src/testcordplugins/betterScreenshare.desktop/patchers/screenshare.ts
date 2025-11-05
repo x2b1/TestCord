@@ -1,8 +1,20 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 import { UserStore } from "@webpack/common";
 
@@ -57,12 +69,24 @@ export class ScreensharePatcher extends Patcher {
                 this.forceUpdateDesktopSourceOptions = forceUpdateDesktopSourceOptions;
                 this.forceUpdateTransportationOptions = forceUpdateTransportationOptions;
 
-                Emitter.addListener(connection.emitter, "on", "connected", () => {
+                (Emitter.addListener as (
+                    emitter: any,
+                    type: "on" | "once",
+                    event: string,
+                    fn: (...args: any[]) => void,
+                    plugin?: string
+                ) => () => void)(connection.emitter as any, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                     this.forceUpdateDesktopSourceOptions();
                 });
 
-                Emitter.addListener(connection.emitter, "on", "destroy", () => {
+                (Emitter.addListener as (
+                    emitter: any,
+                    type: "on" | "once",
+                    event: string,
+                    fn: (...args: any[]) => void,
+                    plugin?: string
+                ) => () => void)(connection.emitter as any, "on", "destroy", () => {
                     this.forceUpdateTransportationOptions = () => void 0;
                     this.forceUpdateDesktopSourceOptions = () => void 0;
                     this.oldSetTransportOptions = () => void 0;
@@ -70,11 +94,17 @@ export class ScreensharePatcher extends Patcher {
                 });
             };
 
-        Emitter.addListener(
-            this.mediaEngine.emitter,
+        (Emitter.addListener as (
+            emitter: any,
+            type: "on" | "once",
+            event: string,
+            fn: (...args: any[]) => void,
+            plugin?: string
+        ) => () => void)(
+            this.mediaEngine.emitter as any,
             "on",
             "connection",
-            connectionEventFunction,
+            connectionEventFunction as (...args: any[]) => void,
             PluginInfo.PLUGIN_NAME
         );
 

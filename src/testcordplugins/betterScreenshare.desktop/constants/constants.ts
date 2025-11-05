@@ -1,8 +1,20 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2023 Vendicated and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 
 import { Devs } from "@utils/constants";
 
@@ -10,22 +22,17 @@ import { types } from "../../philsPluginLibrary";
 
 export const PluginInfo = {
     PLUGIN_NAME: "BetterScreenshare",
-    DESCRIPTION: "Allows you to further customize your screen sharing",
+    DESCRIPTION: "This plugin allows you to further customize your screen sharing.",
     AUTHOR: {
-        ...Devs.phil,
-        github: "https://github.com/philhk"
+        ...Devs.feelslove,
+        github: "https://github.com/kanvekin"
     },
     CONTRIBUTORS: {
-        walrus: {
-            github: "https://github.com/philhk",
-            id: 305317288775778306n,
-            name: "walrus"
+        feelslove: {
+            github: "https://github.com/kanvekin",
+            id: 1368308663504343041n,
+            name: "kaanseas"
         },
-        Loukious: {
-            github: "https://github.com/loukious",
-            id: 211461918127292416n,
-            name: "Loukious"
-        }
     },
-    README: "https://github.com/RobinRMC/VencordPlus/tree/main/src/plusplugins/betterScreenshare.desktop"
+    README: "https://github.com/Vendicated/Vencord/tree/main/src/plugins/betterScreenshare"
 } as const satisfies types.PluginInfo;

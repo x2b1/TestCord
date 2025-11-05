@@ -11,6 +11,7 @@ import { Devs } from "@utils/constants";
 import { LazyComponent } from "@utils/lazyReact";
 import { classes } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
+import type { Channel, User } from "@vencord/discord-types";
 import { filters, find, findByPropsLazy, findStoreLazy } from "@webpack";
 import {
     ChannelStore,
@@ -22,7 +23,6 @@ import {
     Toasts,
     UserStore
 } from "@webpack/common";
-import type { Channel, User } from "discord-types/general";
 import type { PropsWithChildren, SVGProps } from "react";
 
 const HeaderBarIcon = LazyComponent(() => {
@@ -353,7 +353,6 @@ export default definePlugin({
         if (followUserId) {
             return (
                 <HeaderBarIcon
-                    className="vc-follow-user-indicator"
                     tooltip={`Following ${UserStore.getUser(followUserId).username} (click to trigger manually, right-click to unfollow)`}
                     icon={UnfollowIcon}
                     onClick={() => {

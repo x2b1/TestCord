@@ -5,69 +5,72 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
-    forceMono: {
-        description: "Force mono (disable stereo)",
-        type: OptionType.BOOLEAN,
-        default: true,
-    },
-    showNotifications: {
-        description: "Show notifications",
-        type: OptionType.BOOLEAN,
-        default: false,
-    }
+  forceMono: {
+    description: "Force mono (disable stereo)",
+    type: OptionType.BOOLEAN,
+    default: true,
+  },
+  showNotifications: {
+    description: "Show notifications",
+    type: OptionType.BOOLEAN,
+    default: false,
+  },
 });
 
 export default definePlugin({
-    name: "AntiStereo",
-    description: "Force Discord to use mono instead of stereo for audio output",
-    authors: [{
-        name: "Bash",
-        id: 1327483363518582784n
-    }],
-    settings,
-
-    patches: [
-        {
-            find: "Audio codecs",
-            replacement: {
-                match: /channels:\d+(?:\.\d+)?,/,
-                replace: "channels:1,",
-                predicate: () => settings.store.forceMono
-            }
-        },
-        {
-            find: "stereo",
-            replacement: {
-                match: /stereo:\s*["']?\d+(?:\.\d+)?["']?/g,
-                replace: "stereo:false",
-                predicate: () => settings.store.forceMono
-            }
-        },
-        {
-            find: "AudioContext",
-            replacement: {
-                match: /sampleRate:\s*\d+/g,
-                replace: "sampleRate:48000",
-                predicate: () => settings.store.forceMono
-            }
-        }
-    ],
-
-    start() {
-        if (settings.store.forceMono) {
-            console.log("[AntiStereo] AntiStereo plugin activated - Forcing mono");
-
-            if (settings.store.showNotifications) {
-                // Note: Notifications would require importing @api/Notifications
-                console.log("[AntiStereo] Notifications enabled");
-            }
-        }
+  name: "AntiStereo",
+  description: "Forces Discord to use mono instead of stereo for audio output",
+  authors: [
+    {
+      name: "Bash",
+      id: 1327483363518582784n,
     },
+  ],
+  settings,
 
-    stop() {
-        console.log("[AntiStereo] AntiStereo plugin deactivated");
+  patches: [
+    {
+      find: "Audio codecs",
+      replacement: {
+        match: /channels:\d+(?:\.\d+)?,/,
+        replace: "channels:1,",
+        predicate: () => settings.store.forceMono,
+      },
+    },
+    {
+      find: "stereo",
+      replacement: {
+        match: /stereo:\s*["']?\d+(?:\.\d+)?["']?/g,
+        replace: "stereo:false",
+        predicate: () => settings.store.forceMono,
+      },
+    },
+    {
+      find: "AudioContext",
+      replacement: {
+        match: /sampleRate:\s*\d+/g,
+        replace: "sampleRate:48000",
+        predicate: () => settings.store.forceMono,
+      },
+    },
+  ],
+
+  start() {
+    if (settings.store.forceMono) {
+      console.log("[AntiStereo] AntiStereo plugin enabled - Forcing mono");
+
+      if (settings.store.showNotifications) {
+        // Note: Notifications would require importing @api/Notifications
+        console.log("[AntiStereo] Notifications enabled");
+      }
     }
+  },
+
+  stop() {
+    console.log("[AntiStereo] AntiStereo plugin disabled");
+  },
 });
