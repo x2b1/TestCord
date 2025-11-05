@@ -8,8 +8,7 @@ import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import { Alerts, Button, showToast } from "@webpack/common";
-import { Toasts } from "@webpack/common/utils";
+import { Alerts, Button, showToast, Toasts } from "@webpack/common";
 
 import { clearUserNotes, transferUserNotes } from "./data";
 
