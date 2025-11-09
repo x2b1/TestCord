@@ -1,6 +1,6 @@
 /*
- * Equicord, a modification for Discord's desktop app
- * Copyright (c) 2022 Equicord and contributors
+ * Vencord, a modification for Discord's desktop app
+ * Copyright (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,241 +14,124 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
-import "./style.css";
+import "@equicordplugins/_misc/styles.css";
 
-import {
-    ApplicationCommandInputType,
-    ApplicationCommandOptionType,
-    findOption,
-    sendBotMessage,
-} from "@api/Commands";
+import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { Forms, MessageStore, UserStore } from "@webpack/common";
+import { Channel, Message } from "@vencord/discord-types";
+import { Forms, MessageActions, MessageStore, UserStore } from "@webpack/common";
 
-// Find the message actions we need
-const MessageActions = findByPropsLazy("deleteMessage", "startEditMessage");
-
-async function deleteMessages(
-    amount: number,
-    channelId: string,
-    delay: number = 1500
-): Promise<number> {
+async function deleteMessages(amount: number, channel: Channel, delay: number = 1500): Promise<number> {
     let deleted = 0;
-    const userId = UserStore.getCurrentUser().id;
-
-    try {
-        // Get messages from the channel using MessageStore
-        const messagesData = MessageStore.getMessages(channelId);
-
-        if (!messagesData) {
-            console.error(
-                "[PurgeMessages] No messages data found in channel:",
-                channelId
-            );
-            return 0;
-        }
-
-        // Extract messages - try different approaches based on MessageStore structure
-        let allMessages: any[] = [];
-
-        // Try _map approach (like messageBurst plugin)
-        if (messagesData._map) {
-            allMessages = Object.values(messagesData._map);
-        }
-        // Try _array approach (like quickReply plugin)
-        else if (messagesData._array) {
-            allMessages = Array.from(messagesData._array);
-        }
-        // Try toArray method
-        else if (messagesData.toArray) {
-            allMessages = messagesData.toArray();
-        }
-        // Fallback to Object.values
-        else if (typeof messagesData === "object") {
-            allMessages = Object.values(messagesData).filter(
-                (msg: any) => msg && typeof msg === "object" && msg.id
-            );
-        }
-
-        console.log(
-            `[PurgeMessages] Total messages in store: ${allMessages.length}`
-        );
-
-        // Filter to only user's messages and sort by timestamp (newest first)
-        const userMessages = allMessages
-            .filter((msg: any) => msg && msg.author && msg.author.id === userId)
-            .sort(
-                (a: any, b: any) =>
-                    new Date(b.timestamp).getTime() -
-                    new Date(a.timestamp).getTime()
-            );
-
-        console.log(
-            `[PurgeMessages] Found ${userMessages.length} messages from user in channel ${channelId}`
-        );
-
-        if (userMessages.length === 0) {
-            console.warn("[PurgeMessages] No messages found from current user");
-            return 0;
-        }
-
-        // Delete messages with delay
-        for (let i = 0; i < Math.min(amount, userMessages.length); i++) {
-            const message = userMessages[i];
-
-            try {
-                console.log(
-                    `[PurgeMessages] Deleting message ${i + 1}/${amount}: ${
-                        message.id
-                    }`
-                );
-                MessageActions.deleteMessage(channelId, message.id);
-                deleted++;
-
-                // Add delay between deletions (except for the last one)
-                if (
-                    delay > 0 &&
-                    i < Math.min(amount, userMessages.length) - 1
-                ) {
-                    await new Promise((resolve) => setTimeout(resolve, delay));
-                }
-            } catch (error) {
-                console.error(
-                    `[PurgeMessages] Failed to delete message ${message.id}:`,
-                    error
-                );
-            }
-        }
-    } catch (error) {
-        console.error(
-            "[PurgeMessages] Error in deleteMessages function:",
-            error
-        );
+    const userId = UserStore.getCurrentUser()?.id;
+    if (!userId) {
+        console.error("[PurgeMessages] No user ID found");
+        return 0;
     }
 
+    const channelId = typeof channel === "string" ? channel : channel?.id;
+    if (!channelId) {
+        console.error("[PurgeMessages] No channel ID found");
+        return 0;
+    }
+
+    const messagesData = MessageStore.getMessages(channelId);
+    if (!messagesData || !messagesData._array) {
+        console.error("[PurgeMessages] No messages found in store for channel:", channelId);
+        return 0;
+    }
+
+    const allMessages = messagesData._array.filter((m: Message) => m.author?.id === userId);
+    const messages: Message[] = [...allMessages].reverse().slice(0, amount);
+
+    if (messages.length === 0) {
+        console.error("[PurgeMessages] No messages to delete (found", allMessages.length, "user messages)");
+        return 0;
+    }
+
+    console.log("[PurgeMessages] Attempting to delete", messages.length, "messages from channel", channelId);
+
+    for (const message of messages) {
+        try {
+            if (!message.id) continue;
+            MessageActions.deleteMessage(channelId, message.id);
+            deleted++;
+            if (deleted >= amount) break;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        } catch (error) {
+            console.error("[PurgeMessages] Failed to delete message:", message.id, error);
+        }
+    }
+
+    console.log("[PurgeMessages] Deleted", deleted, "messages");
     return deleted;
 }
 
 export default definePlugin({
     name: "PurgeMessages",
-    description:
-        "Purge your own messages from any channel with customizable delay",
+    description: "Purges messages from a channel",
     authors: [EquicordDevs.bhop, Devs.nyx],
-
-    // Better settings component with more warnings
-    settingsAboutComponent: () => (
-        <div className="purge-settings">
-            <Forms.FormText>
-                ⚠️ Use with caution! This plugin may trigger Discord's anti-spam
-                systems.
-            </Forms.FormText>
-            <Forms.FormText>
-                🔍 Make sure you have proper permissions in the target channel.
-            </Forms.FormText>
-            <Forms.FormText>
-                ⏱️ Higher delays (2000ms+) are recommended to avoid rate limits.
-            </Forms.FormText>
-        </div>
-    ),
-
+    settingsAboutComponent: () => <>
+        <Forms.FormText className="plugin-warning">
+            We can't guarantee this plugin won't get you warned or banned.
+        </Forms.FormText>
+    </>,
     commands: [
         {
             name: "purge",
-            description: "Delete your recent messages from a channel",
+            description: "Purge a chosen amount of messages from a channel",
             options: [
                 {
                     name: "amount",
-                    description: "Number of your messages to delete (max 100)",
+                    description: "How many messages you wish to purge",
                     type: ApplicationCommandOptionType.INTEGER,
-                    required: true,
+                    required: true
                 },
                 {
                     name: "channel",
-                    description:
-                        "Channel to purge messages from (default: current channel)",
+                    description: "Channel ID you wish to purge from",
                     type: ApplicationCommandOptionType.CHANNEL,
-                    required: false,
+                    required: false
                 },
                 {
                     name: "delay",
-                    description:
-                        "Delay between deletions in milliseconds (default: 1500)",
+                    description: "Delay inbetween deleting messages",
                     type: ApplicationCommandOptionType.INTEGER,
-                    required: false,
-                },
+                    required: false
+                }
             ],
             inputType: ApplicationCommandInputType.BUILT_IN,
-
             execute: async (opts, ctx) => {
-                try {
-                    const amount = findOption(opts, "amount", 0);
-                    const channel = findOption(opts, "channel", ctx.channel);
-                    const delay = findOption(opts, "delay", 1500);
-
-                    // Input validation
-                    if (amount <= 0 || amount > 100) {
-                        sendBotMessage(ctx.channel.id, {
-                            content:
-                                "❌ Please specify a number between 1 and 100.",
-                        });
-                        return;
-                    }
-
-                    if (delay < 0 || delay > 10000) {
-                        sendBotMessage(ctx.channel.id, {
-                            content:
-                                "❌ Delay must be between 0 and 10000 milliseconds.",
-                        });
-                        return;
-                    }
-
-                    // Send initial confirmation
-                    await sendBotMessage(ctx.channel.id, {
-                        content: `🔄 Preparing to delete your last ${amount} messages${
-                            delay > 0 ? ` with ${delay}ms delay` : ""
-                        }...`,
-                    });
-
-                    // Execute the purge
-                    const deletedCount = await deleteMessages(
-                        amount,
-                        channel.id,
-                        delay
-                    );
-
-                    // Send result
-                    if (deletedCount === 0) {
-                        sendBotMessage(ctx.channel.id, {
-                            content:
-                                "❌ No messages found to delete. Make sure you have sent messages in this channel.",
-                        });
-                    } else if (deletedCount < amount) {
-                        sendBotMessage(ctx.channel.id, {
-                            content: `⚠️ Deleted ${deletedCount} messages (requested ${amount}). You may not have enough messages in this channel.`,
-                        });
-                    } else {
-                        sendBotMessage(ctx.channel.id, {
-                            content: `✅ Successfully deleted ${deletedCount} messages!`,
-                        });
-                    }
-                } catch (error) {
-                    console.error(
-                        "[PurgeMessages] Command execution error:",
-                        error
-                    );
+                const amount: number = findOption(opts, "amount", 0);
+                if (!amount || amount <= 0) {
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Unexpected error: ${
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                        }`,
+                        content: `> Invalid amount specified.`
+                    });
+                    return;
+                }
+
+                const channel: Channel = findOption(opts, "channel", ctx.channel) || ctx.channel;
+                const delay: number = findOption(opts, "delay", 1500);
+
+                sendBotMessage(ctx.channel.id, {
+                    content: `> deleting ${amount} messages.`
+                });
+
+                try {
+                    const deleted = await deleteMessages(amount, channel, delay);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `> deleted ${deleted} messages`
+                    });
+                } catch (error) {
+                    console.error("[PurgeMessages] Error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `> Error: Failed to delete messages`
                     });
                 }
             },
-        },
+        }
     ],
 });
