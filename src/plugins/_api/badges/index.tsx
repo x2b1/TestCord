@@ -28,20 +28,13 @@ import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
-<<<<<<< HEAD
-import { TestCordDonorModal, VencordDonorModal } from "./modals";
-
-const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
-const TESTCORD_CONTRIBUTOR_BADGE = "https://testcord.org/assets/favicon.png";
-=======
 import Plugins, { PluginMeta } from "~plugins";
 
-import { EquicordDonorModal, VencordDonorModal } from "./modals";
+import { VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
 const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
->>>>>>> aa13cfdc564f8d9093f633fd1d6c460e428abfda
 
 const ContributorBadge: ProfileBadge = {
     description: "Vencord Contributor",
@@ -190,11 +183,7 @@ export default definePlugin({
         }
     },
 
-<<<<<<< HEAD
-    userProfileBadges: [ContributorBadge, TestCordContributorBadge],
-=======
     userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
->>>>>>> aa13cfdc564f8d9093f633fd1d6c460e428abfda
 
     async start() {
         await loadAllBadges();
