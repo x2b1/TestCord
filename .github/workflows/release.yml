@@ -1,12 +1,13 @@
-name: Nightly Autobuild
+name: Build & Release
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
+    tags:
+      - "v*"
 
 jobs:
-  nightly:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,12 +31,9 @@ jobs:
       - name: Build Browser
         run: pnpm buildWeb
 
-      - name: Upload to Nightly Release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: nightly
-          name: Nightly Build
-          prerelease: true
           files: dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
