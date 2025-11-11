@@ -184,7 +184,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, TestCordContributorBadge, UserPluginContributorBadge],
 
     async start() {
         await loadAllBadges();
