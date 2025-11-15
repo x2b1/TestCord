@@ -30,7 +30,7 @@ import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { EquicordDonorModal, VencordDonorModal } from "./modals";
+import { VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
@@ -45,15 +45,9 @@ const ContributorBadge: ProfileBadge = {
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId))
 };
 
-<<<<<<< HEAD
-const TestCordContributorBadge: ProfileBadge = {
-    description: "TestCord Contributor",
-    image: TESTCORD_CONTRIBUTOR_BADGE,
-=======
 const EquicordContributorBadge: ProfileBadge = {
     description: "Equicord Contributor",
     iconSrc: EQUICORD_CONTRIBUTOR_BADGE,
->>>>>>> 5ebcba776eddc41348771ddbb04930ba53fd5506
     position: BadgePosition.START,
     shouldShow: ({ userId }) => shouldShowEquicordContributorBadge(userId),
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
@@ -254,15 +248,9 @@ export default definePlugin({
         } satisfies ProfileBadge));
     },
 
-<<<<<<< HEAD
-    getTestCordDonorBadges(userId: string) {
-        return TestCordDonorBadges[userId]?.map(badge => ({
-            image: badge.badge,
-=======
     getEquicordDonorBadges(userId: string) {
         return EquicordDonorBadges[userId]?.map(badge => ({
             iconSrc: badge.badge,
->>>>>>> 5ebcba776eddc41348771ddbb04930ba53fd5506
             description: badge.tooltip,
             position: BadgePosition.START,
             props: {
