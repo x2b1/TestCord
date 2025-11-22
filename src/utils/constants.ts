@@ -18,7 +18,6 @@
 
 export const REACT_GLOBAL = "Vencord.Webpack.Common.React";
 
-// TestCord
 export const SUPPORT_CHANNEL_ID = "1297590739911573585";
 export const GUILD_ID = "1173279886065029291";
 export const DONOR_ROLE_ID = "1173316879083896912";
@@ -29,7 +28,6 @@ export const EQUIBOP_CONTRIB_ROLE_ID = "1287079931645263968";
 export const VENCORD_CONTRIB_ROLE_ID = "1173343399470964856";
 export const EQUIBOT_USER_ID = "1243063117852835941";
 
-// Vencord
 export const VC_SUPPORT_CHANNEL_ID = "1026515880080842772";
 export const VC_GUILD_ID = "1015060230222131221";
 export const VENBOT_USER_ID = "1017176847865352332";
@@ -41,24 +39,27 @@ export const VC_KNOWN_ISSUES_CHANNEL_ID = "1222936386626129920";
 export const VESKTOP_SUPPORT_CHANNEL_ID = "1345457031426871417";
 export const VC_SUPPORT_CHANNEL_IDS = [VC_SUPPORT_CHANNEL_ID, VESKTOP_SUPPORT_CHANNEL_ID];
 
-export const GUILD_IDS = [GUILD_ID, VC_GUILD_ID];
+export const KERNIXCORD_GUILD_ID = "1418334900616167516";
+export const KERNIXCORD_DONOR_ROLE_ID = "1424778827535618120";
+export const KERNIXCORD_CONTRIB_ROLE_ID = "1424778855583060121";
+export const KERNIXBOT_USER_ID = "1422108411780141216";
+
+export const GUILD_IDS = [GUILD_ID, VC_GUILD_ID, KERNIXCORD_GUILD_ID];
 export const SUPPORT_CHANNEL_IDS = [SUPPORT_CHANNEL_ID, VC_SUPPORT_CHANNEL_ID];
-export const DONOR_ROLE_IDS = [DONOR_ROLE_ID, VC_DONOR_ROLE_ID];
-export const CONTRIB_ROLE_IDS = [CONTRIB_ROLE_ID, EQUIBOP_CONTRIB_ROLE_ID, VENCORD_CONTRIB_ROLE_ID, VC_CONTRIB_ROLE_ID];
+export const DONOR_ROLE_IDS = [DONOR_ROLE_ID, VC_DONOR_ROLE_ID, KERNIXCORD_DONOR_ROLE_ID];
+export const CONTRIB_ROLE_IDS = [CONTRIB_ROLE_ID, EQUIBOP_CONTRIB_ROLE_ID, VENCORD_CONTRIB_ROLE_ID, VC_CONTRIB_ROLE_ID, KERNIXCORD_CONTRIB_ROLE_ID];
 
 const platform = navigator.platform.toLowerCase();
 export const IS_WINDOWS = platform.startsWith("win");
 export const IS_MAC = platform.startsWith("mac");
 export const IS_LINUX = platform.startsWith("linux");
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_tablet_or_desktop
-// "In summary, we recommend looking for the string Mobi anywhere in the User Agent to detect a mobile device."
-export const IS_MOBILE = navigator.userAgent.includes("Mobi");
 
 export interface Dev {
     name: string;
     id: bigint;
     badge?: boolean;
 }
+
 
 /**
  * If you made a plugin or substantial contribution, add yourself here.
@@ -135,6 +136,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     Nuckyz: {
         name: "Nuckyz",
         id: 235834946571337729n
+    },
+    feelslove: {
+        name: "feelslove",
+        id: 249620332925812736n
     },
     D3SOX: {
         name: "D3SOX",
@@ -635,7 +640,7 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     }
 } satisfies Record<string, Dev>);
 
-export const TestCordDevs = Object.freeze({
+export const EquicordDevs = Object.freeze({
     nobody: {
         name: "nobody",
         id: 0n
@@ -864,6 +869,10 @@ export const TestCordDevs = Object.freeze({
         name: "nin0dev",
         id: 886685857560539176n
     },
+    feelslove: {
+        name: "feelslove",
+        id: 249620332925812736n
+    },
     D3SOX: {
         name: "D3SOX",
         id: 201052085641281538n
@@ -1024,10 +1033,6 @@ export const TestCordDevs = Object.freeze({
     OIRNOIR: {
         name: "OIRNOIR",
         id: 720842469024989195n
-    },
-    cassie: {
-        name: "cassie",
-        id: 280411966126948353n,
     },
     mochienya: {
         name: "mochie",
@@ -1200,11 +1205,22 @@ export const TestCordDevs = Object.freeze({
     square: {
         name: "square",
         id: 219363409097916416n
-    },
-    neoarz: {
-        name: "neoarz",
-        id: 1015372540937502851n
     }
+} satisfies Record<string, Dev>);
+
+export const KernixcordDevs = Object.freeze({
+    feelslove: {
+        name: "Emrepanda12",
+        id: 249620332925812736n
+    },
+    sikilmem: {
+        name: "Emirpanda12",
+        id: 1368308663504343041n
+    },
+    pic: {
+        name: "Enespanda12",
+        id: 682549231365390375n
+    },
 } satisfies Record<string, Dev>);
 
 // iife so #__PURE__ works correctly
@@ -1216,14 +1232,18 @@ export const VencordDevsById = /* #__PURE__*/ (() =>
     ))
 )() as Record<string, Dev>;
 
-export const TestCordDevsById = /* #__PURE__*/ (() =>
+export const EquicordDevsById = /* #__PURE__*/ (() =>
     Object.freeze(Object.fromEntries(
-        Object.entries(TestCordDevs)
+        Object.entries(EquicordDevs)
             .filter(d => d[1].id !== 0n)
             .map(([_, v]) => [v.id, v] as const)
     ))
 )() as Record<string, Dev>;
 
-// Aliases for backward compatibility
-export const EquicordDevs = TestCordDevs;
-export const EquicordDevsById = TestCordDevsById;
+export const KernixcordDevsById = /* #__PURE__*/ (() =>
+    Object.freeze(Object.fromEntries(
+        Object.entries(KernixcordDevs)
+            .filter(d => d[1].id !== 0n)
+            .map(([_, v]) => [v.id, v] as const)
+    ))
+)() as Record<string, Dev>;

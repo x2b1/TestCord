@@ -17,7 +17,7 @@
 */
 
 import { React, useEffect, useMemo, useReducer, useState } from "@webpack/common";
-import type { ActionDispatch, ReactNode } from "react";
+import { ActionDispatch, ReactNode } from "react";
 
 import { checkIntersecting } from "./misc";
 

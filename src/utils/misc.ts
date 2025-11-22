@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { ChannelStore, GuildMemberStore } from "@webpack/common";
+import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
 
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { copyToClipboard } from "./clipboard";
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, KernixcordDevsById, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
@@ -33,6 +34,15 @@ export function classes(...classes: Array<string | null | undefined | false>) {
  */
 export function sleep(ms: number): Promise<void> {
     return new Promise(r => setTimeout(r, ms));
+}
+
+export async function copyWithToast(text: string, toastMessage = "Copied to clipboard!") {
+    await copyToClipboard(text);
+    Toasts.show({
+        message: toastMessage,
+        id: Toasts.genId(),
+        type: Toasts.Type.SUCCESS
+    });
 }
 
 /**
@@ -77,18 +87,21 @@ export function identity<T>(value: T): T {
     return value;
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_tablet_or_desktop
+// "In summary, we recommend looking for the string Mobi anywhere in the User Agent to detect a mobile device."
+export const isMobile = navigator.userAgent.includes("Mobi");
+
 export const isPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id);
 export const shouldShowContributorBadge = (id: string) => isPluginDev(id) && VencordDevsById[id].badge !== false;
 
-export const isTestCordPluginDev = (id: string) => Object.hasOwn(TestCordDevsById, id);
-export const shouldShowEquicordContributorBadge = (id: string) => isTestCordPluginDev(id) && TestCordDevsById[id].badge !== false;
+export const isEquicordPluginDev = (id: string) => Object.hasOwn(EquicordDevsById, id);
+export const shouldShowEquicordContributorBadge = (id: string) => isEquicordPluginDev(id) && EquicordDevsById[id].badge !== false;
 
-// Aliases for backward compatibility
-export const isEquicordGuild = isTestCordGuild;
-export const isEquicordPluginDev = isTestCordPluginDev;
-export const isEquicordSupport = isTestCordSupport;
+export const isKernixcordPluginDev = (id: string) => Object.hasOwn(KernixcordDevsById, id);
+export const shouldShowKernixcordContributorBadge = (id: string) => isKernixcordPluginDev(id) && KernixcordDevsById[id].badge !== false;
 
-export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(TestCordDevsById, id);
+
+export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id) || Object.hasOwn(KernixcordDevsById, id);
 
 export function pluralise(amount: number, singular: string, plural = singular + "s") {
     return amount === 1 ? `${amount} ${singular}` : `${amount} ${plural}`;
@@ -110,7 +123,7 @@ export function tryOrElse<T>(func: () => T, fallback: T): T {
     }
 }
 
-export function isTestCordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
+export function isEquicordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
     if (!id) return false;
     if (isGuildId) return id === GUILD_ID;
     const channel = ChannelStore.getChannel(id);
@@ -122,7 +135,7 @@ export function isSupportChannel(channelId: string | null | undefined): boolean 
     return channelId === SUPPORT_CHANNEL_ID;
 }
 
-export function isTestCordSupport(userId: string | null | undefined): boolean {
+export function isEquicordSupport(userId: string | null | undefined): boolean {
     if (!userId) return false;
 
     const member = GuildMemberStore.getMember(GUILD_ID, userId);
