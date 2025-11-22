@@ -10,7 +10,7 @@ import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
 import * as Modal from "@utils/modal";
 import definePlugin from "@utils/types";
-import { Button, Flex, React, Text, TextInput } from "@webpack/common";
+import { Button, Flux, React, Text, TextInput } from "@webpack/common";
 
 const loginWithToken = (token: string) => {
     const iframe = document.createElement("iframe");
@@ -89,7 +89,7 @@ const AddAccountModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="token-login-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flux justify={Flux.Justify.END} gap={10}>
                     <Button
                         color={Button.Colors.BRAND}
                         disabled={!username || !token}
@@ -106,7 +106,7 @@ const AddAccountModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                     >
                         Cancel
                     </Button>
-                </Flex>
+                </Flux>
             </Modal.ModalFooter>
         </Modal.ModalRoot>
     );
@@ -169,7 +169,7 @@ class TokenLoginManagerUI {
 
         return (
             <div className="token-login-container">
-                <Flex justify={Flex.Justify.BETWEEN} align={Flex.Align.CENTER}>
+                <Flux justify={Flux.Justify.BETWEEN} align={Flux.Align.CENTER}>
                     <Text variant="heading-lg/semibold">Token Login Manager</Text>
                     <Button
                         onClick={() => {
@@ -187,7 +187,7 @@ class TokenLoginManagerUI {
                     >
                         Add Account
                     </Button>
-                </Flex>
+                </Flux>
                 {Object.values(this.manager.accounts).map(account => (
                     <AccountEntryComponent
                         key={account.id}
