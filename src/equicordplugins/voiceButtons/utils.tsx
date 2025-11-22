@@ -8,7 +8,8 @@ import "./styles.css";
 
 import { Icon, User } from "@vencord/discord-types";
 import { findComponentByCodeLazy, findStoreLazy } from "@webpack";
-import { Button, ChannelStore, GuildActions, MediaEngineStore, NavigationRouter, PermissionsBits, PermissionStore, Tooltip, UserStore, VoiceActions, VoiceStateStore } from "@webpack/common";
+import { Button, ChannelStore, MediaEngineStore, NavigationRouter, PermissionsBits, PermissionStore, Tooltip, UserStore, VoiceActions, VoiceStateStore } from "@webpack/common";
+import sendPatch from "../voiceChatUtils";
 import { JSX } from "react";
 
 import { settings } from "./settings";
@@ -132,7 +133,7 @@ export function UserMuteButton({ user }: { user: User; }) {
                     const voiceState = VoiceStateStore.getVoiceStateForUser(user.id);
                     const channel = voiceState?.channelId ? ChannelStore.getChannel(voiceState.channelId) : null;
                     if (channel?.guild_id) {
-                        GuildActions.setServerMute(channel.guild_id, user.id, !isServerMuted);
+                        sendPatch(channel, { mute: !isServerMuted });
                     }
                 } else {
                     if (isCurrent) {
@@ -179,7 +180,7 @@ export function UserDeafenButton({ user }: { user: User; }) {
                     const voiceState = VoiceStateStore.getVoiceStateForUser(user.id);
                     const channel = voiceState?.channelId ? ChannelStore.getChannel(voiceState.channelId) : null;
                     if (channel?.guild_id) {
-                        GuildActions.setServerDeaf(channel.guild_id, user.id, !isServerDeafened);
+                        sendPatch(channel, { deaf: !isServerDeafened });
                     }
                 } else {
                     if (isCurrent) {

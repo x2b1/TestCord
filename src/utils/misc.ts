@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { ChannelStore, GuildMemberStore } from "@webpack/common";
+import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
+
 
 import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
 
@@ -112,6 +113,13 @@ export function isEquicordGuild(id: string | null | undefined, isGuildId: boolea
     return channel.guild_id === GUILD_ID;
 }
 
+export function isTestCordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
+    if (!id) return false;
+    if (isGuildId) return id === "TESTCORD_GUILD_ID"; // replace with actual TestCord guild ID
+    const channel = ChannelStore.getChannel(id);
+    return channel?.guild_id === "TESTCORD_GUILD_ID"; // replace with actual TestCord guild ID
+}
+
 export function isSupportChannel(channelId: string | null | undefined): boolean {
     if (!channelId) return false;
     return channelId === SUPPORT_CHANNEL_ID;
@@ -122,4 +130,12 @@ export function isEquicordSupport(userId: string | null | undefined): boolean {
 
     const member = GuildMemberStore.getMember(GUILD_ID, userId);
     return member?.roles?.includes(EQUICORD_HELPERS) || false;
+}
+
+export function copyWithToast(text: string, message = "Copied to clipboard!") {
+    navigator.clipboard.writeText(text).then(() => {
+        Toasts.show({ id: Toasts.genId(), message, type: Toasts.Type.SUCCESS });
+    }).catch(() => {
+        Toasts.show({ id: Toasts.genId(), message: "Failed to copy to clipboard", type: Toasts.Type.FAILURE });
+    });
 }
