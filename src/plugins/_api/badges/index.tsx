@@ -31,7 +31,7 @@ import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { VencordDonorModal } from "./modals";
+import { VencordDonorModal, EquicordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
@@ -82,7 +82,7 @@ const UserPluginContributorBadge: ProfileBadge = {
 };
 
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
-let TestCordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;
@@ -93,10 +93,10 @@ async function loadBadges(url: string, noCache = false) {
 
 async function loadAllBadges(noCache = false) {
     const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const testcordBadges = await loadBadges("https://testcord.org/badges.json", noCache);
+    const equicordBadges = await loadBadges("https://equicord.org/badges.json", noCache);
 
     DonorBadges = vencordBadges;
-    TestCordDonorBadges = testcordBadges;
+    EquicordDonorBadges = equicordBadges;
 }
 
 let intervalId: any;
@@ -171,8 +171,8 @@ export default definePlugin({
         return DonorBadges;
     },
 
-    get TestCordDonorBadges() {
-        return TestCordDonorBadges;
+    get EquicordDonorBadges() {
+        return EquicordDonorBadges;
     },
 
     toolboxActions: {
@@ -265,13 +265,13 @@ export default definePlugin({
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
-                return TestCordDonorModal();
+                return EquicordDonorModal();
             },
         } satisfies ProfileBadge));
     },
 
     // Alias for backward compatibility
     getEquicordDonorBadges: function (userId: string) {
-        return this.getTestCordDonorBadges(userId);
+        return this.getEquicordDonorBadges(userId);
     }
 });
