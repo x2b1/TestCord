@@ -31,7 +31,7 @@ import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { VencordDonorModal, EquicordDonorModal } from "./modals";
+import { VencordDonorModal, TestCordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
@@ -186,7 +186,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EQUICORD_CONTRIBUTOR_BADGE, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
 
     async start() {
         await loadAllBadges();
@@ -265,13 +265,13 @@ export default definePlugin({
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
-                return EquicordDonorModal();
+                return TestCordDonorModal();
             },
         } satisfies ProfileBadge));
     },
 
     // Alias for backward compatibility
-    getEquicordDonorBadges: function (userId: string) {
+    getTestCordDonorBadges: function (userId: string) {
         return this.getEquicordDonorBadges(userId);
     }
 });
