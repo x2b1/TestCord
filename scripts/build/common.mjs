@@ -26,7 +26,7 @@ import esbuild, { build, context } from "esbuild";
 import { constants as FsConstants, readFileSync } from "fs";
 import { access, readdir, readFile } from "fs/promises";
 import { minify as minifyHtml } from "html-minifier-terser";
-import { dirname, join, relative } from "path";
+import { dirname, join, relative, resolve } from "path";
 import { fileURLToPath } from "url";
 import { promisify } from "util";
 
@@ -238,6 +238,7 @@ export const globPlugins = (kind) => ({
             return {
                 contents: code,
                 resolveDir: "./src",
+                watchDirs: pluginDirs.map(d => resolve("src", d)),
             };
         });
     },

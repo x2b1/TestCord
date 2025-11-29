@@ -65,7 +65,7 @@ function Indicator() {
 
 }
 
-const ChatBarIcon: ChatBarButtonFactory = ({ isMainChat }) => {
+const ChatBarRender: ChatBarButtonFactory = ({ isMainChat }) => {
     if (!isMainChat) return null;
 
     return (
@@ -76,19 +76,25 @@ const ChatBarIcon: ChatBarButtonFactory = ({ isMainChat }) => {
                 "aria-haspopup": "dialog",
             }}
         >
-            <svg
-                aria-hidden
-                role="img"
-                width="20"
-                height="20"
-                viewBox={"0 0 64 64"}
-                style={{ scale: "1.39", translate: "0 -1px" }}
-            >
-                <path fill="currentColor" d="M 32 9 C 24.832 9 19 14.832 19 22 L 19 27.347656 C 16.670659 28.171862 15 30.388126 15 33 L 15 49 C 15 52.314 17.686 55 21 55 L 43 55 C 46.314 55 49 52.314 49 49 L 49 33 C 49 30.388126 47.329341 28.171862 45 27.347656 L 45 22 C 45 14.832 39.168 9 32 9 z M 32 13 C 36.963 13 41 17.038 41 22 L 41 27 L 23 27 L 23 22 C 23 17.038 27.037 13 32 13 z" />
-            </svg>
+            {ChatBarIcon()}
         </ChatBarButton>
     );
 };
+
+function ChatBarIcon() {
+    return (
+        <svg
+            aria-hidden
+            role="img"
+            width="20"
+            height="20"
+            viewBox={"0 0 64 64"}
+            style={{ scale: "1.39", translate: "0 -1px" }}
+        >
+            <path fill="currentColor" d="M 32 9 C 24.832 9 19 14.832 19 22 L 19 27.347656 C 16.670659 28.171862 15 30.388126 15 33 L 15 49 C 15 52.314 17.686 55 21 55 L 43 55 C 46.314 55 49 52.314 49 49 L 49 33 C 49 30.388126 47.329341 28.171862 45 27.347656 L 45 22 C 45 14.832 39.168 9 32 9 z M 32 13 C 36.963 13 41 17.038 41 22 L 41 27 L 23 27 L 23 22 C 23 17.038 27.037 13 32 13 z" />
+        </svg>
+    );
+}
 
 const settings = definePluginSettings({
     savedPasswords: {
@@ -98,6 +104,49 @@ const settings = definePluginSettings({
     }
 });
 
+const EMBED_API_URL = "https://embed.sammcheese.net";
+const INV_REGEX = new RegExp(/( \u200c|\u200d |[\u2060-\u2064])[^\u200b]/);
+const URL_REGEX = new RegExp(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/);
+function colorCodeFromNumber(color: number): string {
+    return `#${[color >> 16, color >> 8, color]
+        .map(x => (x & 0xFF).toString(16))
+        .join("")}`;
+}
+
+async function getEmbed(url: URL): Promise<Object | {}> {
+    const { body } = await RestAPI.post({
+        url: Constants.Endpoints.UNFURL_EMBED_URLS,
+        body: {
+            urls: [url]
+        }
+    });
+    // The endpoint returns the color as a number, but Discord expects a string
+    body.embeds[0].color = colorCodeFromNumber(body.embeds[0].color);
+    return await body.embeds[0];
+}
+
+export async function buildEmbed(message: any, revealed: string): Promise<void> {
+    const urlCheck = revealed.match(URL_REGEX);
+
+    message.embeds.push({
+        type: "rich",
+        rawTitle: "Decrypted Message",
+        color: "#45f5f5",
+        rawDescription: revealed,
+        footer: {
+            text: "Made with ❤️ by c0dine and Sammy!",
+        },
+    });
+
+    if (urlCheck?.length) {
+        const embed = await getEmbed(new URL(urlCheck[0]));
+        if (embed)
+            message.embeds.push(embed);
+    }
+
+    updateMessage(message.channel_id, message.id, { embeds: message.embeds });
+}
+
 export default definePlugin({
     name: "InvisibleChat",
     description: "Encrypt your Messages in a non-suspicious way!",
@@ -105,6 +154,11 @@ export default definePlugin({
     dependencies: ["MessageUpdaterAPI"],
     reporterTestable: ReporterTestable.Patches,
     settings,
+
+    chatBarButton: {
+        icon: ChatBarIcon,
+        render: ChatBarRender
+    },
 
     patches: [
         {
@@ -116,80 +170,34 @@ export default definePlugin({
             }
         },
     ],
+    INV_REGEX,
 
-    EMBED_API_URL: "https://embed.sammcheese.net",
-    INV_REGEX: new RegExp(/( \u200c|\u200d |[\u2060-\u2064])[^\u200b]/),
-    URL_REGEX: new RegExp(
-        /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/,
-    ),
     async start() {
         const { default: StegCloak } = await getStegCloak();
         steggo = new StegCloak(true, false);
     },
+    messagePopoverButton: {
+        icon: PopOverIcon,
+        render(message) {
+            return INV_REGEX.test(message?.content)
+                ? {
+                    label: "Decrypt Message",
+                    icon: PopOverIcon,
+                    message: message,
+                    channel: ChannelStore.getChannel(message.channel_id),
+                    onClick: async () => {
+                        const res = await iteratePasswords(message);
 
-    renderMessagePopoverButton(message) {
-        return this.INV_REGEX.test(message?.content)
-            ? {
-                label: "Decrypt Message",
-                icon: this.popOverIcon,
-                message: message,
-                channel: ChannelStore.getChannel(message.channel_id),
-                onClick: async () => {
-                    const res = await iteratePasswords(message);
-
-                    if (res)
-                        this.buildEmbed(message, res);
-                    else
-                        buildDecModal({ message });
+                        if (res)
+                            buildEmbed(message, res);
+                        else
+                            buildDecModal({ message });
+                    }
                 }
-            }
-            : null;
-    },
-
-    renderChatBarButton: ChatBarIcon,
-
-    colorCodeFromNumber(color: number): string {
-        return `#${[color >> 16, color >> 8, color]
-            .map(x => (x & 0xFF).toString(16))
-            .join("")}`;
-    },
-
-    // Gets the Embed of a Link
-    async getEmbed(url: URL): Promise<Object | {}> {
-        const { body } = await RestAPI.post({
-            url: Constants.Endpoints.UNFURL_EMBED_URLS,
-            body: {
-                urls: [url]
-            }
-        });
-        // The endpoint returns the color as a number, but Discord expects a string
-        body.embeds[0].color = this.colorCodeFromNumber(body.embeds[0].color);
-        return await body.embeds[0];
-    },
-
-    async buildEmbed(message: any, revealed: string): Promise<void> {
-        const urlCheck = revealed.match(this.URL_REGEX);
-
-        message.embeds.push({
-            type: "rich",
-            rawTitle: "Decrypted Message",
-            color: "#45f5f5",
-            rawDescription: revealed,
-            footer: {
-                text: "Made with ❤️ by c0dine and Sammy!",
-            },
-        });
-
-        if (urlCheck?.length) {
-            const embed = await this.getEmbed(new URL(urlCheck[0]));
-            if (embed)
-                message.embeds.push(embed);
+                : null;
         }
-
-        updateMessage(message.channel_id, message.id, { embeds: message.embeds });
     },
 
-    popOverIcon: () => <PopOverIcon />,
     indicator: ErrorBoundary.wrap(Indicator, { noop: true })
 });
 
