@@ -19,7 +19,7 @@
 import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
 
 
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, VencordDevsById } from "./constants";
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
@@ -115,9 +115,9 @@ export function isEquicordGuild(id: string | null | undefined, isGuildId: boolea
 
 export function isTestCordGuild(id: string | null | undefined, isGuildId: boolean = false): boolean {
     if (!id) return false;
-    if (isGuildId) return id === "TESTCORD_GUILD_ID"; // replace with actual TestCord guild ID
+    if (isGuildId) return id === TESTCORD_GUILD_ID;
     const channel = ChannelStore.getChannel(id);
-    return channel?.guild_id === "TESTCORD_GUILD_ID"; // replace with actual TestCord guild ID
+    return channel?.guild_id === TESTCORD_GUILD_ID;
 }
 
 export function isSupportChannel(channelId: string | null | undefined): boolean {
