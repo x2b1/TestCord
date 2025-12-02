@@ -57,10 +57,10 @@ function createNitroGiftEmbed(duration: string, fromUser: string) {
     return {
         type: "rich",
         title: "You've been gifted a subscription!",
-        description: `${fromUser} has gifted you Nitro for ${duration}!`,
+        description: `${fromUser} has gifted you Discord Nitro for ${duration}!`,
         color: 0x5865f2,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1119017161740204142/1119017161948301412/NitroGift.png"
+            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
         },
         fields: [
             {
@@ -70,9 +70,21 @@ function createNitroGiftEmbed(duration: string, fromUser: string) {
             }
         ],
         footer: {
-            text: "Discord"
+            text: "Discord",
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
+    };
+}
+
+function createOfficialBadgeEmbed() {
+    return {
+        type: "rich",
+        author: {
+            name: "Discord",
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
+        },
+        color: 0x5865f2
     };
 }
 
@@ -165,6 +177,12 @@ export default definePlugin({
                             messageType = MessageType.GUILD_BOOST;
                             content = message || "This server has reached a new boost level!";
                             break;
+                        case "fake_boost":
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.GUILD_BOOST;
+                            content = message || "🎉 This server has reached a new boost level! 🎉";
+                            break;
                         case "nitro_gift":
                             authorId = DISCORD_SYSTEM_USER_ID;
                             authorName = "Discord";
@@ -197,17 +215,44 @@ export default definePlugin({
                             authorName = "Discord";
                             messageType = MessageType.DEFAULT;
                             content = message || "This is a system message from Discord.";
+                            embeds = [createOfficialBadgeEmbed()];
+                            break;
+                        case "user_join":
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.USER_JOIN;
+                            const joinUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
+                            content = message || `${joinUser} joined the server.`;
+                            break;
+                        case "channel_pin":
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.CHANNEL_PINNED_MESSAGE;
+                            const pinUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
+                            content = message || `${pinUser} pinned a message to this channel.`;
+                            break;
+                        case "call_start":
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.CALL;
+                            const callUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
+                            content = message || `${callUser} started a call.`;
                             break;
                         default:
-                            throw new Error("Invalid message type");
+                            // Default to server boost if no type specified
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.GUILD_BOOST;
+                            content = message || "This server has reached a new boost level!";
+                            break;
                     }
 
                     const user = UserStore.getUser(authorId) || {
                         id: authorId,
                         username: authorName,
-                        avatar: null,
+                        avatar: authorId === DISCORD_SYSTEM_USER_ID ? "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png" : null,
                         discriminator: "0000",
-                        public_flags: type === "discord_system" ? 1 << 12 : 0, // Official Discord bot flag for system messages
+                        public_flags: (authorId === DISCORD_SYSTEM_USER_ID || type === "discord_system" || type === "server_boost" || type === "nitro_gift") ? (1 << 12) | (1 << 16) : 0, // Verified bot + official Discord flags
                         premium_type: 0,
                         flags: 0,
                         banner: null,
