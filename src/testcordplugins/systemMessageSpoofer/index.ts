@@ -53,55 +53,207 @@ enum MessageType {
     PURCHASE_NOTIFICATION = 44
 }
 
-function createOfficialNitroGiftEmbed(duration: string, fromUser: string) {
+function generateSnowflake() {
+    const timestamp = Date.now() - 1420070400000;
+    const random = Math.floor(Math.random() * 4096);
+    return ((timestamp << 22) | random).toString();
+}
+
+function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 month") {
+    const gifter = UserStore.getUser(gifterId);
+    const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
+
     return {
         type: "rich",
-        title: "You've been gifted a subscription!",
-        description: `${fromUser} has gifted you Discord Nitro for ${duration}!`,
-        color: 0x5865f2,
+        title: "A gift for you!",
+        description: `${gifterName} just gifted you **Discord Nitro** for **${duration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
+        color: 0x5865F2,
         thumbnail: {
-            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
+            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
         },
         fields: [
             {
                 name: "Expires in",
                 value: "48 hours",
                 inline: true
+            },
+            {
+                name: "Gift Value",
+                value: `$${duration === "1 month" ? "9.99" : duration === "1 year" ? "99.99" : "4.99"}`,
+                inline: true
             }
         ],
         footer: {
             text: "Discord",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createOfficialBadgeEmbed() {
+function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
+    const booster = boosterId ? UserStore.getUser(boosterId) : null;
+    const boosterName = booster ? `<@${booster.id}>` : "Someone";
+    const levelEmoji = ["✨", "🌟", "💫"][tier - 1] || "✨";
+
     return {
         type: "rich",
-        author: {
-            name: "Discord",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
+        title: `${levelEmoji} Server Boosted!`,
+        description: `${boosterName} just boosted the server${tier > 1 ? ` ${tier} times!` : '!'}`,
+        color: 0xFF73FA,
+        thumbnail: {
+            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
         },
-        color: 0x5865f2
+        fields: [
+            {
+                name: "Server Level",
+                value: `Level ${tier}`,
+                inline: true
+            },
+            {
+                name: "Benefits Unlocked",
+                value: `${tier >= 1 ? "✓ 50 Emoji Slots\n" : ""}${tier >= 2 ? "✓ 100 Emoji Slots\n" : ""}${tier >= 3 ? "✓ Animated Server Icon\n" : ""}`,
+                inline: true
+            }
+        ],
+        footer: {
+            text: "Thank you for boosting!",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        timestamp: new Date().toISOString()
     };
 }
 
-function createClydeComponents() {
-    return [
-        {
-            type: 1,
-            components: [
-                {
-                    type: 2,
-                    style: 4,
-                    label: "Dismiss message",
-                    custom_id: "clyde_dismiss"
-                }
-            ]
-        }
-    ];
+function createClydeEmbed(message: string) {
+    return {
+        type: "rich",
+        title: "Clyde",
+        description: message,
+        color: 0x2F3136,
+        footer: {
+            text: "This is an automated message from Discord",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        timestamp: new Date().toISOString()
+    };
+}
+
+function createDiscordSystemEmbed(title: string, message: string, type: string = "announcement") {
+    const color = {
+        announcement: 0x5865F2,
+        warning: 0xFEE75C,
+        update: 0x57F287,
+        maintenance: 0xED4245
+    }[type] || 0x5865F2;
+
+    return {
+        type: "rich",
+        title: title,
+        description: message,
+        color: color,
+        author: {
+            name: "Discord",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        footer: {
+            text: "System Message",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        timestamp: new Date().toISOString()
+    };
+}
+
+function createAutoModEmbed(rule: string, action: string, username?: string) {
+    return {
+        type: "rich",
+        title: "🚨 AutoMod Action",
+        description: username ? `${username} triggered an AutoMod rule` : "A message was blocked by AutoMod",
+        color: 0xED4245,
+        fields: [
+            {
+                name: "Rule Triggered",
+                value: rule,
+                inline: true
+            },
+            {
+                name: "Action Taken",
+                value: action,
+                inline: true
+            }
+        ],
+        footer: {
+            text: "Discord AutoMod",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        timestamp: new Date().toISOString()
+    };
+}
+
+function createPurchaseNotificationEmbed(item: string, price: string, username?: string) {
+    return {
+        type: "rich",
+        title: "🛒 Purchase Complete",
+        description: username ? `${username} purchased ${item}` : "Thanks for your purchase!",
+        color: 0x57F287,
+        fields: [
+            {
+                name: "Item",
+                value: item,
+                inline: true
+            },
+            {
+                name: "Amount",
+                value: price,
+                inline: true
+            }
+        ],
+        footer: {
+            text: "Discord Shop",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        },
+        timestamp: new Date().toISOString()
+    };
+}
+
+function dispatchMessage(channelId: string, messageData: any) {
+    const snowflake = generateSnowflake();
+    const timestamp = new Date().toISOString();
+
+    const fullMessage = {
+        ...messageData,
+        id: snowflake,
+        nonce: snowflake,
+        timestamp: timestamp,
+        channel_id: channelId,
+        edited_timestamp: null,
+        mention_everyone: false,
+        mention_roles: [],
+        mentions: [],
+        mention_channels: [],
+        attachments: messageData.attachments || [],
+        embeds: messageData.embeds || [],
+        components: messageData.components || [],
+        sticker_items: [],
+        reactions: [],
+        position: 0,
+        message_reference: null,
+        referenced_message: null,
+        interaction: null,
+        webhook_id: null,
+        activity: null,
+        application: null,
+        application_id: null,
+        flags: messageData.flags || 0,
+        pinned: false,
+        tts: false
+    };
+
+    FluxDispatcher.dispatch({
+        type: "MESSAGE_CREATE",
+        message: fullMessage,
+        optimistic: false,
+        isPushNotification: false
+    });
 }
 
 export default definePlugin({
@@ -112,25 +264,20 @@ export default definePlugin({
 
     commands: [
         {
-            name: "spoofsystem",
-            description: "Spoof a system message",
+            name: "spoofnitro",
+            description: "Spoof a Discord Nitro gift message",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
                 {
                     type: ApplicationCommandOptionType.STRING,
-                    name: "type",
-                    description: "Type of system message to spoof (nitro_gift, clyde, discord_system)",
-                    required: true,
-                    choices: [
-                        { label: "Nitro Gift", name: "Nitro Gift", value: "nitro_gift" },
-                        { label: "Clyde Message", name: "Clyde Message", value: "clyde" },
-                        { label: "Discord System", name: "Discord System", value: "discord_system" }
-                    ]
+                    name: "duration",
+                    description: "Duration of the Nitro gift (e.g., '1 month', '3 months')",
+                    required: true
                 },
                 {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "message",
-                    description: "The message content",
+                    type: ApplicationCommandOptionType.USER,
+                    name: "from_user",
+                    description: "User who sent the Nitro gift",
                     required: true
                 },
                 {
@@ -153,115 +300,41 @@ export default definePlugin({
                     const duration = args.find(x => x.name === "duration")?.value as string;
                     const fromUserArg = args.find(x => x.name === "from_user");
 
-                    const delay = args.find(x => x.name === "delay");
-                    const type = args.find(x => x.name === "type")?.value as string || "server_boost";
-                    const message = args.find(x => x.name === "message")?.value as string || "";
-                    const fromUserArg = args.find(x => x.name === "from_user");
-                    const duration = args.find(x => x.name === "duration")?.value as string || "1 month";
-
                     if (delay) {
                         FluxDispatcher.dispatch({
                             type: "TYPING_START",
                             channelId: channel.value,
-                            userId: type === "clyde" ? CLYDE_USER_ID : DISCORD_SYSTEM_USER_ID,
+                            userId: DISCORD_SYSTEM_USER_ID,
                         });
                     }
 
-                    let authorId: string;
-                    let authorName: string;
-                    let messageType: MessageType;
-                    let content: string = "";
-                    let embeds: any[] = [];
-                    let components: any[] = [];
-
-                    switch (type) {
-                        case "server_boost":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.GUILD_BOOST;
-                            content = message || "This server has reached a new boost level!";
-                            break;
-                        case "fake_boost":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.GUILD_BOOST;
-                            content = message || "🎉 This server has reached a new boost level! 🎉";
-                            break;
-                        case "nitro_gift":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.DEFAULT;
-                            const fromUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                            embeds = [createOfficialNitroGiftEmbed(duration, fromUser)];
-                            components = [
+                    const fromUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
+                    const embeds = [createOfficialNitroGiftEmbed(duration, fromUser)];
+                    const components = [
+                        {
+                            type: 1,
+                            components: [
                                 {
-                                    type: 1,
-                                    components: [
-                                        {
-                                            type: 2,
-                                            style: 3,
-                                            label: "Accept",
-                                            custom_id: "nitro_accept"
-                                        }
-                                    ]
+                                    type: 2,
+                                    style: 3,
+                                    label: "Accept",
+                                    custom_id: "nitro_accept"
                                 }
-                            ];
-                            break;
-                        case "clyde":
-                            authorId = CLYDE_USER_ID;
-                            authorName = "Clyde";
-                            messageType = MessageType.DEFAULT;
-                            content = message || "This is a message from Clyde!";
-                            components = createClydeComponents();
-                            break;
-                        case "discord_system":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.DEFAULT;
-                            content = message || "This is a system message from Discord.";
-                            embeds = [createOfficialBadgeEmbed()];
-                            break;
-                        case "user_join":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.USER_JOIN;
-                            const joinUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                            content = message || `${joinUser} joined the server.`;
-                            break;
-                        case "channel_pin":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.CHANNEL_PINNED_MESSAGE;
-                            const pinUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                            content = message || `${pinUser} pinned a message to this channel.`;
-                            break;
-                        case "call_start":
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.CALL;
-                            const callUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                            content = message || `${callUser} started a call.`;
-                            break;
-                        default:
-                            // Default to server boost if no type specified
-                            authorId = DISCORD_SYSTEM_USER_ID;
-                            authorName = "Discord";
-                            messageType = MessageType.GUILD_BOOST;
-                            content = message || "This server has reached a new boost level!";
-                            break;
-                    }
+                            ]
+                        }
+                    ];
 
-                    const user = UserStore.getUser(authorId) || {
-                        id: authorId,
-                        username: authorName,
-                        avatar: authorId === DISCORD_SYSTEM_USER_ID ? "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png" : null,
+                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
+                        id: DISCORD_SYSTEM_USER_ID,
+                        username: "Discord",
+                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
                         discriminator: "0000",
-                        public_flags: (authorId === DISCORD_SYSTEM_USER_ID || type === "discord_system" || type === "server_boost" || type === "nitro_gift") ? (1 << 12) | (1 << 16) : 0, // Verified bot + official Discord flags
+                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
                         premium_type: 0,
                         flags: 0,
                         banner: null,
                         accent_color: null,
-                        global_name: authorName,
+                        global_name: "Discord",
                         avatar_decoration_data: null,
                         banner_color: null
                     };
@@ -288,7 +361,7 @@ export default definePlugin({
                                 },
                                 channel_id: channel.value,
                                 components: components,
-                                content: content,
+                                content: "",
                                 edited_timestamp: null,
                                 embeds: embeds,
                                 flags: 0,
@@ -300,7 +373,319 @@ export default definePlugin({
                                 pinned: false,
                                 timestamp: new Date(),
                                 tts: false,
-                                type: messageType
+                                type: MessageType.DEFAULT
+                            },
+                            optimistic: false,
+                            isPushNotification: false
+                        });
+                    }, (Number(delay?.value ?? 0.5) * 1000));
+                } catch (error) {
+                    sendBotMessage(ctx.channel.id, {
+                        content: `Something went wrong: \`${error}\``,
+                    });
+                }
+            }
+        },
+        {
+            name: "spoofserverboost",
+            description: "Spoof a server boost message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "message",
+                    description: "The boost message content",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "sender",
+                    description: "User who boosted the server",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send the spoofed message in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "delay",
+                    description: "Delay for the message to appear (in seconds)",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
+                    const delay = args.find(x => x.name === "delay");
+                    const message = args.find(x => x.name === "message")?.value as string || "This server has reached a new boost level!";
+                    const senderArg = args.find(x => x.name === "sender");
+
+                    if (delay) {
+                        FluxDispatcher.dispatch({
+                            type: "TYPING_START",
+                            channelId: channel.value,
+                            userId: DISCORD_SYSTEM_USER_ID,
+                        });
+                    }
+
+                    const sender = senderArg ? UserStore.getUser(senderArg.value)?.username || "Someone" : null;
+                    const content = sender ? `${sender} boosted the server! ${message}` : message;
+
+                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
+                        id: DISCORD_SYSTEM_USER_ID,
+                        username: "Discord",
+                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
+                        discriminator: "0000",
+                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
+                        premium_type: 0,
+                        flags: 0,
+                        banner: null,
+                        accent_color: null,
+                        global_name: "Discord",
+                        avatar_decoration_data: null,
+                        banner_color: null
+                    };
+
+                    setTimeout(() => {
+                        FluxDispatcher.dispatch({
+                            type: "MESSAGE_CREATE",
+                            channelId: channel.value,
+                            message: {
+                                attachments: [],
+                                author: {
+                                    id: user.id,
+                                    username: user.username,
+                                    avatar: user.avatar,
+                                    discriminator: user.discriminator,
+                                    public_flags: user.publicFlags,
+                                    premium_type: user.premiumType,
+                                    flags: user.flags,
+                                    banner: user.banner,
+                                    accent_color: null,
+                                    global_name: user.globalName,
+                                    avatar_decoration_data: null,
+                                    banner_color: null
+                                },
+                                channel_id: channel.value,
+                                components: [],
+                                content: content,
+                                edited_timestamp: null,
+                                embeds: [],
+                                flags: 0,
+                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                mention_everyone: false,
+                                mention_roles: [],
+                                mentions: [],
+                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                pinned: false,
+                                timestamp: new Date(),
+                                tts: false,
+                                type: MessageType.GUILD_BOOST
+                            },
+                            optimistic: false,
+                            isPushNotification: false
+                        });
+                    }, (Number(delay?.value ?? 0.5) * 1000));
+                } catch (error) {
+                    sendBotMessage(ctx.channel.id, {
+                        content: `Something went wrong: \`${error}\``,
+                    });
+                }
+            }
+        },
+        {
+            name: "spoofclyde",
+            description: "Spoof a Clyde message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "message",
+                    description: "The message content",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send the spoofed message in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "delay",
+                    description: "Delay for the message to appear (in seconds)",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
+                    const delay = args.find(x => x.name === "delay");
+                    const message = args.find(x => x.name === "message")?.value as string;
+
+                    if (delay) {
+                        FluxDispatcher.dispatch({
+                            type: "TYPING_START",
+                            channelId: channel.value,
+                            userId: CLYDE_USER_ID,
+                        });
+                    }
+
+                    const components = createClydeComponents();
+
+                    const user = UserStore.getUser(CLYDE_USER_ID) || {
+                        id: CLYDE_USER_ID,
+                        username: "Clyde",
+                        avatar: null,
+                        discriminator: "0000",
+                        public_flags: 0,
+                        premium_type: 0,
+                        flags: 0,
+                        banner: null,
+                        accent_color: null,
+                        global_name: "Clyde",
+                        avatar_decoration_data: null,
+                        banner_color: null
+                    };
+
+                    setTimeout(() => {
+                        FluxDispatcher.dispatch({
+                            type: "MESSAGE_CREATE",
+                            channelId: channel.value,
+                            message: {
+                                attachments: [],
+                                author: {
+                                    id: user.id,
+                                    username: user.username,
+                                    avatar: user.avatar,
+                                    discriminator: user.discriminator,
+                                    public_flags: user.publicFlags,
+                                    premium_type: user.premiumType,
+                                    flags: user.flags,
+                                    banner: user.banner,
+                                    accent_color: null,
+                                    global_name: user.globalName,
+                                    avatar_decoration_data: null,
+                                    banner_color: null
+                                },
+                                channel_id: channel.value,
+                                components: components,
+                                content: message,
+                                edited_timestamp: null,
+                                embeds: [],
+                                flags: 0,
+                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                mention_everyone: false,
+                                mention_roles: [],
+                                mentions: [],
+                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                pinned: false,
+                                timestamp: new Date(),
+                                tts: false,
+                                type: MessageType.DEFAULT
+                            },
+                            optimistic: false,
+                            isPushNotification: false
+                        });
+                    }, (Number(delay?.value ?? 0.5) * 1000));
+                } catch (error) {
+                    sendBotMessage(ctx.channel.id, {
+                        content: `Something went wrong: \`${error}\``,
+                    });
+                }
+            }
+        },
+        {
+            name: "spoofsystem",
+            description: "Spoof a general system message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "message",
+                    description: "The message content",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send the spoofed message in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "delay",
+                    description: "Delay for the message to appear (in seconds)",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
+                    const delay = args.find(x => x.name === "delay");
+                    const message = args.find(x => x.name === "message")?.value as string;
+
+                    if (delay) {
+                        FluxDispatcher.dispatch({
+                            type: "TYPING_START",
+                            channelId: channel.value,
+                            userId: DISCORD_SYSTEM_USER_ID,
+                        });
+                    }
+
+                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
+                        id: DISCORD_SYSTEM_USER_ID,
+                        username: "Discord",
+                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
+                        discriminator: "0000",
+                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
+                        premium_type: 0,
+                        flags: 0,
+                        banner: null,
+                        accent_color: null,
+                        global_name: "Discord",
+                        avatar_decoration_data: null,
+                        banner_color: null
+                    };
+
+                    setTimeout(() => {
+                        FluxDispatcher.dispatch({
+                            type: "MESSAGE_CREATE",
+                            channelId: channel.value,
+                            message: {
+                                attachments: [],
+                                author: {
+                                    id: user.id,
+                                    username: user.username,
+                                    avatar: user.avatar,
+                                    discriminator: user.discriminator,
+                                    public_flags: user.publicFlags,
+                                    premium_type: user.premiumType,
+                                    flags: user.flags,
+                                    banner: user.banner,
+                                    accent_color: null,
+                                    global_name: user.globalName,
+                                    avatar_decoration_data: null,
+                                    banner_color: null
+                                },
+                                channel_id: channel.value,
+                                components: [],
+                                content: message,
+                                edited_timestamp: null,
+                                embeds: [],
+                                flags: 0,
+                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                mention_everyone: false,
+                                mention_roles: [],
+                                mentions: [],
+                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
+                                pinned: false,
+                                timestamp: new Date(),
+                                tts: false,
+                                type: MessageType.DEFAULT
                             },
                             optimistic: false,
                             isPushNotification: false
@@ -313,6 +698,5 @@ export default definePlugin({
                 }
             }
         }
-                try {
     ]
-    });
+});

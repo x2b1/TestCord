@@ -54,14 +54,14 @@ function generateSnowflake() {
     return ((timestamp << 22) | random).toString();
 }
 
-function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 month") {
+function createOfficialNitroGiftEmbed(gifterId: string, nitroDuration: string = "1 month") {
     const gifter = UserStore.getUser(gifterId);
     const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
     
     return {
         type: "rich",
         title: "A gift for you!",
-        description: `${gifterName} just gifted you **Discord Nitro** for **${duration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
+        description: `${gifterName} just gifted you **Discord Nitro** for **${nitroDuration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
         color: 0x5865F2,
         thumbnail: {
             url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
@@ -74,7 +74,7 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
             },
             {
                 name: "Gift Value",
-                value: `$${duration === "1 month" ? "9.99" : duration === "1 year" ? "99.99" : "4.99"}`,
+                value: `$${nitroDuration === "1 month" ? "9.99" : nitroDuration === "1 year" ? "99.99" : "4.99"}`,
                 inline: true
             }
         ],
@@ -86,15 +86,15 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
     };
 }
 
-function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
+function createServerBoostEmbed(boostTier: number = 1, boosterId?: string) {
     const booster = boosterId ? UserStore.getUser(boosterId) : null;
     const boosterName = booster ? `<@${booster.id}>` : "Someone";
-    const levelEmoji = ["✨", "🌟", "💫"][tier - 1] || "✨";
+    const levelEmoji = ["✨", "🌟", "💫"][boostTier - 1] || "✨";
     
     return {
         type: "rich",
         title: `${levelEmoji} Server Boosted!`,
-        description: `${boosterName} just boosted the server${tier > 1 ? ` ${tier} times!` : '!'}`,
+        description: `${boosterName} just boosted the server${boostTier > 1 ? ` ${boostTier} times!` : '!'}`,
         color: 0xFF73FA,
         thumbnail: {
             url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
@@ -102,12 +102,12 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
         fields: [
             {
                 name: "Server Level",
-                value: `Level ${tier}`,
+                value: `Level ${boostTier}`,
                 inline: true
             },
             {
                 name: "Benefits Unlocked",
-                value: `${tier >= 1 ? "✓ 50 Emoji Slots\n" : ""}${tier >= 2 ? "✓ 100 Emoji Slots\n" : ""}${tier >= 3 ? "✓ Animated Server Icon\n" : ""}`,
+                value: `${boostTier >= 1 ? "✓ 50 Emoji Slots\n" : ""}${boostTier >= 2 ? "✓ 100 Emoji Slots\n" : ""}${boostTier >= 3 ? "✓ Animated Server Icon\n" : ""}`,
                 inline: true
             }
         ],
@@ -133,13 +133,13 @@ function createClydeEmbed(message: string) {
     };
 }
 
-function createDiscordSystemEmbed(title: string, message: string, type: string = "announcement") {
+function createDiscordSystemEmbed(title: string, message: string, systemType: string = "announcement") {
     const color = {
         announcement: 0x5865F2,
         warning: 0xFEE75C,
         update: 0x57F287,
         maintenance: 0xED4245
-    }[type] || 0x5865F2;
+    }[systemType] || 0x5865F2;
     
     return {
         type: "rich",
