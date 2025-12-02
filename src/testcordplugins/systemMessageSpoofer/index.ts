@@ -53,7 +53,7 @@ enum MessageType {
     PURCHASE_NOTIFICATION = 44
 }
 
-function createNitroGiftEmbed(duration: string, fromUser: string) {
+function createOfficialNitroGiftEmbed(duration: string, fromUser: string) {
     return {
         type: "rich",
         title: "You've been gifted a subscription!",

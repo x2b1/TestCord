@@ -1,52 +1,15 @@
-# Translation Task: Translate French text in TestCord Plugins to English
+# TODO: Update SystemMessageSpoofer Plugin
 
-## Overview
-Translate all French strings (logs, comments, settings descriptions) to English in the following plugins:
-- antiDeco (antideconnection)
-- antiGroup (antigroup)
-- antiStereo (antistereo)
-- audioCenter (audiocenter)
-- audioLimiter (audiolimiter)
-- autoDeco (autodeco)
-- autoDeleter (autodeleter)
-- autoUnmute (autounmute)
-- chatGPT (chatgpt)
-- closeAllDms (closealldms)
-- FakeMuteAndDeafen (fakemuteanddeafen)
-- fileSplitter (filesplitter)
-- groupKicker (groupkicker)
-- idTranslater (idtranslater)
-- leaveAllGroups (leaveallgroups)
-- lockGroup (lockgroup)
-- messageCleaner (messagecleaner)
-- serverBackup (serverbackup)
-- serverPinner (serverpinner)
-- settingsShortcuts (settingsshortcuts)
-- soundboardPro (soundboardpro)
-- token (tokendisplay)
+## Tasks
+- [ ] Restructure plugin to use multiple separate commands instead of one "spoofsystem" with choices
+- [ ] Create /spoofnitro command with options: duration, from_user, channel, delay
+- [ ] Fix nitro embed to match official Discord Nitro gift embed structure
+- [ ] Create /spoofserverboost command with options: message, channel, delay, sender (booster)
+- [ ] Create /spoofclyde command with options: message, channel, delay
+- [ ] Create /spoofsystem command with options: message, channel, delay (for general system messages)
+- [ ] Add new commands for additional spoof types: /spoofvoice (with audio upload), /spoofmedia (with file upload), /spoofuserjoin, /spoofchannelpin, /spoofcallstart
+- [ ] Ensure options are tailored per command to avoid redundancy
+- [ ] Test the new commands in Discord
 
-## Progress
-- [x] Create TODO.md
-- [x] Read and translate antiDeco/index.ts
-- [x] Read and translate antiGroup/index.tsx
-- [x] Read and translate antiStereo/index.ts
-- [ ] Read and translate audioCenter/index.tsx
-- [ ] Read and translate audioLimiter/index.tsx
-- [ ] Read and translate autoDeco/index.tsx
-- [ ] Read and translate autoDeleter/index.tsx
-- [ ] Read and translate autoUnmute/index.tsx
-- [ ] Read and translate chatGPT/index.tsx
-- [ ] Read and translate closeAllDms/index.tsx
-- [ ] Read and translate FakeMuteAndDeafen/index.tsx
-- [ ] Read and translate fileSplitter/index.tsx
-- [ ] Read and translate groupKicker/index.tsx
-- [ ] Read and translate idTranslater/index.tsx
-- [ ] Read and translate leaveAllGroups/index.tsx
-- [ ] Read and translate lockGroup/index.tsx
-- [ ] Read and translate messageCleaner/index.tsx
-- [ ] Read and translate serverBackup/index.tsx
-- [ ] Read and translate serverPinner/index.tsx
-- [ ] Read and translate settingsShortcuts/index.tsx
-- [ ] Read and translate soundboardPro/index.tsx
-- [ ] Read and translate token/index.tsx
-- [ ] Verify all translations are complete and accurate
+## Dependent Files
+- src/testcordplugins/systemMessageSpoofer/index.ts
