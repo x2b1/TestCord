@@ -150,6 +150,8 @@ export default definePlugin({
                 try {
                     const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
                     const delay = args.find(x => x.name === "delay");
+                    const duration = args.find(x => x.name === "duration")?.value as string;
+                    const delay = args.find(x => x.name === "delay");
                     const type = args.find(x => x.name === "type")?.value as string || "server_boost";
                     const message = args.find(x => x.name === "message")?.value as string || "";
                     const fromUserArg = args.find(x => x.name === "from_user");
@@ -188,7 +190,7 @@ export default definePlugin({
                             authorName = "Discord";
                             messageType = MessageType.DEFAULT;
                             const fromUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                            embeds = [createNitroGiftEmbed(duration, fromUser)];
+                            embeds = [createOfficialNitroGiftEmbed(duration, fromUser)];
                             components = [
                                 {
                                     type: 1,
@@ -309,5 +311,6 @@ export default definePlugin({
                 }
             }
         }
+                try {
     ]
 });

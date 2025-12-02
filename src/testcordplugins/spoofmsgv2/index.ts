@@ -8,11 +8,7 @@ import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { FluxDispatcher, UserStore, ChannelStore, RelationshipStore, GuildStore } from "@webpack/common";
-
-const MessageCreator = findByPropsLazy("sendMessage", "editMessage");
-const UploadManager = findByPropsLazy("upload", "getUploads");
+import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const CLYDE_USER_ID = "1081004946872352958";
 const DISCORD_SYSTEM_USER_ID = "0";
@@ -53,9 +49,9 @@ enum MessageType {
 }
 
 function generateSnowflake() {
-    const timestamp = BigInt(Date.now() - 1420070400000);
-    const random = BigInt(Math.floor(Math.random() * 4096));
-    return (timestamp << 22n | random).toString();
+    const timestamp = Date.now() - 1420070400000;
+    const random = Math.floor(Math.random() * 4096);
+    return ((timestamp << 22) | random).toString();
 }
 
 function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 month") {
@@ -63,16 +59,12 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
     const gifterName = gifter?.username || "Someone";
     
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: "A gift for you!",
         description: `${gifterName} just gifted you **Discord Nitro** for **${duration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
         color: 0x5865F2,
-        url: "https://discord.com/gifts/xxxx-xxxx-xxxx",
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png",
-            width: 128,
-            height: 128
+            url: "attachment://nitro.png"
         },
         fields: [
             {
@@ -87,13 +79,9 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
             }
         ],
         footer: {
-            text: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Discord"
         },
-        timestamp: new Date().toISOString(),
-        provider: {
-            name: "Discord"
-        }
+        timestamp: new Date().toISOString()
     };
 }
 
@@ -103,13 +91,12 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
     const levelEmoji = ["✨", "🌟", "💫"][tier - 1] || "✨";
     
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: `${levelEmoji} Server Boosted!`,
         description: `${boosterName} just boosted the server${tier > 1 ? ` ${tier} times!` : '!'}`,
         color: 0xFF73FA,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
+            url: "attachment://boost.png"
         },
         fields: [
             {
@@ -124,8 +111,7 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
             }
         ],
         footer: {
-            text: "Thank you for boosting!",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Thank you for boosting!"
         },
         timestamp: new Date().toISOString()
     };
@@ -133,44 +119,45 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
 
 function createClydeEmbed(message: string) {
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: "Clyde",
         description: message,
         color: 0x2F3136,
         footer: {
-            text: "This is an automated message from Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
+            text: "This is an automated message from Discord"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createDiscordSystemEmbed(title: string, message: string) {
+function createDiscordSystemEmbed(title: string, message: string, type: string = "announcement") {
+    const color = {
+        announcement: 0x5865F2,
+        warning: 0xFEE75C,
+        update: 0x57F287,
+        maintenance: 0xED4245
+    }[type] || 0x5865F2;
+    
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: title,
         description: message,
-        color: 0x5865F2,
+        color: color,
         author: {
-            name: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            name: "Discord"
         },
         footer: {
-            text: "System Message",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "System Message"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createAutoModEmbed(rule: string, action: string) {
+function createAutoModEmbed(rule: string, action: string, username?: string) {
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: "🚨 AutoMod Action",
-        description: `A message was blocked by AutoMod`,
+        description: username ? `${username} triggered an AutoMod rule` : "A message was blocked by AutoMod",
         color: 0xED4245,
         fields: [
             {
@@ -185,19 +172,17 @@ function createAutoModEmbed(rule: string, action: string) {
             }
         ],
         footer: {
-            text: "Discord AutoMod",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Discord AutoMod"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createPurchaseNotificationEmbed(item: string, price: string) {
+function createPurchaseNotificationEmbed(item: string, price: string, username?: string) {
     return {
-        id: generateSnowflake(),
         type: "rich",
         title: "🛒 Purchase Complete",
-        description: `Thanks for your purchase!`,
+        description: username ? `${username} purchased ${item}` : "Thanks for your purchase!",
         color: 0x57F287,
         fields: [
             {
@@ -212,8 +197,7 @@ function createPurchaseNotificationEmbed(item: string, price: string) {
             }
         ],
         footer: {
-            text: "Discord Shop",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Discord Shop"
         },
         timestamp: new Date().toISOString()
     };
@@ -284,9 +268,9 @@ export default definePlugin({
                     description: "Duration of the Nitro gift",
                     required: false,
                     choices: [
-                        { label: "1 Month", value: "1 month" },
-                        { label: "3 Months", value: "3 months" },
-                        { label: "1 Year", value: "1 year" }
+                        { name: "1 Month", value: "1 month" },
+                        { name: "3 Months", value: "3 months" },
+                        { name: "1 Year", value: "1 year" }
                     ]
                 },
                 {
@@ -294,14 +278,6 @@ export default definePlugin({
                     name: "channel",
                     description: "Channel to send in (defaults to current)",
                     required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.NUMBER,
-                    name: "delay",
-                    description: "Delay in seconds",
-                    required: false,
-                    min_value: 0,
-                    max_value: 10
                 }
             ],
             execute: async (args, ctx) => {
@@ -309,51 +285,49 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const gifterId = args.find(x => x.name === "gifter")?.value as string;
                     const duration = args.find(x => x.name === "duration")?.value as string || "1 month";
-                    const delay = (args.find(x => x.name === "delay")?.value as number || 0) * 1000;
                     
-                    setTimeout(() => {
-                        const embed = createOfficialNitroGiftEmbed(gifterId, duration);
-                        
-                        dispatchMessage(channelId, {
-                            type: MessageType.DEFAULT,
-                            author: {
-                                id: DISCORD_SYSTEM_USER_ID,
-                                username: "Discord",
-                                avatar: "28174a34e77bb5e5310ced9f95cb480b",
-                                discriminator: "0000",
-                                public_flags: 0,
-                                bot: true,
-                                flags: 0
-                            },
-                            content: "",
-                            embeds: [embed],
-                            components: [
-                                {
-                                    type: 1,
-                                    components: [
-                                        {
-                                            type: 2,
-                                            style: 3,
-                                            label: "Accept Gift",
-                                            custom_id: "accept_nitro_gift"
-                                        },
-                                        {
-                                            type: 2,
-                                            style: 2,
-                                            label: "See Details",
-                                            custom_id: "view_nitro_details"
-                                        }
-                                    ]
-                                }
-                            ]
-                        });
-                    }, delay);
+                    const embed = createOfficialNitroGiftEmbed(gifterId, duration);
+                    
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed],
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        style: 3,
+                                        label: "Accept Gift",
+                                        custom_id: "accept_nitro_gift"
+                                    },
+                                    {
+                                        type: 2,
+                                        style: 2,
+                                        label: "See Details",
+                                        custom_id: "view_nitro_details"
+                                    }
+                                ]
+                            }
+                        ]
+                    });
                     
                     sendBotMessage(ctx.channel.id, {
-                        content: "✅ Nitro gift spoof will appear shortly...",
+                        content: "✅ Nitro gift spoofed!",
                         ephemeral: true
                     });
                 } catch (error) {
+                    console.error("Nitro spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -379,9 +353,9 @@ export default definePlugin({
                     description: "Boost tier (1-3)",
                     required: false,
                     choices: [
-                        { label: "Tier 1", value: 1 },
-                        { label: "Tier 2", value: 2 },
-                        { label: "Tier 3", value: 3 }
+                        { name: "Tier 1", value: 1 },
+                        { name: "Tier 2", value: 2 },
+                        { name: "Tier 3", value: 3 }
                     ]
                 },
                 {
@@ -426,6 +400,7 @@ export default definePlugin({
                         ephemeral: true
                     });
                 } catch (error) {
+                    console.error("Boost spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -450,23 +425,16 @@ export default definePlugin({
                     name: "channel",
                     description: "Channel to send in",
                     required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "attachment",
-                    description: "Optional attachment",
-                    required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const message = args.find(x => x.name === "message")?.value as string;
-                    const attachment = args.find(x => x.name === "attachment")?.value;
                     
                     const embed = createClydeEmbed(message);
                     
-                    const messageData: any = {
+                    dispatchMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: CLYDE_USER_ID,
@@ -479,28 +447,14 @@ export default definePlugin({
                         },
                         content: "",
                         embeds: [embed]
-                    };
-                    
-                    if (attachment) {
-                        messageData.attachments = [{
-                            id: generateSnowflake(),
-                            filename: "clyde_attachment.png",
-                            size: 1024,
-                            url: attachment,
-                            proxy_url: attachment,
-                            width: 128,
-                            height: 128,
-                            content_type: "image/png"
-                        }];
-                    }
-                    
-                    dispatchMessage(channelId, messageData);
+                    });
                     
                     sendBotMessage(ctx.channel.id, {
                         content: "✅ Clyde message spoofed!",
                         ephemeral: true
                     });
                 } catch (error) {
+                    console.error("Clyde spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -563,6 +517,7 @@ export default definePlugin({
                         ephemeral: true
                     });
                 } catch (error) {
+                    console.error("Join spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -623,6 +578,7 @@ export default definePlugin({
                         ephemeral: true
                     });
                 } catch (error) {
+                    console.error("Pin spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -654,8 +610,8 @@ export default definePlugin({
                     description: "Call action",
                     required: true,
                     choices: [
-                        { label: "Start Call", value: "start" },
-                        { label: "End Call", value: "end" }
+                        { name: "Start Call", value: "start" },
+                        { name: "End Call", value: "end" }
                     ]
                 },
                 {
@@ -711,88 +667,7 @@ export default definePlugin({
                         ephemeral: true
                     });
                 } catch (error) {
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
-        },
-        
-        {
-            name: "spoofautomod",
-            description: "Spoof an AutoMod action notification",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "rule",
-                    description: "AutoMod rule that was triggered",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "action",
-                    description: "Action taken",
-                    required: true,
-                    choices: [
-                        { label: "Block Message", value: "block" },
-                        { label: "Send Alert", value: "alert" },
-                        { label: "Timeout User", value: "timeout" }
-                    ]
-                },
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "user",
-                    description: "User who triggered it",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const rule = args.find(x => x.name === "rule")?.value as string;
-                    const action = args.find(x => x.name === "action")?.value as string;
-                    const userId = args.find(x => x.name === "user")?.value as string;
-                    
-                    const user = userId ? UserStore.getUser(userId) : null;
-                    const actionText = {
-                        block: "Message blocked",
-                        alert: "Alert sent to moderators",
-                        timeout: "User timed out"
-                    }[action] || action;
-                    
-                    const embed = createAutoModEmbed(rule, actionText);
-                    if (user) {
-                        embed.description = `${user.username} triggered an AutoMod rule`;
-                    }
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.AUTO_MODERATION_ACTION,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord AutoMod",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
-                            discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: "✅ AutoMod notification spoofed!",
-                        ephemeral: true
-                    });
-                } catch (error) {
+                    console.error("Call spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -830,17 +705,11 @@ export default definePlugin({
                     description: "Type of system message",
                     required: false,
                     choices: [
-                        { label: "Announcement", value: "announcement" },
-                        { label: "Warning", value: "warning" },
-                        { label: "Update", value: "update" },
-                        { label: "Maintenance", value: "maintenance" }
+                        { name: "Announcement", value: "announcement" },
+                        { name: "Warning", value: "warning" },
+                        { name: "Update", value: "update" },
+                        { name: "Maintenance", value: "maintenance" }
                     ]
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "attachment",
-                    description: "Optional system attachment",
-                    required: false
                 }
             ],
             execute: async (args, ctx) => {
@@ -849,19 +718,10 @@ export default definePlugin({
                     const title = args.find(x => x.name === "title")?.value as string;
                     const message = args.find(x => x.name === "message")?.value as string;
                     const type = args.find(x => x.name === "type")?.value as string || "announcement";
-                    const attachment = args.find(x => x.name === "attachment")?.value;
                     
-                    const color = {
-                        announcement: 0x5865F2,
-                        warning: 0xFEE75C,
-                        update: 0x57F287,
-                        maintenance: 0xED4245
-                    }[type] || 0x5865F2;
+                    const embed = createDiscordSystemEmbed(title, message, type);
                     
-                    const embed = createDiscordSystemEmbed(title, message);
-                    embed.color = color;
-                    
-                    const messageData: any = {
+                    dispatchMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -874,290 +734,14 @@ export default definePlugin({
                         },
                         content: "",
                         embeds: [embed]
-                    };
-                    
-                    if (attachment) {
-                        messageData.attachments = [{
-                            id: generateSnowflake(),
-                            filename: `system_${type}.png`,
-                            size: 2048,
-                            url: attachment,
-                            proxy_url: attachment,
-                            content_type: "image/png"
-                        }];
-                    }
-                    
-                    dispatchMessage(channelId, messageData);
+                    });
                     
                     sendBotMessage(ctx.channel.id, {
                         content: "✅ System message spoofed!",
                         ephemeral: true
                     });
                 } catch (error) {
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
-        },
-        
-        {
-            name: "spoofpurchase",
-            description: "Spoof a purchase notification",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "user",
-                    description: "User who made purchase",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "item",
-                    description: "Item purchased",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "price",
-                    description: "Price (e.g., $9.99)",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const userId = args.find(x => x.name === "user")?.value as string;
-                    const item = args.find(x => x.name === "item")?.value as string;
-                    const price = args.find(x => x.name === "price")?.value as string;
-                    
-                    const user = UserStore.getUser(userId);
-                    
-                    const embed = createPurchaseNotificationEmbed(item, price);
-                    embed.description = `${user?.username || "A user"} purchased ${item}`;
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.PURCHASE_NOTIFICATION,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord Shop",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
-                            discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: "✅ Purchase notification spoofed!",
-                        ephemeral: true
-                    });
-                } catch (error) {
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
-        },
-        
-        {
-            name: "spoofvoicemessage",
-            description: "Spoof a voice message notification",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "user",
-                    description: "User who sent voice message",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "duration",
-                    description: "Duration in seconds",
-                    required: false,
-                    min_value: 1,
-                    max_value: 300
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "waveform",
-                    description: "Waveform image (optional)",
-                    required: false
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const userId = args.find(x => x.name === "user")?.value as string;
-                    const duration = args.find(x => x.name === "duration")?.value as number || 30;
-                    const waveform = args.find(x => x.name === "waveform")?.value;
-                    
-                    const user = UserStore.getUser(userId);
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.DEFAULT,
-                        author: {
-                            id: userId,
-                            username: user?.username || "Unknown",
-                            avatar: user?.avatar || null,
-                            discriminator: user?.discriminator || "0000",
-                            public_flags: user?.publicFlags || 0,
-                            bot: false,
-                            flags: 0
-                        },
-                        content: `🎤 Voice Message (${duration}s)`,
-                        flags: 8192, // Voice message flag
-                        attachments: waveform ? [{
-                            id: generateSnowflake(),
-                            filename: "voice-message-waveform.png",
-                            size: 512,
-                            url: waveform,
-                            proxy_url: waveform,
-                            content_type: "image/png",
-                            waveform: "data:audio/waveform;base64," + btoa("waveform_data")
-                        }] : []
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: "✅ Voice message spoofed!",
-                        ephemeral: true
-                    });
-                } catch (error) {
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
-        },
-        
-        {
-            name: "spoofmedia",
-            description: "Spoof any media message with custom attachments",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "user",
-                    description: "User who sent media",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "caption",
-                    description: "Caption for media",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "media1",
-                    description: "Media attachment 1",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "media2",
-                    description: "Media attachment 2",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "media3",
-                    description: "Media attachment 3",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.ATTACHMENT,
-                    name: "media4",
-                    description: "Media attachment 4",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "type",
-                    description: "Media type",
-                    required: false,
-                    choices: [
-                        { label: "Image", value: "image" },
-                        { label: "Video", value: "video" },
-                        { label: "Audio", value: "audio" },
-                        { label: "File", value: "file" }
-                    ]
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const userId = args.find(x => x.name === "user")?.value as string;
-                    const caption = args.find(x => x.name === "caption")?.value as string;
-                    const mediaType = args.find(x => x.name === "type")?.value as string || "image";
-                    
-                    const user = UserStore.getUser(userId);
-                    const attachments = [];
-                    
-                    for (let i = 1; i <= 4; i++) {
-                        const media = args.find(x => x.name === `media${i}`);
-                        if (media?.value) {
-                            attachments.push({
-                                id: generateSnowflake(),
-                                filename: `${mediaType}_${i}.${mediaType === 'image' ? 'png' : mediaType === 'video' ? 'mp4' : 'bin'}`,
-                                size: 1024 * 1024,
-                                url: media.value,
-                                proxy_url: media.value,
-                                content_type: mediaType === 'image' ? 'image/png' : 
-                                            mediaType === 'video' ? 'video/mp4' : 
-                                            mediaType === 'audio' ? 'audio/mpeg' : 'application/octet-stream',
-                                width: mediaType === 'image' ? 1280 : null,
-                                height: mediaType === 'image' ? 720 : null
-                            });
-                        }
-                    }
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.DEFAULT,
-                        author: {
-                            id: userId,
-                            username: user?.username || "Unknown",
-                            avatar: user?.avatar || null,
-                            discriminator: user?.discriminator || "0000",
-                            public_flags: user?.publicFlags || 0,
-                            bot: false,
-                            flags: 0
-                        },
-                        content: caption || "",
-                        attachments: attachments
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: `✅ ${attachments.length} media file(s) spoofed!`,
-                        ephemeral: true
-                    });
-                } catch (error) {
+                    console.error("System spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -1165,5 +749,13 @@ export default definePlugin({
                 }
             }
         }
-    ]
+    ],
+
+    start() {
+        console.log("SystemMessageSpoofer started");
+    },
+
+    stop() {
+        console.log("SystemMessageSpoofer stopped");
+    }
 });
