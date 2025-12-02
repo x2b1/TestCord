@@ -151,6 +151,8 @@ export default definePlugin({
                     const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
                     const delay = args.find(x => x.name === "delay");
                     const duration = args.find(x => x.name === "duration")?.value as string;
+                    const fromUserArg = args.find(x => x.name === "from_user");
+
                     const delay = args.find(x => x.name === "delay");
                     const type = args.find(x => x.name === "type")?.value as string || "server_boost";
                     const message = args.find(x => x.name === "message")?.value as string || "";
@@ -313,4 +315,4 @@ export default definePlugin({
         }
                 try {
     ]
-});
+    });

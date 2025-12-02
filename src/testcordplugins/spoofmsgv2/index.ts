@@ -56,7 +56,7 @@ function generateSnowflake() {
 
 function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 month") {
     const gifter = UserStore.getUser(gifterId);
-    const gifterName = gifter?.username || "Someone";
+    const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
     
     return {
         type: "rich",
@@ -64,7 +64,7 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
         description: `${gifterName} just gifted you **Discord Nitro** for **${duration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
         color: 0x5865F2,
         thumbnail: {
-            url: "attachment://nitro.png"
+            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
         },
         fields: [
             {
@@ -79,7 +79,8 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
             }
         ],
         footer: {
-            text: "Discord"
+            text: "Discord",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -87,7 +88,7 @@ function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 mo
 
 function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
     const booster = boosterId ? UserStore.getUser(boosterId) : null;
-    const boosterName = booster?.username || "Someone";
+    const boosterName = booster ? `<@${booster.id}>` : "Someone";
     const levelEmoji = ["✨", "🌟", "💫"][tier - 1] || "✨";
     
     return {
@@ -96,7 +97,7 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
         description: `${boosterName} just boosted the server${tier > 1 ? ` ${tier} times!` : '!'}`,
         color: 0xFF73FA,
         thumbnail: {
-            url: "attachment://boost.png"
+            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
         },
         fields: [
             {
@@ -111,7 +112,8 @@ function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
             }
         ],
         footer: {
-            text: "Thank you for boosting!"
+            text: "Thank you for boosting!",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -124,7 +126,8 @@ function createClydeEmbed(message: string) {
         description: message,
         color: 0x2F3136,
         footer: {
-            text: "This is an automated message from Discord"
+            text: "This is an automated message from Discord",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -144,10 +147,12 @@ function createDiscordSystemEmbed(title: string, message: string, type: string =
         description: message,
         color: color,
         author: {
-            name: "Discord"
+            name: "Discord",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         footer: {
-            text: "System Message"
+            text: "System Message",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -172,7 +177,8 @@ function createAutoModEmbed(rule: string, action: string, username?: string) {
             }
         ],
         footer: {
-            text: "Discord AutoMod"
+            text: "Discord AutoMod",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -197,7 +203,8 @@ function createPurchaseNotificationEmbed(item: string, price: string, username?:
             }
         ],
         footer: {
-            text: "Discord Shop"
+            text: "Discord Shop",
+            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -245,7 +252,7 @@ function dispatchMessage(channelId: string, messageData: any) {
 }
 
 export default definePlugin({
-    name: "AdvancedSystemMessageSpoofer",
+    name: "SystemMessageSpoofer",
     description: "Spoof Discord system messages with multiple dedicated commands",
     authors: [Devs.Ven],
     dependencies: ["CommandsAPI"],
@@ -284,9 +291,9 @@ export default definePlugin({
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const gifterId = args.find(x => x.name === "gifter")?.value as string;
-                    const duration = args.find(x => x.name === "duration")?.value as string || "1 month";
+                    const nitroDuration = args.find(x => x.name === "duration")?.value as string || "1 month";
                     
-                    const embed = createOfficialNitroGiftEmbed(gifterId, duration);
+                    const embed = createOfficialNitroGiftEmbed(gifterId, nitroDuration);
                     
                     dispatchMessage(channelId, {
                         type: MessageType.DEFAULT,
@@ -375,10 +382,10 @@ export default definePlugin({
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const boosterId = args.find(x => x.name === "booster")?.value as string;
-                    const tier = args.find(x => x.name === "tier")?.value as number || 1;
+                    const boostTier = args.find(x => x.name === "tier")?.value as number || 1;
                     const anonymous = args.find(x => x.name === "anonymous")?.value as boolean || false;
                     
-                    const embed = createServerBoostEmbed(tier, anonymous ? undefined : boosterId);
+                    const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
                     
                     dispatchMessage(channelId, {
                         type: MessageType.GUILD_BOOST,
@@ -494,7 +501,7 @@ export default definePlugin({
                     const showWelcome = args.find(x => x.name === "show_welcome")?.value as boolean || false;
                     
                     const user = UserStore.getUser(userId);
-                    const username = user?.username || "Unknown User";
+                    const username = user ? `<@${user.id}>` : "Unknown User";
                     
                     dispatchMessage(channelId, {
                         type: MessageType.USER_JOIN,
@@ -557,7 +564,7 @@ export default definePlugin({
                     const pinnedContent = args.find(x => x.name === "pinned_message")?.value as string || "Check this out!";
                     
                     const user = UserStore.getUser(userId);
-                    const username = user?.username || "Someone";
+                    const username = user ? `<@${user.id}>` : "Someone";
                     
                     dispatchMessage(channelId, {
                         type: MessageType.CHANNEL_PINNED_MESSAGE,
@@ -626,14 +633,14 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const userId = args.find(x => x.name === "user")?.value as string;
                     const action = args.find(x => x.name === "action")?.value as string;
-                    const duration = args.find(x => x.name === "duration")?.value as number;
+                    const callDuration = args.find(x => x.name === "duration")?.value as number;
                     
                     const user = UserStore.getUser(userId);
-                    const username = user?.username || "Someone";
+                    const username = user ? `<@${user.id}>` : "Someone";
                     
                     const content = action === "start" 
                         ? `${username} started a call. Join here!`
-                        : `${username} ended the call${duration ? ` (Duration: ${duration} minutes)` : ''}.`;
+                        : `${username} ended the call${callDuration ? ` (Duration: ${callDuration} minutes)` : ''}.`;
                     
                     dispatchMessage(channelId, {
                         type: MessageType.CALL,
@@ -668,6 +675,86 @@ export default definePlugin({
                     });
                 } catch (error) {
                     console.error("Call spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+        
+        {
+            name: "spoofautomod",
+            description: "Spoof an AutoMod action notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "rule",
+                    description: "AutoMod rule that was triggered",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "action",
+                    description: "Action taken",
+                    required: true,
+                    choices: [
+                        { name: "Block Message", value: "block" },
+                        { name: "Send Alert", value: "alert" },
+                        { name: "Timeout User", value: "timeout" }
+                    ]
+                },
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who triggered it",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const rule = args.find(x => x.name === "rule")?.value as string;
+                    const action = args.find(x => x.name === "action")?.value as string;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    
+                    const user = userId ? UserStore.getUser(userId) : null;
+                    const actionText = {
+                        block: "Message blocked",
+                        alert: "Alert sent to moderators",
+                        timeout: "User timed out"
+                    }[action] || action;
+                    
+                    const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
+                    
+                    dispatchMessage(channelId, {
+                        type: MessageType.AUTO_MODERATION_ACTION,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord AutoMod",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+                    
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ AutoMod notification spoofed!",
+                        ephemeral: true
+                    });
+                } catch (error) {
+                    console.error("AutoMod spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -717,9 +804,9 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const title = args.find(x => x.name === "title")?.value as string;
                     const message = args.find(x => x.name === "message")?.value as string;
-                    const type = args.find(x => x.name === "type")?.value as string || "announcement";
+                    const systemType = args.find(x => x.name === "type")?.value as string || "announcement";
                     
-                    const embed = createDiscordSystemEmbed(title, message, type);
+                    const embed = createDiscordSystemEmbed(title, message, systemType);
                     
                     dispatchMessage(channelId, {
                         type: MessageType.DEFAULT,
@@ -742,6 +829,76 @@ export default definePlugin({
                     });
                 } catch (error) {
                     console.error("System spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+        
+        {
+            name: "spoofpurchase",
+            description: "Spoof a purchase notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who made purchase",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "item",
+                    description: "Item purchased",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "price",
+                    description: "Price (e.g., $9.99)",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const item = args.find(x => x.name === "item")?.value as string;
+                    const price = args.find(x => x.name === "price")?.value as string;
+                    
+                    const user = UserStore.getUser(userId);
+                    
+                    const embed = createPurchaseNotificationEmbed(item, price, user ? `<@${user.id}>` : undefined);
+                    
+                    dispatchMessage(channelId, {
+                        type: MessageType.PURCHASE_NOTIFICATION,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord Shop",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+                    
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Purchase notification spoofed!",
+                        ephemeral: true
+                    });
+                } catch (error) {
+                    console.error("Purchase spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
