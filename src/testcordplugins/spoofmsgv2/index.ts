@@ -11,7 +11,7 @@ import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const CLYDE_USER_ID = "1081004946872352958";
-const DISCORD_SYSTEM_USER_ID = "0";
+const DISCORD_SYSTEM_USER_ID = "643945264868098049"; // Fixed Discord user ID
 
 enum MessageType {
     DEFAULT = 0,
@@ -54,33 +54,30 @@ function generateSnowflake() {
     return ((timestamp << 22) | random).toString();
 }
 
-function createOfficialNitroGiftEmbed(gifterId: string, nitroDuration: string = "1 month") {
+function createOfficialNitroGiftEmbed(gifterId: string) {
     const gifter = UserStore.getUser(gifterId);
     const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
     
     return {
         type: "rich",
-        title: "A gift for you!",
-        description: `${gifterName} just gifted you **Discord Nitro** for **${nitroDuration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
         color: 0x5865F2,
+        author: {
+            name: "Discord",
+            icon_url: "https://cdn.discordapp.com/emojis/1159627219011190824.png"
+        },
+        description: `${gifterName}, you have a gift!`,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
+            url: "https://cdn.discordapp.com/emojis/1159627219011190824.png"
         },
         fields: [
             {
                 name: "Expires in",
-                value: "48 hours",
-                inline: true
-            },
-            {
-                name: "Gift Value",
-                value: `$${nitroDuration === "1 month" ? "9.99" : nitroDuration === "1 year" ? "99.99" : "4.99"}`,
+                value: "47 hours",
                 inline: true
             }
         ],
         footer: {
-            text: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "NITRO • GET CHAT PERKS + 2 BOOSTS"
         },
         timestamp: new Date().toISOString()
     };
@@ -94,10 +91,10 @@ function createServerBoostEmbed(boostTier: number = 1, boosterId?: string) {
     return {
         type: "rich",
         title: `${levelEmoji} Server Boosted!`,
-        description: `${boosterName} just boosted the server${boostTier > 1 ? ` ${boostTier} times!` : '!'}`,
+        description: `${boosterName} just boosted the server!`,
         color: 0xFF73FA,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
+            url: "https://cdn.discordapp.com/emojis/1159626882694783036.png"
         },
         fields: [
             {
@@ -112,8 +109,7 @@ function createServerBoostEmbed(boostTier: number = 1, boosterId?: string) {
             }
         ],
         footer: {
-            text: "Thank you for boosting!",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Thank you for boosting!"
         },
         timestamp: new Date().toISOString()
     };
@@ -122,12 +118,11 @@ function createServerBoostEmbed(boostTier: number = 1, boosterId?: string) {
 function createClydeEmbed(message: string) {
     return {
         type: "rich",
-        title: "Clyde",
         description: message,
         color: 0x2F3136,
-        footer: {
-            text: "This is an automated message from Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+        author: {
+            name: "Clyde",
+            icon_url: "https://cdn.discordapp.com/embed/avatars/0.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -148,11 +143,10 @@ function createDiscordSystemEmbed(title: string, message: string, systemType: st
         color: color,
         author: {
             name: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://cdn.discordapp.com/emojis/1159627219011190824.png"
         },
         footer: {
-            text: "System Message",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "System Message"
         },
         timestamp: new Date().toISOString()
     };
@@ -177,8 +171,7 @@ function createAutoModEmbed(rule: string, action: string, username?: string) {
             }
         ],
         footer: {
-            text: "Discord AutoMod",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Discord AutoMod"
         },
         timestamp: new Date().toISOString()
     };
@@ -203,8 +196,7 @@ function createPurchaseNotificationEmbed(item: string, price: string, username?:
             }
         ],
         footer: {
-            text: "Discord Shop",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            text: "Discord Shop"
         },
         timestamp: new Date().toISOString()
     };
@@ -251,16 +243,52 @@ function dispatchMessage(channelId: string, messageData: any) {
     });
 }
 
+function createNitroComponents() {
+    return [
+        {
+            type: 1,
+            components: [
+                {
+                    type: 2,
+                    style: 3,
+                    label: "Accept",
+                    custom_id: "accept_nitro_gift"
+                }
+            ]
+        }
+    ];
+}
+
+function createClydeComponents() {
+    return [
+        {
+            type: 1,
+            components: [
+                {
+                    type: 2,
+                    style: 2,
+                    label: "Dismiss message",
+                    custom_id: "clyde_dismiss",
+                    emoji: {
+                        name: "👀",
+                        id: "1159627544426946560"
+                    }
+                }
+            ]
+        }
+    ];
+}
+
 export default definePlugin({
-    name: "SystemMessageSpoofer",
-    description: "Spoof Discord system messages with multiple dedicated commands",
+    name: "SpoofSystemV2",
+    description: "Spoof official Discord system messages with realistic embeds",
     authors: [Devs.Ven],
     dependencies: ["CommandsAPI"],
 
     commands: [
         {
             name: "spoofnitro",
-            description: "Spoof a Discord Nitro gift notification",
+            description: "Spoof an official Discord Nitro gift notification",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
                 {
@@ -268,17 +296,6 @@ export default definePlugin({
                     name: "gifter",
                     description: "User who sent the gift",
                     required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "duration",
-                    description: "Duration of the Nitro gift",
-                    required: false,
-                    choices: [
-                        { name: "1 Month", value: "1 month" },
-                        { name: "3 Months", value: "3 months" },
-                        { name: "1 Year", value: "1 year" }
-                    ]
                 },
                 {
                     type: ApplicationCommandOptionType.CHANNEL,
@@ -291,42 +308,23 @@ export default definePlugin({
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const gifterId = args.find(x => x.name === "gifter")?.value as string;
-                    const nitroDuration = args.find(x => x.name === "duration")?.value as string || "1 month";
                     
-                    const embed = createOfficialNitroGiftEmbed(gifterId, nitroDuration);
+                    const embed = createOfficialNitroGiftEmbed(gifterId);
                     
                     dispatchMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17, // Official Discord System
+                            bot: false,
                             flags: 0
                         },
                         content: "",
                         embeds: [embed],
-                        components: [
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        style: 3,
-                                        label: "Accept Gift",
-                                        custom_id: "accept_nitro_gift"
-                                    },
-                                    {
-                                        type: 2,
-                                        style: 2,
-                                        label: "See Details",
-                                        custom_id: "view_nitro_details"
-                                    }
-                                ]
-                            }
-                        ]
+                        components: createNitroComponents()
                     });
                     
                     sendBotMessage(ctx.channel.id, {
@@ -387,15 +385,18 @@ export default definePlugin({
                     
                     const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
                     
+                    // For server boosts, the message should appear as if from the booster
+                    const booster = UserStore.getUser(boosterId);
+                    
                     dispatchMessage(channelId, {
                         type: MessageType.GUILD_BOOST,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17,
+                            bot: false,
                             flags: 0
                         },
                         content: "",
@@ -453,7 +454,8 @@ export default definePlugin({
                             flags: 0
                         },
                         content: "",
-                        embeds: [embed]
+                        embeds: [embed],
+                        components: createClydeComponents()
                     });
                     
                     sendBotMessage(ctx.channel.id, {
@@ -486,19 +488,12 @@ export default definePlugin({
                     name: "channel",
                     description: "Channel to send in",
                     required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.BOOLEAN,
-                    name: "show_welcome",
-                    description: "Show welcome message",
-                    required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const userId = args.find(x => x.name === "user")?.value as string;
-                    const showWelcome = args.find(x => x.name === "show_welcome")?.value as boolean || false;
                     
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Unknown User";
@@ -508,15 +503,13 @@ export default definePlugin({
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17,
+                            bot: false,
                             flags: 0
                         },
-                        content: showWelcome 
-                            ? `🎉 Welcome ${username} to the server! 🎉\nPlease read the rules and enjoy your stay!`
-                            : `${username} joined the server.`
+                        content: `🎉 Welcome ${username} to the server! 🎉`
                     });
                     
                     sendBotMessage(ctx.channel.id, {
@@ -549,19 +542,12 @@ export default definePlugin({
                     name: "channel",
                     description: "Channel to send in",
                     required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "pinned_message",
-                    description: "Content of pinned message",
-                    required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const userId = args.find(x => x.name === "user")?.value as string;
-                    const pinnedContent = args.find(x => x.name === "pinned_message")?.value as string || "Check this out!";
                     
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Someone";
@@ -571,10 +557,10 @@ export default definePlugin({
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17,
+                            bot: false,
                             flags: 0
                         },
                         content: `${username} pinned a message to this channel. See all the pins.`
@@ -620,12 +606,6 @@ export default definePlugin({
                         { name: "Start Call", value: "start" },
                         { name: "End Call", value: "end" }
                     ]
-                },
-                {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "duration",
-                    description: "Call duration in minutes (for end)",
-                    required: false
                 }
             ],
             execute: async (args, ctx) => {
@@ -633,40 +613,26 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const userId = args.find(x => x.name === "user")?.value as string;
                     const action = args.find(x => x.name === "action")?.value as string;
-                    const callDuration = args.find(x => x.name === "duration")?.value as number;
                     
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Someone";
                     
                     const content = action === "start" 
-                        ? `${username} started a call. Join here!`
-                        : `${username} ended the call${callDuration ? ` (Duration: ${callDuration} minutes)` : ''}.`;
+                        ? `${username} started a call.`
+                        : `${username} ended the call.`;
                     
                     dispatchMessage(channelId, {
                         type: MessageType.CALL,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17,
+                            bot: false,
                             flags: 0
                         },
-                        content: content,
-                        components: action === "start" ? [
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        style: 1,
-                                        label: "Join Call",
-                                        custom_id: "join_call_button"
-                                    }
-                                ]
-                            }
-                        ] : []
+                        content: content
                     });
                     
                     sendBotMessage(ctx.channel.id, {
@@ -675,6 +641,127 @@ export default definePlugin({
                     });
                 } catch (error) {
                     console.error("Call spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+        
+        {
+            name: "spoofsystem",
+            description: "Spoof an official Discord system message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "message",
+                    description: "System message content",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const message = args.find(x => x.name === "message")?.value as string;
+                    
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
+                            discriminator: "0000",
+                            public_flags: 1 << 17,
+                            bot: false,
+                            flags: 0
+                        },
+                        content: message
+                    });
+                    
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ System message spoofed!",
+                        ephemeral: true
+                    });
+                } catch (error) {
+                    console.error("System spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+        
+        {
+            name: "spoofpurchase",
+            description: "Spoof a purchase notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who made purchase",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "item",
+                    description: "Item purchased",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "price",
+                    description: "Price (e.g., $9.99)",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const item = args.find(x => x.name === "item")?.value as string;
+                    const price = args.find(x => x.name === "price")?.value as string;
+                    
+                    const user = UserStore.getUser(userId);
+                    
+                    const embed = createPurchaseNotificationEmbed(item, price, user ? `<@${user.id}>` : undefined);
+                    
+                    dispatchMessage(channelId, {
+                        type: MessageType.PURCHASE_NOTIFICATION,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord Shop",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
+                            discriminator: "0000",
+                            public_flags: 1 << 17,
+                            bot: false,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+                    
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Purchase notification spoofed!",
+                        ephemeral: true
+                    });
+                } catch (error) {
+                    console.error("Purchase spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
                         content: `❌ Error: ${error}`,
                         ephemeral: true
@@ -739,10 +826,10 @@ export default definePlugin({
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord AutoMod",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            avatar: "f78426a064bc9dd24847519259bc42af",
                             discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
+                            public_flags: 1 << 17,
+                            bot: false,
                             flags: 0
                         },
                         content: "",
@@ -761,158 +848,14 @@ export default definePlugin({
                     });
                 }
             }
-        },
-        
-        {
-            name: "spoofsystem",
-            description: "Spoof an official Discord system message",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "title",
-                    description: "Title of the system message",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "message",
-                    description: "System message content",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "type",
-                    description: "Type of system message",
-                    required: false,
-                    choices: [
-                        { name: "Announcement", value: "announcement" },
-                        { name: "Warning", value: "warning" },
-                        { name: "Update", value: "update" },
-                        { name: "Maintenance", value: "maintenance" }
-                    ]
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const title = args.find(x => x.name === "title")?.value as string;
-                    const message = args.find(x => x.name === "message")?.value as string;
-                    const systemType = args.find(x => x.name === "type")?.value as string || "announcement";
-                    
-                    const embed = createDiscordSystemEmbed(title, message, systemType);
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.DEFAULT,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
-                            discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: "✅ System message spoofed!",
-                        ephemeral: true
-                    });
-                } catch (error) {
-                    console.error("System spoof error:", error);
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
-        },
-        
-        {
-            name: "spoofpurchase",
-            description: "Spoof a purchase notification",
-            inputType: ApplicationCommandInputType.BUILT_IN,
-            options: [
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "user",
-                    description: "User who made purchase",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "item",
-                    description: "Item purchased",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "price",
-                    description: "Price (e.g., $9.99)",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.CHANNEL,
-                    name: "channel",
-                    description: "Channel to send in",
-                    required: false
-                }
-            ],
-            execute: async (args, ctx) => {
-                try {
-                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
-                    const userId = args.find(x => x.name === "user")?.value as string;
-                    const item = args.find(x => x.name === "item")?.value as string;
-                    const price = args.find(x => x.name === "price")?.value as string;
-                    
-                    const user = UserStore.getUser(userId);
-                    
-                    const embed = createPurchaseNotificationEmbed(item, price, user ? `<@${user.id}>` : undefined);
-                    
-                    dispatchMessage(channelId, {
-                        type: MessageType.PURCHASE_NOTIFICATION,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord Shop",
-                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
-                            discriminator: "0000",
-                            public_flags: 0,
-                            bot: true,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
-                    });
-                    
-                    sendBotMessage(ctx.channel.id, {
-                        content: "✅ Purchase notification spoofed!",
-                        ephemeral: true
-                    });
-                } catch (error) {
-                    console.error("Purchase spoof error:", error);
-                    sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
-                    });
-                }
-            }
         }
     ],
 
     start() {
-        console.log("SystemMessageSpoofer started");
+        console.log("SpoofSystemV2 started");
     },
 
     stop() {
-        console.log("SystemMessageSpoofer stopped");
+        console.log("SpoofSystemV2 stopped");
     }
 });

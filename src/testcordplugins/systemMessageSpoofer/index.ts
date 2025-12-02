@@ -265,435 +265,640 @@ export default definePlugin({
     commands: [
         {
             name: "spoofnitro",
-            description: "Spoof a Discord Nitro gift message",
+            description: "Spoof a Discord Nitro gift notification",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "gifter",
+                    description: "User who sent the gift",
+                    required: true
+                },
                 {
                     type: ApplicationCommandOptionType.STRING,
                     name: "duration",
-                    description: "Duration of the Nitro gift (e.g., '1 month', '3 months')",
-                    required: true
-                },
-                {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "from_user",
-                    description: "User who sent the Nitro gift",
-                    required: true
+                    description: "Duration of the Nitro gift",
+                    required: false,
+                    choices: [
+                        { label: "1 Month", name: "1 Month", value: "1 month" },
+                        { label: "3 Months", name: "3 Months", value: "3 months" },
+                        { label: "1 Year", name: "1 Year", value: "1 year" }
+                    ]
                 },
                 {
                     type: ApplicationCommandOptionType.CHANNEL,
                     name: "channel",
-                    description: "Channel to send the spoofed message in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "delay",
-                    description: "Delay for the message to appear (in seconds)",
+                    description: "Channel to send in (defaults to current)",
                     required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
-                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
-                    const delay = args.find(x => x.name === "delay");
-                    const duration = args.find(x => x.name === "duration")?.value as string;
-                    const fromUserArg = args.find(x => x.name === "from_user");
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const gifterId = args.find(x => x.name === "gifter")?.value as string;
+                    const nitroDuration = args.find(x => x.name === "duration")?.value as string || "1 month";
 
-                    if (delay) {
-                        FluxDispatcher.dispatch({
-                            type: "TYPING_START",
-                            channelId: channel.value,
-                            userId: DISCORD_SYSTEM_USER_ID,
-                        });
-                    }
+                    const embed = createOfficialNitroGiftEmbed(gifterId, nitroDuration);
 
-                    const fromUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
-                    const embeds = [createOfficialNitroGiftEmbed(duration, fromUser)];
-                    const components = [
-                        {
-                            type: 1,
-                            components: [
-                                {
-                                    type: 2,
-                                    style: 3,
-                                    label: "Accept",
-                                    custom_id: "nitro_accept"
-                                }
-                            ]
-                        }
-                    ];
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed],
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        style: 3,
+                                        label: "Accept Gift",
+                                        custom_id: "accept_nitro_gift"
+                                    },
+                                    {
+                                        type: 2,
+                                        style: 2,
+                                        label: "See Details",
+                                        custom_id: "view_nitro_details"
+                                    }
+                                ]
+                            }
+                        ]
+                    });
 
-                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
-                        id: DISCORD_SYSTEM_USER_ID,
-                        username: "Discord",
-                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
-                        discriminator: "0000",
-                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
-                        premium_type: 0,
-                        flags: 0,
-                        banner: null,
-                        accent_color: null,
-                        global_name: "Discord",
-                        avatar_decoration_data: null,
-                        banner_color: null
-                    };
-
-                    setTimeout(() => {
-                        FluxDispatcher.dispatch({
-                            type: "MESSAGE_CREATE",
-                            channelId: channel.value,
-                            message: {
-                                attachments: [],
-                                author: {
-                                    id: user.id,
-                                    username: user.username,
-                                    avatar: user.avatar,
-                                    discriminator: user.discriminator,
-                                    public_flags: user.publicFlags,
-                                    premium_type: user.premiumType,
-                                    flags: user.flags,
-                                    banner: user.banner,
-                                    accent_color: null,
-                                    global_name: user.globalName,
-                                    avatar_decoration_data: null,
-                                    banner_color: null
-                                },
-                                channel_id: channel.value,
-                                components: components,
-                                content: "",
-                                edited_timestamp: null,
-                                embeds: embeds,
-                                flags: 0,
-                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                mention_everyone: false,
-                                mention_roles: [],
-                                mentions: [],
-                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                pinned: false,
-                                timestamp: new Date(),
-                                tts: false,
-                                type: MessageType.DEFAULT
-                            },
-                            optimistic: false,
-                            isPushNotification: false
-                        });
-                    }, (Number(delay?.value ?? 0.5) * 1000));
-                } catch (error) {
                     sendBotMessage(ctx.channel.id, {
-                        content: `Something went wrong: \`${error}\``,
+                        content: "✅ Nitro gift spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Nitro spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
                     });
                 }
             }
         },
+
         {
-            name: "spoofserverboost",
-            description: "Spoof a server boost message",
+            name: "spoofboost",
+            description: "Spoof a server boost notification",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
                 {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "message",
-                    description: "The boost message content",
-                    required: false
+                    type: ApplicationCommandOptionType.USER,
+                    name: "booster",
+                    description: "User who boosted",
+                    required: true
                 },
                 {
-                    type: ApplicationCommandOptionType.USER,
-                    name: "sender",
-                    description: "User who boosted the server",
-                    required: false
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "tier",
+                    description: "Boost tier (1-3)",
+                    required: false,
+                    choices: [
+                        { label: "Tier 1", name: "Tier 1", value: 1 },
+                        { label: "Tier 2", name: "Tier 2", value: 2 },
+                        { label: "Tier 3", name: "Tier 3", value: 3 }
+                    ]
                 },
                 {
                     type: ApplicationCommandOptionType.CHANNEL,
                     name: "channel",
-                    description: "Channel to send the spoofed message in",
+                    description: "Channel to send in",
                     required: false
                 },
                 {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "delay",
-                    description: "Delay for the message to appear (in seconds)",
+                    type: ApplicationCommandOptionType.BOOLEAN,
+                    name: "anonymous",
+                    description: "Send as anonymous boost",
                     required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
-                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
-                    const delay = args.find(x => x.name === "delay");
-                    const message = args.find(x => x.name === "message")?.value as string || "This server has reached a new boost level!";
-                    const senderArg = args.find(x => x.name === "sender");
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const boosterId = args.find(x => x.name === "booster")?.value as string;
+                    const boostTier = Number(args.find(x => x.name === "tier")?.value) || 1;
+                    const anonymous = Boolean(args.find(x => x.name === "anonymous")?.value) || false;
 
-                    if (delay) {
-                        FluxDispatcher.dispatch({
-                            type: "TYPING_START",
-                            channelId: channel.value,
-                            userId: DISCORD_SYSTEM_USER_ID,
-                        });
-                    }
+                    const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
 
-                    const sender = senderArg ? UserStore.getUser(senderArg.value)?.username || "Someone" : null;
-                    const content = sender ? `${sender} boosted the server! ${message}` : message;
+                    dispatchMessage(channelId, {
+                        type: MessageType.GUILD_BOOST,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
 
-                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
-                        id: DISCORD_SYSTEM_USER_ID,
-                        username: "Discord",
-                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
-                        discriminator: "0000",
-                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
-                        premium_type: 0,
-                        flags: 0,
-                        banner: null,
-                        accent_color: null,
-                        global_name: "Discord",
-                        avatar_decoration_data: null,
-                        banner_color: null
-                    };
-
-                    setTimeout(() => {
-                        FluxDispatcher.dispatch({
-                            type: "MESSAGE_CREATE",
-                            channelId: channel.value,
-                            message: {
-                                attachments: [],
-                                author: {
-                                    id: user.id,
-                                    username: user.username,
-                                    avatar: user.avatar,
-                                    discriminator: user.discriminator,
-                                    public_flags: user.publicFlags,
-                                    premium_type: user.premiumType,
-                                    flags: user.flags,
-                                    banner: user.banner,
-                                    accent_color: null,
-                                    global_name: user.globalName,
-                                    avatar_decoration_data: null,
-                                    banner_color: null
-                                },
-                                channel_id: channel.value,
-                                components: [],
-                                content: content,
-                                edited_timestamp: null,
-                                embeds: [],
-                                flags: 0,
-                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                mention_everyone: false,
-                                mention_roles: [],
-                                mentions: [],
-                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                pinned: false,
-                                timestamp: new Date(),
-                                tts: false,
-                                type: MessageType.GUILD_BOOST
-                            },
-                            optimistic: false,
-                            isPushNotification: false
-                        });
-                    }, (Number(delay?.value ?? 0.5) * 1000));
-                } catch (error) {
                     sendBotMessage(ctx.channel.id, {
-                        content: `Something went wrong: \`${error}\``,
+                        content: "✅ Server boost spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Boost spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
                     });
                 }
             }
         },
+
         {
             name: "spoofclyde",
-            description: "Spoof a Clyde message",
+            description: "Spoof a message from Clyde (Discord's bot)",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
                 {
                     type: ApplicationCommandOptionType.STRING,
                     name: "message",
-                    description: "The message content",
+                    description: "Message content from Clyde",
                     required: true
                 },
                 {
                     type: ApplicationCommandOptionType.CHANNEL,
                     name: "channel",
-                    description: "Channel to send the spoofed message in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "delay",
-                    description: "Delay for the message to appear (in seconds)",
+                    description: "Channel to send in",
                     required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
-                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
-                    const delay = args.find(x => x.name === "delay");
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const message = args.find(x => x.name === "message")?.value as string;
 
-                    if (delay) {
-                        FluxDispatcher.dispatch({
-                            type: "TYPING_START",
-                            channelId: channel.value,
-                            userId: CLYDE_USER_ID,
-                        });
-                    }
+                    const embed = createClydeEmbed(message);
 
-                    const components = createClydeComponents();
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: CLYDE_USER_ID,
+                            username: "Clyde",
+                            avatar: null,
+                            discriminator: "0000",
+                            public_flags: 1 << 16,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
 
-                    const user = UserStore.getUser(CLYDE_USER_ID) || {
-                        id: CLYDE_USER_ID,
-                        username: "Clyde",
-                        avatar: null,
-                        discriminator: "0000",
-                        public_flags: 0,
-                        premium_type: 0,
-                        flags: 0,
-                        banner: null,
-                        accent_color: null,
-                        global_name: "Clyde",
-                        avatar_decoration_data: null,
-                        banner_color: null
-                    };
-
-                    setTimeout(() => {
-                        FluxDispatcher.dispatch({
-                            type: "MESSAGE_CREATE",
-                            channelId: channel.value,
-                            message: {
-                                attachments: [],
-                                author: {
-                                    id: user.id,
-                                    username: user.username,
-                                    avatar: user.avatar,
-                                    discriminator: user.discriminator,
-                                    public_flags: user.publicFlags,
-                                    premium_type: user.premiumType,
-                                    flags: user.flags,
-                                    banner: user.banner,
-                                    accent_color: null,
-                                    global_name: user.globalName,
-                                    avatar_decoration_data: null,
-                                    banner_color: null
-                                },
-                                channel_id: channel.value,
-                                components: components,
-                                content: message,
-                                edited_timestamp: null,
-                                embeds: [],
-                                flags: 0,
-                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                mention_everyone: false,
-                                mention_roles: [],
-                                mentions: [],
-                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                pinned: false,
-                                timestamp: new Date(),
-                                tts: false,
-                                type: MessageType.DEFAULT
-                            },
-                            optimistic: false,
-                            isPushNotification: false
-                        });
-                    }, (Number(delay?.value ?? 0.5) * 1000));
-                } catch (error) {
                     sendBotMessage(ctx.channel.id, {
-                        content: `Something went wrong: \`${error}\``,
+                        content: "✅ Clyde message spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Clyde spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
                     });
                 }
             }
         },
+
         {
-            name: "spoofsystem",
-            description: "Spoof a general system message",
+            name: "spoofjoin",
+            description: "Spoof a user join notification",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [
                 {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "message",
-                    description: "The message content",
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who joined",
                     required: true
                 },
                 {
                     type: ApplicationCommandOptionType.CHANNEL,
                     name: "channel",
-                    description: "Channel to send the spoofed message in",
+                    description: "Channel to send in",
                     required: false
                 },
                 {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "delay",
-                    description: "Delay for the message to appear (in seconds)",
+                    type: ApplicationCommandOptionType.BOOLEAN,
+                    name: "show_welcome",
+                    description: "Show welcome message",
                     required: false
                 }
             ],
             execute: async (args, ctx) => {
                 try {
-                    const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
-                    const delay = args.find(x => x.name === "delay");
-                    const message = args.find(x => x.name === "message")?.value as string;
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const showWelcome = Boolean(args.find(x => x.name === "show_welcome")?.value) || false;
 
-                    if (delay) {
-                        FluxDispatcher.dispatch({
-                            type: "TYPING_START",
-                            channelId: channel.value,
-                            userId: DISCORD_SYSTEM_USER_ID,
-                        });
-                    }
+                    const user = UserStore.getUser(userId);
+                    const username = user ? `<@${user.id}>` : "Unknown User";
 
-                    const user = UserStore.getUser(DISCORD_SYSTEM_USER_ID) || {
-                        id: DISCORD_SYSTEM_USER_ID,
-                        username: "Discord",
-                        avatar: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png",
-                        discriminator: "0000",
-                        public_flags: (1 << 12) | (1 << 16), // Verified bot + official Discord flags
-                        premium_type: 0,
-                        flags: 0,
-                        banner: null,
-                        accent_color: null,
-                        global_name: "Discord",
-                        avatar_decoration_data: null,
-                        banner_color: null
-                    };
+                    dispatchMessage(channelId, {
+                        type: MessageType.USER_JOIN,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: showWelcome
+                            ? `🎉 Welcome ${username} to the server! 🎉\nPlease read the rules and enjoy your stay!`
+                            : `${username} joined the server.`
+                    });
 
-                    setTimeout(() => {
-                        FluxDispatcher.dispatch({
-                            type: "MESSAGE_CREATE",
-                            channelId: channel.value,
-                            message: {
-                                attachments: [],
-                                author: {
-                                    id: user.id,
-                                    username: user.username,
-                                    avatar: user.avatar,
-                                    discriminator: user.discriminator,
-                                    public_flags: user.publicFlags,
-                                    premium_type: user.premiumType,
-                                    flags: user.flags,
-                                    banner: user.banner,
-                                    accent_color: null,
-                                    global_name: user.globalName,
-                                    avatar_decoration_data: null,
-                                    banner_color: null
-                                },
-                                channel_id: channel.value,
-                                components: [],
-                                content: message,
-                                edited_timestamp: null,
-                                embeds: [],
-                                flags: 0,
-                                id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                mention_everyone: false,
-                                mention_roles: [],
-                                mentions: [],
-                                nonce: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
-                                pinned: false,
-                                timestamp: new Date(),
-                                tts: false,
-                                type: MessageType.DEFAULT
-                            },
-                            optimistic: false,
-                            isPushNotification: false
-                        });
-                    }, (Number(delay?.value ?? 0.5) * 1000));
-                } catch (error) {
                     sendBotMessage(ctx.channel.id, {
-                        content: `Something went wrong: \`${error}\``,
+                        content: "✅ Join notification spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Join spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofpin",
+            description: "Spoof a message pin notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who pinned",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "pinned_message",
+                    description: "Content of pinned message",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const pinnedContent = args.find(x => x.name === "pinned_message")?.value as string || "Check this out!";
+
+                    const user = UserStore.getUser(userId);
+                    const username = user ? `<@${user.id}>` : "Someone";
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.CHANNEL_PINNED_MESSAGE,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: `${username} pinned a message to this channel. See all the pins.`
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Pin notification spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Pin spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofcall",
+            description: "Spoof a call start/end notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who started/ended the call",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "action",
+                    description: "Call action",
+                    required: true,
+                    choices: [
+                        { label: "Start Call", name: "Start Call", value: "start" },
+                        { label: "End Call", name: "End Call", value: "end" }
+                    ]
+                },
+                {
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "duration",
+                    description: "Call duration in minutes (for end)",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const action = args.find(x => x.name === "action")?.value as string;
+                    const callDuration = args.find(x => x.name === "duration")?.value as number;
+
+                    const user = UserStore.getUser(userId);
+                    const username = user ? `<@${user.id}>` : "Someone";
+
+                    const content = action === "start"
+                        ? `${username} started a call. Join here!`
+                        : `${username} ended the call${callDuration ? ` (Duration: ${callDuration} minutes)` : ''}.`;
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.CALL,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: content,
+                        components: action === "start" ? [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        style: 1,
+                                        label: "Join Call",
+                                        custom_id: "join_call_button"
+                                    }
+                                ]
+                            }
+                        ] : []
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Call notification spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Call spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofautomod",
+            description: "Spoof an AutoMod action notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "rule",
+                    description: "AutoMod rule that was triggered",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "action",
+                    description: "Action taken",
+                    required: true,
+                    choices: [
+                        { label: "Block Message", name: "Block Message", value: "block" },
+                        { label: "Send Alert", name: "Send Alert", value: "alert" },
+                        { label: "Timeout User", name: "Timeout User", value: "timeout" }
+                    ]
+                },
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who triggered it",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const rule = args.find(x => x.name === "rule")?.value as string;
+                    const action = args.find(x => x.name === "action")?.value as string;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+
+                    const user = userId ? UserStore.getUser(userId) : null;
+                    const actionText = {
+                        block: "Message blocked",
+                        alert: "Alert sent to moderators",
+                        timeout: "User timed out"
+                    }[action] || action;
+
+                    const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.AUTO_MODERATION_ACTION,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord AutoMod",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ AutoMod notification spoofed!"
+                    });
+                } catch (error) {
+                    console.error("AutoMod spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofsystem",
+            description: "Spoof an official Discord system message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "title",
+                    description: "Title of the system message",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "message",
+                    description: "System message content",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "type",
+                    description: "Type of system message",
+                    required: false,
+                    choices: [
+                        { label: "Announcement", name: "Announcement", value: "announcement" },
+                        { label: "Warning", name: "Warning", value: "warning" },
+                        { label: "Update", name: "Update", value: "update" },
+                        { label: "Maintenance", name: "Maintenance", value: "maintenance" }
+                    ]
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const title = args.find(x => x.name === "title")?.value as string;
+                    const message = args.find(x => x.name === "message")?.value as string;
+                    const systemType = args.find(x => x.name === "type")?.value as string || "announcement";
+
+                    const embed = createDiscordSystemEmbed(title, message, systemType);
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ System message spoofed!"
+                    });
+                } catch (error) {
+                    console.error("System spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofpurchase",
+            description: "Spoof a purchase notification",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "user",
+                    description: "User who made purchase",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "item",
+                    description: "Item purchased",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "price",
+                    description: "Price (e.g., $9.99)",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const userId = args.find(x => x.name === "user")?.value as string;
+                    const item = args.find(x => x.name === "item")?.value as string;
+                    const price = args.find(x => x.name === "price")?.value as string;
+
+                    const user = UserStore.getUser(userId);
+
+                    const embed = createPurchaseNotificationEmbed(item, price, user ? `<@${user.id}>` : undefined);
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.PURCHASE_NOTIFICATION,
+                        author: {
+                            id: DISCORD_SYSTEM_USER_ID,
+                            username: "Discord Shop",
+                            avatar: "28174a34e77bb5e5310ced9f95cb480b",
+                            discriminator: "0000",
+                            public_flags: 0,
+                            bot: true,
+                            flags: 0
+                        },
+                        content: "",
+                        embeds: [embed]
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Purchase notification spoofed!",
+                        ephemeral: true
+                    });
+                } catch (error) {
+                    console.error("Purchase spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`,
+                        ephemeral: true
                     });
                 }
             }
