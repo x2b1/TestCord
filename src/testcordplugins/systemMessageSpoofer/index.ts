@@ -53,6 +53,45 @@ enum MessageType {
     PURCHASE_NOTIFICATION = 44
 }
 
+function createNitroGiftEmbed(duration: string, fromUser: string) {
+    return {
+        type: "rich",
+        title: "You've been gifted a subscription!",
+        description: `${fromUser} has gifted you Nitro for ${duration}!`,
+        color: 0x5865f2,
+        thumbnail: {
+            url: "https://cdn.discordapp.com/attachments/1119017161740204142/1119017161948301412/NitroGift.png"
+        },
+        fields: [
+            {
+                name: "Expires in",
+                value: "48 hours",
+                inline: true
+            }
+        ],
+        footer: {
+            text: "Discord"
+        },
+        timestamp: new Date().toISOString()
+    };
+}
+
+function createClydeComponents() {
+    return [
+        {
+            type: 1,
+            components: [
+                {
+                    type: 2,
+                    style: 4,
+                    label: "Dismiss message",
+                    custom_id: "clyde_dismiss"
+                }
+            ]
+        }
+    ];
+}
+
 export default definePlugin({
     name: "SystemMessageSpoofer",
     description: "Spoof Discord system messages, including nitro gifts, Clyde messages, and verified Discord messages",
@@ -99,8 +138,10 @@ export default definePlugin({
                 try {
                     const channel = args.find(x => x.name === "channel") ?? { value: ctx.channel.id };
                     const delay = args.find(x => x.name === "delay");
-                    const type = args.find(x => x.name === "type")?.value as string;
-                    const message = args.find(x => x.name === "message")?.value as string;
+                    const type = args.find(x => x.name === "type")?.value as string || "server_boost";
+                    const message = args.find(x => x.name === "message")?.value as string || "";
+                    const fromUserArg = args.find(x => x.name === "from_user");
+                    const duration = args.find(x => x.name === "duration")?.value as string || "1 month";
 
                     if (delay) {
                         FluxDispatcher.dispatch({
@@ -113,26 +154,49 @@ export default definePlugin({
                     let authorId: string;
                     let authorName: string;
                     let messageType: MessageType;
-                    let content: string;
+                    let content: string = "";
+                    let embeds: any[] = [];
+                    let components: any[] = [];
 
                     switch (type) {
-                        case "nitro_gift":
+                        case "server_boost":
                             authorId = DISCORD_SYSTEM_USER_ID;
                             authorName = "Discord";
                             messageType = MessageType.GUILD_BOOST;
-                            content = `🎁 ${message}`;
+                            content = message || "This server has reached a new boost level!";
+                            break;
+                        case "nitro_gift":
+                            authorId = DISCORD_SYSTEM_USER_ID;
+                            authorName = "Discord";
+                            messageType = MessageType.DEFAULT;
+                            const fromUser = fromUserArg ? UserStore.getUser(fromUserArg.value)?.username || "Someone" : "Someone";
+                            embeds = [createNitroGiftEmbed(duration, fromUser)];
+                            components = [
+                                {
+                                    type: 1,
+                                    components: [
+                                        {
+                                            type: 2,
+                                            style: 3,
+                                            label: "Accept",
+                                            custom_id: "nitro_accept"
+                                        }
+                                    ]
+                                }
+                            ];
                             break;
                         case "clyde":
                             authorId = CLYDE_USER_ID;
                             authorName = "Clyde";
                             messageType = MessageType.DEFAULT;
-                            content = message;
+                            content = message || "This is a message from Clyde!";
+                            components = createClydeComponents();
                             break;
                         case "discord_system":
                             authorId = DISCORD_SYSTEM_USER_ID;
                             authorName = "Discord";
                             messageType = MessageType.DEFAULT;
-                            content = message;
+                            content = message || "This is a system message from Discord.";
                             break;
                         default:
                             throw new Error("Invalid message type");
@@ -143,7 +207,7 @@ export default definePlugin({
                         username: authorName,
                         avatar: null,
                         discriminator: "0000",
-                        public_flags: 0,
+                        public_flags: type === "discord_system" ? 1 << 12 : 0, // Official Discord bot flag for system messages
                         premium_type: 0,
                         flags: 0,
                         banner: null,
@@ -174,10 +238,10 @@ export default definePlugin({
                                     banner_color: null
                                 },
                                 channel_id: channel.value,
-                                components: [],
+                                components: components,
                                 content: content,
                                 edited_timestamp: null,
-                                embeds: [],
+                                embeds: embeds,
                                 flags: 0,
                                 id: (BigInt(Date.now() - 1420070400000) << 22n).toString(),
                                 mention_everyone: false,
