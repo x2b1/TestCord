@@ -7,12 +7,11 @@
 import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
 import { Devs } from "@utils/constants";
-import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
 const CLYDE_USER_ID = "1081004946872352958";
-const DISCORD_SYSTEM_USER_ID = "000000000000000000"; // Discord system user
+const DISCORD_SYSTEM_USER_ID = "000000000000000000";
 
 enum MessageType {
     DEFAULT = 0,
@@ -24,101 +23,59 @@ enum MessageType {
     CHANNEL_PINNED_MESSAGE = 6,
     USER_JOIN = 7,
     GUILD_BOOST = 8,
-    GUILD_BOOST_TIER_1 = 9,
-    GUILD_BOOST_TIER_2 = 10,
-    GUILD_BOOST_TIER_3 = 11,
     CHANNEL_FOLLOW_ADD = 12,
-    GUILD_DISCOVERY_DISQUALIFIED = 14,
-    GUILD_DISCOVERY_REQUALIFIED = 15,
-    GUILD_DISCOVERY_GRACE_PERIOD_INITIAL_WARNING = 16,
-    GUILD_DISCOVERY_GRACE_PERIOD_FINAL_WARNING = 17,
-    THREAD_CREATED = 18,
-    REPLY = 19,
-    CHAT_INPUT_COMMAND = 20,
-    THREAD_STARTER_MESSAGE = 21,
-    GUILD_INVITE_REMINDER = 22,
-    CONTEXT_MENU_COMMAND = 23,
     AUTO_MODERATION_ACTION = 24,
-    ROLE_SUBSCRIPTION_PURCHASE = 25,
-    INTERACTION_PREMIUM_UPSELL = 26,
-    STAGE_START = 27,
-    STAGE_END = 28,
-    STAGE_SPEAKER = 29,
-    STAGE_TOPIC = 31,
-    GUILD_APPLICATION_PREMIUM_SUBSCRIPTION = 32,
-    GUILD_INCIDENT_ALERT_MODE_ENABLED = 36,
-    GUILD_INCIDENT_ALERT_MODE_DISABLED = 37,
-    GUILD_INCIDENT_REPORT_RAID = 38,
-    GUILD_INCIDENT_REPORT_FALSE_ALARM = 39,
     PURCHASE_NOTIFICATION = 44
 }
 
 function generateSnowflake() {
-    const timestamp = Date.now() - 1420070400000;
-    const random = Math.floor(Math.random() * 4096);
-    return ((timestamp << 22) | random).toString();
+    const timestamp = BigInt(Date.now() - 1420070400000) << 22n;
+    const random = BigInt(Math.floor(Math.random() * 4096));
+    return (timestamp | random).toString();
 }
 
-function createOfficialNitroGiftEmbed(gifterId: string, duration: string = "1 month") {
+function createNitroEmbed(gifterId: string, duration: string = "1 month") {
     const gifter = UserStore.getUser(gifterId);
     const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
 
     return {
         type: "rich",
-        title: "A gift for you!",
-        description: `${gifterName} just gifted you **Discord Nitro** for **${duration}**! 🎉\nEnjoy animated avatars, custom emoji anywhere, and more!`,
-        color: 0x5865F2,
+        title: "You've been gifted a subscription!",
+        description: `${gifterName} has gifted you Discord Nitro for ${duration}!`,
+        color: 0x5865f2,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054170116167/Nitro.png"
+            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
         },
         fields: [
             {
                 name: "Expires in",
                 value: "48 hours",
                 inline: true
-            },
-            {
-                name: "Gift Value",
-                value: `$${duration === "1 month" ? "9.99" : duration === "1 year" ? "99.99" : "4.99"}`,
-                inline: true
             }
         ],
         footer: {
             text: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createServerBoostEmbed(tier: number = 1, boosterId?: string) {
+function createBoostEmbed(boosterId?: string) {
     const booster = boosterId ? UserStore.getUser(boosterId) : null;
     const boosterName = booster ? `<@${booster.id}>` : "Someone";
-    const levelEmoji = ["✨", "🌟", "💫"][tier - 1] || "✨";
 
     return {
         type: "rich",
-        title: `${levelEmoji} Server Boosted!`,
-        description: `${boosterName} just boosted the server${tier > 1 ? ` ${tier} times!` : '!'}`,
-        color: 0xFF73FA,
+        title: "Server Boosted!",
+        description: `${boosterName} just boosted the server!`,
+        color: 0xff73fa,
         thumbnail: {
-            url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054778282054/Boost.png"
+            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
         },
-        fields: [
-            {
-                name: "Server Level",
-                value: `Level ${tier}`,
-                inline: true
-            },
-            {
-                name: "Benefits Unlocked",
-                value: `${tier >= 1 ? "✓ 50 Emoji Slots\n" : ""}${tier >= 2 ? "✓ 100 Emoji Slots\n" : ""}${tier >= 3 ? "✓ Animated Server Icon\n" : ""}`,
-                inline: true
-            }
-        ],
         footer: {
             text: "Thank you for boosting!",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -129,35 +86,28 @@ function createClydeEmbed(message: string) {
         type: "rich",
         title: "Clyde",
         description: message,
-        color: 0x2F3136,
+        color: 0x5865f2,
         footer: {
             text: "This is an automated message from Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createDiscordSystemEmbed(title: string, message: string, type: string = "announcement") {
-    const color = {
-        announcement: 0x5865F2,
-        warning: 0xFEE75C,
-        update: 0x57F287,
-        maintenance: 0xED4245
-    }[type] || 0x5865F2;
-
+function createSystemEmbed(title: string, message: string) {
     return {
         type: "rich",
         title: title,
         description: message,
-        color: color,
+        color: 0x5865f2,
         author: {
             name: "Discord",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         footer: {
             text: "System Message",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
@@ -168,7 +118,7 @@ function createAutoModEmbed(rule: string, action: string, username?: string) {
         type: "rich",
         title: "🚨 AutoMod Action",
         description: username ? `${username} triggered an AutoMod rule` : "A message was blocked by AutoMod",
-        color: 0xED4245,
+        color: 0xed4245,
         fields: [
             {
                 name: "Rule Triggered",
@@ -183,18 +133,18 @@ function createAutoModEmbed(rule: string, action: string, username?: string) {
         ],
         footer: {
             text: "Discord AutoMod",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function createPurchaseNotificationEmbed(item: string, price: string, username?: string) {
+function createPurchaseEmbed(item: string, price: string, username?: string) {
     return {
         type: "rich",
         title: "🛒 Purchase Complete",
         description: username ? `${username} purchased ${item}` : "Thanks for your purchase!",
-        color: 0x57F287,
+        color: 0x57f287,
         fields: [
             {
                 name: "Item",
@@ -209,48 +159,50 @@ function createPurchaseNotificationEmbed(item: string, price: string, username?:
         ],
         footer: {
             text: "Discord Shop",
-            icon_url: "https://cdn.discordapp.com/attachments/1024859932628434964/1118092054564376586/5865F2.png"
+            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
         },
         timestamp: new Date().toISOString()
     };
 }
 
-function dispatchMessage(channelId: string, messageData: any) {
-    const snowflake = generateSnowflake();
+function dispatchFakeMessage(channelId: string, messageData: any) {
+    const messageId = generateSnowflake();
     const timestamp = new Date().toISOString();
 
-    const fullMessage = {
-        ...messageData,
-        id: snowflake,
-        nonce: snowflake,
-        timestamp: timestamp,
+    const message = {
+        id: messageId,
+        type: messageData.type || MessageType.DEFAULT,
+        content: messageData.content || "",
         channel_id: channelId,
-        edited_timestamp: null,
-        mention_everyone: false,
-        mention_roles: [],
-        mentions: [],
-        mention_channels: [],
+        author: messageData.author,
         attachments: messageData.attachments || [],
         embeds: messageData.embeds || [],
         components: messageData.components || [],
-        sticker_items: [],
-        reactions: [],
+        timestamp: timestamp,
+        edited_timestamp: null,
+        mentions: [],
+        mention_roles: [],
+        mention_everyone: false,
+        pinned: false,
+        webhook_id: null,
+        flags: messageData.flags || 0,
+        nonce: messageId,
+        tts: false,
         position: 0,
         message_reference: null,
         referenced_message: null,
         interaction: null,
-        webhook_id: null,
         activity: null,
         application: null,
         application_id: null,
-        flags: messageData.flags || 0,
-        pinned: false,
-        tts: false
+        sticker_items: [],
+        reactions: []
     };
 
     FluxDispatcher.dispatch({
         type: "MESSAGE_CREATE",
-        message: fullMessage,
+        channelId: channelId,
+        message: message,
         optimistic: false,
         isPushNotification: false
     });
@@ -298,9 +250,9 @@ export default definePlugin({
                     const gifterId = args.find(x => x.name === "gifter")?.value as string;
                     const nitroDuration = args.find(x => x.name === "duration")?.value as string || "1 month";
 
-                    const embed = createOfficialNitroGiftEmbed(gifterId, nitroDuration);
+                    const embed = createNitroEmbed(gifterId, nitroDuration);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -340,8 +292,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Nitro spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -359,26 +310,9 @@ export default definePlugin({
                     required: true
                 },
                 {
-                    type: ApplicationCommandOptionType.INTEGER,
-                    name: "tier",
-                    description: "Boost tier (1-3)",
-                    required: false,
-                    choices: [
-                        { label: "Tier 1", name: "Tier 1", value: 1 },
-                        { label: "Tier 2", name: "Tier 2", value: 2 },
-                        { label: "Tier 3", name: "Tier 3", value: 3 }
-                    ]
-                },
-                {
                     type: ApplicationCommandOptionType.CHANNEL,
                     name: "channel",
                     description: "Channel to send in",
-                    required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.BOOLEAN,
-                    name: "anonymous",
-                    description: "Send as anonymous boost",
                     required: false
                 }
             ],
@@ -386,12 +320,10 @@ export default definePlugin({
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const boosterId = args.find(x => x.name === "booster")?.value as string;
-                    const boostTier = Number(args.find(x => x.name === "tier")?.value as string) || 1;
-                    const anonymous = Boolean(args.find(x => x.name === "anonymous")?.value) || false;
 
-                    const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
+                    const embed = createBoostEmbed(boosterId);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.GUILD_BOOST,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -443,7 +375,7 @@ export default definePlugin({
 
                     const embed = createClydeEmbed(message);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: CLYDE_USER_ID,
@@ -503,7 +435,7 @@ export default definePlugin({
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Unknown User";
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.USER_JOIN,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -564,7 +496,7 @@ export default definePlugin({
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Someone";
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.CHANNEL_PINNED_MESSAGE,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -638,7 +570,7 @@ export default definePlugin({
                         ? `${username} started a call. Join here!`
                         : `${username} ended the call${callDuration ? ` (Duration: ${callDuration} minutes)` : ''}.`;
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.CALL,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -728,7 +660,7 @@ export default definePlugin({
 
                     const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.AUTO_MODERATION_ACTION,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -749,8 +681,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("AutoMod spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -778,18 +709,6 @@ export default definePlugin({
                     name: "channel",
                     description: "Channel to send in",
                     required: false
-                },
-                {
-                    type: ApplicationCommandOptionType.STRING,
-                    name: "type",
-                    description: "Type of system message",
-                    required: false,
-                    choices: [
-                        { label: "Announcement", name: "Announcement", value: "announcement" },
-                        { label: "Warning", name: "Warning", value: "warning" },
-                        { label: "Update", name: "Update", value: "update" },
-                        { label: "Maintenance", name: "Maintenance", value: "maintenance" }
-                    ]
                 }
             ],
             execute: async (args, ctx) => {
@@ -797,11 +716,10 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const title = args.find(x => x.name === "title")?.value as string;
                     const message = args.find(x => x.name === "message")?.value as string;
-                    const systemType = args.find(x => x.name === "type")?.value as string || "announcement";
 
-                    const embed = createDiscordSystemEmbed(title, message, systemType);
+                    const embed = createSystemEmbed(title, message);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -867,9 +785,9 @@ export default definePlugin({
 
                     const user = UserStore.getUser(userId);
 
-                    const embed = createPurchaseNotificationEmbed(item, price, user ? `<@${user.id}>` : undefined);
+                    const embed = createPurchaseEmbed(item, price, user ? `<@${user.id}>` : undefined);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.PURCHASE_NOTIFICATION,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -935,7 +853,6 @@ export default definePlugin({
 
                     const sender = UserStore.getUser(senderId);
 
-                    // Create a fake attachment for the voice message
                     const attachment = {
                         id: generateSnowflake(),
                         filename: audioAttachment.filename || "voice-message.ogg",
@@ -946,11 +863,11 @@ export default definePlugin({
                         width: null,
                         height: null,
                         flags: 0,
-                        waveform: "AA==", // Fake waveform data
+                        waveform: "AA==",
                         duration_secs: voiceDuration
                     };
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: sender.id,
@@ -963,7 +880,7 @@ export default definePlugin({
                         },
                         content: "",
                         attachments: [attachment],
-                        flags: 1 << 13 // Voice message flag
+                        flags: 1 << 13
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -1017,7 +934,6 @@ export default definePlugin({
 
                     const sender = UserStore.getUser(senderId);
 
-                    // Create attachment object
                     const attachment = {
                         id: generateSnowflake(),
                         filename: fileAttachment.filename,
@@ -1030,7 +946,7 @@ export default definePlugin({
                         flags: 0
                     };
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: sender.id,
