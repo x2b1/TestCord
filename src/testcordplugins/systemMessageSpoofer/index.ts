@@ -386,7 +386,7 @@ export default definePlugin({
                 try {
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const boosterId = args.find(x => x.name === "booster")?.value as string;
-                    const boostTier = Number(args.find(x => x.name === "tier")?.value) || 1;
+                    const boostTier = Number(args.find(x => x.name === "tier")?.value as string) || 1;
                     const anonymous = Boolean(args.find(x => x.name === "anonymous")?.value) || false;
 
                     const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
@@ -412,8 +412,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Boost spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -465,8 +464,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Clyde spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -527,8 +525,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Join spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -587,8 +584,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Pin spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -675,8 +671,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("Call spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -827,8 +822,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("System spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
@@ -891,14 +885,173 @@ export default definePlugin({
                     });
 
                     sendBotMessage(ctx.channel.id, {
-                        content: "✅ Purchase notification spoofed!",
-                        ephemeral: true
+                        content: "✅ Purchase notification spoofed!"
                     });
                 } catch (error) {
                     console.error("Purchase spoof error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: `❌ Error: ${error}`,
-                        ephemeral: true
+                        content: `❌ Error: ${error}`
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofvoice",
+            description: "Spoof a voice message",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.ATTACHMENT,
+                    name: "audio",
+                    description: "Audio file to upload as voice message",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "sender",
+                    description: "User who sent the voice message",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.INTEGER,
+                    name: "duration",
+                    description: "Duration of the voice message in seconds",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const audioAttachment = args.find(x => x.name === "audio")?.value as any;
+                    const senderId = args.find(x => x.name === "sender")?.value as string;
+                    const voiceDuration = Number(args.find(x => x.name === "duration")?.value as string) || 5;
+
+                    const sender = UserStore.getUser(senderId);
+
+                    // Create a fake attachment for the voice message
+                    const attachment = {
+                        id: generateSnowflake(),
+                        filename: audioAttachment.filename || "voice-message.ogg",
+                        size: audioAttachment.size || 1024,
+                        url: audioAttachment.url,
+                        proxy_url: audioAttachment.proxy_url,
+                        content_type: audioAttachment.content_type || "audio/ogg",
+                        width: null,
+                        height: null,
+                        flags: 0,
+                        waveform: "AA==", // Fake waveform data
+                        duration_secs: voiceDuration
+                    };
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: sender.id,
+                            username: sender.username,
+                            avatar: sender.avatar,
+                            discriminator: sender.discriminator,
+                            public_flags: sender.publicFlags,
+                            bot: false,
+                            flags: sender.flags
+                        },
+                        content: "",
+                        attachments: [attachment],
+                        flags: 1 << 13 // Voice message flag
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Voice message spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Voice spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`
+                    });
+                }
+            }
+        },
+
+        {
+            name: "spoofmedia",
+            description: "Spoof a media message with file upload",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    type: ApplicationCommandOptionType.ATTACHMENT,
+                    name: "file",
+                    description: "File to upload (image, video, etc.)",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.USER,
+                    name: "sender",
+                    description: "User who sent the media",
+                    required: true
+                },
+                {
+                    type: ApplicationCommandOptionType.STRING,
+                    name: "caption",
+                    description: "Optional caption for the media",
+                    required: false
+                },
+                {
+                    type: ApplicationCommandOptionType.CHANNEL,
+                    name: "channel",
+                    description: "Channel to send in",
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                try {
+                    const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
+                    const fileAttachment = args.find(x => x.name === "file")?.value as any;
+                    const senderId = args.find(x => x.name === "sender")?.value as string;
+                    const caption = args.find(x => x.name === "caption")?.value as string || "";
+
+                    const sender = UserStore.getUser(senderId);
+
+                    // Create attachment object
+                    const attachment = {
+                        id: generateSnowflake(),
+                        filename: fileAttachment.filename,
+                        size: fileAttachment.size,
+                        url: fileAttachment.url,
+                        proxy_url: fileAttachment.proxy_url,
+                        content_type: fileAttachment.content_type,
+                        width: fileAttachment.width || null,
+                        height: fileAttachment.height || null,
+                        flags: 0
+                    };
+
+                    dispatchMessage(channelId, {
+                        type: MessageType.DEFAULT,
+                        author: {
+                            id: sender.id,
+                            username: sender.username,
+                            avatar: sender.avatar,
+                            discriminator: sender.discriminator,
+                            public_flags: sender.publicFlags,
+                            bot: false,
+                            flags: sender.flags
+                        },
+                        content: caption,
+                        attachments: [attachment]
+                    });
+
+                    sendBotMessage(ctx.channel.id, {
+                        content: "✅ Media message spoofed!"
+                    });
+                } catch (error) {
+                    console.error("Media spoof error:", error);
+                    sendBotMessage(ctx.channel.id, {
+                        content: `❌ Error: ${error}`
                     });
                 }
             }
