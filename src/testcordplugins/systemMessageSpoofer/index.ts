@@ -34,135 +34,34 @@ function generateSnowflake() {
     return (timestamp | random).toString();
 }
 
-function createNitroEmbed(gifterId: string, duration: string = "1 month") {
+function createNitroMessage(gifterId: string, duration: string = "1 month") {
     const gifter = UserStore.getUser(gifterId);
-    const gifterName = gifter ? `<@${gifter.id}>` : "Someone";
-
-    return {
-        type: "rich",
-        title: "You've been gifted a subscription!",
-        description: `${gifterName} has gifted you Discord Nitro for ${duration}!`,
-        color: 0x5865f2,
-        thumbnail: {
-            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
-        },
-        fields: [
-            {
-                name: "Expires in",
-                value: "48 hours",
-                inline: true
-            }
-        ],
-        footer: {
-            text: "Discord",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+    const gifterName = gifter ? gifter.username : "Someone";
+    return `${gifterName} has gifted you Discord Nitro for ${duration}!`;
 }
 
-function createBoostEmbed(boosterId?: string) {
+function createBoostMessage(boosterId?: string) {
     const booster = boosterId ? UserStore.getUser(boosterId) : null;
-    const boosterName = booster ? `<@${booster.id}>` : "Someone";
-
-    return {
-        type: "rich",
-        title: "Server Boosted!",
-        description: `${boosterName} just boosted the server!`,
-        color: 0xff73fa,
-        thumbnail: {
-            url: "https://discord.com/assets/3c6ccb83716d1e4fb91d3082f6b21d77.svg"
-        },
-        footer: {
-            text: "Thank you for boosting!",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+    const boosterName = booster ? booster.username : "Someone";
+    return `${boosterName} just boosted the server!`;
 }
 
-function createClydeEmbed(message: string) {
-    return {
-        type: "rich",
-        title: "Clyde",
-        description: message,
-        color: 0x5865f2,
-        footer: {
-            text: "This is an automated message from Discord",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+function createClydeMessage(message: string) {
+    return message;
 }
 
-function createSystemEmbed(title: string, message: string) {
-    return {
-        type: "rich",
-        title: title,
-        description: message,
-        color: 0x5865f2,
-        author: {
-            name: "Discord",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        footer: {
-            text: "System Message",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+function createSystemMessage(title: string, message: string) {
+    return `${title}: ${message}`;
 }
 
-function createAutoModEmbed(rule: string, action: string, username?: string) {
-    return {
-        type: "rich",
-        title: "🚨 AutoMod Action",
-        description: username ? `${username} triggered an AutoMod rule` : "A message was blocked by AutoMod",
-        color: 0xed4245,
-        fields: [
-            {
-                name: "Rule Triggered",
-                value: rule,
-                inline: true
-            },
-            {
-                name: "Action Taken",
-                value: action,
-                inline: true
-            }
-        ],
-        footer: {
-            text: "Discord AutoMod",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+function createAutoModMessage(rule: string, action: string, username?: string) {
+    const userText = username ? `${username} triggered` : "A message triggered";
+    return `🚨 ${userText} an AutoMod rule: ${rule} - ${action}`;
 }
 
-function createPurchaseEmbed(item: string, price: string, username?: string) {
-    return {
-        type: "rich",
-        title: "🛒 Purchase Complete",
-        description: username ? `${username} purchased ${item}` : "Thanks for your purchase!",
-        color: 0x57f287,
-        fields: [
-            {
-                name: "Item",
-                value: item,
-                inline: true
-            },
-            {
-                name: "Amount",
-                value: price,
-                inline: true
-            }
-        ],
-        footer: {
-            text: "Discord Shop",
-            icon_url: "https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png"
-        },
-        timestamp: new Date().toISOString()
-    };
+function createPurchaseMessage(item: string, price: string, username?: string) {
+    const userText = username ? `${username} purchased` : "Purchase completed for";
+    return `🛒 ${userText} ${item} for ${price}`;
 }
 
 function dispatchFakeMessage(channelId: string, messageData: any) {
@@ -250,7 +149,7 @@ export default definePlugin({
                     const gifterId = args.find(x => x.name === "gifter")?.value as string;
                     const nitroDuration = args.find(x => x.name === "duration")?.value as string || "1 month";
 
-                    const embed = createNitroEmbed(gifterId, nitroDuration);
+                    const content = createNitroMessage(gifterId, nitroDuration);
 
                     dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
@@ -263,27 +162,9 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed],
-                        components: [
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        style: 3,
-                                        label: "Accept Gift",
-                                        custom_id: "accept_nitro_gift"
-                                    },
-                                    {
-                                        type: 2,
-                                        style: 2,
-                                        label: "See Details",
-                                        custom_id: "view_nitro_details"
-                                    }
-                                ]
-                            }
-                        ]
+                        content: "✅ Nitro gift spoofed!",
+                        embeds: [],
+                        components: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -321,8 +202,6 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const boosterId = args.find(x => x.name === "booster")?.value as string;
 
-                    const embed = createBoostEmbed(boosterId);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.GUILD_BOOST,
                         author: {
@@ -334,8 +213,8 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed]
+                        content: "✅ Server boost spoofed!",
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -373,8 +252,6 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const message = args.find(x => x.name === "message")?.value as string;
 
-                    const embed = createClydeEmbed(message);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
@@ -386,8 +263,8 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed]
+                        content: "✅ Clyde message spoofed!",
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -658,8 +535,6 @@ export default definePlugin({
                         timeout: "User timed out"
                     }[action] || action;
 
-                    const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.AUTO_MODERATION_ACTION,
                         author: {
@@ -671,8 +546,8 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed]
+                        content: "✅ AutoMod action spoofed!",
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -717,8 +592,6 @@ export default definePlugin({
                     const title = args.find(x => x.name === "title")?.value as string;
                     const message = args.find(x => x.name === "message")?.value as string;
 
-                    const embed = createSystemEmbed(title, message);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
@@ -730,8 +603,8 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed]
+                        content: "✅ System message spoofed!",
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -785,8 +658,6 @@ export default definePlugin({
 
                     const user = UserStore.getUser(userId);
 
-                    const embed = createPurchaseEmbed(item, price, user ? `<@${user.id}>` : undefined);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.PURCHASE_NOTIFICATION,
                         author: {
@@ -798,8 +669,8 @@ export default definePlugin({
                             bot: true,
                             flags: 0
                         },
-                        content: "",
-                        embeds: [embed]
+                        content: "✅ Purchase spoofed!",
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -849,7 +720,7 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const audioAttachment = args.find(x => x.name === "audio")?.value as any;
                     const senderId = args.find(x => x.name === "sender")?.value as string;
-                    const voiceDuration = Number(args.find(x => x.name === "duration")?.value as string) || 5;
+                    const voiceDuration = Number(args.find(x => x.name === "duration")?.value) || 5;
 
                     const sender = UserStore.getUser(senderId);
 
