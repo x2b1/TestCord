@@ -1,6 +1,6 @@
 .vc-addon-card {
     background-color: var(--card-primary-bg);
-    color: var(--text-normal);
+    color: var(--interactive-active);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     display: block;
