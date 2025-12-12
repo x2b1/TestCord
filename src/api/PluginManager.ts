@@ -41,7 +41,7 @@ export { Plugins as plugins };
 
 import { traceFunction } from "../debug/Tracer";
 import { addAudioProcessor, removeAudioProcessor } from "./AudioPlayer";
-import { addHeaderBarButton, removeHeaderBarButton } from "./HeaderBar";
+import { addChannelToolbarButton, addHeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "./HeaderBar";
 
 const logger = new Logger("PluginManager", "#a6d189");
 
@@ -191,7 +191,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
         onBeforeMessageEdit, onBeforeMessageSend, onMessageClick,
         renderChatBarButton, chatBarButton, renderMemberListDecorator, renderMessageAccessory, renderMessageDecoration, renderMessagePopoverButton, messagePopoverButton,
         // Custom
-        renderNicknameIcon, renderHeaderBarButton, audioProcessor
+        renderNicknameIcon, headerBarButton, audioProcessor
     } = p;
 
     if (p.start) {
@@ -253,7 +253,13 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
 
     // Custom
     if (renderNicknameIcon) addNicknameIcon(name, renderNicknameIcon);
-    if (renderHeaderBarButton) addHeaderBarButton(name, renderHeaderBarButton);
+    if (headerBarButton) {
+        if (headerBarButton.location === "channeltoolbar") {
+            addChannelToolbarButton(name, headerBarButton.render, headerBarButton.priority);
+        } else {
+            addHeaderBarButton(name, headerBarButton.render, headerBarButton.priority);
+        }
+    }
     if (audioProcessor) addAudioProcessor(name, audioProcessor);
 
     return true;
@@ -265,7 +271,7 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
         onBeforeMessageEdit, onBeforeMessageSend, onMessageClick,
         renderChatBarButton, chatBarButton, renderMemberListDecorator, renderMessageAccessory, renderMessageDecoration, renderMessagePopoverButton, messagePopoverButton,
         // Custom
-        renderNicknameIcon, renderHeaderBarButton, audioProcessor
+        renderNicknameIcon, headerBarButton, audioProcessor
     } = p;
 
     if (p.stop) {
@@ -321,7 +327,13 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
 
     // Custom
     if (renderNicknameIcon) removeNicknameIcon(name);
-    if (renderHeaderBarButton) removeHeaderBarButton(name);
+    if (headerBarButton) {
+        if (headerBarButton.location === "channeltoolbar") {
+            removeChannelToolbarButton(name);
+        } else {
+            removeHeaderBarButton(name);
+        }
+    }
     if (audioProcessor) removeAudioProcessor(name);
 
     return true;
@@ -335,7 +347,7 @@ export const initPluginManager = onlyOnce(function init() {
         "onBeforeMessageEdit", "onBeforeMessageSend", "onMessageClick",
         "renderChatBarButton", "renderMemberListDecorator", "renderMessageAccessory", "renderMessageDecoration", "renderMessagePopoverButton",
         // Custom
-        "renderNicknameIcon", "renderHeaderBarButton"
+        "renderNicknameIcon"
     ];
 
     const neededApiPlugins = new Set<string>();
@@ -374,7 +386,7 @@ export const initPluginManager = onlyOnce(function init() {
 
         // Custom
         if (p.renderNicknameIcon) neededApiPlugins.add("NicknameIconsAPI");
-        if (p.renderHeaderBarButton) neededApiPlugins.add("HeaderBarAPI");
+        if (p.headerBarButton) neededApiPlugins.add("HeaderBarAPI");
         if (p.audioProcessor) neededApiPlugins.add("AudioPlayerAPI");
 
         for (const key of pluginKeysToBind) {
