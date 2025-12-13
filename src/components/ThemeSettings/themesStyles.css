@@ -28,14 +28,14 @@
     gap: 8px;
 }
 
-.vc-settings-usercss-ie-buttons>div {
+.vc-settings-usercss-ie-buttons > div {
     color: var(--interactive-icon-default, var(--interactive-normal));
     opacity: 0.5;
     padding: 4px;
     cursor: pointer;
 }
 
-.vc-settings-usercss-ie-buttons>div:hover {
+.vc-settings-usercss-ie-buttons > div:hover {
     color: var(--interactive-icon-hover, var(--interactive-hover));
     opacity: 1;
 }
@@ -79,4 +79,55 @@
 
 .vc-settings-theme-footer-pin-icon svg path {
     fill: var(--text-muted);
+}
+
+.name__2ea32,
+.overflow_b0dfc2 {
+    color: lightgray;
+}
+
+.botText__82f07 {
+    color: lightgray;
+}
+
+.vc-btn-base,
+.vc-btn-primary,
+.vc-btn-small {
+    background-color: rgba(10, 115, 185, 0.5) !important;
+    color: whitesmoke !important;
+}
+
+.vc-toolbox-btn,
+.iconWrapper__9293f,
+.clickable__9293f,
+.vc-text-btn-base,
+.vc-text-btn-secondary,
+.vc-ranb-button {
+    color: rgb(233, 233, 233);
+}
+
+.vc-text-base,
+.vc-text-md,
+.vc-text-medium,
+.vc-plugins-setting-title {
+    color: lightgray;
+}
+
+.lowerBadge_cc5dd2 {
+    color: lightgray !important;
+}
+
+.vc-membercount-total-count {
+    color: gray !important;
+}
+
+.vc-addon-note {
+    color: white;
+}
+
+.vc-text-base,
+.vc-text-sm,
+.vc-text-normal,
+.vc-plugins-setting-description {
+    color: white;
 }
