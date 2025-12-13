@@ -21,6 +21,7 @@ import "./style.css";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
+import { Alert } from "@components/Alert";
 import { Devs } from "@utils/constants";
 import { getTheme, Theme } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
@@ -47,7 +48,7 @@ function ToolBarHeader() {
 async function openCompleteQuestUI() {
     const quest = [...QuestsStore.quests.values()].find(x => x.id !== "1412491570820812933" && x.userStatus?.enrolledAt && !x.userStatus?.completedAt && new Date(x.config.expiresAt).getTime() > Date.now());
 
-    if (!quest && !settings.store.disableNotifications) {
+    if (!quest) {
         showNotification({
             title: "Quest Completer",
             body: "No Quests To Complete. Click to navigate to the quests tab",
@@ -207,17 +208,22 @@ async function openCompleteQuestUI() {
 
 const settings = definePluginSettings({
     disableNotifications: {
-        description: "Disable notifications when no quests are available or when a quest is completed",
         type: OptionType.BOOLEAN,
+        description: "Disable notifications when no quests are available or when a quest is completed - still shows no quests notif",
         default: false,
     },
 });
 
 export default definePlugin({
     name: "QuestCompleter",
-    description: "A plugin to complete quests without having the game installed.",
+    description: "Adds a button to the header bar to complete quests without having the game installed.",
     authors: [Devs.amia],
     settings,
+    settingsAboutComponent: () => (
+        <Alert.Info>
+            You must manually accept the quest first before clicking the button.
+        </Alert.Info>
+    ),
     headerBarButton: {
         icon: QuestIcon,
         render: ToolBarHeader
