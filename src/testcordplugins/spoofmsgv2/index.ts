@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
+import { ApplicationCommandOptionType, registerCommand, sendBotMessage, unregisterCommand } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
@@ -187,42 +187,44 @@ function createPurchaseNotificationEmbed(item: string, price: string, username?:
     };
 }
 
-function dispatchMessage(channelId: string, messageData: any) {
-    const snowflake = generateSnowflake();
+function dispatchFakeMessage(channelId: string, messageData: any) {
+    const messageId = generateSnowflake();
     const timestamp = new Date().toISOString();
 
-    const fullMessage = {
-        ...messageData,
-        id: snowflake,
-        nonce: snowflake,
-        timestamp: timestamp,
+    const message = {
+        id: messageId,
+        type: messageData.type || MessageType.DEFAULT,
+        content: messageData.content || "",
         channel_id: channelId,
-        edited_timestamp: null,
-        mention_everyone: false,
-        mention_roles: [],
-        mentions: [],
-        mention_channels: [],
+        author: messageData.author,
         attachments: messageData.attachments || [],
         embeds: messageData.embeds || [],
         components: messageData.components || [],
-        sticker_items: [],
-        reactions: [],
+        timestamp: timestamp,
+        edited_timestamp: null,
+        mentions: [],
+        mention_roles: [],
+        mention_everyone: false,
+        pinned: false,
+        webhook_id: null,
+        flags: messageData.flags || 0,
+        nonce: messageId,
+        tts: false,
         position: 0,
         message_reference: null,
         referenced_message: null,
         interaction: null,
-        webhook_id: null,
         activity: null,
         application: null,
         application_id: null,
-        flags: messageData.flags || 0,
-        pinned: false,
-        tts: false
+        sticker_items: [],
+        reactions: []
     };
 
     FluxDispatcher.dispatch({
         type: "MESSAGE_CREATE",
-        message: fullMessage,
+        channelId: channelId,
+        message: message,
         optimistic: false,
         isPushNotification: false
     });
@@ -318,7 +320,7 @@ export default definePlugin({
 
                     const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.GUILD_BOOST,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -378,7 +380,7 @@ export default definePlugin({
 
                     const embed = createClydeEmbed(message);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: CLYDE_USER_ID,
@@ -437,7 +439,7 @@ export default definePlugin({
                         return;
                     }
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: CLYDE_USER_ID,
@@ -501,7 +503,7 @@ export default definePlugin({
                         return;
                     }
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.USER_JOIN,
                         author: {
                             id: user.id,
@@ -567,7 +569,7 @@ export default definePlugin({
 
                     const username = `<@${user.id}>`;
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.CHANNEL_PINNED_MESSAGE,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -634,7 +636,7 @@ export default definePlugin({
                         ? `${username} started a call.`
                         : `${username} ended the call.`;
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.CALL,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -691,7 +693,7 @@ export default definePlugin({
                         return;
                     }
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -771,7 +773,7 @@ export default definePlugin({
 
                     const embed = createPurchaseNotificationEmbed(item, price, `<@${user.id}>`);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.PURCHASE_NOTIFICATION,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -857,7 +859,7 @@ export default definePlugin({
 
                     const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
 
-                    dispatchMessage(channelId, {
+                    dispatchFakeMessage(channelId, {
                         type: MessageType.AUTO_MODERATION_ACTION,
                         author: {
                             id: DISCORD_SYSTEM_USER_ID,
@@ -887,9 +889,11 @@ export default definePlugin({
 
     start() {
         console.log("SpoofSystemV2 started");
+        // Commands are automatically registered by the CommandsAPI
     },
 
     stop() {
         console.log("SpoofSystemV2 stopped");
+        // Commands are automatically unregistered by the CommandsAPI
     }
 });
