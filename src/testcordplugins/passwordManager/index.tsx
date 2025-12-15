@@ -670,17 +670,15 @@ export default definePlugin({
         await this.passwordManager.init();
         this.ui = new PasswordManagerUI(this.passwordManager);
 
-        const customSettingsSections = (
-            Vencord.Plugins.plugins.Settings as any as {
-                customSections: ((ID: Record<string, unknown>) => any)[];
-            }
-        ).customSections;
-
-        customSettingsSections.push(_ => ({
-            section: "passwordManager",
-            label: "Password Manager",
-            element: this.ui!.render
-        }));
+        const settingsPlugin = Vencord.Plugins.plugins.Settings as any;
+        if (settingsPlugin && settingsPlugin.customEntries) {
+            settingsPlugin.customEntries.push({
+                key: "passwordManager",
+                title: "Password Manager",
+                Component: () => this.ui!.render(),
+                Icon: () => React.createElement("div", {}, "🔒") // Placeholder icon
+            });
+        }
     },
 
     stop() {
