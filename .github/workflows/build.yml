@@ -20,8 +20,6 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
-              with:
-                  ref: v1.0.0  # Checkout the specific tag
 
             - uses: pnpm/action-setup@v3
 
@@ -69,16 +67,9 @@ jobs:
                   rm release/package.json
                   rm release/*.map
 
-            - name: Create Release if it doesn't exist
-              run: |
-                  # Check if release exists, create if it doesn't
-                  if ! gh release view v1.0.0 > /dev/null 2>&1; then
-                    gh release create v1.0.0 --title "Release v1.0.0" --notes "Automated release"
-                  fi
-
             - name: Upload Equicord Stable
               run: |
-                  gh release upload v1.0.0 --clobber dist/release/*
+                  gh release upload latest --clobber dist/release/*
 
             - name: Upload Plugin JSONs to Equibored repo
               run: |
