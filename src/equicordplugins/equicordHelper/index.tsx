@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
+import customRPC from "@plugins/customRPC";
 import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
 import { isAnyPluginDev } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
@@ -25,11 +27,19 @@ const settings = definePluginSettings({
     noMirroredCamera: {
         type: OptionType.BOOLEAN,
         description: "Prevents the camera from being mirrored on your screen",
+        restartNeeded: true,
         default: false,
     },
     removeActivitySection: {
         type: OptionType.BOOLEAN,
         description: "Removes the activity section above member list",
+        restartNeeded: true,
+        default: false,
+    },
+    showYourOwnActivityButtons: {
+        type: OptionType.BOOLEAN,
+        description: "Discord hides your own activity buttons for some reason",
+        restartNeeded: true,
         default: false,
     }
 });
@@ -101,6 +111,14 @@ export default definePlugin({
                 match: /null==\i\|\|/,
                 replace: "true||$&"
             },
+        },
+        {
+            find: ".buttons.length)>=1",
+            predicate: () => settings.store.showYourOwnActivityButtons && !isPluginEnabled(customRPC.name),
+            replacement: {
+                match: /.getId\(\)===\i.id/,
+                replace: "$& && false"
+            }
         },
         // Always show open legacy settings
         ...[

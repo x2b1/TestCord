@@ -27,6 +27,7 @@ import type { MessageDecorationFactory } from "@api/MessageDecorations";
 import type { MessageClickListener, MessageEditListener, MessageSendListener } from "@api/MessageEvents";
 import type { MessagePopoverButtonData, MessagePopoverButtonFactory } from "@api/MessagePopover";
 import type { NicknameIconFactory } from "@api/NicknameIcons";
+import type { UserAreaButtonData } from "@api/UserArea";
 import type { Command, FluxEvents } from "@vencord/discord-types";
 import type { ReactNode } from "react";
 import type { LiteralUnion } from "type-fest";
@@ -130,6 +131,10 @@ export interface PluginDef {
      */
     enabledByDefault?: boolean;
     /**
+     * Whether enabling or disabling this plugin requires a restart. Defaults to true if the plugin has patches.
+     */
+    requiresRestart?: boolean;
+    /**
      * When to call the start() method
      * @default StartAt.WebpackReady
      */
@@ -202,6 +207,7 @@ export interface PluginDef {
     renderNicknameIcon?: NicknameIconFactory;
     headerBarButton?: HeaderBarButtonData;
     audioProcessor?: AudioProcessor;
+    userAreaButton?: UserAreaButtonData;
 
     // TODO: Remove eventually
     /**
