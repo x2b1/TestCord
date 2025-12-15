@@ -76,7 +76,7 @@ interface SettingsLayoutBuilder {
 const settings = definePluginSettings({
     settingsLocation: {
         type: OptionType.SELECT,
-        description: "Where to put the Equicord settings section",
+        description: "Where to put the TestCord settings section",
         options: [
             { label: "At the very top", value: "top" },
             { label: "Above the Nitro section", value: "aboveNitro", default: true },
@@ -216,12 +216,12 @@ export default definePlugin({
 
     getSettingsSectionMappings() {
         return [
-            ["EquicordSettings", "equicord_main_panel"],
+            ["TestCordSettings", "equicord_main_panel"],
             ["EquicordPlugins", "equicord_plugins_panel"],
             ["EquicordThemes", "equicord_themes_panel"],
             ["EquicordUpdater", "equicord_updater_panel"],
             ["EquicordChangelog", "equicord_changelog_panel"],
-            ["EquicordCloud", "equicord_cloud_panel"],
+            ["TestCordCloud", "equicord_cloud_panel"],
             ["EquicordBackupAndRestore", "equicord_backup_restore_panel"],
             ["EquicordPatchHelper", "equicord_patch_helper_panel"],
             ["EquibopSettings", "equicord_equibop_settings_panel"],
@@ -263,7 +263,7 @@ export default definePlugin({
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
                 key: "equicord_updater",
                 title: "Updater",
-                panelTitle: "Equicord Updater",
+                panelTitle: "TestCord Updater",
                 Component: UpdaterTab,
                 Icon: UpdaterIcon
             }),
@@ -310,7 +310,7 @@ export default definePlugin({
         const equicordSection: SettingsLayoutNode = {
             key: "equicord_section",
             type: LayoutTypes.SECTION,
-            useTitle: () => "Equicord Settings",
+            useTitle: () => "TestCord Settings",
             buildLayout: () => equicordEntries
         };
 
@@ -351,7 +351,7 @@ export default definePlugin({
                 className: "vc-settings-header",
             },
             {
-                section: "EquicordSettings",
+                section: "TestCordSettings",
                 label: "TestCord",
                 element: VencordTab,
                 className: "vc-settings",

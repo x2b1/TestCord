@@ -214,17 +214,15 @@ export default definePlugin({
         await this.tokenLoginManager.init();
         this.ui = new TokenLoginManagerUI(this.tokenLoginManager);
 
-        const customSettingsSections = (
-            Vencord.Plugins.plugins.Settings as any as {
-                customSections: ((ID: Record<string, unknown>) => any)[];
-            }
-        ).customSections;
-
-        customSettingsSections.push(_ => ({
-            section: "tokenLoginManager",
-            label: "Token Login Manager",
-            element: this.ui!.render
-        }));
+        const settingsPlugin = Vencord.Plugins.plugins.Settings as any;
+        if (settingsPlugin && settingsPlugin.customEntries) {
+            settingsPlugin.customEntries.push({
+                key: "tokenLoginManager",
+                title: "Token Login Manager",
+                Component: () => this.ui!.render(),
+                Icon: () => React.createElement("div", {}, "🔑") // Placeholder icon
+            });
+        }
     },
 
     stop() {

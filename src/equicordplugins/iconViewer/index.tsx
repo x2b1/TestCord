@@ -45,10 +45,8 @@ export default definePlugin({
         }));
     },
     stop() {
-        const { customEntries, customSections } = SettingsPlugin;
+        const { customEntries } = SettingsPlugin;
         const entry = customEntries.findIndex(entry => entry.key === "equicord_icon_viewer");
-        const section = customSections.findIndex(section => section({} as any).id === "IconViewer");
         if (entry !== -1) customEntries.splice(entry, 1);
-        if (section !== -1) customSections.splice(section, 1);
     },
 });

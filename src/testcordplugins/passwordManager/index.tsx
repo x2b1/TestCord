@@ -8,6 +8,7 @@ import "./styles.css";
 
 import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
+import { EyeIcon } from "@components/Icons";
 import * as Modal from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Button, Flex, React, Text, TextInput } from "@webpack/common";
@@ -444,16 +445,16 @@ const ViewPasswordModal = ({
                         <Flex direction={Flex.Direction.VERTICAL} gap={10}>
                             <div className="password-view-section">
                                 <Text variant="heading-sm/medium">Username</Text>
-                                <Text selectable>{entry.username}</Text>
+                                <Text>{entry.username}</Text>
                             </div>
                             <div className="password-view-section">
                                 <Text variant="heading-sm/medium">Password</Text>
-                                <Text selectable>{entry.password}</Text>
+                                <Text>{entry.password}</Text>
                             </div>
                             {entry.twoFactorSecret && (
                                 <div className="password-view-section">
                                     <Text variant="heading-sm/medium">2FA Secret</Text>
-                                    <Text selectable>{entry.twoFactorSecret}</Text>
+                                    <Text>{entry.twoFactorSecret}</Text>
                                 </div>
                             )}
                         </Flex>
@@ -659,7 +660,7 @@ class PasswordManagerUI {
 export default definePlugin({
     name: "PasswordManager",
     description: "Securely store and manage your passwords",
-    authors: [EquicordDevs.ExoDev],
+    authors: [EquicordDevs.bhop],
 
     passwordManager: null as PasswordManager | null,
     ui: null as PasswordManagerUI | null,
