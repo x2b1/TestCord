@@ -161,7 +161,7 @@ async function generateDebugInfoMessage() {
         potentiallyProblematicPlugins.push("CustomIdle");
     }
 
-    const potentiallyProblematicPluginsNote = "-# Note: said plugin(s) might be the not be the cause of your problem. They are just plug-ins that cause common issues.";
+    const potentiallyProblematicPluginsNote = "-# note, those plugins are just common issues and might not be the problem";
 
     const commonIssues = {
         "Activity Sharing Disabled": tryOrElse(() => !ShowCurrentGame.getSetting(), false),
@@ -286,25 +286,6 @@ export default definePlugin({
                             or if this issue persists on Vencord, continue on.
                         </Paragraph>
                     </div>
-                });
-            }
-
-            if (!IS_STANDALONE && !settings.store.dismissedDevBuildWarning) {
-                return Alerts.show({
-                    title: "Hold on!",
-                    body: <div>
-                        <Paragraph>You are using a custom build of TestCord, which we do not provide support for!</Paragraph>
-
-                        <Paragraph className={Margins.top8}>
-                            We only provide support for <Link href="https://github.com/Equicord/Equicord">official TestCord builds</Link>.
-                            Either <Link href="https://github.com/Equicord/Equilotl">switch to an official build</Link> or figure your issue out yourself.
-                        </Paragraph>
-
-                        <BaseText size="md" weight="bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</BaseText>
-                    </div>,
-                    confirmText: "Understood",
-                    secondaryConfirmText: "Don't show again",
-                    onConfirmSecondary: () => settings.store.dismissedDevBuildWarning = true
                 });
             }
         }
