@@ -198,6 +198,10 @@ function generatePluginList() {
         content += `**Enabled UserPlugins (${enabledUserPlugins.length}):**\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
     }
 
+    const user = UserStore.getCurrentUser();
+
+
+
     return content;
 }
 
