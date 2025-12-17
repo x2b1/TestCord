@@ -7,7 +7,7 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { debounce } from "@shared/debounce";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { humanFriendlyJoin } from "@utils/text";
 import { makeRange } from "@utils/types";
 import definePlugin, { OptionType } from "@utils/types";
@@ -198,7 +198,7 @@ function trustEveryone() {
 export default definePlugin({
     name: "AutoMute",
     description: "Automatically mute yourself in voice channels if you're not speaking for too long, or if someone who isn't a friend joins.",
-    authors: [Devs.Sqaaakoi],
+    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
     settings,
     flux: {
         SPEAKING(s: SpeakingState) {
@@ -281,3 +281,5 @@ export default definePlugin({
     },
     trustedUsers
 });
+
+

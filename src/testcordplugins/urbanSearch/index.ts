@@ -7,7 +7,7 @@
 import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -21,7 +21,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "UrbanDictionary",
     description: "Search for a word on Urban Dictionary via /urban slash command",
-    authors: [Devs.jewdev],
+    authors: [Devs.jewdev, TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
     settings,
     commands: [
@@ -91,3 +91,5 @@ export default definePlugin({
         }
     ]
 });
+
+

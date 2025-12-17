@@ -5,7 +5,7 @@
  */
 
 import { classNameFactory, disableStyle, enableStyle } from "@api/Styles";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 
@@ -18,10 +18,9 @@ export const cl = classNameFactory("vc-relationshipPruner-");
 export default definePlugin({
     name: "RelationshipPruner",
     description: "Adds a way to easily prune your servers and friends. To open, right click the home button or friends tab button",
-    authors:
-    [
+    authors: [
         Devs.Samwich
-    ],
+    , TestcordDevs.x2b],
     onContextMenu(type)
     {
         openModal(props => (type === "guild" ? <GuildPruneModal {...props}/> : <FriendPruneModal {...props}/>));
@@ -50,3 +49,5 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
+

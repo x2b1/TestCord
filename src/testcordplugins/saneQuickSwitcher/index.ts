@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { getCurrentGuild } from "@utils/discord";
 import definePlugin from "@utils/types";
 
@@ -24,7 +24,7 @@ export default definePlugin({
     name: "SaneQuickSwitcher",
     authors: [
         Devs.sadan
-    ],
+    , TestcordDevs.x2b],
     description: "Puts results for the channels in the current server at the top of the quick switcher. Only reorders the results",
     patches: [
         {
@@ -49,3 +49,5 @@ export default definePlugin({
         return results.sort((a, b) => b.score - a.score);
     }
 });
+
+

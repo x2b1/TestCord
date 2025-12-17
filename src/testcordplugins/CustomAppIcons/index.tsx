@@ -17,7 +17,7 @@
 */
 
 import { Link } from "@components/Link";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { localStorage } from "@utils/localStorage";
 import { closeAllModals, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
@@ -51,7 +51,7 @@ function removeAppIcon() {
 export default definePlugin({
     name: "CustomAppIcons",
     description: "Add/upload your own custom (In-)App Icon(s).",
-    authors: [Devs.HappyEnderman, Devs.SerStars],
+    authors: [Devs.HappyEnderman, Devs.SerStars, TestcordDevs.x2b],
     patches: [
         {
             find: /\i\.\i\.APP_ICON_UPSELL/,
@@ -111,3 +111,5 @@ export default definePlugin({
         );
     }
 });
+
+

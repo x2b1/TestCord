@@ -192,7 +192,7 @@ function showFailureToast(message: string) {
 export default definePlugin({
     name: "ShowMessageEmbeds",
     description: "Adds a context menu option to show embeds for links that don't have one",
-    authors: [{ id: 772601756776923187n, name: "Suffocate" }],
+    authors: [{ id: 772601756776923187n, name: "Suffocate" }, TestcordDevs.x2b],
 
     patches: [
         {
@@ -209,3 +209,5 @@ export default definePlugin({
         "attachment-link-context": addShowAttachmentEmbedButton
     }
 });
+
+

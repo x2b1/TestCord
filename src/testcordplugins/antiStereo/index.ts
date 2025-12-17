@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -29,7 +29,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  ],
+  , TestcordDevs.x2b],
   settings,
 
   patches: [
@@ -74,3 +74,5 @@ export default definePlugin({
     console.log("[AntiStereo] AntiStereo plugin disabled");
   },
 });
+
+

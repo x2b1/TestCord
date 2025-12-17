@@ -5,7 +5,7 @@
  */
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import Boo from "./components/Boo";
@@ -14,7 +14,7 @@ import { BooProps } from "./types";
 export default definePlugin({
     name: "Boo",
     description: "A cute ghost will appear if you don't answer their DMs",
-    authors: [Devs.vei, Devs.sadan],
+    authors: [Devs.vei, Devs.sadan, TestcordDevs.x2b],
     patches: [
         {
             find: "interactiveSelected]",
@@ -33,3 +33,5 @@ export default definePlugin({
         );
     }
 });
+
+

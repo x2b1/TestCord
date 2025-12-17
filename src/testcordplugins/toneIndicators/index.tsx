@@ -6,7 +6,7 @@
 
 import "./tooltip.css";
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Tooltip } from "@webpack/common";
 import { React } from "webpack/common/react";
@@ -90,7 +90,7 @@ export default definePlugin({
     name: "ToneIndicators",
     description: "Adds descriptions when hovering over tone indicators.",
     nexulien: true,
-    authors: [Devs.Jaegerwald, Devs.Zoid, Devs.sadan],
+    authors: [Devs.Jaegerwald, Devs.Zoid, Devs.sadan, TestcordDevs.x2b],
 
     patches: [
         {
@@ -150,3 +150,5 @@ export default definePlugin({
     },
 
 });
+
+

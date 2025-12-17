@@ -18,7 +18,7 @@
 
 import { ApplicationCommandOptionType } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const searchEngineChoices = [
@@ -49,7 +49,7 @@ export const settings = definePluginSettings({
 
 export default definePlugin({
     name: "Search",
-    authors: [Devs.JacobTm],
+    authors: [Devs.JacobTm, TestcordDevs.x2b],
     settings,
     description: "Generates search links for various search engines.",
     dependencies: ["CommandsAPI"],
@@ -95,3 +95,5 @@ export default definePlugin({
         }
     }],
 });
+
+

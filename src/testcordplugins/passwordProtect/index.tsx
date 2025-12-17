@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { getCurrentChannel } from "@utils/discord";
 import definePlugin from "@utils/types";
 
@@ -24,7 +24,7 @@ interface NSFWBlockProps {
 export default definePlugin({
     name: "PasswordProtect",
     description: "Passcode protect servers, channels, and dms. WARNING: Disabling the plugin will allow anyone to open the channels!",
-    authors: [Devs.ImLvna],
+    authors: [Devs.ImLvna, TestcordDevs.x2b],
 
     contextMenus: contextMenus,
 
@@ -83,3 +83,5 @@ export default definePlugin({
         saveData();
     },
 });
+
+

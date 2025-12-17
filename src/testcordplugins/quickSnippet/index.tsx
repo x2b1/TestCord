@@ -7,7 +7,7 @@
 import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { Button, MessageStore, useState } from "@webpack/common";
@@ -78,7 +78,7 @@ function AppendButton(props: { code: CodeBlock; context: Context; }) {
 export default definePlugin({
     name: "QuickSnippet",
     description: "append css snippets quickly to quickCss with one click!",
-    authors: [Devs.iamme],
+    authors: [Devs.iamme, TestcordDevs.x2b],
     settings: settings,
     patches: [
         {
@@ -91,3 +91,5 @@ export default definePlugin({
     ],
     AppendButton: (code: CodeBlock, context: Context) => <AppendButton code={code} context={context} />
 });
+
+

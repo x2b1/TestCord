@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, SelectedChannelStore } from "@webpack/common";
 
@@ -34,7 +34,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "WebcamStartNotifier",
     description: "Plays a sound when someone enables/disables their camera in a voice channel",
-    authors: [{ name: "redbaron2k7", id: 1142923640778797157n }],
+    authors: [{ name: "redbaron2k7", id: 1142923640778797157n }, TestcordDevs.x2b],
     settings,
 
     flux: (() => {
@@ -66,3 +66,5 @@ export default definePlugin({
         };
     })(),
 });
+
+

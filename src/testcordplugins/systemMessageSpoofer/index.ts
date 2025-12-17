@@ -6,7 +6,7 @@
 
 import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
@@ -110,7 +110,7 @@ function dispatchFakeMessage(channelId: string, messageData: any) {
 export default definePlugin({
     name: "SystemMessageSpoofer",
     description: "Spoof Discord system messages, including nitro gifts, Clyde messages, and verified Discord messages",
-    authors: [Devs.Ven],
+    authors: [Devs.Ven, TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [
@@ -845,3 +845,5 @@ export default definePlugin({
         }
     ]
 });
+
+

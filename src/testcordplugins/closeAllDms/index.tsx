@@ -8,7 +8,7 @@ import {
   findGroupChildrenByChildId,
   NavContextMenuPatchCallback,
 } from "@api/ContextMenu";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
@@ -160,7 +160,7 @@ export default definePlugin({
   name: "CloseAllDms",
   description:
     "Closes all private DMs with one click with 50ms rate limit (preserves groups)",
-  authors: [Devs.BigDuck],
+  authors: [Devs.BigDuck, TestcordDevs.x2b],
 
   contextMenus: {
     "gdm-context": GroupDMContextMenuPatch,
@@ -168,3 +168,5 @@ export default definePlugin({
     "guild-context": ServerContextMenuPatch,
   },
 });
+
+

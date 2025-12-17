@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { makeContextItem } from "./components";
@@ -15,7 +15,7 @@ export default definePlugin({
     settings,
     name: "CustomFolderIcons",
     description: "Customize folder icons with any png",
-    authors: [Devs.sadan],
+    authors: [Devs.sadan, TestcordDevs.x2b],
     patches: [
         {
             find: ".expandedFolderIconWrapper",
@@ -56,3 +56,5 @@ export default definePlugin({
         }
     }
 });
+
+

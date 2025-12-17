@@ -6,7 +6,7 @@
 
 import { addMessagePreSendListener, MessageSendListener,removeMessagePreSendListener, } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 let languages: string[] = [
@@ -180,7 +180,7 @@ const presendObject : MessageSendListener = async (channelId, msg) =>
 export default definePlugin({
     name: "ChineseWhispers",
     description: "Translate plugin but 20x more funny",
-    authors: [Devs.Samwich],
+    authors: [Devs.Samwich, TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     start()
     {
@@ -192,3 +192,5 @@ export default definePlugin({
     },
     settings
 });
+
+

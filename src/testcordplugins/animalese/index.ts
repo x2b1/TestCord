@@ -142,7 +142,7 @@ async function playSound(buffer: AudioBuffer, volume: number) {
 export default definePlugin({
     name: "Animalese",
     description: "Plays animalese (they yap a lot) on message sent",
-    authors: [EquicordDevs.ryanamay],
+    authors: [EquicordDevs.ryanamay, TestcordDevs.x2b],
     settings,
 
     start() {
@@ -199,3 +199,5 @@ export default definePlugin({
         currentChannelId = null;
     },
 });
+
+

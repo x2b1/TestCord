@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { addSettingsPanelButton, Emitter, MicrophoneSettingsIcon, removeSettingsPanelButton } from "../philsPluginLibrary";
@@ -28,7 +28,7 @@ import { initMicrophoneStore } from "./stores";
 export default definePlugin({
     name: "BetterMicrophone",
     description: "This plugin allows you to further customize your microphone.",
-    authors: [Devs.feelslove],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
     dependencies: ["PhilsPluginLibrary"],
     start(): void {
         initMicrophoneStore();
@@ -45,3 +45,5 @@ export default definePlugin({
         removeSettingsPanelButton(PluginInfo.PLUGIN_NAME);
     }
 });
+
+

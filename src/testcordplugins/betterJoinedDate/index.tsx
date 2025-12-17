@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Tooltip } from "@webpack/common";
 
@@ -38,7 +38,7 @@ function addTooltip(str: string, timestamp: number) {
 
 export default definePlugin({
     name: "BetterJoinedDate",
-    authors: [Devs.AutumnVN],
+    authors: [Devs.AutumnVN, TestcordDevs.x2b],
     description: "Add a tooltip to the joined date showing the exact time and how many days ago it was",
     patches: [{
         find: ".USER_PROFILE_MEMBER_SINCE",
@@ -57,3 +57,5 @@ export default definePlugin({
         return addTooltip(str, timestamp);
     }
 });
+
+

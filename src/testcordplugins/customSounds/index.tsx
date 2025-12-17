@@ -8,7 +8,7 @@ import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Button, Forms, React, showToast, TextInput } from "@webpack/common";
 
@@ -195,7 +195,7 @@ export function findOverride(id: string): SoundOverride | null {
 export default definePlugin({
     name: "CustomSounds",
     description: "Customize Discord's sounds.",
-    authors: [Devs.ScattrdBlade, Devs.TheKodeToad],
+    authors: [Devs.ScattrdBlade, Devs.TheKodeToad, TestcordDevs.x2b],
     patches: [
         {
             find: 'Error("could not play audio")',
@@ -222,3 +222,5 @@ export default definePlugin({
     findOverride,
     isOverriden,
 });
+
+

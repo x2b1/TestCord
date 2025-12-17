@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "BlockKrisp",
     description: "Prevent Krisp from loading",
-    authors: [Devs.D3SOX],
+    authors: [Devs.D3SOX, TestcordDevs.x2b],
     patches: [
         // Block loading modules on Desktop
         {
@@ -38,3 +38,5 @@ export default definePlugin({
         }
     ],
 });
+
+

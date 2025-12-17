@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import gitRemote from "~git-remote";
@@ -12,7 +12,7 @@ import gitRemote from "~git-remote";
 export default definePlugin({
     name: "Versions",
     description: "Adds extra information to the version info",
-    authors: [Devs.ImLvna],
+    authors: [Devs.ImLvna, TestcordDevs.x2b],
     enabledByDefault: true,
 
     patches: [
@@ -40,3 +40,5 @@ export default definePlugin({
         );
     }
 });
+
+

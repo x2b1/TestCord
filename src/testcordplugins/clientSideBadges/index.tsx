@@ -8,7 +8,7 @@
 import { ProfileBadge } from "@api/Badges";
 import { Badges } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Forms, Toasts, UserStore } from "@webpack/common";
 // eslint-disable-next-line unused-imports/no-unused-imports
@@ -25,7 +25,7 @@ export default definePlugin({
     authors: [
         Devs.nin0dev,
         { name: "KrystalSkullOfficial", id: 929208515883569182n }
-    ],
+    , TestcordDevs.x2b],
     settingsAboutComponent: () => <>
         <Forms.FormTitle style={{ color: "red", fontSize: "2rem", fontWeight: "bold" }}>Only you can view the badges. No, this can't and won't be changed.</Forms.FormTitle>
         <Forms.FormText>You may need to reload Discord after editing your settings for them to apply.</Forms.FormText>
@@ -282,3 +282,5 @@ export default definePlugin({
         });
     }
 });
+
+

@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -29,7 +29,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "TriggerWarning",
-    authors: [Devs.Joona],
+    authors: [Devs.Joona, TestcordDevs.x2b],
     description: "Spoiler attachments based on filenames and links.",
     patches: [
         {
@@ -68,3 +68,5 @@ export default definePlugin({
         }
     }
 });
+
+

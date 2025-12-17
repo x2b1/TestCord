@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { Button, ContextMenuApi, Menu, React, RelationshipStore, RestAPI, Toasts, UserStore } from "@webpack/common";
@@ -283,7 +283,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
 export default definePlugin({
     name: "FriendsScrapper",
     description: "Adds a Scrap button to Friends > All to unfriend everyone except whitelisted.",
-    authors: [Devs.feelslove],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
     settings,
     renderChatBarButton: ({ isMainChat }) => {
         if (!isMainChat) return null;
@@ -307,3 +307,5 @@ export default definePlugin({
         );
     }
 });
+
+

@@ -8,7 +8,7 @@ import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
 import { Link } from "@components/Link";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { identity } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
@@ -166,7 +166,7 @@ function VoiceSettings() {
 export default definePlugin({
     name: "VCPanelSettings",
     description: "Control voice settings right from the voice panel",
-    authors: [Devs.nin0dev],
+    authors: [Devs.nin0dev, TestcordDevs.x2b],
     settings: definePluginSettings({
         title1: {
             type: OptionType.COMPONENT,
@@ -250,3 +250,5 @@ export default definePlugin({
         }
     ]
 });
+
+

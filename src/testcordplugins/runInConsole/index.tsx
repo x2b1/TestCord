@@ -17,7 +17,7 @@
 */
 
 import { classNameFactory, disableStyle, enableStyle } from "@api/Styles";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
@@ -136,7 +136,7 @@ function replaceIcon(icon: Function) {
 export default definePlugin({
     name: "RunInConsole",
     description: "Allows you to run code blocks in the console. Press Shift to edit the code before running.",
-    authors: [Devs.Tolgchu],
+    authors: [Devs.Tolgchu, TestcordDevs.x2b],
     patches: [
         {
             find: /\i\(\)\(\i\.scrollbarGhostHairline,"hljs"\)/,
@@ -157,3 +157,5 @@ export default definePlugin({
         disableStyle(style);
     },
 });
+
+

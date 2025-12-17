@@ -1,6 +1,6 @@
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { cache } from "@webpack";
 import { Button, Constants, Forms, MessageStore, Parser, RestAPI, Toasts, useEffect, UserStore, useState } from "@webpack/common";
@@ -179,7 +179,7 @@ const ChannelData = () => {
 export default definePlugin({
     name: "ReactionTracker",
     description: "See how much you've been reacted with a specific emoji, and by who",
-    authors: [Devs.nin0dev],
+    authors: [Devs.nin0dev, TestcordDevs.x2b],
     flux: {
         async MESSAGE_REACTION_ADD(event) {
             try {
@@ -236,3 +236,5 @@ export default definePlugin({
         }
     })
 });
+
+

@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "NoDraftLengthLimit",
     description: "Removes the 4500 character saved draft message truncation",
-    authors: [Devs.Sqaaakoi],
+    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
     patches: [
         {
             find: "MAX_MESSAGE_LENGTH_PREMIUM+500",
@@ -21,3 +21,5 @@ export default definePlugin({
         }
     ]
 });
+
+

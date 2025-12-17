@@ -287,7 +287,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  ],
+  , TestcordDevs.x2b],
   dependencies: ["ContextMenuAPI"],
   settings,
 
@@ -418,3 +418,5 @@ export default definePlugin({
     }
   },
 });
+
+

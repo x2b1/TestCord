@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { Menu } from "@webpack/common";
@@ -60,7 +60,7 @@ const StateKeys = ["selfDeaf", "selfMute", "selfVideo"];
 export default definePlugin({
     name: "FakeMuteAndDeafen",
     description: "You can fake mute and deafen yourself. You can continue speaking and being heard during this time.",
-    authors: [Devs.feelslove],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
     settings,
     modifyVoiceState(e) {
         for (let i = 0; i < StateKeys.length; i++) {
@@ -128,3 +128,5 @@ export default definePlugin({
         }
     ],
 });
+
+

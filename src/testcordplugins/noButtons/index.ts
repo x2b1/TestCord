@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 
@@ -50,7 +50,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "NoButtons",
     description: "Removes annoying buttons that you don't need",
-    authors: [Devs.None],
+    authors: [Devs.None, TestcordDevs.x2b],
     patches: [],
     settings,
     start() {
@@ -93,3 +93,5 @@ export default definePlugin({
         }
     },
 });
+
+

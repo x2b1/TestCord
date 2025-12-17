@@ -6,7 +6,7 @@
 
 import "./styles.css";
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { Menu } from "@webpack/common";
@@ -17,7 +17,7 @@ import { openUserEditModal } from "./modal";
 export default definePlugin({
     name: "EditUsers",
     description: "Edit users",
-    authors: [Devs.Ven],
+    authors: [Devs.Ven, TestcordDevs.x2b],
 
     settings,
 
@@ -123,3 +123,5 @@ export default definePlugin({
         return hasFlag(flags, OverrideFlags.DisableNicks);
     }
 });
+
+

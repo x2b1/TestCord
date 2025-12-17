@@ -24,3 +24,5 @@ export interface FriendInvite {
     type: number;
     uses: number;
 }
+
+

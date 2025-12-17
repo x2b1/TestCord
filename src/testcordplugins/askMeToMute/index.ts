@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { PermissionsBits, PermissionStore, SelectedChannelStore, UserStore } from "@webpack/common";
@@ -23,7 +23,7 @@ interface VoiceState {
 export default definePlugin({
     name: "AskMeToMute",
     description: "Mute yourself when moderators server mute you, and automatically remove your server mute if you have permission.",
-    authors: [Devs.Sqaaakoi],
+    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
 
     flux: {
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
@@ -40,3 +40,5 @@ export default definePlugin({
         }
     }
 });
+
+

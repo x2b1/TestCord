@@ -5,7 +5,7 @@
  */
 
 import { findOption, RequiredMessageOption } from "@api/Commands";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 function annoil(input) {
@@ -18,7 +18,7 @@ function annoil(input) {
 export default definePlugin({
     name: "Annoiler",
     description: "Makes you send messages with spoilers around every single character. Originally made by Kyza for Powercord, Usage: /annoil",
-    authors: [Devs.vbajs, Devs.kyza, Devs.luckycanucky],
+    authors: [Devs.vbajs, Devs.kyza, Devs.luckycanucky, TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
     commands: [
         {
@@ -31,3 +31,5 @@ export default definePlugin({
         },
     ],
 });
+
+

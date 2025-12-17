@@ -12,7 +12,7 @@ import { Connection } from "./connection-types";
 export default definePlugin({
     name: "AllConnectionsEnabled",
     description: "Enables all connections",
-    authors: [Devs.cooper],
+    authors: [Devs.cooper, TestcordDevs.x2b],
     patches: [
         {
             find: "getPlatformUserUrl:",
@@ -33,3 +33,5 @@ export default definePlugin({
         return connections;
     }
 });
+
+

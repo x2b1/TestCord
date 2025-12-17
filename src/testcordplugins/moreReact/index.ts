@@ -17,7 +17,7 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -32,7 +32,7 @@ export default definePlugin({
     name: "MoreReact",
     description: "This plugin allows you to modify the max number of reactions for the frencency reaction experiment",
     tags: ["Frencency", "Reactions"],
-    authors: [Devs.iamme],
+    authors: [Devs.iamme, TestcordDevs.x2b],
     patches: [
         {
             find: ".MESSAGE_HOVER_BAR_REACTION_SUGGESTION_ADD_ALLY",
@@ -44,3 +44,5 @@ export default definePlugin({
     ],
     settings,
 });
+
+

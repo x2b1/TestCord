@@ -8,13 +8,13 @@
  * Copyright (c) 2024 HAHALOSAH. All rights reserved.
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "SortReactions",
     description: "Sorts reactions by count in chat.",
-    authors: [Devs.HAHALOSAH],
+    authors: [Devs.HAHALOSAH, TestcordDevs.x2b],
     patches: [
         {
             find: 'location:"message_reactions"',
@@ -27,3 +27,5 @@ export default definePlugin({
         },
     ],
 });
+
+

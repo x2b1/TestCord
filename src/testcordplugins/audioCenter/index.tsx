@@ -1010,7 +1010,7 @@ export default definePlugin({
   name: "AudioCenter",
   description:
     "Complete audio center: mixing, virtual device, limiting and diagnostics",
-  authors: [{ name: "Bash", id: 1327483363518582784n }],
+  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
   settings,
 
   settingsAboutComponent: () => (
@@ -1200,3 +1200,5 @@ export default definePlugin({
     console.log("AudioCenter: Plugin stopped");
   },
 });
+
+

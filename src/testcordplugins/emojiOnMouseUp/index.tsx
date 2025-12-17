@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "EmojiOnMouseUp",
     description: "Sends the emoji you are hovering when you take your mouse button up.",
-    authors: [Devs.sadan],
+    authors: [Devs.sadan, TestcordDevs.x2b],
     patches: [
         {
             find: ".customItem;",
@@ -21,3 +21,5 @@ export default definePlugin({
         }
     ]
 });
+
+

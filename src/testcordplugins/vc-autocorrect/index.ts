@@ -45,7 +45,7 @@ export default definePlugin({
     name: "AutoCorrect",
     description: "Configure auto text correction, completion, and capitalization",
     settings,
-    authors: [EquicordDevs.paipai],
+    authors: [EquicordDevs.paipai, TestcordDevs.x2b],
     patches: [
         {
             find: /autocorrect:"?(off|false|none)"?/i,
@@ -76,3 +76,5 @@ export default definePlugin({
         },
     ],
 });
+
+

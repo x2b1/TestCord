@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "NSFWGateBypass",
     description: "Allows you to access NSFW channels without setting/verifying your age",
-    authors: [Devs.Commandtechno],
+    authors: [Devs.Commandtechno, TestcordDevs.x2b],
     patches: [
         {
             find: ".nsfwAllowed=null",
@@ -39,3 +39,5 @@ export default definePlugin({
         }
     ],
 });
+
+

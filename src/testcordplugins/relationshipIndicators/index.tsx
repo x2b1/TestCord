@@ -14,7 +14,7 @@ import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberLi
 import { addMessageDecoration, removeMessageDecoration } from "@api/MessageDecorations";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 import { getBadges, RelationshipIndicator } from "./utils";
@@ -66,7 +66,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "RelationshipIndicators",
-    authors: [Devs.None],
+    authors: [Devs.None, TestcordDevs.x2b],
     settings,
     description: "Adds icons to indicate relationships with users.",
     start() {
@@ -80,3 +80,5 @@ export default definePlugin({
         });
     },
 });
+
+

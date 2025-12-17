@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, MessageStore, SelectedChannelStore, UserStore } from "@webpack/common";
 
@@ -30,7 +30,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ShyTyping",
     description: "Prevents you from accidentally revealing that you're lurking in a channel",
-    authors: [Devs.Sqaaakoi],
+    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
     settings,
     patches: [
         {
@@ -59,3 +59,5 @@ export default definePlugin({
         return false;
     }
 });
+
+

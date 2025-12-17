@@ -6,7 +6,7 @@
 
 import "./style.css";
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { React, Tooltip, useMemo } from "@webpack/common";
@@ -16,7 +16,7 @@ import { useKatex } from "./katexLoader";
 export default definePlugin({
     name: "TeX",
     description: "Typesets math in messages, written as `$x$` or `$$x$$`.",
-    authors: [Devs.Kyuuhachi],
+    authors: [Devs.Kyuuhachi, TestcordDevs.x2b],
 
     patches: [
         {
@@ -91,3 +91,5 @@ function LatexPlaceholder({ className, delim, children, ...props }) {
         </code>
     );
 }
+
+

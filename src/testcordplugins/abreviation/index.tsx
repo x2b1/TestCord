@@ -286,7 +286,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  ],
+  , TestcordDevs.x2b],
   dependencies: ["MessageEventsAPI"],
   settings,
 
@@ -335,3 +335,5 @@ export default definePlugin({
     }
   },
 });
+
+

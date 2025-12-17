@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { SelectedChannelStore } from "@webpack/common";
@@ -45,7 +45,7 @@ export const settings = definePluginSettings({
 export default definePlugin({
     name: "SoundTriggers",
     description: "Chaotic plugin for mapping text/emojis to sound",
-    authors: [Devs.None],
+    authors: [Devs.None, TestcordDevs.x2b],
     settings,
     start() {
         if (Array.isArray(settings.store.soundTriggers)) {
@@ -63,3 +63,5 @@ export default definePlugin({
         }
     }
 });
+
+

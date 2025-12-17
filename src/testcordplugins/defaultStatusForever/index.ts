@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 interface Choice {
@@ -16,7 +16,7 @@ interface Choice {
 export default definePlugin({
     name: "DefaultStatusForever",
     description: "Make statuses default to last forever",
-    authors: [Devs.ImLvna],
+    authors: [Devs.ImLvna, TestcordDevs.x2b],
 
     patches: [
         {
@@ -46,3 +46,5 @@ export default definePlugin({
         return choices;
     }
 });
+
+

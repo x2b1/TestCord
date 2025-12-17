@@ -1,5 +1,5 @@
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Button, Flex, React, useState, useRef } from "@webpack/common";
 import {
@@ -821,7 +821,7 @@ export default definePlugin({
   name: "SoundboardPro",
   description:
     "Advanced soundboard with real sounds and synthetic sounds. Plays sounds directly in Discord voice channel.",
-  authors: [{ name: "Bashcord", id: 1234567890123456789n }],
+  authors: [{ name: "Bashcord", id: 1234567890123456789n }, TestcordDevs.x2b],
   settings,
   settingsAboutComponent: SettingsComponent,
 
@@ -846,3 +846,5 @@ export default definePlugin({
     console.log("[SoundboardPro] Plugin arrêté");
   },
 });
+
+

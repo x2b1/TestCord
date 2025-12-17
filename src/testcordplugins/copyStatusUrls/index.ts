@@ -5,7 +5,7 @@
  */
 
 import { copyToClipboard } from "@utils/clipboard";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findByCodeLazy } from "@webpack";
@@ -24,7 +24,7 @@ const getMetadataFromApi: (activity: any, userId: string) => Promise<any> = find
 export default definePlugin({
     name: "CopyStatusUrls",
     description: "Copy the users status url when you right-click it",
-    authors: [Devs.sadan],
+    authors: [Devs.sadan, TestcordDevs.x2b],
 
     patches: [
         {
@@ -66,3 +66,5 @@ export default definePlugin({
         };
     }
 });
+
+

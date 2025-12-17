@@ -7,7 +7,7 @@
 import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { FluxDispatcher as Flux, Forms } from "@webpack/common";
 
@@ -32,7 +32,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MessageNitroBadge",
     description: "Enables the Social Proofing Message Nitro Badge experiment",
-    authors: [Devs.feelslove],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
     settings,
     dependencies: ["Experiments"],
 
@@ -46,3 +46,5 @@ export default definePlugin({
     start: () => Flux.dispatch({ ...options, experimentBucket: Number(settings.store.experimentTreatment) }),
     stop: () => Flux.dispatch({ ...options, experimentBucket: null }),
 });
+
+

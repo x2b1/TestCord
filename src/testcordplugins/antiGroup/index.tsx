@@ -215,7 +215,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  ],
+  , TestcordDevs.x2b],
   settings,
 
   flux: {
@@ -336,3 +336,5 @@ export default definePlugin({
     }
   },
 });
+
+

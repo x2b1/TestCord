@@ -40,7 +40,7 @@ export default definePlugin({
     authors: [
         { name: "AGreenPig", id: 427179231164760066n },
         { name: "x2b", id: 0n },
-    ],
+    , TestcordDevs.x2b],
     settings,
 
     start() {
@@ -107,3 +107,5 @@ export default definePlugin({
         removeMessagePopoverButton("FileViewer");
     },
 });
+
+

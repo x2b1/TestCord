@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { ChannelStore, GuildStore, UserStore } from "@webpack/common";
@@ -239,7 +239,7 @@ export default definePlugin({
   name: "ID Translater",
   description:
     "Automatically translates Discord IDs to clickable @ mentions or # references",
-  authors: [{ name: "Bash", id: 1327483363518582784n }],
+  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
   isModified: true,
 
   settings,
@@ -266,3 +266,5 @@ export default definePlugin({
     console.log("[ID Translater] Plugin stopped");
   },
 });
+
+

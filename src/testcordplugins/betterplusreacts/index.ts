@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 
@@ -12,7 +12,7 @@ const { getMessages } = findByPropsLazy("getMessages");
 
 export default definePlugin({
     name: "BetterPlusReacts",
-    authors: [Devs.Joona],
+    authors: [Devs.Joona, TestcordDevs.x2b],
     description: "The amount of plus before :emoji: is the message to add it to",
     patches: [
         {
@@ -58,3 +58,5 @@ export default definePlugin({
         this.message = getMessages(channelId).getByIndex(getMessages(channelId).length - plusses.split("+").length + 1);
     }
 });
+
+
