@@ -12,7 +12,7 @@ const { getMessages } = findByPropsLazy("getMessages");
 
 export default definePlugin({
     name: "BetterPlusReacts",
-    authors: [Devs.Joona, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "The amount of plus before :emoji: is the message to add it to",
     patches: [
         {
@@ -58,6 +58,7 @@ export default definePlugin({
         this.message = getMessages(channelId).getByIndex(getMessages(channelId).length - plusses.split("+").length + 1);
     }
 });
+
 
 
 

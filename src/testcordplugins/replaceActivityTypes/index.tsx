@@ -89,7 +89,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ReplaceActivityTypes",
     description: "Replace the activity type (Playing) of any rich presence app (rats in my vencord?)",
-    authors: [Devs.Nyako, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         // how has this patch not broken yet lol (i do not like fixing patches tho)
         {
@@ -128,6 +128,7 @@ export default definePlugin({
         });
     },
 });
+
 
 
 

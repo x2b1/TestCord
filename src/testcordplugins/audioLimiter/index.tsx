@@ -10,6 +10,8 @@ import { findByPropsLazy } from "@webpack";
 import { React, FluxDispatcher, Forms, Slider } from "@webpack/common";
 import definePlugin, { OptionType } from "@utils/types";
 
+import { TestcordDevs } from "@utils/constants";
+
 const configModule = findByPropsLazy("getOutputVolume");
 
 const settings = definePluginSettings({
@@ -483,7 +485,7 @@ export default definePlugin({
   name: "Audio Limiter",
   description:
     "Automatically limits output volume to avoid sounds that are too loud",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   settings,
   settingsAboutComponent: SettingsPanel,
 
@@ -507,6 +509,7 @@ export default definePlugin({
     },
   ],
 });
+
 
 
 

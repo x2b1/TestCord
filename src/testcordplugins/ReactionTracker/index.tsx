@@ -179,7 +179,7 @@ const ChannelData = () => {
 export default definePlugin({
     name: "ReactionTracker",
     description: "See how much you've been reacted with a specific emoji, and by who",
-    authors: [Devs.nin0dev, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     flux: {
         async MESSAGE_REACTION_ADD(event) {
             try {
@@ -236,6 +236,7 @@ export default definePlugin({
         }
     })
 });
+
 
 
 

@@ -11,6 +11,8 @@ import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { moment } from "@webpack/common";
 
+import { TestcordDevs } from "@utils/constants";
+
 interface ScheduledMessage {
     channelId: string;
     content: string;
@@ -127,7 +129,7 @@ function scheduleMessage(channelId: string, content: string, delay: number): voi
 export default definePlugin({
     name: "MessageScheduler",
     description: "Schedule messages to be sent at a specific time or after a delay",
-    authors: [{ name: "MessageScheduler", id: 0n }, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
 
     commands: [
@@ -285,6 +287,7 @@ export default definePlugin({
         logger.info("Plugin stopped, all scheduled messages cleared");
     }
 });
+
 
 
 

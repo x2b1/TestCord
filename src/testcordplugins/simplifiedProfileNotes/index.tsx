@@ -77,7 +77,7 @@ function NotesSection(props: NoteHook & NotesSectionProps) {
 export default definePlugin({
     name: "SimplifiedProfileNotes",
     description: "Show the notes text box in the new simplified profile popouts",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     patches: [
         {
@@ -114,6 +114,7 @@ export default definePlugin({
     useNoteBox,
     NotesSection
 });
+
 
 
 

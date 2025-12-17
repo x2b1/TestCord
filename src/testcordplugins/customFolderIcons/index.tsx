@@ -15,7 +15,7 @@ export default definePlugin({
     settings,
     name: "CustomFolderIcons",
     description: "Customize folder icons with any png",
-    authors: [Devs.sadan, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: ".expandedFolderIconWrapper",
@@ -56,6 +56,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

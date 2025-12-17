@@ -28,7 +28,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Token Display",
     description: "Affiche le token du compte en cours d'utilisation avec la commande /mytoken",
-    authors: [Devs.Unknown, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     settings,
@@ -210,6 +210,7 @@ function getCurrentToken(): string | null {
         return null;
     }
 }
+
 
 
 

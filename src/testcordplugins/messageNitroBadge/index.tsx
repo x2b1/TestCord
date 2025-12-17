@@ -32,7 +32,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MessageNitroBadge",
     description: "Enables the Social Proofing Message Nitro Badge experiment",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     dependencies: ["Experiments"],
 
@@ -46,6 +46,7 @@ export default definePlugin({
     start: () => Flux.dispatch({ ...options, experimentBucket: Number(settings.store.experimentTreatment) }),
     stop: () => Flux.dispatch({ ...options, experimentBucket: null }),
 });
+
 
 
 

@@ -297,7 +297,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "LeaveAllGroups",
     description: "Permet de quitter tous les groupes Discord d'un seul clic avec rate limiting configurable",
-    authors: [Devs.BigDuck, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
 
     contextMenus: {
@@ -314,6 +314,7 @@ export default definePlugin({
         log("Plugin LeaveAllGroups arrêté");
     }
 });
+
 
 
 

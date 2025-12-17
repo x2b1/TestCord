@@ -269,7 +269,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
 export default definePlugin({
     name: "ChatsScrapper",
     description: "Adds an × button near DM UI to close all 1:1 DMs except whitelist.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     renderChatBarButton: ({ isMainChat }) => {
         if (!isMainChat) return null;
@@ -292,6 +292,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

@@ -10,6 +10,8 @@ import { User } from "@vencord/discord-types";
 import { findByProps } from "@webpack";
 import { moment, React } from "@webpack/common";
 
+import { TestcordDevs } from "@utils/constants";
+
 interface PresenceStatus {
     hasBeenOnline: boolean;
     lastOffline: number | null;
@@ -49,7 +51,7 @@ function formatTime(time: number) {
 export default definePlugin({
     name: "LastOnline",
     description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
-    authors: [Devs.nick, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     flux: {
         PRESENCE_UPDATES({ updates }) {
             updates.forEach(update => {
@@ -93,6 +95,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

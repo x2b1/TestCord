@@ -58,7 +58,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Quoter",
     description: "Adds the ability to create an inspirational quote image from a message",
-    authors: [Devs.Samwich, Devs.thororen, TestcordDevs.neoarz, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
 
     async start() {
@@ -198,6 +198,7 @@ function QuoteModal({ message, ...props }: ModalProps & { message: Message; }) {
         </ModalRoot>
     );
 }
+
 
 
 

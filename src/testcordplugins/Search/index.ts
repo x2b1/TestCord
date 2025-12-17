@@ -49,7 +49,7 @@ export const settings = definePluginSettings({
 
 export default definePlugin({
     name: "Search",
-    authors: [Devs.JacobTm, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     description: "Generates search links for various search engines.",
     dependencies: ["CommandsAPI"],
@@ -95,6 +95,7 @@ export default definePlugin({
         }
     }],
 });
+
 
 
 

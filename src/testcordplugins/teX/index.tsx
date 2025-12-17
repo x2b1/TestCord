@@ -16,7 +16,7 @@ import { useKatex } from "./katexLoader";
 export default definePlugin({
     name: "TeX",
     description: "Typesets math in messages, written as `$x$` or `$$x$$`.",
-    authors: [Devs.Kyuuhachi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     patches: [
         {
@@ -91,6 +91,7 @@ function LatexPlaceholder({ className, delim, children, ...props }) {
         </code>
     );
 }
+
 
 
 

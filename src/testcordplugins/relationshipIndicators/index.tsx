@@ -66,7 +66,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "RelationshipIndicators",
-    authors: [Devs.None, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     description: "Adds icons to indicate relationships with users.",
     start() {
@@ -80,6 +80,7 @@ export default definePlugin({
         });
     },
 });
+
 
 
 

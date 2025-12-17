@@ -97,7 +97,7 @@ let loggedMessages: Record<string, Message> = {};
 export default definePlugin({
     name: "Stalker",
     description: "This plugin allows you to stalk users, made for delusional people like myself.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageLoggerEnhanced"],
     settings,
     flux: {
@@ -320,6 +320,7 @@ const contextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
     }
 };
 export { settings };
+
 
 
 

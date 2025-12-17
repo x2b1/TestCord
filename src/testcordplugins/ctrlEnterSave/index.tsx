@@ -111,7 +111,7 @@ export default definePlugin({
     settings,
     name: "CtrlEnterSave",
     description: "Adds a keybind to save settings. YOU HAVE TO SET THE KEYBIND IN SETTINGS.",
-    authors: [Devs.sadan, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: ".SETTINGS_NOTICE_MESSAGE",
@@ -138,6 +138,7 @@ export default definePlugin({
         return <></>;
     }
 });
+
 
 
 

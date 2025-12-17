@@ -14,7 +14,7 @@ import { BooProps } from "./types";
 export default definePlugin({
     name: "Boo",
     description: "A cute ghost will appear if you don't answer their DMs",
-    authors: [{ name: "Vei", id: 239414094799699968n }, Devs.sadan, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: "interactiveSelected]",
@@ -33,6 +33,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

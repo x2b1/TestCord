@@ -23,7 +23,7 @@ interface VoiceState {
 export default definePlugin({
     name: "AskMeToMute",
     description: "Mute yourself when moderators server mute you, and automatically remove your server mute if you have permission.",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     flux: {
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
@@ -40,6 +40,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

@@ -6,11 +6,15 @@
 
 import "./style.css";
 
+import { TestcordDevs } from "@utils/constants";
+
 import { definePluginSettings } from "@api/Settings";
 import {Devs} from "@utils/constants";
 import { LazyComponent } from "@utils/lazyReact";
 import { closeModal, Modals, openModalLazy } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
+
+import { TestcordDevs } from "@utils/constants";
 
 export const ModalRootdiv = LazyComponent(() => Modals.ModalRoot);
 export const settings = definePluginSettings({
@@ -78,7 +82,7 @@ export default definePlugin({
         }
     ],
 
-    authors: [Devs.sadan, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     start(){
         if (settings.store.onHomeClick)
             this.interval = setInterval(() => c = 0, 1000);
@@ -104,6 +108,7 @@ export default definePlugin({
         }
     ]
 });
+
 
 
 

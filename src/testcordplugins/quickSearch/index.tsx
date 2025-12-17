@@ -18,7 +18,7 @@ const QUERY_STORE = findByPropsLazy("tokenizeQuery");
 
 export default definePlugin({
     name: "QuickSearch",
-    authors: [Devs.None, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Adds context menu to quickly search stuff",
 
     async start() {
@@ -176,6 +176,7 @@ function getQueryString(query: QueryOptions) {
         + (!query.mentions || !query.mentions?.length ? "" : `${MENTIONS} ${getCorrectUsername(query.mentions[0])} `)
         + (!query.content ? "" : query.content.replace(/\n/g, ""));
 }
+
 
 
 

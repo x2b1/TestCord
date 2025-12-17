@@ -981,7 +981,7 @@ const handleOpenMessageScrapper = () => {
 export default definePlugin({
     name: "MessagesScrapper",
     description: "Delete your own messages in DMs or servers with a beautiful progress interface. Logs each run to JSON.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     start() {
         // Listen for custom event from separate window
@@ -1017,6 +1017,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

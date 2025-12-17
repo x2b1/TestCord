@@ -239,7 +239,7 @@ export default definePlugin({
   name: "ID Translater",
   description:
     "Automatically translates Discord IDs to clickable @ mentions or # references",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   isModified: true,
 
   settings,
@@ -266,6 +266,7 @@ export default definePlugin({
     console.log("[ID Translater] Plugin stopped");
   },
 });
+
 
 
 

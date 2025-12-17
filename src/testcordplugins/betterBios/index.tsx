@@ -9,7 +9,7 @@ const classes = findByPropsLazy("interactiveNormal");
 
 export default definePlugin({
     name: "BetterBios",
-    authors: [Devs.TheSun, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Improves Discord's bio redesign",
     patches: [{
         find: ".viewFullBio,",
@@ -51,6 +51,7 @@ export default definePlugin({
         </>;
     }
 });
+
 
 
 

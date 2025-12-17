@@ -523,7 +523,7 @@ const handleOpenUserTools = () => {
 export default definePlugin({
     name: "UserTools",
     description: "Adds context menu options to continuously disconnect, mute, or deafen users in guilds",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     settings,
 
@@ -641,6 +641,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

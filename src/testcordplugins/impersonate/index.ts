@@ -14,7 +14,7 @@ import { FluxDispatcher, UserStore } from "@webpack/common";
 export default definePlugin({
     name: "Impersonate",
     description: "Impersonate a user and have them send a \"message\"",
-    authors: [Devs.None, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [
@@ -117,6 +117,7 @@ export default definePlugin({
         }
     ]
 });
+
 
 
 

@@ -9,8 +9,12 @@ import { openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
 
+import { TestcordDevs } from "@utils/constants";
+
 import { SearchModal } from "./SearchModal";
 import styles from "./styles.css?managed";
+
+import { TestcordDevs } from "@utils/constants";
 
 export const settings = definePluginSettings({
   maxResults: {
@@ -119,7 +123,7 @@ export default definePlugin({
   name: "Ultra Advanced Search",
   description:
     "Advanced search similar to Discord mobile - Searches in all conversations, private messages, images, etc.",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   isModified: true,
 
   settings,
@@ -205,6 +209,7 @@ export default definePlugin({
     });
   },
 });
+
 
 
 

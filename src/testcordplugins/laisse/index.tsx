@@ -9,6 +9,8 @@ import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
+
+import { TestcordDevs } from "@utils/constants";
   Menu,
   React,
   VoiceStateStore,
@@ -18,6 +20,8 @@ import {
 } from "@webpack/common";
 import definePlugin, { OptionType } from "@utils/types";
 import { User, VoiceState } from "@vencord/discord-types";
+
+import { TestcordDevs } from "@utils/constants";
 
 type TLeashedUserInfo = {
   userId: string;
@@ -134,7 +138,7 @@ export default definePlugin({
   name: "laisse",
   description:
     "Hooks a user to you by automatically moving them to the voice channel you go to",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   settings,
   contextMenus: {
     "user-context": UserContextMenuPatch,
@@ -210,6 +214,7 @@ export default definePlugin({
     myLastChannelId = null;
   },
 });
+
 
 
 

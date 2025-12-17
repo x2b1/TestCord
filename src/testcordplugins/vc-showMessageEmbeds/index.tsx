@@ -13,6 +13,7 @@ import definePlugin from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { findByCodeLazy } from "@webpack";
 import { ChannelStore, Constants, Menu, MessageStore, React, RestAPI, showToast, Toasts } from "@webpack/common";
+import { TestcordDevs } from "@utils/constants";
 
 const logger = new Logger("ShowMessageEmbeds");
 
@@ -46,7 +47,7 @@ const addButton = (children, message, url) => {
                 label="Show Embed"
                 action={_ => unfurlEmbed(url, message)}
                 icon={ImageVisible}
-                key="vc-sme-show"/>);
+                key="vc-sme-show" />);
     } else if (isUrlInMessage(message, url)) { // check the url is actually in the message text so we know it's one people can actually add back
         children.splice(0, 0,
             <Menu.MenuItem
@@ -54,7 +55,7 @@ const addButton = (children, message, url) => {
                 label="Remove Embed"
                 action={_ => removeEmbed(url, message)}
                 icon={ImageInvisible}
-                key="vc-sme-remove"/>);
+                key="vc-sme-remove" />);
     }
 };
 
@@ -192,7 +193,7 @@ function showFailureToast(message: string) {
 export default definePlugin({
     name: "ShowMessageEmbeds",
     description: "Adds a context menu option to show embeds for links that don't have one",
-    authors: [{ id: 772601756776923187n, name: "Suffocate" }, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     patches: [
         {
@@ -209,6 +210,7 @@ export default definePlugin({
         "attachment-link-context": addShowAttachmentEmbedButton
     }
 });
+
 
 
 

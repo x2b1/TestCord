@@ -50,7 +50,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "NoButtons",
     description: "Removes annoying buttons that you don't need",
-    authors: [Devs.None, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [],
     settings,
     start() {
@@ -93,6 +93,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

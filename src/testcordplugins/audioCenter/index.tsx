@@ -8,6 +8,8 @@ import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
+
+import { TestcordDevs } from "@utils/constants";
   React,
   MediaEngineStore,
   FluxDispatcher,
@@ -18,6 +20,8 @@ import {
 } from "@webpack/common";
 import { identity } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
+
+import { TestcordDevs } from "@utils/constants";
 
 const configModule = findByPropsLazy("getOutputVolume");
 
@@ -1010,7 +1014,7 @@ export default definePlugin({
   name: "AudioCenter",
   description:
     "Complete audio center: mixing, virtual device, limiting and diagnostics",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   settings,
 
   settingsAboutComponent: () => (
@@ -1200,6 +1204,7 @@ export default definePlugin({
     console.log("AudioCenter: Plugin stopped");
   },
 });
+
 
 
 

@@ -32,7 +32,7 @@ export default definePlugin({
     name: "MoreReact",
     description: "This plugin allows you to modify the max number of reactions for the frencency reaction experiment",
     tags: ["Frencency", "Reactions"],
-    authors: [Devs.iamme, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: ".MESSAGE_HOVER_BAR_REACTION_SUGGESTION_ADD_ALLY",
@@ -44,6 +44,7 @@ export default definePlugin({
     ],
     settings,
 });
+
 
 
 

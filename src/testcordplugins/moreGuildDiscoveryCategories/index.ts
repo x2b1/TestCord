@@ -10,7 +10,7 @@ import { findExportedComponentLazy } from "@webpack";
 
 export default definePlugin({
     name: "MoreGuildDiscoveryCategories",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Show all guild discovery categories in the sidebar",
     patches: [
         {
@@ -41,6 +41,7 @@ export default definePlugin({
     ],
     UnknownCategoryIcon: findExportedComponentLazy("CircleQuestionIcon")
 });
+
 
 
 

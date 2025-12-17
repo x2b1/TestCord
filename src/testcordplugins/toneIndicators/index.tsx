@@ -90,7 +90,7 @@ export default definePlugin({
     name: "ToneIndicators",
     description: "Adds descriptions when hovering over tone indicators.",
     nexulien: true,
-    authors: [Devs.Jaegerwald, Devs.Zoid, Devs.sadan, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     patches: [
         {
@@ -150,6 +150,7 @@ export default definePlugin({
     },
 
 });
+
 
 
 

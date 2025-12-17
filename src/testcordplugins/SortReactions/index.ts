@@ -14,7 +14,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "SortReactions",
     description: "Sorts reactions by count in chat.",
-    authors: [Devs.HAHALOSAH, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: 'location:"message_reactions"',
@@ -27,6 +27,7 @@ export default definePlugin({
         },
     ],
 });
+
 
 
 

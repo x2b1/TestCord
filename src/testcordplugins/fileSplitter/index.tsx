@@ -320,7 +320,7 @@ export default definePlugin({
   name: "File Splitter",
   description:
     "Split large files into multiple parts to bypass size limits and share them easily.",
-  authors: [Devs.Unknown, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   settings,
 
   toolboxActions: {
@@ -329,6 +329,7 @@ export default definePlugin({
     },
   },
 });
+
 
 
 

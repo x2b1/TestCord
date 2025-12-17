@@ -255,7 +255,7 @@ function createClydeComponents() {
 export default definePlugin({
     name: "SpoofSystemV2",
     description: "Spoof official Discord system messages with realistic embeds",
-    authors: [Devs.Ven, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [
@@ -897,6 +897,7 @@ export default definePlugin({
         // Commands are automatically unregistered by the CommandsAPI
     }
 });
+
 
 
 

@@ -75,7 +75,7 @@ function ProfileContainer({ user }: { user: User; }) {
 export default definePlugin({
     name: "UserNotes",
     description: "Allows you to write unlimited notes for users, unlike Discord, which restricts saved notes to a maximum of 500 users and removes older notes when this limit is exceeded",
-    authors: [Devs.Vishnya, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     patches: [
         {
@@ -135,6 +135,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

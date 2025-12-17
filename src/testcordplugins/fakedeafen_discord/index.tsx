@@ -130,7 +130,7 @@ function FakeDeafenButton() {
 export default definePlugin({
   name: "FakeDeafen",
   description: "Fake deafen - no need to explain much, just open and try it.",
-  authors: [Devs.feelslove, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   patches: [
     {
       // Inject button into "speaking while muted" UI
@@ -175,6 +175,7 @@ export default definePlugin({
     }
   },
 });
+
 
 
 

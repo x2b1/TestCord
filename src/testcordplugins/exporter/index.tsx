@@ -151,7 +151,7 @@ async function exportChannel(channelId: string) {
 export default definePlugin({
     name: "Exporter",
     description: "Right-click DM/Group -> Export full chat as HTML with unlimited pagination.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     renderChatBarButton: ({ channel, isMainChat }) => {
         if (!isMainChat || !channel?.id) return null;
@@ -181,6 +181,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

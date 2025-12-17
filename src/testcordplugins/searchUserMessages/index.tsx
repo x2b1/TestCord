@@ -69,7 +69,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "SearchUserMessages",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Adds a context menu option to search messages from a user",
     settings,
 
@@ -81,6 +81,7 @@ export default definePlugin({
         removeContextMenuPatch("user-context", UserContextMenuPatch);
     },
 });
+
 
 
 

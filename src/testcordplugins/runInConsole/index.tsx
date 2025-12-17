@@ -136,7 +136,7 @@ function replaceIcon(icon: Function) {
 export default definePlugin({
     name: "RunInConsole",
     description: "Allows you to run code blocks in the console. Press Shift to edit the code before running.",
-    authors: [Devs.Tolgchu, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: /\i\(\)\(\i\.scrollbarGhostHairline,"hljs"\)/,
@@ -157,6 +157,7 @@ export default definePlugin({
         disableStyle(style);
     },
 });
+
 
 
 

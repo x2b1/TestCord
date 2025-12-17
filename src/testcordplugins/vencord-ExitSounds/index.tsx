@@ -44,7 +44,7 @@ const SoundButtonContext: NavContextMenuPatchCallback = (children, data: { sound
 export default definePlugin({
     name: "ExitSounds",
     description: "Play noises when you disconnect or swap channels.",
-    authors: [Devs.niko, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
 
     contextMenus: {
@@ -80,6 +80,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

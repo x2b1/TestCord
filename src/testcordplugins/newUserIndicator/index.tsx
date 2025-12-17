@@ -73,7 +73,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "NewUserIndicator",
     description: "Adds a indicator if users account is created recently",
-    authors: [Devs.None,, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [],
     settings,
     start() {
@@ -97,6 +97,7 @@ export default definePlugin({
     },
 
 });
+
 
 
 

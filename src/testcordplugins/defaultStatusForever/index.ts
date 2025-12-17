@@ -16,7 +16,7 @@ interface Choice {
 export default definePlugin({
     name: "DefaultStatusForever",
     description: "Make statuses default to last forever",
-    authors: [Devs.ImLvna, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     patches: [
         {
@@ -46,6 +46,7 @@ export default definePlugin({
         return choices;
     }
 });
+
 
 
 

@@ -22,7 +22,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "NSFWGateBypass",
     description: "Allows you to access NSFW channels without setting/verifying your age",
-    authors: [Devs.Commandtechno, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: ".nsfwAllowed=null",
@@ -39,6 +39,7 @@ export default definePlugin({
         }
     ],
 });
+
 
 
 

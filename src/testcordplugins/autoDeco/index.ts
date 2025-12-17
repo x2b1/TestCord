@@ -1,5 +1,7 @@
 import definePlugin, { OptionType } from "@utils/types";
 import {
+
+import { TestcordDevs } from "@utils/constants";
   NavContextMenuPatchCallback,
   addContextMenuPatch,
   removeContextMenuPatch,
@@ -9,6 +11,8 @@ import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Menu, React, FluxDispatcher } from "@webpack/common";
 import { Channel, User } from "discord-types/general";
+
+import { TestcordDevs } from "@utils/constants";
 
 const VoiceActions = findByPropsLazy("leaveChannel");
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
@@ -64,7 +68,7 @@ export default definePlugin({
   name: "AutoDeco",
   description:
     "Automatically disconnects from voice channel when a specific user joins",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [TestcordDevs.x2b],
   settings,
   contextMenus: {
     "user-context": UserContextMenuPatch,
@@ -119,6 +123,7 @@ export default definePlugin({
     lastProcessedStates.clear();
   },
 });
+
 
 
 

@@ -81,7 +81,7 @@ const getPresend = dictionary => {
 export default definePlugin({
     name: "GrammarFix",
     description: "Automatic punctuation, capitalization and word replacement",
-    authors: [TestcordDevs.seth, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,
     async start() {
@@ -96,6 +96,7 @@ export default definePlugin({
         removeMessagePreSendListener(getPresend({}));
     },
 });
+
 
 
 

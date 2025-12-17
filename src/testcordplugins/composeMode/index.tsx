@@ -67,7 +67,7 @@ const ComposeModeToggleButton: ChatBarButtonFactory = ({ isMainChat }) => {
 
 export default definePlugin({
     name: "ComposeMode",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Toggle writing multi-line messages by default",
     dependencies: ["CommandsAPI", "ChatInputButtonAPI"],
     settings,
@@ -89,6 +89,7 @@ export default definePlugin({
     start: () => addChatBarButton("ComposeMode", ComposeModeToggleButton),
     stop: () => removeChatBarButton("ComposeMode"),
 });
+
 
 
 

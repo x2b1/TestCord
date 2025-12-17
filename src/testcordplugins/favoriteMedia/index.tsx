@@ -13,7 +13,7 @@ import style from "./style.css?managed";
 export default definePlugin({
     name: "FavoriteMedia",
     description: "Favorite any type of media",
-    authors: [Devs.ImLvna, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     patches: [
         {
@@ -32,6 +32,7 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
 
 
 

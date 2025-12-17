@@ -13,7 +13,7 @@ const classes = findByPropsLazy("menu", "submenu");
 export default definePlugin({
     name: "ContextMenuSelectFix",
     description: "Releasing right click when hovering over a context menu entry selects it, bringing the behaviour in line with other apps",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     pointerUpEventHandler(e: PointerEvent) {
         let target = e.target as HTMLElement | null;
         if (!target || e.button !== 2) return;
@@ -37,6 +37,7 @@ export default definePlugin({
         document.body.addEventListener("pointerup", this.pointerUpEventHandler);
     }
 });
+
 
 
 

@@ -20,6 +20,7 @@ import {
 } from "@webpack/common";
 import type { Channel, User } from "discord-types/general";
 import type { PropsWithChildren, SVGProps } from "react";
+import { TestcordDevs } from "@utils/constants";
 
 const HeaderBarIcon = LazyComponent(() => {
     const classFilter = filters.byCode(".HEADER_BAR_BADGE");
@@ -342,6 +343,7 @@ export default definePlugin({
         ];
     },
 });
+
 
 
 

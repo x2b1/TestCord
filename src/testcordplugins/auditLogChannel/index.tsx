@@ -15,7 +15,7 @@ import { useAuditLogPermission } from "./hooks";
 export default definePlugin({
     name: "AuditLogChannel",
     description: "Adds an audit log channel",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             // Inject option into list of special channels
@@ -70,6 +70,7 @@ export default definePlugin({
     AuditLogPage,
     AuditLogPageWrapper,
 });
+
 
 
 

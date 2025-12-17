@@ -76,7 +76,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
 export default definePlugin({
     name: "FollowVoiceUser-Extand",
     description: "Follow a friend in voice chat.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     settingsAboutComponent: () => <>
         <Forms.FormText className="plugin-warning">
@@ -113,6 +113,7 @@ export default definePlugin({
         "user-context": UserContextMenuPatch
     }
 });
+
 
 
 

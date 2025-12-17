@@ -283,7 +283,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
 export default definePlugin({
     name: "FriendsScrapper",
     description: "Adds a Scrap button to Friends > All to unfriend everyone except whitelisted.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     settings,
     renderChatBarButton: ({ isMainChat }) => {
         if (!isMainChat) return null;
@@ -307,6 +307,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

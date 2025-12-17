@@ -8,6 +8,8 @@ import {definePluginSettings} from "@api/Settings";
 import {Devs} from "@utils/constants";
 import definePlugin, {makeRange, OptionType} from "@utils/types";
 
+import { TestcordDevs } from "@utils/constants";
+
 const settings = definePluginSettings({
     threshold: {
         description: "Number of emojis that are allowed to be jumbo",
@@ -29,7 +31,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MoreJumboEmoji",
     description: "Unlock the maximum amount of jumbo emoji",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     tags: ["wumboji"],
     settings,
     patches: [{
@@ -43,6 +45,7 @@ export default definePlugin({
         return !(settings.store.unlimited || (emojiCount <= settings.store.threshold));
     }
 });
+
 
 
 

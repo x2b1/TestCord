@@ -195,7 +195,7 @@ export function findOverride(id: string): SoundOverride | null {
 export default definePlugin({
     name: "CustomSounds",
     description: "Customize Discord's sounds.",
-    authors: [Devs.ScattrdBlade, Devs.TheKodeToad, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: 'Error("could not play audio")',
@@ -222,6 +222,7 @@ export default definePlugin({
     findOverride,
     isOverriden,
 });
+
 
 
 

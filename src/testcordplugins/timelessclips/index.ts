@@ -21,7 +21,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "TimelessClips",
-    authors: [Devs.Joona, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Add a your own clip length",
     patches: [
         {
@@ -39,6 +39,7 @@ export default definePlugin({
 
     }
 });
+
 
 
 

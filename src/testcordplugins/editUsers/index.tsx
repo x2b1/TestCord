@@ -17,7 +17,7 @@ import { openUserEditModal } from "./modal";
 export default definePlugin({
     name: "EditUsers",
     description: "Edit users",
-    authors: [Devs.Ven, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     settings,
 
@@ -123,6 +123,7 @@ export default definePlugin({
         return hasFlag(flags, OverrideFlags.DisableNicks);
     }
 });
+
 
 
 
