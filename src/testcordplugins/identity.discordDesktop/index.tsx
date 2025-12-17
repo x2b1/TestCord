@@ -7,7 +7,7 @@
 import { DataStore } from "@api/index";
 import { Flex } from "@components/Flex";
 import { Paragraph } from "@components/Paragraph";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { PluginNative } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
 import { Alerts, Button, FluxDispatcher, Toasts, UserProfileStore, UserStore } from "@webpack/common";
@@ -135,7 +135,7 @@ function ResetCard() {
 export default definePlugin({
     name: "Identity",
     description: "Allows you to edit your profile to a random fake person with the click of a button",
-    authors: [Devs.Samwich, EquicordDevs.port22exposed, EquicordDevs.x2b],
+    authors: [Devs.Samwich, TestcordDevs.port22exposed, TestcordDevs.x2b],
     ResetCard: ResetCard,
     patches: [
         {
@@ -147,6 +147,7 @@ export default definePlugin({
         },
     ]
 });
+
 
 
 

@@ -91,3 +91,4 @@ export function patchActivityList({ activities, user, hideTooltip }: ActivityLis
     return null;
 }
 
+

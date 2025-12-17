@@ -18,7 +18,7 @@ export default definePlugin({
     authors: [{
         name: "nicola02nb",
         id: 257900031351193600n
-    }, EquicordDevs.x2b],
+    }, TestcordDevs.x2b],
     settings,
     patches: [
         {
@@ -70,6 +70,7 @@ export default definePlugin({
             || shouldBypassBlocked && hasBlockedUsers && !hasIgnoredUsers;
     }
 });
+
 
 
 

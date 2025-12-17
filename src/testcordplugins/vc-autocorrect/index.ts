@@ -17,7 +17,7 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { EquicordDevs, EquicordDevs } from "@utils/constants";
+import { Devs, EquicordDevs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType, PluginSettingDef } from "@utils/types";
 
 const settingsSharedProps: PluginSettingDef = {
@@ -45,7 +45,7 @@ export default definePlugin({
     name: "AutoCorrect",
     description: "Configure auto text correction, completion, and capitalization",
     settings,
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     patches: [
         {
             find: /autocorrect:"?(off|false|none)"?/i,
@@ -76,6 +76,7 @@ export default definePlugin({
         },
     ],
 });
+
 
 
 

@@ -13,7 +13,7 @@ import { Divider } from "@components/Divider";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { openModal } from "@utils/modal";
 import definePlugin, { OptionType, PluginNative, ReporterTestable } from "@utils/types";
@@ -195,7 +195,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MediaDownloader",
     description: "Download and send videos with from YouTube, Twitter, Reddit and more.",
-    authors: [EquicordDevs.Colorman, EquicordDevs.x2b],
+    authors: [TestcordDevs.Colorman, TestcordDevs.x2b],
     reporterTestable: ReporterTestable.Patches,
     settings,
     commands: [{
@@ -337,6 +337,7 @@ async function download(channel: Channel, {
     // See petpet
     setTimeout(() => UploadHandler.promptToUpload([file], channel, DraftType.ChannelMessage), 10);
 }
+
 
 
 

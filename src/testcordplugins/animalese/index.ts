@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import {EquicordDevs} from "@utils/constants";
+import {TestcordDevs} from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { FluxDispatcher } from "@webpack/common";
 
@@ -142,7 +142,7 @@ async function playSound(buffer: AudioBuffer, volume: number) {
 export default definePlugin({
     name: "Animalese",
     description: "Plays animalese (they yap a lot) on message sent",
-    authors: [EquicordDevs.ryanamay, EquicordDevs.x2b],
+    authors: [TestcordDevs.ryanamay, TestcordDevs.x2b],
     settings,
 
     start() {
@@ -199,6 +199,7 @@ export default definePlugin({
         currentChannelId = null;
     },
 });
+
 
 
 

@@ -6,7 +6,7 @@
 
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings, Settings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, MessageStore, NavigationRouter, UserStore } from "@webpack/common";
 
@@ -29,7 +29,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ReactionLogger",
     description: "Get notified when a user reacts to your messages",
-    authors: [Devs.Fafa, EquicordDevs.x2b],
+    authors: [Devs.Fafa, TestcordDevs.x2b],
 
     settings,
 
@@ -85,6 +85,7 @@ export default definePlugin({
         },
     }
 });
+
 
 
 

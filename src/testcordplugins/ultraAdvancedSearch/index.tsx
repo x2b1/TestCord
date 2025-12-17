@@ -119,7 +119,7 @@ export default definePlugin({
   name: "Ultra Advanced Search",
   description:
     "Advanced search similar to Discord mobile - Searches in all conversations, private messages, images, etc.",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, EquicordDevs.x2b],
+  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
   isModified: true,
 
   settings,
@@ -205,6 +205,7 @@ export default definePlugin({
     });
   },
 });
+
 
 
 

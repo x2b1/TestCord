@@ -10,7 +10,7 @@ import {
     MessageSendListener,
 } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -81,7 +81,7 @@ const getPresend = dictionary => {
 export default definePlugin({
     name: "GrammarFix",
     description: "Automatic punctuation, capitalization and word replacement",
-    authors: [EquicordDevs.seth, EquicordDevs.x2b],
+    authors: [TestcordDevs.seth, TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,
     async start() {
@@ -96,6 +96,7 @@ export default definePlugin({
         removeMessagePreSendListener(getPresend({}));
     },
 });
+
 
 
 

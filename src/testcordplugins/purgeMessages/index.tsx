@@ -19,7 +19,7 @@
 import "@equicordplugins/_misc/styles.css";
 
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Channel, Message } from "@vencord/discord-types";
 import { Forms, MessageActions, MessageStore, UserStore } from "@webpack/common";
@@ -73,7 +73,7 @@ async function deleteMessages(amount: number, channel: Channel, delay: number = 
 export default definePlugin({
     name: "PurgeMessages",
     description: "Purges messages from a channel",
-    authors: [EquicordDevs.bhop, Devs.nyx, EquicordDevs.x2b],
+    authors: [TestcordDevs.bhop, Devs.nyx, TestcordDevs.x2b],
     settingsAboutComponent: () => <>
         <Forms.FormText className="plugin-warning">
             We can't guarantee this plugin won't get you warned or banned.
@@ -135,6 +135,7 @@ export default definePlugin({
         }
     ],
 });
+
 
 
 

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import AuditLogChannelRow from "./components/AuditLogChannelRow";
@@ -15,7 +15,7 @@ import { useAuditLogPermission } from "./hooks";
 export default definePlugin({
     name: "AuditLogChannel",
     description: "Adds an audit log channel",
-    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
+    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
     patches: [
         {
             // Inject option into list of special channels
@@ -70,6 +70,7 @@ export default definePlugin({
     AuditLogPage,
     AuditLogPageWrapper,
 });
+
 
 
 

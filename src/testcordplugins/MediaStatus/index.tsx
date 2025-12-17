@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { Link } from "@components/Link";
-import {EquicordDevs} from "@utils/constants";
+import {TestcordDevs} from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
@@ -282,7 +282,7 @@ function getServerName(): string {
 export default definePlugin({
     name: "MediaStatus",
     description: "Show your Jellyfin/Plex media activity as Discord Rich Presence",
-    authors: [EquicordDevs.RedBaron2k7, EquicordDevs.x2b],
+    authors: [TestcordDevs.RedBaron2k7, TestcordDevs.x2b],
     dependencies: ["UserSettingsAPI"],
     settings,
 
@@ -412,6 +412,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

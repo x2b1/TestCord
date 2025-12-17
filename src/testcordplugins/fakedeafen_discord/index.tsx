@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types"; // Function to register the plugin in Vencord
 import { findByProps, findComponentByCodeLazy } from "@webpack"; // Helpers to find internal modules
 import { React } from "@webpack/common"; // React used to create components
@@ -130,7 +130,7 @@ function FakeDeafenButton() {
 export default definePlugin({
   name: "FakeDeafen",
   description: "Fake deafen - no need to explain much, just open and try it.",
-  authors: [Devs.feelslove, EquicordDevs.x2b],
+  authors: [Devs.feelslove, TestcordDevs.x2b],
   patches: [
     {
       // Inject button into "speaking while muted" UI
@@ -175,6 +175,7 @@ export default definePlugin({
     }
   },
 });
+
 
 
 

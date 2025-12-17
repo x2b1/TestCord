@@ -6,7 +6,7 @@
 
 import "./styles.css";
 
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Menu, React, showToast, useEffect, useState } from "@webpack/common";
@@ -173,7 +173,7 @@ function ZipAttachmentPreview({ attachment }: { attachment: any; }) {
 export default definePlugin({
     name: "ZipPreview",
     description: "Preview and navigate inside zip files without extracting.",
-    authors: [EquicordDevs.justjxke, EquicordDevs.SteelTech, EquicordDevs.x2b],
+    authors: [TestcordDevs.justjxke, TestcordDevs.SteelTech, TestcordDevs.x2b],
 
     patches: [
         {
@@ -191,6 +191,7 @@ export default definePlugin({
 
     ZipAttachmentPreview,
 });
+
 
 
 

@@ -17,7 +17,7 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Text } from "@webpack/common";
 import { Common } from "webpack";
@@ -84,7 +84,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ForceRoleColor",
     description: "Forces a specific role color on yourself globally",
-    authors: [Devs.surgedevs, EquicordDevs.x2b],
+    authors: [Devs.surgedevs, TestcordDevs.x2b],
     settings,
     patches: [
         {
@@ -177,6 +177,7 @@ export default definePlugin({
         return this.getColorsForMessages({ author: user }, old);
     }
 });
+
 
 
 

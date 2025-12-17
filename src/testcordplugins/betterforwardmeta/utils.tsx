@@ -19,3 +19,4 @@ export const checkForIconExistence = (guild: Guild) => {
     return true;
 };
 
+

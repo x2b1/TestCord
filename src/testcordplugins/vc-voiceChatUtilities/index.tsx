@@ -6,7 +6,7 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { makeRange, OptionType } from "@utils/types";
 import type { Channel } from "@vencord/discord-types";
 import { findStoreLazy } from "@webpack";
@@ -158,7 +158,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "VoiceChatUtilities",
     description: "This plugin allows you to perform multiple actions on an entire channel (move, mute, disconnect, etc.) (originally by dutake)",
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
 
     settings,
 
@@ -166,6 +166,7 @@ export default definePlugin({
         "channel-context": VoiceChannelContext
     },
 });
+
 
 
 

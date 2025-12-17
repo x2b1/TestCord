@@ -49,7 +49,7 @@ function formatTime(time: number) {
 export default definePlugin({
     name: "LastOnline",
     description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
-    authors: [Devs.nick, EquicordDevs.x2b],
+    authors: [Devs.nick, TestcordDevs.x2b],
     flux: {
         PRESENCE_UPDATES({ updates }) {
             updates.forEach(update => {
@@ -93,6 +93,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

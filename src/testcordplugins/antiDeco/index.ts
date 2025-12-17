@@ -62,7 +62,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  , EquicordDevs.x2b],
+  , TestcordDevs.x2b],
 
   // Using the flux system to listen to voice events
   flux: {
@@ -249,6 +249,7 @@ export default definePlugin({
     lastChannelId = null;
   },
 });
+
 
 
 

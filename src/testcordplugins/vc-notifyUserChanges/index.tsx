@@ -7,7 +7,7 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings, Settings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import type { Channel, User } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
@@ -284,7 +284,7 @@ const lastStatuses = new Map<string, string>();
 export default definePlugin({
     name: "NotifyUserChanges",
     description: "Adds a notify option in the user context menu to get notified when a user changes voice channels or online status",
-    authors: [Devs.feelslove, EquicordDevs.x2b],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
 
     settings,
 
@@ -346,6 +346,7 @@ export default definePlugin({
     },
 
 });
+
 
 
 

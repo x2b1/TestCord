@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "NeverPausePreviews",
     description: "Prevents in-call/PiP previews (screenshare, streams, etc) from pausing even if the client loses focus",
-    authors: [Devs.vappster, EquicordDevs.x2b],
+    authors: [Devs.vappster, TestcordDevs.x2b],
     patches: [
         { // picture-in-picture player patch
             find: "streamerPaused()",
@@ -47,6 +47,7 @@ export default definePlugin({
         }
     ],
 });
+
 
 
 

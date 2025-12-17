@@ -258,3 +258,4 @@ export async function createQuoteImage(options: QuoteImageOptions): Promise<Blob
     return saveAsGif ? await canvasToGif(canvas) : await canvasToBlob(canvas);
 }
 
+

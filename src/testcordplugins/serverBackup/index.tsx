@@ -318,7 +318,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  , EquicordDevs.x2b],
+  , TestcordDevs.x2b],
   dependencies: ["CommandsAPI"],
 
   commands: [
@@ -525,6 +525,7 @@ export default definePlugin({
     console.log("[ServerBackup] Plugin stopped");
   },
 });
+
 
 
 

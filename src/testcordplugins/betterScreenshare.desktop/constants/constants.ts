@@ -37,3 +37,4 @@ export const PluginInfo = {
     README: "https://github.com/Vendicated/Vencord/tree/main/src/plugins/betterScreenshare"
 } as const satisfies types.PluginInfo;
 
+

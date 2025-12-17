@@ -9,7 +9,7 @@ import "./styles.css";
 import { definePluginSettings, migratePluginSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy, findStoreLazy } from "@webpack";
 import { PresenceStore, React, Tooltip, useEffect, useMemo, UserStore, useState, useStateFromStores } from "@webpack/common";
@@ -240,7 +240,7 @@ export default definePlugin({
         Devs.D3SOX,
         Devs.Arjix,
         Devs.AutumnVN
-    , EquicordDevs.x2b],
+    , TestcordDevs.x2b],
     tags: ["activity"],
 
     settings,
@@ -483,6 +483,7 @@ export default definePlugin({
         },
     ],
 });
+
 
 
 

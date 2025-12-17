@@ -4,14 +4,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import {EquicordDevs, sleep} from "@utils/index";
+import {TestcordDevs, sleep} from "@utils/index";
 import definePlugin from "@utils/types";
 
 import { settings } from "./settings";
 export default definePlugin({
     name: "Maxwell :3",
     description: "Silly Silly Silly",
-    authors: [EquicordDevs.Antipollyanna, EquicordDevs.x2b],
+    authors: [TestcordDevs.Antipollyanna, TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
     settings,
     async start() {
@@ -86,6 +86,7 @@ export async function addGifToScreen() {
 
     timeToGetReallySilly();
 }
+
 
 
 

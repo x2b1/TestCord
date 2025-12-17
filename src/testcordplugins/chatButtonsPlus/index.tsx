@@ -12,7 +12,7 @@ import { definePluginSettings, migratePluginSettings, Settings } from "@api/Sett
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { getCurrentChannel, sendMessage } from "@utils/discord";
 import { useForceUpdater } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
@@ -267,7 +267,7 @@ migratePluginSettings("ChatButtonsPlus", "Meow", "Woof");
 export default definePlugin({
     name: "ChatButtonsPlus",
     description: "Add custom chat buttons with personalized + messages and SVG icons",
-    authors: [EquicordDevs.creations, EquicordDevs.x2b],
+    authors: [TestcordDevs.creations, TestcordDevs.x2b],
     settings,
 
     renderChatBarButton: ({ isMainChat }) => {
@@ -322,6 +322,7 @@ export default definePlugin({
         buttonEntries = storedEntries;
     }
 });
+
 
 
 

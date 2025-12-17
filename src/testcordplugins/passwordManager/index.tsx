@@ -7,7 +7,7 @@
 import "./styles.css";
 
 import { DataStore } from "@api/index";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { EyeIcon } from "@components/Icons";
 import * as Modal from "@utils/modal";
 import SettingsPlugin from "@plugins/_core/settings";
@@ -661,7 +661,7 @@ class PasswordManagerUI {
 export default definePlugin({
     name: "PasswordManager",
     description: "Securely store and manage your passwords",
-    authors: [EquicordDevs.bhop, EquicordDevs.x2b],
+    authors: [TestcordDevs.bhop, TestcordDevs.x2b],
 
     passwordManager: null as PasswordManager | null,
     ui: null as PasswordManagerUI | null,
@@ -691,6 +691,7 @@ export default definePlugin({
         this.ui = null;
     }
 });
+
 
 
 

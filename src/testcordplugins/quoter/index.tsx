@@ -8,7 +8,7 @@ import { findGroupChildrenByChildId } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import { FormSwitch } from "@components/FormSwitch";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { getCurrentChannel } from "@utils/discord";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
@@ -58,7 +58,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Quoter",
     description: "Adds the ability to create an inspirational quote image from a message",
-    authors: [Devs.Samwich, Devs.thororen, EquicordDevs.neoarz, EquicordDevs.x2b],
+    authors: [Devs.Samwich, Devs.thororen, TestcordDevs.neoarz, TestcordDevs.x2b],
     settings,
 
     async start() {
@@ -198,6 +198,7 @@ function QuoteModal({ message, ...props }: ModalProps & { message: Message; }) {
         </ModalRoot>
     );
 }
+
 
 
 

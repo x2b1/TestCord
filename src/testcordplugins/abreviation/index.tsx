@@ -11,7 +11,7 @@ import {
     MessageSendListener,
     removeMessagePreSendListener,
 } from "@api/MessageEvents";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -282,7 +282,7 @@ export default definePlugin({
     name: "Abreviation",
     description:
         "Automatically transforms abbreviations into full text when sending messages",
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,
 
@@ -331,6 +331,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

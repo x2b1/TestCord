@@ -7,7 +7,7 @@
 import "./styles.css";
 
 import { DataStore } from "@api/index";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import * as Modal from "@utils/modal";
 import SettingsPlugin from "@plugins/_core/settings";
 import definePlugin from "@utils/types";
@@ -205,7 +205,7 @@ class TokenLoginManagerUI {
 export default definePlugin({
     name: "TokenLoginManager",
     description: "Manage and login with user tokens",
-    authors: [EquicordDevs.ExoDev, EquicordDevs.x2b],
+    authors: [TestcordDevs.ExoDev, TestcordDevs.x2b],
 
     tokenLoginManager: null as TokenLoginManager | null,
     ui: null as TokenLoginManagerUI | null,
@@ -241,6 +241,7 @@ export default definePlugin({
         this.ui = null;
     }
 });
+
 
 
 

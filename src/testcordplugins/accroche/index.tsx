@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import definePlugin, { OptionType } from "@utils/types";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
     UserStore,
@@ -633,7 +633,7 @@ export default definePlugin({
             name: "Bash",
             id: 1327483363518582784n,
         },
-        EquicordDevs.x2b
+        TestcordDevs.x2b
     ],
     settings,
 
@@ -985,6 +985,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

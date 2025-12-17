@@ -8,7 +8,7 @@ import { addMessageAccessory, removeMessageAccessory } from "@api/MessageAccesso
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import type { Message } from "@vencord/discord-types";
 import { React, Text } from "@webpack/common";
@@ -156,7 +156,7 @@ function RickrollWarning({ message, isCustom }: { message: Message; isCustom: bo
 export default definePlugin({
     name: "AntiRickroll",
     description: "Warns you of potential Rickrolls in messages, including masked links (supports custom rules)",
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI", "UserSettingsAPI"],
 
     settings,
@@ -173,6 +173,7 @@ export default definePlugin({
         removeMessageAccessory("rickrollWarning");
     },
 });
+
 
 
 

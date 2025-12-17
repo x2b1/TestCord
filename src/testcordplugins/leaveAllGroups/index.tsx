@@ -7,7 +7,7 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { ChannelStore, FluxDispatcher, Menu, RestAPI, showToast, Toasts, UserStore } from "@webpack/common";
@@ -297,7 +297,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "LeaveAllGroups",
     description: "Permet de quitter tous les groupes Discord d'un seul clic avec rate limiting configurable",
-    authors: [Devs.BigDuck, EquicordDevs.x2b],
+    authors: [Devs.BigDuck, TestcordDevs.x2b],
     settings,
 
     contextMenus: {
@@ -314,6 +314,7 @@ export default definePlugin({
         log("Plugin LeaveAllGroups arrêté");
     }
 });
+
 
 
 

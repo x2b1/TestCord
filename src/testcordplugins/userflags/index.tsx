@@ -7,7 +7,7 @@
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import { DataStore } from "@api/index";
 import { addMessageAccessory } from "@api/MessageAccessories";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Parser, React, Text } from "@webpack/common";
 
@@ -79,7 +79,7 @@ function Flag({ id }: { id: string; }) {
 export default definePlugin({
     name: "UserFlags",
     description: "Add \"flags\" to users that will always show under their messages",
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {
         const savedFlags = await DataStore.get("USERFLAGS");
@@ -166,6 +166,7 @@ export default definePlugin({
         }
     ]
 });
+
 
 
 

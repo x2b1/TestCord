@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import FriendCodesPanel from "./components/FriendCodesPanel";
@@ -12,7 +12,7 @@ import FriendCodesPanel from "./components/FriendCodesPanel";
 export default definePlugin({
     name: "FriendCodes",
     description: "Generate FriendCodes to easily add friends",
-    authors: [Devs.domiBtnr, EquicordDevs.x2b],
+    authors: [Devs.domiBtnr, TestcordDevs.x2b],
     patches: [
         {
             find: ".Messages.ADD_FRIEND}),(",
@@ -27,6 +27,7 @@ export default definePlugin({
         return <FriendCodesPanel />;
     }
 });
+
 
 
 

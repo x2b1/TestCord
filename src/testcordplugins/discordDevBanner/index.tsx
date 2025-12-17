@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings, migratePluginSettings } from "@api/Settings";
-import {EquicordDevs} from "@utils/constants";
+import {TestcordDevs} from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 
@@ -38,8 +38,8 @@ export default definePlugin({
     name: "DiscordDevBanner",
     description: "Enables the Discord developer banner, in which displays the build-ID",
     authors: [
-        EquicordDevs.KrystalSkull
-    , EquicordDevs.x2b],
+        TestcordDevs.KrystalSkull
+    , TestcordDevs.x2b],
     settings,
 
     patches: [
@@ -73,6 +73,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

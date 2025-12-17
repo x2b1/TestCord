@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { ChannelStore, Constants, ContextMenuApi, Menu, React, RestAPI, Toasts } from "@webpack/common";
@@ -151,7 +151,7 @@ async function exportChannel(channelId: string) {
 export default definePlugin({
     name: "Exporter",
     description: "Right-click DM/Group -> Export full chat as HTML with unlimited pagination.",
-    authors: [Devs.feelslove, EquicordDevs.x2b],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
     settings,
     renderChatBarButton: ({ channel, isMainChat }) => {
         if (!isMainChat || !channel?.id) return null;
@@ -181,6 +181,7 @@ export default definePlugin({
         );
     }
 });
+
 
 
 

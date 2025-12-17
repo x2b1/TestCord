@@ -23,3 +23,4 @@ import { types } from "../";
 
 export const UserSummaryItem = LazyComponent<React.ComponentProps<types.UserSummaryItem>>(() => findByCode("defaultRenderUser", "showDefaultAvatarsForNullUsers"));
 
+

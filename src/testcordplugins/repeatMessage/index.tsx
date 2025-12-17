@@ -19,7 +19,7 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/MessagePopover";
 import { classNameFactory } from "@api/Styles";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import { classes } from "@utils/misc";
 import definePlugin from "@utils/types";
@@ -98,7 +98,7 @@ const keydownListener = (event: KeyboardEvent) => {
 export default definePlugin({
     name: "RepeatMessage",
     description: "Allows you to repeat messages quickly. If you hold shift while clicking the Repeat option, it will reply to the message.",
-    authors: [EquicordDevs.Tolgchu, EquicordDevs.x2b],
+    authors: [TestcordDevs.Tolgchu, TestcordDevs.x2b],
     contextMenus: {
         "message": messageCtxPatch
     },
@@ -125,6 +125,7 @@ export default definePlugin({
         document.removeEventListener("keydown", keydownListener);
     },
 });
+
 
 
 

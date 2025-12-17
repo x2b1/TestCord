@@ -19,7 +19,7 @@
 import { addChatBarButton, ChatBarButton, removeChatBarButton } from "@api/ChatButtons";
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
-import { EquicordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, FluxDispatcher, React } from "@webpack/common";
 
@@ -132,7 +132,7 @@ function isEnabled(channelId: string) {
 
 export default definePlugin({
     name: "SilentTyping",
-    authors: [EquicordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Hide that you are typing",
     dependencies: ["ChatInputButtonAPI"],
     settings,
@@ -175,6 +175,7 @@ export default definePlugin({
     start: () => addChatBarButton("SilentTyping", SilentTypingToggle),
     stop: () => removeChatBarButton("SilentTyping"),
 });
+
 
 
 

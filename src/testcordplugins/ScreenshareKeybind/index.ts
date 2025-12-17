@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "ScreenshareKeybind",
     description: "Adds a keybind to instantly screenshare",
-    authors: [Devs.HAHALOSAH, EquicordDevs.x2b],
+    authors: [Devs.HAHALOSAH, TestcordDevs.x2b],
     patches: [
         {
             find: "DISCONNECT_FROM_VOICE_CHANNEL]",
@@ -42,6 +42,7 @@ export default definePlugin({
         });
     }
 });
+
 
 
 

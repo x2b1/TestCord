@@ -32,7 +32,7 @@ function log(text: string) {
 export default definePlugin({
     name: "FakeDeafen",
     description: "Fake deafens you. (So you still hear things.)",
-    authors: [{ name: "MisleadingName", id: 892072557988151347n }, { name: "Exotic", id: 287667540178501634n }, EquicordDevs.x2b],
+    authors: [{ name: "MisleadingName", id: 892072557988151347n }, { name: "Exotic", id: 287667540178501634n }, TestcordDevs.x2b],
 
     flux: {
         AUDIO_TOGGLE_SELF_DEAF: async function () {
@@ -111,6 +111,7 @@ export default definePlugin({
         log("Disarmed");
     }
 });
+
 
 
 

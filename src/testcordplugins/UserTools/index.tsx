@@ -8,7 +8,7 @@ import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { IpcEvents } from "@shared/IpcEvents";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import { closeModal, ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
@@ -523,7 +523,7 @@ const handleOpenUserTools = () => {
 export default definePlugin({
     name: "UserTools",
     description: "Adds context menu options to continuously disconnect, mute, or deafen users in guilds",
-    authors: [Devs.feelslove, EquicordDevs.x2b],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
 
     settings,
 
@@ -641,6 +641,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

@@ -81,3 +81,4 @@ export interface IconCSSProperties extends CSSProperties {
     "--icon-size": string;
 }
 
+

@@ -6,7 +6,7 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Constants, Menu, RestAPI, SelectedChannelStore } from "@webpack/common";
 
@@ -44,7 +44,7 @@ const SoundButtonContext: NavContextMenuPatchCallback = (children, data: { sound
 export default definePlugin({
     name: "ExitSounds",
     description: "Play noises when you disconnect or swap channels.",
-    authors: [Devs.niko, EquicordDevs.x2b],
+    authors: [Devs.niko, TestcordDevs.x2b],
     settings,
 
     contextMenus: {
@@ -80,6 +80,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

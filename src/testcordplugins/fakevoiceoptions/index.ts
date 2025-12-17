@@ -6,7 +6,7 @@ export default definePlugin({
     authors: [{
         name: "SaucyDuck",
         id: 1004904120056029256n
-    }, EquicordDevs.x2b],
+    }, TestcordDevs.x2b],
     patches: [
         {
             find: "e.setSelfMute(n)",
@@ -35,6 +35,7 @@ export default definePlugin({
         },
     },
 });
+
 
 
 

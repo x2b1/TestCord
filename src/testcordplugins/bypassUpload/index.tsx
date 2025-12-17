@@ -9,7 +9,7 @@ import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { Flex } from "@components/Flex";
 import { OpenExternalIcon } from "@components/Icons";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { insertTextIntoChatInputBox, sendMessage } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
@@ -776,7 +776,7 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "BigFileUpload",
     description: "Bypass Discord's upload limit by uploading files using the 'Upload a Big File' button or /fileupload and they'll get uploaded as links into chat via file uploaders.",
-    authors: [Devs.ScattrdBlade, EquicordDevs.x2b],
+    authors: [Devs.ScattrdBlade, TestcordDevs.x2b],
     settings,
     dependencies: ["CommandsAPI"],
     contextMenus: {
@@ -807,6 +807,7 @@ export default definePlugin({
         },
     ],
 });
+
 
 
 

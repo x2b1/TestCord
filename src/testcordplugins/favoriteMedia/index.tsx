@@ -5,7 +5,7 @@
  */
 
 import { disableStyle, enableStyle } from "@api/Styles";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import style from "./style.css?managed";
@@ -13,7 +13,7 @@ import style from "./style.css?managed";
 export default definePlugin({
     name: "FavoriteMedia",
     description: "Favorite any type of media",
-    authors: [Devs.ImLvna, EquicordDevs.x2b],
+    authors: [Devs.ImLvna, TestcordDevs.x2b],
 
     patches: [
         {
@@ -32,6 +32,7 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
 
 
 

@@ -87,7 +87,7 @@ function FakeDeafenButton() {
 export default definePlugin({
     name: "FakeDeafen",
     description: "Adds a button to fake deafen yourself in voice channels. When enabled, you appear deafened and muted to others, but you can still hear and speak.",
-    authors: [{ name: "hyyven", id: 449282863582412850n }, EquicordDevs.x2b],
+    authors: [{ name: "hyyven", id: 449282863582412850n }, TestcordDevs.x2b],
     patches: [
         {
             find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
@@ -120,6 +120,7 @@ export default definePlugin({
         }
     }
 });
+
 
 
 

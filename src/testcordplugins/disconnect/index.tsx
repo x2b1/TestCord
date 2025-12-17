@@ -7,7 +7,7 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings, useSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import type { Channel, User } from "@vencord/discord-types";
@@ -186,7 +186,7 @@ const UserContext: NavContextMenuPatchCallback = (children, { user }: UserContex
 export default definePlugin({
     name: "DisconnectUser",
     description: "Adds a context menu entry to auto-disconnect a user when they join voice",
-    authors: [Devs.feelslove, EquicordDevs.x2b],
+    authors: [Devs.feelslove, TestcordDevs.x2b],
 
     settings,
 
@@ -268,6 +268,7 @@ export default definePlugin({
         }
     },
 });
+
 
 
 

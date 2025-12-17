@@ -25,3 +25,4 @@ export async function reloadChannel() {
     NavigationRouter.transitionTo(`/channels/${channel?.guild_id || "@me"}/${channel?.id}`);
 }
 
+

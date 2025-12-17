@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import {
   Button,
@@ -320,7 +320,7 @@ export default definePlugin({
   name: "File Splitter",
   description:
     "Split large files into multiple parts to bypass size limits and share them easily.",
-  authors: [Devs.Unknown, EquicordDevs.x2b],
+  authors: [Devs.Unknown, TestcordDevs.x2b],
   settings,
 
   toolboxActions: {
@@ -329,6 +329,7 @@ export default definePlugin({
     },
   },
 });
+
 
 
 
