@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { Connection } from "./connection-types";
@@ -12,7 +12,7 @@ import { Connection } from "./connection-types";
 export default definePlugin({
     name: "AllConnectionsEnabled",
     description: "Enables all connections",
-    authors: [Devs.cooper, TestcordDevs.x2b],
+    authors: [Devs.cooper, EquicordDevs.x2b],
     patches: [
         {
             find: "getPlatformUserUrl:",
@@ -33,5 +33,6 @@ export default definePlugin({
         return connections;
     }
 });
+
 
 

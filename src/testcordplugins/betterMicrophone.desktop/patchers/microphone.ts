@@ -75,3 +75,4 @@ export class MicrophonePatcher extends Patcher {
         return this._unpatch();
     }
 }
+

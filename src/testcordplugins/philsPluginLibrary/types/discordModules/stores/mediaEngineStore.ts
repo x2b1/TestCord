@@ -117,3 +117,4 @@ export interface MediaEngineStore__ {
     getDispatchToken: (...args: any[]) => any;
     mustEmitChanges: (...args: any[]) => any;
 }
+

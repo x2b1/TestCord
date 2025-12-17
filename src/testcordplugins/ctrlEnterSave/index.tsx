@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { IPluginOptionComponentProps, OptionType } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
 import { Button, Toasts, useEffect, useState } from "@webpack/common";
@@ -111,7 +111,7 @@ export default definePlugin({
     settings,
     name: "CtrlEnterSave",
     description: "Adds a keybind to save settings. YOU HAVE TO SET THE KEYBIND IN SETTINGS.",
-    authors: [Devs.sadan, TestcordDevs.x2b],
+    authors: [Devs.sadan, EquicordDevs.x2b],
     patches: [
         {
             find: ".SETTINGS_NOTICE_MESSAGE",
@@ -138,5 +138,6 @@ export default definePlugin({
         return <></>;
     }
 });
+
 
 

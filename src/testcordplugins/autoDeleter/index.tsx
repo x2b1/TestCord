@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import * as DataStore from "@api/DataStore";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import {
   FluxDispatcher,
@@ -316,7 +316,7 @@ export default definePlugin({
       name: "Bash",
       id: 1327483363518582784n,
     },
-  , TestcordDevs.x2b],
+  , EquicordDevs.x2b],
   settings,
 
   // Map pour suivre les messages en attente de suppression
@@ -1530,5 +1530,6 @@ export default definePlugin({
     );
   },
 });
+
 
 

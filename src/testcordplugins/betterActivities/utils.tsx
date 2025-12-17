@@ -131,3 +131,4 @@ export function getApplicationIcons(activities: Activity[], preferSmall = false)
 
     return applicationIcons;
 }
+

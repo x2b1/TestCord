@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { makeRange } from "@utils/types";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType, } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -21,7 +21,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "TimelessClips",
-    authors: [Devs.Joona, TestcordDevs.x2b],
+    authors: [Devs.Joona, EquicordDevs.x2b],
     description: "Add a your own clip length",
     patches: [
         {
@@ -39,5 +39,6 @@ export default definePlugin({
 
     }
 });
+
 
 

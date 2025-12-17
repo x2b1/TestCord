@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, UserSettingsActionCreators } from "@webpack/common";
 
@@ -57,7 +57,7 @@ function modifyResults(query, originalResults) {
 export default definePlugin({
     name: "FrequentQuickSwitcher Enhanced",
     description: "Prioritizes your most frequent channels in the quick switcher results while preserving other search results -- enhanced by x2b so it wont break searching for users",
-    authors: [TestcordDevs.x2b],
+    authors: [EquicordDevs.x2b],
     settings,
     modifyResults: modifyResults,
     patches: [
@@ -70,4 +70,5 @@ export default definePlugin({
         }
     ]
 });
+
 

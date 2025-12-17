@@ -75,3 +75,4 @@ export const SettingsModal = (props: SettingsModalProps) => {
         </ModalRoot >
     );
 };
+

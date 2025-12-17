@@ -119,3 +119,4 @@ export const enum ActivityType {
     WATCHING = 3,
     COMPETING = 5
 }
+

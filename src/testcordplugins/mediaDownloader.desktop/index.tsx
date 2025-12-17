@@ -195,7 +195,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MediaDownloader",
     description: "Download and send videos with from YouTube, Twitter, Reddit and more.",
-    authors: [EquicordDevs.Colorman, TestcordDevs.x2b],
+    authors: [EquicordDevs.Colorman, EquicordDevs.x2b],
     reporterTestable: ReporterTestable.Patches,
     settings,
     commands: [{
@@ -337,5 +337,6 @@ async function download(channel: Channel, {
     // See petpet
     setTimeout(() => UploadHandler.promptToUpload([file], channel, DraftType.ChannelMessage), 10);
 }
+
 
 

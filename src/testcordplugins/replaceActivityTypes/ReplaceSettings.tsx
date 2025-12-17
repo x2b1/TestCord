@@ -153,3 +153,4 @@ export function ReplaceSettings({ appIds, update, save }: SettingsProps) {
         </>
     );
 }
+

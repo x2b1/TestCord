@@ -92,3 +92,4 @@ export const initMicrophoneStore = () =>
             Object.values(defaultMicrophoneProfiles)
         )
     );
+

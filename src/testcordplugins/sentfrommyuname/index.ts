@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings, Settings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
 
 export const Native = VencordNative.pluginHelpers.SentFromMyUname as PluginNative<typeof import("./native")>;
@@ -25,7 +25,7 @@ async function getWhateverShouldBeSentFromMy() {
 export default definePlugin({
     name: "SentFromMyUname",
     description: "Add your uname/useragent to every single message you send",
-    authors: [Devs.nin0dev, TestcordDevs.x2b],
+    authors: [Devs.nin0dev, EquicordDevs.x2b],
     settings: definePluginSettings({
         signatureToUse: {
             description: "What to show after 'Sent from my'",
@@ -50,5 +50,6 @@ export default definePlugin({
         msg.content += `\n\nSent from my ${await getWhateverShouldBeSentFromMy()}`;
     }
 });
+
 
 

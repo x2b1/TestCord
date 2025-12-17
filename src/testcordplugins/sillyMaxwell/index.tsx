@@ -11,7 +11,7 @@ import { settings } from "./settings";
 export default definePlugin({
     name: "Maxwell :3",
     description: "Silly Silly Silly",
-    authors: [EquicordDevs.Antipollyanna, TestcordDevs.x2b],
+    authors: [EquicordDevs.Antipollyanna, EquicordDevs.x2b],
     dependencies: ["CommandsAPI"],
     settings,
     async start() {
@@ -86,5 +86,6 @@ export async function addGifToScreen() {
 
     timeToGetReallySilly();
 }
+
 
 

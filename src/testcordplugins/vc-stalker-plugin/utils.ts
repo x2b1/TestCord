@@ -48,3 +48,4 @@ export function convertSnakeCaseToCamelCase(obj: any): any {
 const logger = new Logger("Stalker");
 
 export { logger };
+

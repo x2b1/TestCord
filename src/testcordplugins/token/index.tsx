@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
@@ -28,7 +28,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Token Display",
     description: "Affiche le token du compte en cours d'utilisation avec la commande /mytoken",
-    authors: [Devs.Unknown, TestcordDevs.x2b],
+    authors: [Devs.Unknown, EquicordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     settings,
@@ -210,5 +210,6 @@ function getCurrentToken(): string | null {
         return null;
     }
 }
+
 
 

@@ -1,6 +1,6 @@
 /* eslint-disable simple-header/header*/
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
 
@@ -9,7 +9,7 @@ const classes = findByPropsLazy("interactiveNormal");
 
 export default definePlugin({
     name: "BetterBios",
-    authors: [Devs.TheSun, TestcordDevs.x2b],
+    authors: [Devs.TheSun, EquicordDevs.x2b],
     description: "Improves Discord's bio redesign",
     patches: [{
         find: ".viewFullBio,",
@@ -51,5 +51,6 @@ export default definePlugin({
         </>;
     }
 });
+
 
 

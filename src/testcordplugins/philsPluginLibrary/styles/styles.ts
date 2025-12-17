@@ -23,3 +23,4 @@ export const Styles = {
         boxSizing: "border-box"
     },
 } as const satisfies Record<string, React.CSSProperties>;
+

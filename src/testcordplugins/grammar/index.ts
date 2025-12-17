@@ -6,7 +6,7 @@
 
 import { addMessagePreSendListener, removeMessagePreSendListener, MessageSendListener, } from "@api/MessageEvents";
 import { definePluginSettings, Settings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const presendObject: MessageSendListener = (channelId, msg) => {
@@ -25,7 +25,7 @@ const settings = definePluginSettings(
 export default definePlugin({
     name: "Grammar",
     description: "Tweaks your messages to make them look nicer and have better grammar",
-    authors: [Devs.Samwich, TestcordDevs.x2b],
+    authors: [Devs.Samwich, EquicordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     start() {
         addMessagePreSendListener(presendObject);
@@ -106,5 +106,6 @@ function cap(textInput: string): string {
 
     }).join(" ");
 }
+
 
 

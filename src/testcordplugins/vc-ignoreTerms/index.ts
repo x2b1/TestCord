@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "IgnoreTerms",
     description: "Ignore Discord's new terms of service",
-    authors: [TestcordDevs.x2b],
+    authors: [EquicordDevs.x2b],
     patches: [
         {
             find: "Messages.NEW_TERMS_TITLE",
@@ -27,5 +27,6 @@ export default definePlugin({
         return null;
     }
 });
+
 
 

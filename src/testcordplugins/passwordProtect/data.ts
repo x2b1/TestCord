@@ -58,3 +58,4 @@ export function accessChannel(channel: Channel) {
         accessedChannels.splice(accessedChannels.indexOf(channel.id), 1);
     }, 1000);
 }
+

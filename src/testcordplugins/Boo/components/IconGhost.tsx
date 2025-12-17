@@ -17,3 +17,4 @@ function IconGhost() {
 }
 
 export default IconGhost;
+

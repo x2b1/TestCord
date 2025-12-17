@@ -9,3 +9,4 @@ import { findStoreLazy } from "@webpack";
 import * as t from "./types/stores";
 
 export const RelationshipStore: t.RelationshipStore = findStoreLazy("RelationshipStore");
+

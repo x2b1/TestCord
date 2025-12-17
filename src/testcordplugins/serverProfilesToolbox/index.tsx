@@ -7,7 +7,7 @@
 import "./styles.css";
 
 import { copyToClipboard } from "@utils/clipboard";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Guild, GuildMember } from "@vencord/discord-types";
 import { findComponentByCodeLazy } from "@webpack";
@@ -98,7 +98,7 @@ const IdentityActions = {
 
 export default definePlugin({
     name: "ServerProfilesToolbox",
-    authors: [Devs.D3SOX, TestcordDevs.x2b],
+    authors: [Devs.D3SOX, EquicordDevs.x2b],
     description: "Adds a copy/paste/reset button to the server profiles editor",
 
     patchServerProfiles(guild: Guild) {
@@ -223,5 +223,6 @@ export default definePlugin({
     ],
 
 });
+
 
 

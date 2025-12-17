@@ -7,7 +7,7 @@
 import {addChatBarButton, ChatBarButton, ChatBarButtonFactory, removeChatBarButton} from "@api/ChatButtons";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Menu, React } from "@webpack/common";
 
@@ -67,7 +67,7 @@ const ComposeModeToggleButton: ChatBarButtonFactory = ({ isMainChat }) => {
 
 export default definePlugin({
     name: "ComposeMode",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
     description: "Toggle writing multi-line messages by default",
     dependencies: ["CommandsAPI", "ChatInputButtonAPI"],
     settings,
@@ -89,5 +89,6 @@ export default definePlugin({
     start: () => addChatBarButton("ComposeMode", ComposeModeToggleButton),
     stop: () => removeChatBarButton("ComposeMode"),
 });
+
 
 

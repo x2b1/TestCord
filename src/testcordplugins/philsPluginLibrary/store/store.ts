@@ -100,3 +100,4 @@ export function createPluginStore<Z extends PluginSettings = {}>(pluginName: str
         set
     };
 }
+

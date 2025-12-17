@@ -24,3 +24,4 @@ export async function reloadChannel() {
     await new Promise(r => setTimeout(r, 0));
     NavigationRouter.transitionTo(`/channels/${channel?.guild_id || "@me"}/${channel?.id}`);
 }
+

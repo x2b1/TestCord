@@ -126,3 +126,4 @@ export default function ZipPreview({ blob, name, expanded: expandedProp, onExpan
         </div>
     );
 }
+

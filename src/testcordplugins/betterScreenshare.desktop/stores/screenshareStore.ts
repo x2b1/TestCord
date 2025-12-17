@@ -120,3 +120,4 @@ export const initScreenshareStore = () =>
             Object.values(defaultScreenshareProfiles)
         )
     );
+

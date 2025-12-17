@@ -153,3 +153,4 @@ export function SoundTriggerModal(props: SoundTriggerModalProps) {
         </ModalRoot >
     );
 }
+

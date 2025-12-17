@@ -6,7 +6,7 @@
 
 import { ChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { showItemInFolder } from "@utils/native";
 import definePlugin, { OptionType } from "@utils/types";
@@ -981,7 +981,7 @@ const handleOpenMessageScrapper = () => {
 export default definePlugin({
     name: "MessagesScrapper",
     description: "Delete your own messages in DMs or servers with a beautiful progress interface. Logs each run to JSON.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [Devs.feelslove, EquicordDevs.x2b],
     settings,
     start() {
         // Listen for custom event from separate window
@@ -1017,5 +1017,6 @@ export default definePlugin({
         );
     }
 });
+
 
 

@@ -5,7 +5,7 @@
  */
 
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption } from "@api/Commands";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { openUserProfile } from "@utils/discord";
 import definePlugin from "@utils/types";
 import { UserStore } from "@webpack/common";
@@ -13,7 +13,7 @@ import { UserStore } from "@webpack/common";
 export default definePlugin({
     name: "ProfileCommand",
     description: "Adds a /profile command to open someone's profile",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
     dependencies: ["CommandsAPI"],
     commands: [
         {
@@ -30,5 +30,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

@@ -5,12 +5,12 @@
  */
 
 import definePlugin from "@utils/types";
-import { TestcordDevs } from "@utils/constants";
+import { EquicordDevs } from "@utils/constants";
 
 export default definePlugin({
     name: "NewlinesInCommands",
     description: "Allows shift+enter to create new lines in command inputs.",
-    authors: [TestcordDevs.x2b],
+    authors: [EquicordDevs.x2b],
 
     patches: [
         {
@@ -35,5 +35,6 @@ export default definePlugin({
     ],
 
 });
+
 
 

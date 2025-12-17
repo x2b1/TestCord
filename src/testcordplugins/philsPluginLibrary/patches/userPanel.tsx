@@ -104,3 +104,4 @@ export function addSettingsPanelButton(settings: PanelButton) {
 export function removeSettingsPanelButton(name: string) {
     settingsPanelButtons.splice(0, settingsPanelButtons.length, ...settingsPanelButtons.filter(value => value.name !== name));
 }
+

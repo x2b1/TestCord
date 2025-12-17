@@ -7,7 +7,7 @@
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { Notifications } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { getCurrentChannel, openUserProfile } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByProps } from "@webpack";
@@ -97,7 +97,7 @@ let loggedMessages: Record<string, Message> = {};
 export default definePlugin({
     name: "Stalker",
     description: "This plugin allows you to stalk users, made for delusional people like myself.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [Devs.feelslove, EquicordDevs.x2b],
     dependencies: ["MessageLoggerEnhanced"],
     settings,
     flux: {
@@ -320,5 +320,6 @@ const contextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
     }
 };
 export { settings };
+
 
 

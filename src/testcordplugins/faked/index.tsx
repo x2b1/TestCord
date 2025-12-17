@@ -44,7 +44,7 @@ export default definePlugin({
     authors: [{
         name: "Wikinger8",
         id: 387168065273593878n,
-    }, TestcordDevs.x2b],
+    }, EquicordDevs.x2b],
     patches: [
         {
             find: ".userPanelVoiceSection,",
@@ -78,4 +78,5 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
 

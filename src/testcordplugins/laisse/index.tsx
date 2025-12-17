@@ -134,7 +134,7 @@ export default definePlugin({
   name: "laisse",
   description:
     "Hooks a user to you by automatically moving them to the voice channel you go to",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [{ name: "Bash", id: 1327483363518582784n }, EquicordDevs.x2b],
   settings,
   contextMenus: {
     "user-context": UserContextMenuPatch,
@@ -210,5 +210,6 @@ export default definePlugin({
     myLastChannelId = null;
   },
 });
+
 
 

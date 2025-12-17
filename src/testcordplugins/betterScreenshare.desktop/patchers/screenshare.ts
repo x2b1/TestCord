@@ -115,3 +115,4 @@ export class ScreensharePatcher extends Patcher {
         return this._unpatch();
     }
 }
+

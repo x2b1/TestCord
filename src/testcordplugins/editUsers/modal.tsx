@@ -168,3 +168,4 @@ function EditModal({ user, modalProps }: { user: User; modalProps: ModalProps; }
 export function openUserEditModal(user: User) {
     openModal(props => <EditModal user={user} modalProps={props} />);
 }
+

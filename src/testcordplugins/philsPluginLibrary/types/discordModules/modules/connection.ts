@@ -385,3 +385,4 @@ export interface DesktopSourceOptions extends Partial<Resolution> {
     allowScreenCaptureKit?: boolean;
     hdrCaptureMode?: HdrCaptureMode[keyof HdrCaptureMode];
 }
+

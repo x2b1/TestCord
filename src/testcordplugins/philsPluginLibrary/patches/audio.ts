@@ -86,3 +86,4 @@ export function patchConnectionAudioTransportOptions(
 
     return { oldSetTransportOptions, forceUpdateTransportationOptions };
 }
+

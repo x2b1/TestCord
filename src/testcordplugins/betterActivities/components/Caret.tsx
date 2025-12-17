@@ -11,3 +11,4 @@ export function Caret({ disabled, direction }: { disabled: boolean; direction: "
         </svg>
     );
 }
+

@@ -18,7 +18,7 @@
 
 import { addContextMenuPatch, findGroupChildrenByChildId, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import type { User } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
@@ -69,7 +69,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "SearchUserMessages",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
     description: "Adds a context menu option to search messages from a user",
     settings,
 
@@ -81,5 +81,6 @@ export default definePlugin({
         removeContextMenuPatch("user-context", UserContextMenuPatch);
     },
 });
+
 
 

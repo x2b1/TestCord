@@ -87,3 +87,4 @@ export default definePlugin({
         removeButton("AntiLog");
     }
 });
+

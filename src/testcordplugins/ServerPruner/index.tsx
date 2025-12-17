@@ -5,7 +5,7 @@
  */
 
 import { classNameFactory, disableStyle, enableStyle } from "@api/Styles";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { useAwaiter } from "@utils/react";
 import definePlugin from "@utils/types";
@@ -131,7 +131,7 @@ export default definePlugin({
     description: "Adds a modal to easily prune your servers with information and stats. Right click the home button!",
     authors: [
         Devs.Samwich
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     onContextMenu()
     {
         openModal(props => <PruneModal {...props} />);
@@ -154,5 +154,6 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
 
 

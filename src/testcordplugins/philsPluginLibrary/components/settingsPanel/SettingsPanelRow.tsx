@@ -35,3 +35,4 @@ export const SettingsPanelRow = ({ children }: SettingsPanelRowProps) => {
         </div>
     );
 };
+

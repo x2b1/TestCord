@@ -18,3 +18,4 @@ export const checkForIconExistence = (guild: Guild) => {
     if (!guild.icon) return false;
     return true;
 };
+

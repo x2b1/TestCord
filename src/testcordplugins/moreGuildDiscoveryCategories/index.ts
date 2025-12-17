@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findExportedComponentLazy } from "@webpack";
 
 export default definePlugin({
     name: "MoreGuildDiscoveryCategories",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
     description: "Show all guild discovery categories in the sidebar",
     patches: [
         {
@@ -41,5 +41,6 @@ export default definePlugin({
     ],
     UnknownCategoryIcon: findExportedComponentLazy("CircleQuestionIcon")
 });
+
 
 

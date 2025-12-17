@@ -23,7 +23,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "EnableStereo",
     description: "Allows the use of stereo and surround sound in voice chats. Note: Requires restart after every change. Noise suppression and Echo Cancellation must be disabled for it to work correctly!",
-    authors: [Devs.rattles, TestcordDevs.x2b],
+    authors: [Devs.rattles, EquicordDevs.x2b],
     settings,
     patches: [
         {
@@ -52,5 +52,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

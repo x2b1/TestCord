@@ -101,3 +101,4 @@ export class ScreenshareAudioPatcher extends Patcher {
         return this._unpatch();
     }
 }
+

@@ -39,7 +39,7 @@ export default definePlugin({
     description: "Enables the Discord developer banner, in which displays the build-ID",
     authors: [
         EquicordDevs.KrystalSkull
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     settings,
 
     patches: [
@@ -73,5 +73,6 @@ export default definePlugin({
         }
     },
 });
+
 
 

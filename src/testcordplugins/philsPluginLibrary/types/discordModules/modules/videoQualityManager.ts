@@ -79,3 +79,4 @@ export interface LadderValue extends Resolution, Framerate {
     budgetPortion: number;
     mutedFramerate: Framerate;
 }
+

@@ -23,3 +23,4 @@ import * as types from "../types";
 export const panelClasses: types.PanelClasses = findByPropsLazy("button", "buttonContents", "buttonColor");
 
 // waitFor(filters.byProps("button", "buttonContents", "buttonColor"), result => panelClasses = result);
+

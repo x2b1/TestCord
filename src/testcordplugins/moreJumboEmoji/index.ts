@@ -29,7 +29,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MoreJumboEmoji",
     description: "Unlock the maximum amount of jumbo emoji",
-    authors: [Devs.Sqaaakoi, TestcordDevs.x2b],
+    authors: [Devs.Sqaaakoi, EquicordDevs.x2b],
     tags: ["wumboji"],
     settings,
     patches: [{
@@ -43,5 +43,6 @@ export default definePlugin({
         return !(settings.store.unlimited || (emojiCount <= settings.store.threshold));
     }
 });
+
 
 

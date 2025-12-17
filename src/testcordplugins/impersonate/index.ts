@@ -6,7 +6,7 @@
 
 import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
@@ -14,7 +14,7 @@ import { FluxDispatcher, UserStore } from "@webpack/common";
 export default definePlugin({
     name: "Impersonate",
     description: "Impersonate a user and have them send a \"message\"",
-    authors: [Devs.None, TestcordDevs.x2b],
+    authors: [Devs.None, EquicordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [
@@ -117,5 +117,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

@@ -20,3 +20,4 @@ export async function openAccessModal(channelId: string, cb: (success: boolean) 
         }} />;
     });
 }
+

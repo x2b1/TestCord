@@ -9,7 +9,7 @@ import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberLi
 import { addMessageDecoration, removeMessageDecoration } from "@api/MessageDecorations";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { SnowflakeUtils, Tooltip, UserStore } from "@webpack/common";
@@ -73,7 +73,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "NewUserIndicator",
     description: "Adds a indicator if users account is created recently",
-    authors: [Devs.None,, TestcordDevs.x2b],
+    authors: [Devs.None,, EquicordDevs.x2b],
     patches: [],
     settings,
     start() {
@@ -97,5 +97,6 @@ export default definePlugin({
     },
 
 });
+
 
 

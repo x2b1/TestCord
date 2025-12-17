@@ -81,3 +81,4 @@ export const SettingsModalCard = ({ children, title, switchProps, switchEnabled,
         </Card >
     );
 };
+

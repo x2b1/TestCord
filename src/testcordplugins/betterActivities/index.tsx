@@ -7,7 +7,7 @@
 import "./styles.css";
 
 import { migratePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { patchActivityList } from "./patch-helpers/activityList";
@@ -23,7 +23,7 @@ export default definePlugin({
         Devs.D3SOX,
         Devs.Arjix,
         Devs.AutumnVN
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     tags: ["activity"],
 
     settings,
@@ -54,5 +54,6 @@ export default definePlugin({
         },
     ],
 });
+
 
 

@@ -8,7 +8,7 @@ import "@equicordplugins/_misc/styles.css";
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Channel, User, VoiceState } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
@@ -76,7 +76,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, { channel, 
 export default definePlugin({
     name: "FollowVoiceUser-Extand",
     description: "Follow a friend in voice chat.",
-    authors: [Devs.feelslove, TestcordDevs.x2b],
+    authors: [Devs.feelslove, EquicordDevs.x2b],
     settings,
     settingsAboutComponent: () => <>
         <Forms.FormText className="plugin-warning">
@@ -113,5 +113,6 @@ export default definePlugin({
         "user-context": UserContextMenuPatch
     }
 });
+
 
 

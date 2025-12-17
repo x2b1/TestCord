@@ -109,3 +109,4 @@ export function showAllActivitiesComponent({ activity, user, ...props }: Readonl
         );
     }
 }
+

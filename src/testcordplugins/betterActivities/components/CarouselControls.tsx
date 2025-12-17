@@ -75,3 +75,4 @@ export function CarouselControls({ activities, currentActivity, onActivityChange
         </div>
     );
 }
+

@@ -26,3 +26,4 @@ export function ActivityTooltip({ activity, application, user }: Readonly<Activi
         </ErrorBoundary>
     );
 }
+

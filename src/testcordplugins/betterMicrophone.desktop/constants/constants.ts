@@ -29,3 +29,4 @@ export const PluginInfo = {
     },
     CONTRIBUTORS: {}
 } as const satisfies types.PluginInfo;
+

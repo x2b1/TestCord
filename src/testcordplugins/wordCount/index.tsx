@@ -5,7 +5,7 @@
  */
 
 import { addMessageAccessory } from "@api/MessageAccessories";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Text } from "@webpack/common";
 
@@ -29,7 +29,7 @@ function WordCount({ messageContent }: { messageContent: string; }) {
 export default definePlugin({
     name: "WordCount",
     description: "Shows the word count of a message below it",
-    authors: [TestcordDevs.x2b],
+    authors: [EquicordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {
         addMessageAccessory("word-count", (props: Record<string, any>) => (
@@ -37,5 +37,6 @@ export default definePlugin({
         ), 2);
     }
 });
+
 
 

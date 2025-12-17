@@ -16,7 +16,7 @@ export default definePlugin({
             id: 253302259696271360n,
             name: "zastix",
         },
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     settings,
     patches: [
         {
@@ -29,5 +29,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

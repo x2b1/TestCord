@@ -5,7 +5,7 @@
  */
 
 import { classNameFactory, disableStyle, enableStyle } from "@api/Styles";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 
@@ -20,7 +20,7 @@ export default definePlugin({
     description: "Adds a way to easily prune your servers and friends. To open, right click the home button or friends tab button",
     authors: [
         Devs.Samwich
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     onContextMenu(type)
     {
         openModal(props => (type === "guild" ? <GuildPruneModal {...props}/> : <FriendPruneModal {...props}/>));
@@ -49,5 +49,6 @@ export default definePlugin({
         disableStyle(style);
     }
 });
+
 
 

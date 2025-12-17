@@ -17,3 +17,4 @@ export function EmptyState(props: EmptyStateProps) {
         </Card>
     );
 }
+

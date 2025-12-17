@@ -6,7 +6,7 @@
 
 import "./style.css";
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import {ChannelStore, DateUtils, GuildStore, IconUtils, NavigationRouter, Popout, SelectedGuildStore, SnowflakeUtils, Text, useRef, UserStore, useStateFromStores} from "@webpack/common";
 
@@ -15,7 +15,7 @@ import { ArrowSvg, checkForIconExistence, cl, ServerProfileComponent } from "./u
 export default definePlugin({
     name: "BetterForwardMeta",
     description: "Access server profile under forwarded messages (if available) and always show time",
-    authors: [Devs.nin0dev, TestcordDevs.x2b],
+    authors: [Devs.nin0dev, EquicordDevs.x2b],
     ForwardFooter(message: any) {
         const { guild_id, channel_id, message_id } = message.message.messageReference;
         const guild = useStateFromStores([GuildStore], () => GuildStore.getGuild(guild_id));
@@ -96,5 +96,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

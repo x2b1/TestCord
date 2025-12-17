@@ -78,7 +78,7 @@ export default definePlugin({
         }
     ],
 
-    authors: [Devs.sadan, TestcordDevs.x2b],
+    authors: [Devs.sadan, EquicordDevs.x2b],
     start(){
         if (settings.store.onHomeClick)
             this.interval = setInterval(() => c = 0, 1000);
@@ -104,5 +104,6 @@ export default definePlugin({
         }
     ]
 });
+
 
 

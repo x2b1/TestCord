@@ -40,3 +40,4 @@ export const settings = definePluginSettings({})
 export const getUserOverride = (userId: string) => settings.store.users?.[userId] ?? emptyOverride;
 
 export const hasFlag = (field: OverrideFlags, flag: OverrideFlags) => (field & flag) === flag;
+

@@ -28,3 +28,4 @@ export const PluginInfo: types.PluginInfo = {
         github: "https://github.com/kanvekin"
     },
 } as const;
+

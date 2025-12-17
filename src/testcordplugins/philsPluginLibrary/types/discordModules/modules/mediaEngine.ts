@@ -146,3 +146,4 @@ export interface WindowPreview {
     url: string;
     name: string;
 }
+

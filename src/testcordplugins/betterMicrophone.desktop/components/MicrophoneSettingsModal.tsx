@@ -330,3 +330,4 @@ export const MicrophoneSettingsModal = (props: MicrophoneSettingsModalProps) => 
         </SettingsModal>
     );
 };
+

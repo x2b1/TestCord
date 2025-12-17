@@ -27,3 +27,4 @@ export function int2rgba(rgbVal: number, alpha: number = 1) {
         r = (rgbVal & 0xFF0000) >>> 16;
     return `rgba(${[r, g, b].join(",")},${alpha})`;
 }
+

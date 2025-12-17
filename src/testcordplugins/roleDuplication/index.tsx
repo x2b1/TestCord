@@ -49,7 +49,7 @@ export default definePlugin({
             name: "i am me",
             id: 984392761929256980n,
         },
-    , TestcordDevs.x2b],
+    , EquicordDevs.x2b],
     contextMenus: {
         "guild-settings-role-context": MakeContextCallback("settings"),
         "dev-context": MakeContextCallback("other")
@@ -59,5 +59,6 @@ export default definePlugin({
         DeveloperMode.updateSetting(true);
     }
 });
+
 
 

@@ -75,3 +75,4 @@ export const SuccessIcon = LazyComponent(() => React.memo(() => {
         </svg>
     );
 }));
+

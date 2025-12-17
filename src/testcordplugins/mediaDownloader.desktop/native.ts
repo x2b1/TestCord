@@ -310,3 +310,4 @@ export async function interrupt(_: IpcMainInvokeEvent) {
 export const getStdout = () => stdout_global;
 export const isYtdlpAvailable = () => ytdlpAvailable;
 export const isFfmpegAvailable = () => ffmpegAvailable;
+

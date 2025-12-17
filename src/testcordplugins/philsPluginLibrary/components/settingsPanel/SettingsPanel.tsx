@@ -33,3 +33,4 @@ export const SettingsPanel = ({ children }: SettingsPanelProps) => {
         </div>
     );
 };
+

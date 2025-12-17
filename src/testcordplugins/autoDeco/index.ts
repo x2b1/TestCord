@@ -64,7 +64,7 @@ export default definePlugin({
   name: "AutoDeco",
   description:
     "Automatically disconnects from voice channel when a specific user joins",
-  authors: [{ name: "Bash", id: 1327483363518582784n }, TestcordDevs.x2b],
+  authors: [{ name: "Bash", id: 1327483363518582784n }, EquicordDevs.x2b],
   settings,
   contextMenus: {
     "user-context": UserContextMenuPatch,
@@ -119,5 +119,6 @@ export default definePlugin({
     lastProcessedStates.clear();
   },
 });
+
 
 

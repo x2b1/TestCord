@@ -6,7 +6,7 @@
 
 import { ApplicationCommandOptionType, registerCommand, sendBotMessage, unregisterCommand } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
@@ -255,7 +255,7 @@ function createClydeComponents() {
 export default definePlugin({
     name: "SpoofSystemV2",
     description: "Spoof official Discord system messages with realistic embeds",
-    authors: [Devs.Ven, TestcordDevs.x2b],
+    authors: [Devs.Ven, EquicordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [
@@ -897,5 +897,6 @@ export default definePlugin({
         // Commands are automatically unregistered by the CommandsAPI
     }
 });
+
 
 
