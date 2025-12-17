@@ -1,25 +1,26 @@
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { UserStore, FluxDispatcher } from "@webpack/common";
+import { TestcordDevs } from "@utils/constants";
 
 // Retrieval of necessary stores and actions
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 const ChannelActions = findByPropsLazy("selectVoiceChannel");
 
 interface VoiceState {
-  userId: string;
-  channelId?: string;
-  oldChannelId?: string;
-  guildId?: string;
-  deaf: boolean;
-  mute: boolean;
-  selfDeaf: boolean;
-  selfMute: boolean;
-  selfStream: boolean;
-  selfVideo: boolean;
-  sessionId: string;
-  suppress: boolean;
-  requestToSpeakTimestamp: string | null;
+    userId: string;
+    channelId?: string;
+    oldChannelId?: string;
+    guildId?: string;
+    deaf: boolean;
+    mute: boolean;
+    selfDeaf: boolean;
+    selfMute: boolean;
+    selfStream: boolean;
+    selfVideo: boolean;
+    sessionId: string;
+    suppress: boolean;
+    requestToSpeakTimestamp: string | null;
 }
 
 // Variables to detect voluntary disconnections
@@ -32,222 +33,217 @@ let originalSelectVoiceChannel: any = null;
 
 // Function to mark a disconnection as voluntary
 function markVoluntaryDisconnect() {
-  isVoluntaryDisconnect = true;
-  console.log("[AntiDéco] Voluntary disconnection marked");
-  // Reset the flag after a longer delay
-  if (disconnectTimeout) clearTimeout(disconnectTimeout);
-  disconnectTimeout = setTimeout(() => {
-    isVoluntaryDisconnect = false;
-    console.log("[AntiDéco] Voluntary disconnection flag reset");
-  }, 3000);
+    isVoluntaryDisconnect = true;
+    console.log("[AntiDéco] Voluntary disconnection marked");
+    // Reset the flag after a longer delay
+    if (disconnectTimeout) clearTimeout(disconnectTimeout);
+    disconnectTimeout = setTimeout(() => {
+        isVoluntaryDisconnect = false;
+        console.log("[AntiDéco] Voluntary disconnection flag reset");
+    }, 3000);
 }
 
 // Function to mark a channel change
 function markChannelSwitch() {
-  isChannelSwitching = true;
-  console.log("[AntiDéco] Channel change in progress");
-  if (switchTimeout) clearTimeout(switchTimeout);
-  switchTimeout = setTimeout(() => {
-    isChannelSwitching = false;
-    console.log("[AntiDéco] Channel change flag reset");
-  }, 3000);
+    isChannelSwitching = true;
+    console.log("[AntiDéco] Channel change in progress");
+    if (switchTimeout) clearTimeout(switchTimeout);
+    switchTimeout = setTimeout(() => {
+        isChannelSwitching = false;
+        console.log("[AntiDéco] Channel change flag reset");
+    }, 3000);
 }
 
 export default definePlugin({
-  name: "AntiDéconnexion",
-  description:
-    "Automatically reconnects to voice channel in case of forced disconnection",
-  authors: [
-    {
-      name: "Bash",
-      id: 1327483363518582784n,
-    },
-  , TestcordDevs.x2b],
+    name: "AntiDéconnexion",
+    description:
+        "Automatically reconnects to voice channel in case of forced disconnection",
+    authors: [TestcordDevs.x2b],
 
-  // Using the flux system to listen to voice events
-  flux: {
-    VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[] }) {
-      // Security check for current user
-      const currentUser = UserStore.getCurrentUser();
-      if (!currentUser) {
-        console.warn("[AntiDéco] Current user not available");
-        return;
-      }
-
-      const currentUserId = currentUser.id;
-
-      // Process each voice state change
-      for (const state of voiceStates) {
-        const { userId, channelId, oldChannelId } = state;
-
-        // Only interested in events for the current user
-        if (userId !== currentUserId) continue;
-
-        // Store the current channel for next time
-        if (channelId) {
-          lastChannelId = channelId;
-        }
-
-        // Detection of a disconnection:
-        // User was in a channel (oldChannelId exists)
-        // but is no longer in any channel (channelId is null/undefined)
-        if (oldChannelId && !channelId) {
-          console.log(
-            `[AntiDéco] Disconnection detected from channel ${oldChannelId}`
-          );
-
-          // Check if it's a voluntary disconnection
-          if (isVoluntaryDisconnect) {
-            console.log(
-              `[AntiDéco] Voluntary disconnection confirmed, no reconnection`
-            );
-            return;
-          }
-
-          // Check if it's a channel change in progress
-          if (isChannelSwitching) {
-            console.log(
-              `[AntiDéco] Channel change in progress, no reconnection`
-            );
-            return;
-          }
-
-          // Wait a bit to see if a new channel is selected (quick change)
-          setTimeout(() => {
-            // Check again if it's not a voluntary disconnection
-            if (isVoluntaryDisconnect || isChannelSwitching) {
-              console.log(
-                `[AntiDéco] Voluntary disconnection or channel change detected during wait`
-              );
-              return;
+    // Using the flux system to listen to voice events
+    flux: {
+        VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
+            // Security check for current user
+            const currentUser = UserStore.getCurrentUser();
+            if (!currentUser) {
+                console.warn("[AntiDéco] Current user not available");
+                return;
             }
 
-            const currentState =
-              VoiceStateStore.getVoiceStateForUser(currentUserId);
+            const currentUserId = currentUser.id;
 
-            // If user is now in another channel, it was a change
-            if (currentState?.channelId) {
-              console.log(
-                `[AntiDéco] Channel change detected (${oldChannelId} -> ${currentState.channelId}), no reconnection`
-              );
-              return;
-            }
+            // Process each voice state change
+            for (const state of voiceStates) {
+                const { userId, channelId, oldChannelId } = state;
 
-            // If we get here, it's really a forced disconnection
-            console.log(
-              `[AntiDéco] FORCED disconnection confirmed from channel ${oldChannelId}`
-            );
+                // Only interested in events for the current user
+                if (userId !== currentUserId) continue;
 
-            // Attempt reconnection
-            setTimeout(() => {
-              try {
-                console.log(
-                  `[AntiDéco] Attempting reconnection to channel ${oldChannelId}`
-                );
-                // Use original function to avoid loops
-                if (originalSelectVoiceChannel) {
-                  originalSelectVoiceChannel.call(ChannelActions, oldChannelId);
-                } else {
-                  ChannelActions.selectVoiceChannel(oldChannelId);
+                // Store the current channel for next time
+                if (channelId) {
+                    lastChannelId = channelId;
                 }
-              } catch (error) {
-                console.error("[AntiDéco] Error during reconnection:", error);
-              }
-            }, 100);
-          }, 200);
-        }
-      }
+
+                // Detection of a disconnection:
+                // User was in a channel (oldChannelId exists)
+                // but is no longer in any channel (channelId is null/undefined)
+                if (oldChannelId && !channelId) {
+                    console.log(
+                        `[AntiDéco] Disconnection detected from channel ${oldChannelId}`
+                    );
+
+                    // Check if it's a voluntary disconnection
+                    if (isVoluntaryDisconnect) {
+                        console.log(
+                            `[AntiDéco] Voluntary disconnection confirmed, no reconnection`
+                        );
+                        return;
+                    }
+
+                    // Check if it's a channel change in progress
+                    if (isChannelSwitching) {
+                        console.log(
+                            `[AntiDéco] Channel change in progress, no reconnection`
+                        );
+                        return;
+                    }
+
+                    // Wait a bit to see if a new channel is selected (quick change)
+                    setTimeout(() => {
+                        // Check again if it's not a voluntary disconnection
+                        if (isVoluntaryDisconnect || isChannelSwitching) {
+                            console.log(
+                                `[AntiDéco] Voluntary disconnection or channel change detected during wait`
+                            );
+                            return;
+                        }
+
+                        const currentState =
+                            VoiceStateStore.getVoiceStateForUser(currentUserId);
+
+                        // If user is now in another channel, it was a change
+                        if (currentState?.channelId) {
+                            console.log(
+                                `[AntiDéco] Channel change detected (${oldChannelId} -> ${currentState.channelId}), no reconnection`
+                            );
+                            return;
+                        }
+
+                        // If we get here, it's really a forced disconnection
+                        console.log(
+                            `[AntiDéco] FORCED disconnection confirmed from channel ${oldChannelId}`
+                        );
+
+                        // Attempt reconnection
+                        setTimeout(() => {
+                            try {
+                                console.log(
+                                    `[AntiDéco] Attempting reconnection to channel ${oldChannelId}`
+                                );
+                                // Use original function to avoid loops
+                                if (originalSelectVoiceChannel) {
+                                    originalSelectVoiceChannel.call(ChannelActions, oldChannelId);
+                                } else {
+                                    ChannelActions.selectVoiceChannel(oldChannelId);
+                                }
+                            } catch (error) {
+                                console.error("[AntiDéco] Error during reconnection:", error);
+                            }
+                        }, 100);
+                    }, 200);
+                }
+            }
+        },
+
+        // Listen to voluntary disconnection actions
+        VOICE_CHANNEL_SELECT({ channelId }: { channelId: string | null; }) {
+            const currentUser = UserStore.getCurrentUser();
+            if (!currentUser) return;
+
+            const currentUserId = currentUser.id;
+            const currentVoiceState =
+                VoiceStateStore.getVoiceStateForUser(currentUserId);
+
+            if (currentVoiceState?.channelId) {
+                if (channelId === null) {
+                    // Voluntary disconnection
+                    console.log(
+                        "[AntiDéco] Voluntary disconnection action detected via VOICE_CHANNEL_SELECT"
+                    );
+                    markVoluntaryDisconnect();
+                } else if (channelId !== currentVoiceState.channelId) {
+                    // Channel change
+                    console.log(
+                        `[AntiDéco] Channel change detected via VOICE_CHANNEL_SELECT (${currentVoiceState.channelId} -> ${channelId})`
+                    );
+                    markChannelSwitch();
+                }
+            }
+        },
     },
 
-    // Listen to voluntary disconnection actions
-    VOICE_CHANNEL_SELECT({ channelId }: { channelId: string | null }) {
-      const currentUser = UserStore.getCurrentUser();
-      if (!currentUser) return;
+    start() {
+        console.log("[AntiDéco] AntiDisconnection plugin initialized");
 
-      const currentUserId = currentUser.id;
-      const currentVoiceState =
-        VoiceStateStore.getVoiceStateForUser(currentUserId);
-
-      if (currentVoiceState?.channelId) {
-        if (channelId === null) {
-          // Voluntary disconnection
-          console.log(
-            "[AntiDéco] Voluntary disconnection action detected via VOICE_CHANNEL_SELECT"
-          );
-          markVoluntaryDisconnect();
-        } else if (channelId !== currentVoiceState.channelId) {
-          // Channel change
-          console.log(
-            `[AntiDéco] Channel change detected via VOICE_CHANNEL_SELECT (${currentVoiceState.channelId} -> ${channelId})`
-          );
-          markChannelSwitch();
+        // Check that stores are available
+        if (!ChannelActions || !VoiceStateStore || !UserStore) {
+            console.error("[AntiDéco] Error: Discord stores not available");
+            return;
         }
-      }
+
+        // Save the original function
+        originalSelectVoiceChannel = ChannelActions.selectVoiceChannel;
+
+        // Listen to click events on the disconnect button
+        ChannelActions.selectVoiceChannel = function (channelId: string | null) {
+            const currentUser = UserStore.getCurrentUser();
+            if (!currentUser) return originalSelectVoiceChannel.call(this, channelId);
+
+            const currentUserId = currentUser.id;
+            const currentVoiceState =
+                VoiceStateStore.getVoiceStateForUser(currentUserId);
+
+            if (currentVoiceState?.channelId) {
+                if (channelId === null) {
+                    // Voluntary disconnection
+                    console.log(
+                        "[AntiDéco] Voluntary disconnection intercepted via selectVoiceChannel"
+                    );
+                    markVoluntaryDisconnect();
+                } else if (channelId !== currentVoiceState.channelId) {
+                    // Channel change
+                    console.log(
+                        `[AntiDéco] Channel change intercepted via selectVoiceChannel (${currentVoiceState.channelId} -> ${channelId})`
+                    );
+                    markChannelSwitch();
+                }
+            }
+
+            return originalSelectVoiceChannel.call(this, channelId);
+        };
     },
-  },
 
-  start() {
-    console.log("[AntiDéco] AntiDisconnection plugin initialized");
+    stop() {
+        console.log("[AntiDéco] AntiDisconnection plugin stopped");
 
-    // Check that stores are available
-    if (!ChannelActions || !VoiceStateStore || !UserStore) {
-      console.error("[AntiDéco] Error: Discord stores not available");
-      return;
-    }
-
-    // Save the original function
-    originalSelectVoiceChannel = ChannelActions.selectVoiceChannel;
-
-    // Listen to click events on the disconnect button
-    ChannelActions.selectVoiceChannel = function (channelId: string | null) {
-      const currentUser = UserStore.getCurrentUser();
-      if (!currentUser) return originalSelectVoiceChannel.call(this, channelId);
-
-      const currentUserId = currentUser.id;
-      const currentVoiceState =
-        VoiceStateStore.getVoiceStateForUser(currentUserId);
-
-      if (currentVoiceState?.channelId) {
-        if (channelId === null) {
-          // Voluntary disconnection
-          console.log(
-            "[AntiDéco] Voluntary disconnection intercepted via selectVoiceChannel"
-          );
-          markVoluntaryDisconnect();
-        } else if (channelId !== currentVoiceState.channelId) {
-          // Channel change
-          console.log(
-            `[AntiDéco] Channel change intercepted via selectVoiceChannel (${currentVoiceState.channelId} -> ${channelId})`
-          );
-          markChannelSwitch();
+        // Restore the original function
+        if (originalSelectVoiceChannel && ChannelActions) {
+            ChannelActions.selectVoiceChannel = originalSelectVoiceChannel;
+            originalSelectVoiceChannel = null;
         }
-      }
 
-      return originalSelectVoiceChannel.call(this, channelId);
-    };
-  },
-
-  stop() {
-    console.log("[AntiDéco] AntiDisconnection plugin stopped");
-
-    // Restore the original function
-    if (originalSelectVoiceChannel && ChannelActions) {
-      ChannelActions.selectVoiceChannel = originalSelectVoiceChannel;
-      originalSelectVoiceChannel = null;
-    }
-
-    if (disconnectTimeout) {
-      clearTimeout(disconnectTimeout);
-      disconnectTimeout = null;
-    }
-    if (switchTimeout) {
-      clearTimeout(switchTimeout);
-      switchTimeout = null;
-    }
-    isVoluntaryDisconnect = false;
-    isChannelSwitching = false;
-    lastChannelId = null;
-  },
+        if (disconnectTimeout) {
+            clearTimeout(disconnectTimeout);
+            disconnectTimeout = null;
+        }
+        if (switchTimeout) {
+            clearTimeout(switchTimeout);
+            switchTimeout = null;
+        }
+        isVoluntaryDisconnect = false;
+        isChannelSwitching = false;
+        lastChannelId = null;
+    },
 });
 
 
