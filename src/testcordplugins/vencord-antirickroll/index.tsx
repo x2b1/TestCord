@@ -156,7 +156,7 @@ function RickrollWarning({ message, isCustom }: { message: Message; isCustom: bo
 export default definePlugin({
     name: "AntiRickroll",
     description: "Warns you of potential Rickrolls in messages, including masked links (supports custom rules)",
-    authors: [Devs.ryanamay, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI", "UserSettingsAPI"],
 
     settings,

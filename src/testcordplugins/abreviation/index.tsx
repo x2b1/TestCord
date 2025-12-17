@@ -11,7 +11,7 @@ import {
     MessageSendListener,
     removeMessagePreSendListener,
 } from "@api/MessageEvents";
-import { TestcordDevs } from "../../utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 const settings = definePluginSettings({
@@ -282,13 +282,7 @@ export default definePlugin({
     name: "Abreviation",
     description:
         "Automatically transforms abbreviations into full text when sending messages",
-    authors: [
-        {
-            name: "Bash",
-            id: 1327483363518582784n,
-        },
-        TestcordDevs.x2b
-    ],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,
 

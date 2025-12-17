@@ -79,7 +79,7 @@ function Flag({ id }: { id: string; }) {
 export default definePlugin({
     name: "UserFlags",
     description: "Add \"flags\" to users that will always show under their messages",
-    authors: [Devs.nin0dev, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {
         const savedFlags = await DataStore.get("USERFLAGS");

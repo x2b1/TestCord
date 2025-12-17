@@ -29,7 +29,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "TriggerWarning",
-    authors: [Devs.Joona, TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b],
     description: "Spoiler attachments based on filenames and links.",
     patches: [
         {
@@ -47,7 +47,7 @@ export default definePlugin({
         }
     ],
     settings,
-    shouldSpoiler(filename: string): string | null{
+    shouldSpoiler(filename: string): string | null {
         const { spoilerFilenames } = settings.store;
         if (!filename || !spoilerFilenames) return null;
         const strings = spoilerFilenames.split(",").map(s => s.trim());
