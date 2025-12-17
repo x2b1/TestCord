@@ -10,6 +10,7 @@ import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
 import { EyeIcon } from "@components/Icons";
 import * as Modal from "@utils/modal";
+import SettingsPlugin from "@plugins/_core/settings";
 import definePlugin from "@utils/types";
 import { Button, Flex, React, Text, TextInput } from "@webpack/common";
 
@@ -682,6 +683,10 @@ export default definePlugin({
     },
 
     stop() {
+        const { customEntries } = SettingsPlugin;
+        const entry = customEntries.findIndex(entry => entry.key === "passwordManager");
+        if (entry !== -1) customEntries.splice(entry, 1);
+
         this.passwordManager = null;
         this.ui = null;
     }

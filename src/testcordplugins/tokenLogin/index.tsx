@@ -9,6 +9,7 @@ import "./styles.css";
 import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
 import * as Modal from "@utils/modal";
+import SettingsPlugin from "@plugins/_core/settings";
 import definePlugin from "@utils/types";
 import { Button, Flex, React, Text, TextInput } from "@webpack/common";
 
@@ -214,18 +215,28 @@ export default definePlugin({
         await this.tokenLoginManager.init();
         this.ui = new TokenLoginManagerUI(this.tokenLoginManager);
 
-        const settingsPlugin = Vencord.Plugins.plugins.Settings as any;
-        if (settingsPlugin && settingsPlugin.customEntries) {
-            settingsPlugin.customEntries.push({
-                key: "tokenLoginManager",
-                title: "Token Login Manager",
-                Component: () => this.ui!.render(),
-                Icon: () => React.createElement("div", {}, "🔑") // Placeholder icon
-            });
-        }
+        const { customEntries, customSections } = SettingsPlugin;
+
+        customEntries.push({
+            key: "tokenLoginManager",
+            title: "Token Login Manager",
+            Component: () => this.ui!.render(),
+            Icon: () => React.createElement("div", {}, "🔑") // Placeholder icon
+        });
+
+        customSections.push(() => ({
+            section: "TokenLoginManager",
+            label: "Token Login Manager",
+            element: () => this.ui!.render(),
+            id: "TokenLoginManager"
+        }));
     },
 
     stop() {
+        const { customEntries } = SettingsPlugin;
+        const entry = customEntries.findIndex(entry => entry.key === "tokenLoginManager");
+        if (entry !== -1) customEntries.splice(entry, 1);
+
         this.tokenLoginManager = null;
         this.ui = null;
     }
