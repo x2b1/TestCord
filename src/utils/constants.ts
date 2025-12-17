@@ -642,6 +642,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
         name: "VV",
         id: 254866377087778816n
     },
+    cooper: {
+        name: "Cooper",
+        id: 0n
+    },
 } satisfies Record<string, Dev>);
 
 export const EquicordDevs = Object.freeze({
