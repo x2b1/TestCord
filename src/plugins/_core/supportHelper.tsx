@@ -16,9 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { existsSync, readdirSync } from "fs";
-import { join, parse } from "path";
-
 import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, Settings } from "@api/Settings";
@@ -158,8 +155,7 @@ async function generateDebugInfoMessage() {
     }
 
     const potentiallyProblematicPlugins = ([
-        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge",
-        "AlwaysAnimate", "ClientTheme", "SoundTroll", "Ingtoninator", "NeverPausePreviews",
+        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge", "ClientTheme", "Ingtoninator", "NeverPausePreviews",
         "IdleAutoRestart",
     ].filter(Vencord.Plugins.isPluginEnabled) ?? []).sort();
 
@@ -188,99 +184,13 @@ async function generateDebugInfoMessage() {
     return content.trim();
 }
 
-// Helper function to read plugin directories
-function getPluginsFromDir(dirPath: string): string[] {
-    try {
-        if (!existsSync(dirPath)) {
-            console.warn(`Plugin directory not found: ${dirPath}`);
-            return [];
-        }
-
-        const items = readdirSync(dirPath, { withFileTypes: true });
-        return items
-            .filter(item => item.isDirectory() || (item.isFile() && (item.name.endsWith('.js') || item.name.endsWith('.ts') || item.name.endsWith('.tsx'))))
-            .map(item => item.isFile() ? parse(item.name).name : item.name)
-            .sort();
-    } catch (error) {
-        console.error(`Error reading plugin directory ${dirPath}:`, error);
-        return [];
-    }
-}
-
 function generatePluginList() {
     const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin]?.required;
 
     // Get all enabled plugins from Settings.plugins
-    const allEnabledPlugins = Object.keys(Settings.plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
+    const allEnabledPlugins = Object.keys(Settings.plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p)).sort();
 
-    // Get plugins from directories
-    const vencordPlugins = getPluginsFromDir(join(process.cwd(), "src", "plugins"));
-    const equicordPlugins = getPluginsFromDir(join(process.cwd(), "src", "equicordplugins"));
-    const testcordPlugins = getPluginsFromDir(join(process.cwd(), "src", "testcordplugins"));
-
-    // Convert to Sets for faster lookups
-    const vencordSet = new Set(vencordPlugins);
-    const equicordSet = new Set(equicordPlugins);
-    const testcordSet = new Set(testcordPlugins);
-
-    // Categorize enabled plugins
-    const enabledVencordPlugins = allEnabledPlugins.filter(p => vencordSet.has(p)).sort();
-    const enabledEquicordPlugins = allEnabledPlugins.filter(p => equicordSet.has(p)).sort();
-    const enabledTestcordPlugins = allEnabledPlugins.filter(p => testcordSet.has(p)).sort();
-
-    const sections: string[] = [];
-
-    // Helper to add section with splitting if needed
-    const addSection = (title: string, pluginList: string[], maxLength: number = 2000) => {
-        if (pluginList.length === 0) return;
-
-        const content = `${title} (${pluginList.length}):\n\`\`\`\n${pluginList.join(", ")}\n\`\`\``;
-
-        // Split if too large
-        if (content.length <= maxLength) {
-            sections.push(content);
-            return;
-        }
-
-        // Split the plugins list into chunks
-        const chunks: string[][] = [];
-        let currentChunk: string[] = [];
-        let currentLength = title.length + 15; // Base length with formatting
-
-        for (const plugin of pluginList) {
-            const pluginWithComma = plugin + ", ";
-            if (currentLength + pluginWithComma.length > maxLength - 50) { // Reserve space for codeblock formatting
-                if (currentChunk.length > 0) {
-                    chunks.push([...currentChunk]);
-                    currentChunk = [plugin];
-                    currentLength = title.length + plugin.length + 15;
-                } else {
-                    // Single plugin is too long (unlikely), just add it
-                    chunks.push([plugin]);
-                }
-            } else {
-                currentChunk.push(plugin);
-                currentLength += pluginWithComma.length;
-            }
-        }
-
-        if (currentChunk.length > 0) {
-            chunks.push(currentChunk);
-        }
-
-        // Add each chunk as a separate section
-        chunks.forEach((chunk, index) => {
-            const sectionTitle = chunks.length === 1 ? title : `${title} [Part ${index + 1}/${chunks.length}]`;
-            sections.push(`${sectionTitle} (${chunk.length}/${pluginList.length}):\n\`\`\`\n${chunk.join(", ")}\n\`\`\``);
-        });
-    };
-
-    // Add sections in order
-    addSection("**Vencord plugins enabled**", enabledVencordPlugins);
-    addSection("**Equicord plugins enabled**", enabledEquicordPlugins);
-    addSection("**Testcord plugins enabled**", enabledTestcordPlugins);
-
-    return sections;
+    return `**Plugins enabled: (${allEnabledPlugins.length})**\n${makeCodeblock(allEnabledPlugins.join(", "))}`;
 }
 
 const checkForUpdatesOnce = onlyOnce(checkForUpdates);
@@ -316,15 +226,32 @@ export default definePlugin({
             name: "testcord-plugins",
             description: "Send Testcord plugin list",
             execute: async () => {
-                const sections = generatePluginList();
-                if (!Array.isArray(sections) || sections.length === 0) {
+                const pluginList = generatePluginList();
+                if (!pluginList) {
                     return { content: "Unable to generate plugin list." };
                 }
 
-                // Send each section (already split if necessary)
-                for (const section of sections) {
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section });
+                // Split if too long
+                if (pluginList.length <= 2000) {
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: pluginList });
+                } else {
+                    // Split the plugins list into chunks
+                    const lines = pluginList.split("\n");
+                    const header = lines[0]; // **Plugins enabled (count):**
+                    const codeblock = lines.slice(1).join("\n"); // ```plugins```
+                    const pluginsStr = codeblock.slice(3, -3); // remove ```
+                    const plugins = pluginsStr.split(", ");
+
+                    const mid = Math.ceil(plugins.length / 2);
+                    const part1 = plugins.slice(0, mid).join(", ");
+                    const part2 = plugins.slice(mid).join(", ");
+
+                    const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
+                    const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
+
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section1 });
                     await new Promise(resolve => setTimeout(resolve, 100));
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section2 });
                 }
 
                 return { content: "" }; // No response from the command itself
