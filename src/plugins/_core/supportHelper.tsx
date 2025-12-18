@@ -192,11 +192,10 @@ function generatePluginList() {
     const allEnabledPlugins = Object.keys(Settings.plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
     // Categorize plugins
-    const vencordPlugins = allEnabledPlugins.filter(p => p in plugins && !PluginMeta[p]?.userPlugin);
-    const equicordPlugins = allEnabledPlugins.filter(p => !(p in plugins) && [
-        "absRPC", "allCallTimers", "altKrispSwitch", "alwaysExpandProfiles", "amITyping", "anammox", "animalese", "atSomeone", "autoZipper", "bannersEverywhere", "baseDecoder", "betterActivities", "betterAudioPlayer", "betterBanReasons", "betterBlockedUsers", "betterCommands", "betterInvites", "betterPlusReacts", "betterQuickReact", "betterUserArea", "blockKeywords", "blockKrisp", "bypassPinPrompt", "bypassStatus", "channelBadges", "channelTabs", "characterCounter", "cleanChannelName", "clientSideBlock", "clipsEnhancements.discordDesktop", "commandPalette", "contentWarning", "copyProfileColors", "copyStatusUrls", "copyUserMention", "customFolderIcons", "customSounds", "customTimestamps", "customUserColors", "disableCameras", "discordDevBanner", "elementHighlighter", "elementHighlighter.dev", "equicordHelper", "equicordToolbox", "equissant", "exitSounds", "exportMessages", "fastDeleteChannels", "findReply", "fixFileExtensions", "followVoiceUser", "fontLoader", "forwardAnywhere", "frequentQuickSwitcher", "friendCloud", "friendCodes", "friendshipRanks", "friendTags", "fullVcPfp", "gensokyoRadioRPC", "ghosted", "gifCollections", "gifRoulette", "githubRepos", "globalBadges", "googleThat", "guildPickerDumper", "guildTagSettings", "hideChatButtons", "hideServers", "holyNotes", "homeTyping", "hopOn", "husk", "iconViewer", "idleAutoRestart", "ignoreCalls", "ignoreTerms", "imgToGif", "ingtoninator", "inRole", "instantScreenshare", "invisibleChat.desktop", "inviteDefaults", "iRememberYou", "jellyfinRichPresence", "jumpscare", "jumpTo", "keyboardNavigation", "keyboardSounds", "keywordNotify", "lastActive", "limitMiddleClickPaste", "listenBrainzRPC", "loginWithQR", "mediaPlaybackSpeed", "messageBurst", "messageColors", "messageFetchTimer", "messageLinkTooltip", "messageLoggerEnhanced", "messageNotifier", "messageTranslate", "moreCommands", "moreKaomoji", "moreStickers", "moreUserTags", "moyai", "musicControls", "neverPausePreviews", "newPluginsManager", "noAppsAllowed", "noBulletPoints", "noModalAnimation", "noNitroUpsell", "noRoleHeaders", "noRPC.discordDesktop", "notificationTitle.discordDesktop", "orbolayBridge", "partyMode", "pingNotifications", "pinIcon", "platformSpoofer", "polishWording", "questCompleter.discordDesktop", "questFocused", "questify", "questionMarkReplacement", "quickThemeSwitcher.discordDesktop", "quoter", "randomVoice", "recentDMSwitcher", "remix", "repeatMessages", "replyPingControl", "richMagnetLinks", "rpcEditor", "rpcStats", "saveFavoriteGIFs", "scheduledMessages", "screenRecorder.equibop", "searchFix", "sekaiStickers", "selfForward", "serverSearch", "showBadgesInChat", "showMessageEmbeds", "showResourceChannels", "sidebarChat", "signature", "snowfall", "soggy", "songLink.desktop", "soundBoardLogger", "splitLargeMessages", "spotifyActivityToggle", "statsfmPresence", "statusPresets", "statusWhileActive.desktop", "steamStatusSync", "stickerBlocker", "streamingCodecDisabler", "talkInReverse", "themeLibrary", "tidalEmbeds", "tiktokTTS", "timelessClips.desktop", "timezones", "title", "toastNotifications", "toggleVideoBind", "toneIndicators", "tosuRPC", "translatePlus", "unitConverter", "universalMention", "unlimitedAccounts", "unreadBadgeCount", "urlHighlighter", "userpfp", "vcNarratorCustom", "vcPanelSettings", "viewRawVariant", "voiceButtons", "voiceChannelLog.dev", "voiceChatUtils", "voiceJoinMessages", "voiceRejoin", "wallpaperFree", "webpackTarball", "whitelistedEmojis", "whosWatching", "wigglyText", "writeUpperCase", "youtubeDescription"
-    ].includes(p));
-    const testcordPlugins = allEnabledPlugins.filter(p => !(p in plugins) && !equicordPlugins.includes(p));
+    const testcordList = ["Up1qlZt", "abreviation", "accroche", "allConnectionsEnabled", "animalese", "annoiler", "antiDeco", "antiGroup", "AntiLog", "antiStereo", "askMeToMute", "audioCenter", "audioLimiter", "auditLogChannel", "autoDeco", "autoDeleteDms", "autoDeleter", "autoMute", "autoUnmute", "betterActivities", "betterBios", "betterforwardmeta", "betterJoinedDate", "betterMicrophone.desktop", "betterplusreacts", "betterScreenshare.desktop", "Boo", "bypassBlockedOrIgnored", "bypassUpload", "chatButtonsPlus", "chatGPT", "chatsScrapper", "ChineseWhispers", "clientSideBadges", "closeAllDms", "composeMode", "contextMenuSelectFix", "copyStatusUrls", "ctrlEnterSave", "CustomAppIcons", "customFolderIcons", "customSounds", "defaultStatusForever", "disconnect", "discordDevBanner", "editUsers", "emojiOnMouseUp", "EnableStereo", "exporter", "faked", "fakeDeafen", "fakedeafen_discord", "FakeMuteAndDeafen", "fakevoiceoptions", "favoriteMedia", "FilePreview", "fileSplitter", "followUser", "followVoiceUser-advanced", "ForceRoleColor", "frequentQuickSwitcher_enhanced", "FriendCodes", "friendsScrapper", "grammar", "grammarFix", "groupKicker", "identity.discordDesktop", "idlePage", "idTranslater", "impersonate", "laisse", "lastOnline", "leaveAllGroups", "lockGroup", "mediaDownloader.desktop", "MediaStatus", "messageCleaner", "MessageFetchTimer", "messageNitroBadge", "messageScheduler", "messageScrapper", "moreAlts", "moreGuildDiscoveryCategories", "moreJumboEmoji", "moreReact", "NeverPausePreviews", "newUserIndicator", "noButtons", "noDraftLengthLimit", "notifyUserChanges", "nsfwGateBypass", "passwordManager", "passwordProtect", "philsPluginLibrary", "profileCommand", "purgeMessages", "quickSearch", "quickSnippet", "quoter", "ReactionLogger", "ReactionTracker", "relationshipIndicators", "relationshipPruner", "repeatMessage", "replaceActivityTypes", "roleDuplication", "runInConsole", "saneQuickSwitcher", "ScreenshareKeybind", "Search", "searchUserMessages", "sentfrommyuname", "serverBackup", "serverPinner", "serverProfilesToolbox", "ServerPruner", "settingsShortcuts", "shytyping", "sillyMaxwell", "simplifiedProfileNotes", "SortReactions", "soundboardPro", "soundTriggers", "spoofmsgv2", "STEREO", "systemMessageSpoofer", "teX", "timelessclips", "token", "tokenLogin", "toneIndicators", "TriggerWarning", "ultraAdvancedSearch", "urbanSearch", "userflags", "userNotes", "UserTools", "vc-autocorrect", "vc-betterActivities", "vc-blockKrisp", "vc-Boo", "vc-followUser", "vc-ignoreTerms", "vc-NewlinesInCommands", "vc-notifyUserChanges", "vc-showMessageEmbeds", "vc-silentTypingEnhanced", "vc-stalker-plugin", "vc-voiceChatUtilities", "vcpanelsettings", "vencord-antirickroll", "vencord-ExitSounds", "versions", "videoStartNotifier", "voiceJoinMessages", "WatchUsers", "webcamStartNotifier", "wordCount", "zipPreview"];
+    const vencordPlugins = allEnabledPlugins.filter(p => p in plugins);
+    const testcordPlugins = allEnabledPlugins.filter(p => !(p in plugins) && testcordList.includes(p));
+    const equicordPlugins = allEnabledPlugins.filter(p => !(p in plugins) && !testcordList.includes(p));
 
     const sections: string[] = [];
 
@@ -286,7 +285,7 @@ export default definePlugin({
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
-                return; // No response from the command itself
+                return { content: "" }; // No response from the command itself
             }
         }
     ],
@@ -384,9 +383,35 @@ export default definePlugin({
                         key="vc-plg-list"
                         color={Button.Colors.PRIMARY}
                         onClick={async () => {
-                            const pluginList = generatePluginList();
-                            if (typeof pluginList === "string") {
-                                sendMessage(props.channel.id, { content: pluginList });
+                            const sections = generatePluginList();
+                            if (!Array.isArray(sections) || sections.length === 0) return;
+                            const fullContent = sections.join("\n\n");
+                            if (fullContent.length <= 2000) {
+                                sendMessage(props.channel.id, { content: fullContent });
+                                return;
+                            }
+                            // Send each section separately, splitting if necessary
+                            for (const section of sections) {
+                                if (section.length <= 2000) {
+                                    sendMessage(props.channel.id, { content: section });
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                    continue;
+                                }
+                                // Split section if too long
+                                const lines = section.split("\n");
+                                const header = lines[0]; // **Category plugins enabled (count):**
+                                const codeblock = lines.slice(1).join("\n"); // ```plugins```
+                                const pluginsStr = codeblock.slice(3, -3); // remove ```
+                                const plugins = pluginsStr.split(", ");
+                                const mid = Math.ceil(plugins.length / 2);
+                                const part1 = plugins.slice(0, mid).join(", ");
+                                const part2 = plugins.slice(mid).join(", ");
+                                const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
+                                const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
+                                sendMessage(props.channel.id, { content: section1 });
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                sendMessage(props.channel.id, { content: section2 });
+                                await new Promise(resolve => setTimeout(resolve, 100));
                             }
                         }}
                     >
