@@ -258,9 +258,31 @@ export default definePlugin({
                     return { content: fullContent };
                 }
 
-                // Send each section separately with delay
+                // Send each section separately, splitting if necessary
                 for (const section of sections) {
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section });
+                    if (section.length <= 2000) {
+                        await sendMessage(SelectedChannelStore.getChannelId(), { content: section });
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        continue;
+                    }
+
+                    // Split section if too long
+                    const lines = section.split("\n");
+                    const header = lines[0]; // **Category plugins enabled (count):**
+                    const codeblock = lines.slice(1).join("\n"); // ```plugins```
+                    const pluginsStr = codeblock.slice(3, -3); // remove ```
+                    const plugins = pluginsStr.split(", ");
+
+                    const mid = Math.ceil(plugins.length / 2);
+                    const part1 = plugins.slice(0, mid).join(", ");
+                    const part2 = plugins.slice(mid).join(", ");
+
+                    const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
+                    const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
+
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section1 });
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section2 });
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
