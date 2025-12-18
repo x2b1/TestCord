@@ -19,7 +19,7 @@
 import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
 
 
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, VencordDevsById } from "./constants";
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, TestcordDevsById, VencordDevsById } from "./constants";
 
 /**
  * Calls .join(" ") on the arguments
