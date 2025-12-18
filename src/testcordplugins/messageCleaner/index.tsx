@@ -13,6 +13,7 @@ import {
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Menu, RestAPI, UserStore } from "@webpack/common";
 import { Channel, Message } from "discord-types/general";
+import { TestcordDevs } from "@utils/constants";
 
 const settings = definePluginSettings({
   enabled: {
