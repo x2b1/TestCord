@@ -235,23 +235,39 @@ export default definePlugin({
                 if (pluginList.length <= 2000) {
                     await sendMessage(SelectedChannelStore.getChannelId(), { content: pluginList });
                 } else {
-                    // Split the plugins list into chunks
+                    // Split the plugins list into chunks where each message is under 2000 chars
                     const lines = pluginList.split("\n");
-                    const header = lines[0]; // **Plugins enabled (count):**
+                    const baseHeader = lines[0]; // **Plugins enabled (count):**
                     const codeblock = lines.slice(1).join("\n"); // ```plugins```
                     const pluginsStr = codeblock.slice(3, -3); // remove ```
                     const plugins = pluginsStr.split(", ");
 
-                    const mid = Math.ceil(plugins.length / 2);
-                    const part1 = plugins.slice(0, mid).join(", ");
-                    const part2 = plugins.slice(mid).join(", ");
+                    const parts: string[][] = [];
+                    let currentPart: string[] = [];
+                    let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length; // estimate header length
 
-                    const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
-                    const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
+                    for (const plugin of plugins) {
+                        const pluginWithComma = plugin + ", ";
+                        if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
+                            parts.push(currentPart);
+                            currentPart = [plugin];
+                            currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length + plugin.length;
+                        } else {
+                            currentPart.push(plugin);
+                            currentLength += pluginWithComma.length;
+                        }
+                    }
+                    if (currentPart.length > 0) {
+                        parts.push(currentPart);
+                    }
 
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section1 });
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section2 });
+                    const totalParts = parts.length;
+                    for (let i = 0; i < totalParts; i++) {
+                        const partPlugins = parts[i];
+                        const partContent = `${baseHeader} [Part ${i + 1}/${totalParts}]:**\n${makeCodeblock(partPlugins.join(", "))}`;
+                        await sendMessage(SelectedChannelStore.getChannelId(), { content: partContent });
+                        if (i < totalParts - 1) await new Promise(resolve => setTimeout(resolve, 100));
+                    }
                 }
 
                 return { content: "" }; // No response from the command itself
