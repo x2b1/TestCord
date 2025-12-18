@@ -2,6 +2,7 @@ import { disableStyle, enableStyle } from "@api/Styles";
 import ErrorBoundary from "@components/ErrorBoundary";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
+import { TestcordDevs } from "@utils/constants";
 
 import { settings } from "./settings";
 import style from "./style.css?managed";
@@ -12,8 +13,8 @@ const UserPanelSection = findByPropsLazy("default").default;
 function makeIcon(enabled?: boolean) {
     return (
         <svg width="20" height="20" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zm7.91 6a1 1 0 0 1 .993.883l.007.117v2a7 7 0 0 1-5.468 6.834l-.232.042a4 4 0 0 1-7.45-1.328L7 17v-5h-.996a1 1 0 0 1-.993-.883L5 11V9a1 1 0 0 1 .883-.993L6 8h13.91z"/>
-            {!enabled && <path fill="var(--red-400)" d="M4.5 2.5L21 19"/>}
+            <path fill="currentColor" d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zm7.91 6a1 1 0 0 1 .993.883l.007.117v2a7 7 0 0 1-5.468 6.834l-.232.042a4 4 0 0 1-7.45-1.328L7 17v-5h-.996a1 1 0 0 1-.993-.883L5 11V9a1 1 0 0 1 .883-.993L6 8h13.91z" />
+            {!enabled && <path fill="var(--red-400)" d="M4.5 2.5L21 19" />}
         </svg>
     );
 }
