@@ -187,10 +187,10 @@ async function generateDebugInfoMessage() {
 function generatePluginList() {
     const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin]?.required;
 
-    // Get all enabled plugins from Settings.plugins
-    const allEnabledPlugins = Object.keys(Settings.plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p)).sort();
+    // Get all enabled plugins from PluginMeta (includes both stock and user plugins)
+    const allEnabledPlugins = Object.keys(PluginMeta).filter(p => isPluginEnabled(p) && !isApiPlugin(p)).sort();
 
-    return `**Plugins enabled: (${allEnabledPlugins.length})**\n${makeCodeblock(allEnabledPlugins.join(", "))}`;
+    return `**Plugins enabled (${allEnabledPlugins.length}):**\n${makeCodeblock(allEnabledPlugins.join(", "))}`;
 }
 
 const checkForUpdatesOnce = onlyOnce(checkForUpdates);
@@ -270,7 +270,7 @@ export default definePlugin({
                     }
                 }
 
-                return { content: "" }; // No response from the command itself
+                return { content: "\u200B" }; // Send zero-width space to avoid sending command text
             }
         }
     ],
@@ -368,35 +368,55 @@ export default definePlugin({
                         key="vc-plg-list"
                         color={Button.Colors.PRIMARY}
                         onClick={async () => {
-                            const sections = generatePluginList();
-                            if (!Array.isArray(sections) || sections.length === 0) return;
-                            const fullContent = sections.join("\n\n");
-                            if (fullContent.length <= 2000) {
-                                sendMessage(props.channel.id, { content: fullContent });
-                                return;
-                            }
-                            // Send each section separately, splitting if necessary
-                            for (const section of sections) {
-                                if (section.length <= 2000) {
-                                    sendMessage(props.channel.id, { content: section });
-                                    await new Promise(resolve => setTimeout(resolve, 100));
-                                    continue;
+                            // If the message is exactly "/testcord-plugins", delete it to avoid showing the command text
+                            if (props.message.content.trim() === "/testcord-plugins") {
+                                try {
+                                    await DiscordNative.http.delete(`${DiscordNative.http.getAPIBaseURL()}/channels/${props.channel.id}/messages/${props.message.id}`);
+                                } catch (e) {
+                                    // Ignore if delete fails
                                 }
-                                // Split section if too long
-                                const lines = section.split("\n");
-                                const header = lines[0]; // **Category plugins enabled (count):**
+                            }
+
+                            const pluginList = generatePluginList();
+                            if (!pluginList) return;
+
+                            // Split if too long
+                            if (pluginList.length <= 2000) {
+                                sendMessage(props.channel.id, { content: pluginList });
+                            } else {
+                                // Split the plugins list into chunks where each message is under 2000 chars
+                                const lines = pluginList.split("\n");
+                                const baseHeader = lines[0]; // **Plugins enabled (count):**
                                 const codeblock = lines.slice(1).join("\n"); // ```plugins```
                                 const pluginsStr = codeblock.slice(3, -3); // remove ```
                                 const plugins = pluginsStr.split(", ");
-                                const mid = Math.ceil(plugins.length / 2);
-                                const part1 = plugins.slice(0, mid).join(", ");
-                                const part2 = plugins.slice(mid).join(", ");
-                                const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
-                                const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
-                                sendMessage(props.channel.id, { content: section1 });
-                                await new Promise(resolve => setTimeout(resolve, 100));
-                                sendMessage(props.channel.id, { content: section2 });
-                                await new Promise(resolve => setTimeout(resolve, 100));
+
+                                const parts: string[][] = [];
+                                let currentPart: string[] = [];
+                                let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length; // estimate header length
+
+                                for (const plugin of plugins) {
+                                    const pluginWithComma = plugin + ", ";
+                                    if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
+                                        parts.push(currentPart);
+                                        currentPart = [plugin];
+                                        currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length + plugin.length;
+                                    } else {
+                                        currentPart.push(plugin);
+                                        currentLength += pluginWithComma.length;
+                                    }
+                                }
+                                if (currentPart.length > 0) {
+                                    parts.push(currentPart);
+                                }
+
+                                const totalParts = parts.length;
+                                for (let i = 0; i < totalParts; i++) {
+                                    const partPlugins = parts[i];
+                                    const partContent = `${baseHeader} [Part ${i + 1}/${totalParts}]:**\n${makeCodeblock(partPlugins.join(", "))}`;
+                                    sendMessage(props.channel.id, { content: partContent });
+                                    if (i < totalParts - 1) await new Promise(resolve => setTimeout(resolve, 100));
+                                }
                             }
                         }}
                     >
