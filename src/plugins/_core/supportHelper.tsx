@@ -16,6 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { existsSync, readdirSync } from "fs";
+import { join, parse } from "path";
+
 import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, Settings } from "@api/Settings";
@@ -185,33 +188,97 @@ async function generateDebugInfoMessage() {
     return content.trim();
 }
 
+// Helper function to read plugin directories
+function getPluginsFromDir(dirPath: string): string[] {
+    try {
+        if (!existsSync(dirPath)) {
+            console.warn(`Plugin directory not found: ${dirPath}`);
+            return [];
+        }
+
+        const items = readdirSync(dirPath, { withFileTypes: true });
+        return items
+            .filter(item => item.isDirectory() || (item.isFile() && (item.name.endsWith('.js') || item.name.endsWith('.ts') || item.name.endsWith('.tsx'))))
+            .map(item => item.isFile() ? parse(item.name).name : item.name)
+            .sort();
+    } catch (error) {
+        console.error(`Error reading plugin directory ${dirPath}:`, error);
+        return [];
+    }
+}
+
 function generatePluginList() {
     const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin]?.required;
 
     // Get all enabled plugins from Settings.plugins
     const allEnabledPlugins = Object.keys(Settings.plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
-    // Categorize plugins
-    const vencordList = Object.keys(plugins).filter(p => !plugins[p].required);
-    const equicordList = ["_api", "_misc", "absRPC", "allCallTimers", "altKrispSwitch", "alwaysExpandProfiles", "amITyping", "anammox", "animalese", "atSomeone", "autoZipper", "bannersEverywhere", "baseDecoder", "betterActivities", "betterAudioPlayer", "betterBanReasons", "betterBlockedUsers", "betterCommands", "betterInvites", "betterPlusReacts", "betterQuickReact", "betterUserArea", "blockKeywords", "blockKrisp", "bypassPinPrompt", "bypassStatus", "channelBadges", "channelTabs", "characterCounter", "cleanChannelName", "clientSideBlock", "clipsEnhancements.discordDesktop", "commandPalette", "contentWarning", "copyProfileColors", "copyStatusUrls", "copyUserMention", "customFolderIcons", "customSounds", "customTimestamps", "customUserColors", "disableCameras", "discordDevBanner", "elementHighlighter", "elementHighlighter.dev", "equicordHelper", "equicordToolbox", "equissant", "exitSounds", "exportMessages", "fastDeleteChannels", "findReply", "fixFileExtensions", "followVoiceUser", "fontLoader", "forwardAnywhere", "frequentQuickSwitcher", "friendCloud", "friendCodes", "friendshipRanks", "friendTags", "fullVcPfp", "gensokyoRadioRPC", "ghosted", "gifCollections", "gifRoulette", "githubRepos", "globalBadges", "googleThat", "guildPickerDumper", "guildTagSettings", "hideChatButtons", "hideServers", "holyNotes", "homeTyping", "hopOn", "husk", "iconViewer", "idleAutoRestart", "ignoreCalls", "ignoreTerms", "imgToGif", "ingtoninator", "inRole", "instantScreenshare", "invisibleChat.desktop", "inviteDefaults", "iRememberYou", "jellyfinRichPresence", "jumpscare", "jumpTo", "keyboardNavigation", "keyboardSounds", "keywordNotify", "lastActive", "limitMiddleClickPaste", "listenBrainzRPC", "loginWithQR", "mediaPlaybackSpeed", "messageBurst", "messageColors", "messageFetchTimer", "messageLinkTooltip", "messageLoggerEnhanced", "messageNotifier", "messageTranslate", "moreCommands", "moreKaomoji", "moreStickers", "moreUserTags", "moyai", "musicControls", "neverPausePreviews", "newPluginsManager", "noAppsAllowed", "noBulletPoints", "noModalAnimation", "noNitroUpsell", "noRoleHeaders", "noRPC.discordDesktop", "notificationTitle.discordDesktop", "orbolayBridge", "partyMode", "pingNotifications", "pinIcon", "platformSpoofer", "polishWording", "questCompleter.discordDesktop", "questFocused", "questify", "questionMarkReplacement", "quickThemeSwitcher.discordDesktop", "quoter", "randomVoice", "recentDMSwitcher", "remix", "repeatMessages", "replyPingControl", "richMagnetLinks", "rpcEditor", "rpcStats", "saveFavoriteGIFs", "scheduledMessages", "screenRecorder.equibop", "searchFix", "sekaiStickers", "selfForward", "serverSearch", "showBadgesInChat", "showMessageEmbeds", "showResourceChannels", "sidebarChat", "signature", "snowfall", "soggy", "songLink.desktop", "soundBoardLogger", "splitLargeMessages", "spotifyActivityToggle", "statsfmPresence", "statusPresets", "statusWhileActive.desktop", "steamStatusSync", "stickerBlocker", "streamingCodecDisabler", "talkInReverse", "themeLibrary", "tidalEmbeds", "tiktokTTS", "timelessClips.desktop", "timezones", "title", "toastNotifications", "toggleVideoBind", "toneIndicators", "tosuRPC", "translatePlus", "unitConverter", "universalMention", "unlimitedAccounts", "unreadBadgeCount", "urlHighlighter", "userpfp", "vcNarratorCustom", "vcPanelSettings", "viewRawVariant", "voiceButtons", "voiceChannelLog.dev", "voiceChatUtils", "voiceJoinMessages", "voiceRejoin", "wallpaperFree", "webpackTarball", "whitelistedEmojis", "whosWatching", "wigglyText", "writeUpperCase", "youtubeDescription"];
-    const testcordList = ["Up1qlZt", "abreviation", "accroche", "allConnectionsEnabled", "animalese", "annoiler", "antiDeco", "antiGroup", "AntiLog", "antiStereo", "askMeToMute", "audioCenter", "audioLimiter", "auditLogChannel", "autoDeco", "autoDeleteDms", "autoDeleter", "autoMute", "autoUnmute", "betterActivities", "betterBios", "betterforwardmeta", "betterJoinedDate", "betterMicrophone.desktop", "betterplusreacts", "betterScreenshare.desktop", "Boo", "bypassBlockedOrIgnored", "bypassUpload", "chatButtonsPlus", "chatGPT", "chatsScrapper", "ChineseWhispers", "clientSideBadges", "closeAllDms", "composeMode", "contextMenuSelectFix", "copyStatusUrls", "ctrlEnterSave", "CustomAppIcons", "customFolderIcons", "customSounds", "defaultStatusForever", "disconnect", "discordDevBanner", "editUsers", "emojiOnMouseUp", "EnableStereo", "exporter", "faked", "fakeDeafen", "fakedeafen_discord", "FakeMuteAndDeafen", "fakevoiceoptions", "favoriteMedia", "FilePreview", "fileSplitter", "followUser", "followVoiceUser-advanced", "ForceRoleColor", "frequentQuickSwitcher_enhanced", "FriendCodes", "friendsScrapper", "grammar", "grammarFix", "groupKicker", "identity.discordDesktop", "idlePage", "idTranslater", "impersonate", "laisse", "lastOnline", "leaveAllGroups", "lockGroup", "mediaDownloader.desktop", "MediaStatus", "messageCleaner", "MessageFetchTimer", "messageNitroBadge", "messageScheduler", "messageScrapper", "moreAlts", "moreGuildDiscoveryCategories", "moreJumboEmoji", "moreReact", "NeverPausePreviews", "newUserIndicator", "noButtons", "noDraftLengthLimit", "notifyUserChanges", "nsfwGateBypass", "passwordManager", "passwordProtect", "philsPluginLibrary", "profileCommand", "purgeMessages", "quickSearch", "quickSnippet", "quoter", "ReactionLogger", "ReactionTracker", "relationshipIndicators", "relationshipPruner", "repeatMessage", "replaceActivityTypes", "roleDuplication", "runInConsole", "saneQuickSwitcher", "ScreenshareKeybind", "Search", "searchUserMessages", "sentfrommyuname", "serverBackup", "serverPinner", "serverProfilesToolbox", "ServerPruner", "settingsShortcuts", "shytyping", "sillyMaxwell", "simplifiedProfileNotes", "SortReactions", "soundboardPro", "soundTriggers", "spoofmsgv2", "STEREO", "systemMessageSpoofer", "teX", "timelessclips", "token", "tokenLogin", "toneIndicators", "TriggerWarning", "ultraAdvancedSearch", "urbanSearch", "userflags", "userNotes", "UserTools", "vc-autocorrect", "vc-betterActivities", "vc-blockKrisp", "vc-Boo", "vc-followUser", "vc-ignoreTerms", "vc-NewlinesInCommands", "vc-notifyUserChanges", "vc-showMessageEmbeds", "vc-silentTypingEnhanced", "vc-stalker-plugin", "vc-voiceChatUtilities", "vcpanelsettings", "vencord-antirickroll", "vencord-ExitSounds", "versions", "videoStartNotifier", "voiceJoinMessages", "WatchUsers", "webcamStartNotifier", "wordCount", "zipPreview"];
-    const vencordPlugins = allEnabledPlugins.filter(p => vencordList.includes(p)).sort();
-    const equicordPlugins = allEnabledPlugins.filter(p => equicordList.includes(p)).sort();
-    const testcordPlugins = allEnabledPlugins.filter(p => testcordList.includes(p)).sort();
+    // Get plugins from directories
+    const vencordPlugins = getPluginsFromDir(join(process.cwd(), "src", "plugins"));
+    const equicordPlugins = getPluginsFromDir(join(process.cwd(), "src", "equicordplugins"));
+    const testcordPlugins = getPluginsFromDir(join(process.cwd(), "src", "testcordplugins"));
+
+    // Convert to Sets for faster lookups
+    const vencordSet = new Set(vencordPlugins);
+    const equicordSet = new Set(equicordPlugins);
+    const testcordSet = new Set(testcordPlugins);
+
+    // Categorize enabled plugins
+    const enabledVencordPlugins = allEnabledPlugins.filter(p => vencordSet.has(p)).sort();
+    const enabledEquicordPlugins = allEnabledPlugins.filter(p => equicordSet.has(p)).sort();
+    const enabledTestcordPlugins = allEnabledPlugins.filter(p => testcordSet.has(p)).sort();
 
     const sections: string[] = [];
 
-    if (vencordPlugins.length) {
-        sections.push(`**Vencord plugins enabled (${vencordPlugins.length}):**\n${makeCodeblock(vencordPlugins.sort().join(", "))}`);
-    }
+    // Helper to add section with splitting if needed
+    const addSection = (title: string, pluginList: string[], maxLength: number = 2000) => {
+        if (pluginList.length === 0) return;
 
-    if (equicordPlugins.length) {
-        sections.push(`**Equicord plugins enabled (${equicordPlugins.length}):**\n${makeCodeblock(equicordPlugins.sort().join(", "))}`);
-    }
+        const content = `${title} (${pluginList.length}):\n\`\`\`\n${pluginList.join(", ")}\n\`\`\``;
 
-    if (testcordPlugins.length) {
-        sections.push(`**Testcord plugins enabled (${testcordPlugins.length}):**\n${makeCodeblock(testcordPlugins.sort().join(", "))}`);
-    }
+        // Split if too large
+        if (content.length <= maxLength) {
+            sections.push(content);
+            return;
+        }
+
+        // Split the plugins list into chunks
+        const chunks: string[][] = [];
+        let currentChunk: string[] = [];
+        let currentLength = title.length + 15; // Base length with formatting
+
+        for (const plugin of pluginList) {
+            const pluginWithComma = plugin + ", ";
+            if (currentLength + pluginWithComma.length > maxLength - 50) { // Reserve space for codeblock formatting
+                if (currentChunk.length > 0) {
+                    chunks.push([...currentChunk]);
+                    currentChunk = [plugin];
+                    currentLength = title.length + plugin.length + 15;
+                } else {
+                    // Single plugin is too long (unlikely), just add it
+                    chunks.push([plugin]);
+                }
+            } else {
+                currentChunk.push(plugin);
+                currentLength += pluginWithComma.length;
+            }
+        }
+
+        if (currentChunk.length > 0) {
+            chunks.push(currentChunk);
+        }
+
+        // Add each chunk as a separate section
+        chunks.forEach((chunk, index) => {
+            const sectionTitle = chunks.length === 1 ? title : `${title} [Part ${index + 1}/${chunks.length}]`;
+            sections.push(`${sectionTitle} (${chunk.length}/${pluginList.length}):\n\`\`\`\n${chunk.join(", ")}\n\`\`\``);
+        });
+    };
+
+    // Add sections in order
+    addSection("**Vencord plugins enabled**", enabledVencordPlugins);
+    addSection("**Equicord plugins enabled**", enabledEquicordPlugins);
+    addSection("**Testcord plugins enabled**", enabledTestcordPlugins);
 
     return sections;
 }
@@ -254,36 +321,9 @@ export default definePlugin({
                     return { content: "Unable to generate plugin list." };
                 }
 
-                const fullContent = sections.join("\n\n");
-                if (fullContent.length <= 2000) {
-                    return { content: fullContent };
-                }
-
-                // Send each section separately, splitting if necessary
+                // Send each section (already split if necessary)
                 for (const section of sections) {
-                    if (section.length <= 2000) {
-                        await sendMessage(SelectedChannelStore.getChannelId(), { content: section });
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        continue;
-                    }
-
-                    // Split section if too long
-                    const lines = section.split("\n");
-                    const header = lines[0]; // **Category plugins enabled (count):**
-                    const codeblock = lines.slice(1).join("\n"); // ```plugins```
-                    const pluginsStr = codeblock.slice(3, -3); // remove ```
-                    const plugins = pluginsStr.split(", ");
-
-                    const mid = Math.ceil(plugins.length / 2);
-                    const part1 = plugins.slice(0, mid).join(", ");
-                    const part2 = plugins.slice(mid).join(", ");
-
-                    const section1 = `${header} part 1**\n${makeCodeblock(part1)}`;
-                    const section2 = `${header} part 2**\n${makeCodeblock(part2)}`;
-
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section1 });
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section2 });
+                    await sendMessage(SelectedChannelStore.getChannelId(), { content: section });
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
