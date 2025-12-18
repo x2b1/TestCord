@@ -9,29 +9,26 @@ import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
-
-import { TestcordDevs } from "@utils/constants";
-  Menu,
-  React,
-  VoiceStateStore,
-  RestAPI,
-  SelectedGuildStore,
-  Constants,
+    Menu,
+    React,
+    VoiceStateStore,
+    RestAPI,
+    SelectedGuildStore,
+    Constants,
 } from "@webpack/common";
 import definePlugin, { OptionType } from "@utils/types";
 import { User, VoiceState } from "@vencord/discord-types";
-
 import { TestcordDevs } from "@utils/constants";
 
 type TLeashedUserInfo = {
-  userId: string;
-  lastChannelId: string | null;
+    userId: string;
+    lastChannelId: string | null;
 } | null;
 
 interface UserContextProps {
-  channel: any;
-  user: User;
-  guildId?: string;
+    channel: any;
+    user: User;
+    guildId?: string;
 }
 
 let leashedUserInfo: TLeashedUserInfo = null;
@@ -42,177 +39,175 @@ const UserStore = findStoreLazy("UserStore");
 const SelectedChannelStore = findStoreLazy("SelectedChannelStore");
 
 const settings = definePluginSettings({
-  enabled: {
-    type: OptionType.BOOLEAN,
-    default: true,
-    description: "Enable laisse plugin",
-  },
-  onlyWhenInVoice: {
-    type: OptionType.BOOLEAN,
-    default: true,
-    description: "Only move the user when you are in a voice channel",
-  },
-  showNotifications: {
-    type: OptionType.BOOLEAN,
-    default: true,
-    description: "Show notifications during moves",
-  },
+    enabled: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Enable laisse plugin",
+    },
+    onlyWhenInVoice: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Only move the user when you are in a voice channel",
+    },
+    showNotifications: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Show notifications during moves",
+    },
 });
 
 // Function to move a user to a voice channel
 async function moveUserToVoiceChannel(
-  userId: string,
-  channelId: string
+    userId: string,
+    channelId: string
 ): Promise<void> {
-  const guildId = SelectedGuildStore.getGuildId();
-  if (!guildId) {
-    throw new Error("No server selected");
-  }
-
-  try {
-    // Use Discord API to move the user
-    await RestAPI.patch({
-      url: Constants.Endpoints.GUILD_MEMBER(guildId, userId),
-      body: {
-        channel_id: channelId,
-      },
-    });
-
-    if (settings.store.showNotifications) {
-      const user = UserStore.getUser(userId);
-      showNotification({
-        title: "laisse - Success",
-        body: `${
-          user?.username || "User"
-        } has been moved to your voice channel`,
-      });
+    const guildId = SelectedGuildStore.getGuildId();
+    if (!guildId) {
+        throw new Error("No server selected");
     }
-  } catch (error) {
-    console.error("laisse: Discord API error:", error);
-    throw error;
-  }
+
+    try {
+        // Use Discord API to move the user
+        await RestAPI.patch({
+            url: Constants.Endpoints.GUILD_MEMBER(guildId, userId),
+            body: {
+                channel_id: channelId,
+            },
+        });
+
+        if (settings.store.showNotifications) {
+            const user = UserStore.getUser(userId);
+            showNotification({
+                title: "laisse - Success",
+                body: `${user?.username || "User"
+                    } has been moved to your voice channel`,
+            });
+        }
+    } catch (error) {
+        console.error("laisse: Discord API error:", error);
+        throw error;
+    }
 }
 
 const UserContextMenuPatch: NavContextMenuPatchCallback = (
-  children,
-  { channel, user }: UserContextProps
+    children,
+    { channel, user }: UserContextProps
 ) => {
-  if (UserStore.getCurrentUser().id === user.id) return;
+    if (UserStore.getCurrentUser().id === user.id) return;
 
-  const [checked, setChecked] = React.useState(
-    leashedUserInfo?.userId === user.id
-  );
+    const [checked, setChecked] = React.useState(
+        leashedUserInfo?.userId === user.id
+    );
 
-  children.push(
-    <Menu.MenuSeparator />,
-    <Menu.MenuCheckboxItem
-      id="laisse-leash-user"
-      label="laisse - Hook the user"
-      checked={checked}
-      action={() => {
-        if (leashedUserInfo?.userId === user.id) {
-          leashedUserInfo = null;
-          setChecked(false);
-          showNotification({
-            title: "laisse",
-            body: `User ${user.username} is no longer hooked`,
-          });
-          return;
-        }
+    children.push(
+        <Menu.MenuSeparator />,
+        <Menu.MenuCheckboxItem
+            id="laisse-leash-user"
+            label="laisse - Hook the user"
+            checked={checked}
+            action={() => {
+                if (leashedUserInfo?.userId === user.id) {
+                    leashedUserInfo = null;
+                    setChecked(false);
+                    showNotification({
+                        title: "laisse",
+                        body: `User ${user.username} is no longer hooked`,
+                    });
+                    return;
+                }
 
-        leashedUserInfo = {
-          userId: user.id,
-          lastChannelId: null,
-        };
-        setChecked(true);
-        showNotification({
-          title: "laisse",
-          body: `User ${user.username} is now hooked to you`,
-        });
-      }}
-    />
-  );
+                leashedUserInfo = {
+                    userId: user.id,
+                    lastChannelId: null,
+                };
+                setChecked(true);
+                showNotification({
+                    title: "laisse",
+                    body: `User ${user.username} is now hooked to you`,
+                });
+            }}
+        />
+    );
 };
 
 export default definePlugin({
-  name: "laisse",
-  description:
-    "Hooks a user to you by automatically moving them to the voice channel you go to",
-  authors: [TestcordDevs.x2b],
-  settings,
-  contextMenus: {
-    "user-context": UserContextMenuPatch,
-  },
-  flux: {
-    async VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[] }) {
-      if (!leashedUserInfo || !settings.store.enabled) return;
-
-      const myId = UserStore.getCurrentUser().id;
-      const myCurrentChannelId = SelectedChannelStore.getVoiceChannelId();
-
-      // Check if we should only act when in voice
-      if (settings.store.onlyWhenInVoice && !myCurrentChannelId) return;
-
-      for (const voiceState of voiceStates) {
-        // Detect when current user changes voice channel
-        if (
-          voiceState.userId === myId &&
-          voiceState.channelId !== myLastChannelId
-        ) {
-          myLastChannelId = voiceState.channelId;
-
-          // If we have a hooked user and we join a voice channel
-          if (voiceState.channelId && leashedUserInfo.userId) {
-            const leashedUserVoiceState = VoiceStateStore.getVoiceStateForUser(
-              leashedUserInfo.userId
-            );
-
-            // If the hooked user is in a different voice channel
-            if (
-              leashedUserVoiceState &&
-              leashedUserVoiceState.channelId !== voiceState.channelId
-            ) {
-              try {
-                // Try to move the hooked user to our channel
-                // Note: This feature requires moderation permissions
-                const user = UserStore.getUser(leashedUserInfo.userId);
-
-                if (settings.store.showNotifications) {
-                  showNotification({
-                    title: "laisse",
-                    body: `Attempting to move ${
-                      user?.username || "user"
-                    } to your voice channel`,
-                  });
-                }
-
-                // Use Discord API to move the user
-                await moveUserToVoiceChannel(
-                  leashedUserInfo.userId,
-                  voiceState.channelId
-                );
-              } catch (error) {
-                console.error("laisse: Error during move:", error);
-                if (settings.store.showNotifications) {
-                  showNotification({
-                    title: "laisse - Error",
-                    body: "Unable to move user (insufficient permissions)",
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
+    name: "laisse",
+    description:
+        "Hooks a user to you by automatically moving them to the voice channel you go to",
+    authors: [TestcordDevs.x2b],
+    settings,
+    contextMenus: {
+        "user-context": UserContextMenuPatch,
     },
-  },
-  start() {
-    myLastChannelId = SelectedChannelStore.getVoiceChannelId();
-  },
-  stop() {
-    leashedUserInfo = null;
-    myLastChannelId = null;
-  },
+    flux: {
+        async VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
+            if (!leashedUserInfo || !settings.store.enabled) return;
+
+            const myId = UserStore.getCurrentUser().id;
+            const myCurrentChannelId = SelectedChannelStore.getVoiceChannelId();
+
+            // Check if we should only act when in voice
+            if (settings.store.onlyWhenInVoice && !myCurrentChannelId) return;
+
+            for (const voiceState of voiceStates) {
+                // Detect when current user changes voice channel
+                if (
+                    voiceState.userId === myId &&
+                    voiceState.channelId !== myLastChannelId
+                ) {
+                    myLastChannelId = voiceState.channelId;
+
+                    // If we have a hooked user and we join a voice channel
+                    if (voiceState.channelId && leashedUserInfo.userId) {
+                        const leashedUserVoiceState = VoiceStateStore.getVoiceStateForUser(
+                            leashedUserInfo.userId
+                        );
+
+                        // If the hooked user is in a different voice channel
+                        if (
+                            leashedUserVoiceState &&
+                            leashedUserVoiceState.channelId !== voiceState.channelId
+                        ) {
+                            try {
+                                // Try to move the hooked user to our channel
+                                // Note: This feature requires moderation permissions
+                                const user = UserStore.getUser(leashedUserInfo.userId);
+
+                                if (settings.store.showNotifications) {
+                                    showNotification({
+                                        title: "laisse",
+                                        body: `Attempting to move ${user?.username || "user"
+                                            } to your voice channel`,
+                                    });
+                                }
+
+                                // Use Discord API to move the user
+                                await moveUserToVoiceChannel(
+                                    leashedUserInfo.userId,
+                                    voiceState.channelId
+                                );
+                            } catch (error) {
+                                console.error("laisse: Error during move:", error);
+                                if (settings.store.showNotifications) {
+                                    showNotification({
+                                        title: "laisse - Error",
+                                        body: "Unable to move user (insufficient permissions)",
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+    },
+    start() {
+        myLastChannelId = SelectedChannelStore.getVoiceChannelId();
+    },
+    stop() {
+        leashedUserInfo = null;
+        myLastChannelId = null;
+    },
 });
 
 
