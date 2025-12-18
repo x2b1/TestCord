@@ -7,6 +7,7 @@
 import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts } from "@webpack/common";
 
 const googleExtensions = ["pdf"];
@@ -39,8 +40,8 @@ export default definePlugin({
     description: "View PDF and Office files directly inside Discord messages.",
     authors: [
         { name: "AGreenPig", id: 427179231164760066n },
-        { name: "x2b", id: 0n },
-    , TestcordDevs.x2b],
+        TestcordDevs.x2b
+    ],
     settings,
 
     start() {
@@ -100,7 +101,7 @@ export default definePlugin({
                     }
                 },
             };
-        });
+        }, FileViewerIcon);
     },
 
     stop() {
