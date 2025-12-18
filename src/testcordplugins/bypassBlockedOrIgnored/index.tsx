@@ -6,6 +6,7 @@
 
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
+import { TestcordDevs } from "@utils/constants";
 
 import settings from "./settings";
 import { RelationshipStore } from "./stores";
