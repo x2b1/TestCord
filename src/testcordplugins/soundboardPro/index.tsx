@@ -404,10 +404,10 @@ async function playSound(sound: Sound) {
             showNotification({
                 title: "🔊 Soundboard Pro",
                 body: `Son "${sound.name}" joué${isForcedDiscord
-                        ? " dans le canal vocal"
-                        : isLocalFile
-                            ? " (fichier local)"
-                            : " dans le canal vocal"
+                    ? " dans le canal vocal"
+                    : isLocalFile
+                        ? " (fichier local)"
+                        : " dans le canal vocal"
                     }`,
                 color: "var(--green-360)",
             });
@@ -740,7 +740,7 @@ export function openSoundboardPro() {
 }
 
 // Composant bouton pour le panel vocal (comme fakeDeafen)
-const PanelButton = findComponentByCodeLazy("disabled:", "PANEL_BUTTON");
+const PanelButton = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
 
 function SoundboardIcon() {
     return (

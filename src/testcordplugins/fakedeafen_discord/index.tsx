@@ -13,7 +13,7 @@ let originalVoiceStateUpdate: any; // Stores the original voiceStateUpdate metho
 let fakeDeafenEnabled = false; // Flag that indicates if "fake deafen" is active
 
 // Generic Button component obtained via code search
-const Button = findComponentByCodeLazy("disabled:", "PANEL_BUTTON");
+const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
 
 /** Icon that changes color when fake deafen is enabled/disabled */
 function FakeDeafenIcon() {
