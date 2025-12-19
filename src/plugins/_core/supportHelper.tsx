@@ -150,10 +150,6 @@ async function generateDebugInfoMessage() {
         Platform: platformDisplay
     };
 
-    if (IS_DISCORD_DESKTOP) {
-        info["Last Crash Reason"] = (await tryOrElse(() => DiscordNative.processUtils.getLastCrash(), undefined))?.rendererCrashReason ?? "N/A";
-    }
-
     const potentiallyProblematicPlugins = ([
         "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge", "ClientTheme", "Ingtoninator", "NeverPausePreviews",
         "IdleAutoRestart",
