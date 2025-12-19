@@ -19,7 +19,7 @@ type LoopbackActions = {
     toggleSelfDeaf(): unknown;
 };
 
-const PanelButton = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
+const PanelButton = findComponentByCodeLazy("disabled:", "PANEL_BUTTON");
 const VoiceActions = findByPropsLazy("setLoopback", "toggleSelfDeaf") as unknown as LoopbackActions | null;
 
 const ShowCurrentGame = getUserSettingLazy<boolean>("status", "showCurrentGame")!;

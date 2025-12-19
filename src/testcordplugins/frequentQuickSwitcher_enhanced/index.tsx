@@ -64,8 +64,8 @@ export default definePlugin({
         {
             find: "#{intl::QUICKSWITCHER_PLACEHOLDER}",
             replacement: {
-                match: /let{selectedIndex:\i,results:\i}/,
-                replace: "$& this.props.results = $self.modifyResults(this.state.query, results);"
+                match: /let{selectedIndex:\i,results:\i}=this\.props/,
+                replace: "let{selectedIndex:$1,results:$2}=this.props; this.props.results = $self.modifyResults(this.state.query, $2);"
             },
         }
     ]

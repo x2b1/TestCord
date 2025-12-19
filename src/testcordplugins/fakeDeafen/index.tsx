@@ -7,7 +7,7 @@ import { TestcordDevs } from "@utils/constants";
 let originalVoiceStateUpdate: any;
 let fakeDeafenEnabled = false;
 
-const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
+const Button = findComponentByCodeLazy("disabled:", "PANEL_BUTTON");
 
 function FakeDeafenIcon() {
     const color = fakeDeafenEnabled ? "#fff" : "#888";
