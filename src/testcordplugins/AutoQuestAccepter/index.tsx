@@ -344,9 +344,13 @@ function stopAutoCompleting(): void {
 async function acceptAllQuests(): Promise<void> {
     try {
         const quests = Array.from(QuestsStore.quests.values()) as Quest[];
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Starting acceptAllQuests with ${quests.length} quests`);
 
         for (const quest of quests) {
             const questStatus = getQuestStatus(quest, false);
+            const questName = normalizeQuestName(quest.config.messages.questName);
+
+            AutoQuestLogger.info(`[${new Date().toLocaleString()}] Checking quest: ${questName}, status: ${questStatus}, enrolled: ${!!quest.userStatus?.enrolledAt}, completed: ${!!quest.userStatus?.completedAt}, expired: ${new Date(quest.config.expiresAt) <= new Date()}`);
 
             // Check if quest is available to accept (not claimed, not completed, not expired, not already enrolled)
             if (questStatus === QuestStatus.Unclaimed &&
@@ -354,13 +358,20 @@ async function acceptAllQuests(): Promise<void> {
                 !quest.userStatus?.completedAt &&
                 new Date(quest.config.expiresAt) > new Date()) {
 
+                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Accepting quest: ${questName}`);
                 const accepted = await acceptQuest(quest);
                 if (accepted) {
+                    AutoQuestLogger.info(`[${new Date().toLocaleString()}] Successfully accepted quest: ${questName}`);
                     // Wait 1000ms before processing the next quest
                     await new Promise(resolve => setTimeout(resolve, 1000));
+                } else {
+                    AutoQuestLogger.warn(`[${new Date().toLocaleString()}] Failed to accept quest: ${questName}`);
                 }
+            } else {
+                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Skipping quest: ${questName} - not eligible`);
             }
         }
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Finished acceptAllQuests`);
     } catch (error) {
         AutoQuestLogger.error(`[${new Date().toLocaleString()}] Error in acceptAllQuests:`, error);
     }
