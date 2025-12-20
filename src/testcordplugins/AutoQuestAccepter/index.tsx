@@ -4,19 +4,21 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import { Devs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { Button, FluxDispatcher, RestAPI } from "@webpack/common";
+import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
+import { FluxDispatcher, RestAPI } from "@webpack/common";
 
 import { Quest, QuestStatus } from "../../equicordplugins/questify/utils/components";
 import { fetchAndDispatchQuests, getQuestStatus, normalizeQuestName, refreshQuest, reportPlayGameQuestProgress, reportVideoQuestProgress, waitUntilEnrolled } from "../../equicordplugins/questify/utils/misc";
 import { activeQuestIntervals } from "../../equicordplugins/questify/index";
 
 const QuestsStore = findByPropsLazy("getQuest");
+const QuestIcon = findComponentByCodeLazy("10.47a.76.76");
 const AutoQuestLogger = new Logger("AutoQuestAccepter");
 
 let autoAcceptInterval: NodeJS.Timeout | null = null;
@@ -364,6 +366,78 @@ async function acceptAllQuests(): Promise<void> {
     }
 }
 
+async function claimAllQuests(): Promise<void> {
+    try {
+        const quests = Array.from(QuestsStore.quests.values()) as Quest[];
+
+        for (const quest of quests) {
+            const questStatus = getQuestStatus(quest, false);
+
+            // Check if quest is completed and can be claimed
+            if (questStatus === QuestStatus.Unclaimed &&
+                quest.userStatus?.completedAt &&
+                !quest.userStatus?.claimedAt &&
+                new Date(quest.config.expiresAt) > new Date()) {
+
+                const questName = normalizeQuestName(quest.config.messages.questName);
+
+                try {
+                    const response = await RestAPI.post({
+                        url: `/quests/${quest.id}/claim-reward`,
+                        body: {}
+                    });
+
+                    if (response?.status === 200 || response?.status === 204) {
+                        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Successfully claimed quest: ${questName}`);
+
+                        if (!settings.store.disableNotifications) {
+                            showNotification({
+                                title: "Quest Auto-Claimed",
+                                body: `Claimed quest: ${questName}`,
+                                dismissOnClick: true,
+                            });
+                        }
+
+                        // Trigger quest fetch to update the store
+                        await fetchAndDispatchQuests("AutoQuestAccepter", AutoQuestLogger);
+                    }
+                } catch (error) {
+                    AutoQuestLogger.error(`[${new Date().toLocaleString()}] Failed to claim quest ${questName}:`, error);
+                }
+
+                // Wait 1000ms before processing the next quest
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+    } catch (error) {
+        AutoQuestLogger.error(`[${new Date().toLocaleString()}] Error in claimAllQuests:`, error);
+    }
+}
+
+function AcceptAllButton() {
+    return (
+        <HeaderBarButton
+            tooltip="Accept All Quests"
+            position="bottom"
+            className="vc-auto-quest-accept-all"
+            icon={QuestIcon}
+            onClick={acceptAllQuests}
+        />
+    );
+}
+
+function ClaimAllButton() {
+    return (
+        <HeaderBarButton
+            tooltip="Claim All Quests"
+            position="bottom"
+            className="vc-auto-quest-claim-all"
+            icon={QuestIcon}
+            onClick={claimAllQuests}
+        />
+    );
+}
+
 function renderAcceptAllButton(): JSX.Element {
     return (
         <Button
@@ -405,13 +479,14 @@ export default definePlugin({
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] AutoQuestAccepter plugin stopped`);
     },
 
-    patches: [
+    headerBarButton: [
         {
-            find: "headingControls,children:",
-            replacement: {
-                match: /return\{headingControls,children:/,
-                replace: "return{headingControls:[$self.renderAcceptAllButton(),...headingControls],children:"
-            }
+            icon: QuestIcon,
+            render: AcceptAllButton
+        },
+        {
+            icon: QuestIcon,
+            render: ClaimAllButton
         }
     ],
 
