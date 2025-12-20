@@ -38,6 +38,40 @@ function FakeDeafenIcon() {
 }
 
 function FakeDeafenButton() {
+    const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+    const handleClick = React.useCallback(() => {
+        fakeDeafenEnabled = !fakeDeafenEnabled;
+        const ChannelStore = findByProps("getChannel", "getDMFromUserId");
+        const SelectedChannelStore = findByProps("getVoiceChannelId");
+        const GatewayConnection = findByProps("voiceStateUpdate", "voiceServerPing");
+        const MediaEngineStore = findByProps("isDeaf", "isMute");
+        if (ChannelStore && SelectedChannelStore && GatewayConnection && typeof GatewayConnection.voiceStateUpdate === "function") {
+            const channelId = SelectedChannelStore.getVoiceChannelId?.();
+            const channel = channelId ? ChannelStore.getChannel?.(channelId) : null;
+            if (channel) {
+                if (fakeDeafenEnabled) {
+                    GatewayConnection.voiceStateUpdate({
+                        channelId: channel.id,
+                        guildId: channel.guild_id,
+                        selfMute: true,
+                        selfDeaf: true
+                    });
+                } else {
+                    const selfMute = MediaEngineStore?.isMute?.() ?? false;
+                    const selfDeaf = MediaEngineStore?.isDeaf?.() ?? false;
+                    GatewayConnection.voiceStateUpdate({
+                        channelId: channel.id,
+                        guildId: channel.guild_id,
+                        selfMute,
+                        selfDeaf
+                    });
+                }
+            }
+        }
+        forceUpdate();
+    }, []);
+
     return (
         <UserAreaButton
             tooltipText={fakeDeafenEnabled ? "Disable Fake Deafen" : "Enable Fake Deafen"}
@@ -45,36 +79,7 @@ function FakeDeafenButton() {
             role="switch"
             aria-checked={fakeDeafenEnabled}
             redGlow={fakeDeafenEnabled}
-            onClick={() => {
-                fakeDeafenEnabled = !fakeDeafenEnabled;
-                const ChannelStore = findByProps("getChannel", "getDMFromUserId");
-                const SelectedChannelStore = findByProps("getVoiceChannelId");
-                const GatewayConnection = findByProps("voiceStateUpdate", "voiceServerPing");
-                const MediaEngineStore = findByProps("isDeaf", "isMute");
-                if (ChannelStore && SelectedChannelStore && GatewayConnection && typeof GatewayConnection.voiceStateUpdate === "function") {
-                    const channelId = SelectedChannelStore.getVoiceChannelId?.();
-                    const channel = channelId ? ChannelStore.getChannel?.(channelId) : null;
-                    if (channel) {
-                        if (fakeDeafenEnabled) {
-                            GatewayConnection.voiceStateUpdate({
-                                channelId: channel.id,
-                                guildId: channel.guild_id,
-                                selfMute: true,
-                                selfDeaf: true
-                            });
-                        } else {
-                            const selfMute = MediaEngineStore?.isMute?.() ?? false;
-                            const selfDeaf = MediaEngineStore?.isDeaf?.() ?? false;
-                            GatewayConnection.voiceStateUpdate({
-                                channelId: channel.id,
-                                guildId: channel.guild_id,
-                                selfMute,
-                                selfDeaf
-                            });
-                        }
-                    }
-                }
-            }}
+            onClick={handleClick}
         />
     );
 }
