@@ -11,7 +11,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
-import { FluxDispatcher, RestAPI } from "@webpack/common";
+import { ContextMenuApi, FluxDispatcher, Menu, RestAPI } from "@webpack/common";
 
 import { Quest, QuestStatus } from "../../equicordplugins/questify/utils/components";
 import { fetchAndDispatchQuests, getQuestStatus, normalizeQuestName, refreshQuest, reportPlayGameQuestProgress, reportVideoQuestProgress, waitUntilEnrolled } from "../../equicordplugins/questify/utils/misc";
@@ -414,40 +414,50 @@ async function claimAllQuests(): Promise<void> {
     }
 }
 
-function AcceptAllButton() {
+function QuestButton() {
+    function handleClick(event: React.MouseEvent<Element>) {
+        // ListItem does not support onAuxClick, so we have to listen for mousedown events.
+        // Ignore left and right clicks sent via mousedown events to prevent double events.
+        if (event.type === "mousedown" && event.button !== 2) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        ContextMenuApi.openContextMenu(event, () => (
+            <Menu.Menu
+                navId="auto-quest-button-context-menu"
+                onClose={ContextMenuApi.closeContextMenu}
+                aria-label="Auto Quest Button Menu"
+            >
+                <Menu.MenuItem
+                    id="accept-all-quests-option"
+                    label="Accept All Quests"
+                    action={acceptAllQuests}
+                />
+                <Menu.MenuItem
+                    id="claim-all-quests-option"
+                    label="Claim All Quests"
+                    action={claimAllQuests}
+                />
+            </Menu.Menu>
+        ));
+    }
+
     return (
         <HeaderBarButton
-            tooltip="Accept All Quests"
+            tooltip="Auto Quest Actions"
             position="bottom"
-            className="vc-auto-quest-accept-all"
+            className="vc-auto-quest-button"
             icon={QuestIcon}
-            onClick={acceptAllQuests}
+            onClick={handleClick}
+            onContextMenu={handleClick}
         />
     );
 }
 
-function ClaimAllButton() {
-    return (
-        <HeaderBarButton
-            tooltip="Claim All Quests"
-            position="bottom"
-            className="vc-auto-quest-claim-all"
-            icon={QuestIcon}
-            onClick={claimAllQuests}
-        />
-    );
-}
 
-function renderAcceptAllButton(): JSX.Element {
-    return (
-        <Button
-            size={Button.Sizes.SMALL}
-            onClick={acceptAllQuests}
-        >
-            Accept All Quests
-        </Button>
-    );
-}
 
 export default definePlugin({
     name: "AutoQuestAccepter",
