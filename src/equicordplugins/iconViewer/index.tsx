@@ -8,7 +8,8 @@ import { MagnifyingGlassIcon } from "@components/Icons";
 import SettingsPlugin from "@plugins/_core/settings";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { StartAt } from "@utils/types";
-import { LazyComponentWebpack, openUserSettingsPanel } from "@webpack/common";
+import { LazyComponentWebpack } from "@webpack";
+import { openUserSettingsPanel } from "@webpack/common";
 
 export default definePlugin({
     name: "IconViewer",
