@@ -6,14 +6,14 @@
 
 import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types"; // Function to register the plugin in Vencord
-import { findByProps, findComponentByCodeLazy } from "@webpack"; // Helpers to find internal modules
+import { findByProps } from "@webpack"; // Helpers to find internal modules
 import { React } from "@webpack/common"; // React used to create components
+import { UserAreaButton } from "@api/UserArea";
 
 let originalVoiceStateUpdate: any; // Stores the original voiceStateUpdate method
 let fakeDeafenEnabled = false; // Flag that indicates if "fake deafen" is active
 
-// Generic Button component obtained via code search
-const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
+// Removed custom Button component, now using UserAreaButton from API
 
 /** Icon that changes color when fake deafen is enabled/disabled */
 function FakeDeafenIcon() {
@@ -131,17 +131,6 @@ export default definePlugin({
     name: "FakeDeafen",
     description: "Fake deafen - no need to explain much, just open and try it.",
     authors: [TestcordDevs.x2b],
-    patches: [
-        {
-            // Inject button into "speaking while muted" UI
-            find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
-            replacement: {
-                match: /className:\i\.buttons,.{0,50}children:\[/,
-                replace: "$&$self.FakeDeafenButton(),",
-            },
-        },
-    ],
-    FakeDeafenButton, // Expose component for patch
     start() {
         // On start, override voiceStateUpdate to always apply fakeDeafenEnabled
         const GatewayConnection = findByProps(
@@ -163,6 +152,8 @@ export default definePlugin({
                 return originalVoiceStateUpdate.apply(this, arguments);
             };
         }
+
+        Vencord.Api.UserArea.addUserAreaButton("fake-deafen", () => <FakeDeafenButton />);
     },
     stop() {
         // On stop, restore original method
@@ -173,6 +164,8 @@ export default definePlugin({
         if (GatewayConnection && originalVoiceStateUpdate) {
             GatewayConnection.voiceStateUpdate = originalVoiceStateUpdate;
         }
+
+        Vencord.Api.UserArea.removeUserAreaButton("fake-deafen");
     },
 });
 

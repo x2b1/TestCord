@@ -7,7 +7,7 @@ import { TestcordDevs } from "@utils/constants";
 let originalVoiceStateUpdate: any;
 let fakeDeafenEnabled = false;
 
-const Button = findComponentByCodeLazy("disabled:", "PANEL_BUTTON");
+// Removed custom Button component, now using UserAreaButton from API
 
 function FakeDeafenIcon() {
     const color = fakeDeafenEnabled ? "#fff" : "#888";
@@ -46,9 +46,9 @@ function FakeDeafenIcon() {
 
 function FakeDeafenButton() {
     return (
-        <Button
+        <UserAreaButton
             tooltipText={fakeDeafenEnabled ? "Disable Fake Deafen" : "Enable Fake Deafen"}
-            icon={FakeDeafenIcon}
+            icon={<FakeDeafenIcon />}
             role="switch"
             aria-checked={fakeDeafenEnabled}
             redGlow={fakeDeafenEnabled}
