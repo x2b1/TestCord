@@ -1,7 +1,0 @@
-- [x] Update description in settings from "Equicord settings section" to "TestCord settings section"
-- [x] Update section title from "Equicord Settings" to "TestCord Settings"
-- [x] Update main tab title from "Equicord" to "TestCord" and panel title to "TestCord Settings"
-- [x] Update updater panel title from "Equicord Updater" to "TestCord Updater"
-- [x] Update cloud panel title from "Equicord Cloud" to "TestCord Cloud"
-- [x] Update settings section mappings for "EquicordSettings" to "TestCordSettings" and "EquicordCloud" to "TestCordCloud"
-- [x] Update makeSettingsCategories for "EquicordSettings" to "TestCordSettings"
