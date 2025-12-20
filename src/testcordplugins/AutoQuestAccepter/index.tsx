@@ -489,16 +489,10 @@ export default definePlugin({
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] AutoQuestAccepter plugin stopped`);
     },
 
-    headerBarButton: [
-        {
-            icon: QuestIcon,
-            render: AcceptAllButton
-        },
-        {
-            icon: QuestIcon,
-            render: ClaimAllButton
-        }
-    ],
+    headerBarButton: {
+        icon: QuestIcon,
+        render: QuestButton
+    },
 
     flux: {
         // Listen for quest updates and check for new quests
