@@ -10,7 +10,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { FluxDispatcher, RestAPI } from "@webpack/common";
+import { Button, FluxDispatcher, RestAPI } from "@webpack/common";
 
 import { Quest, QuestStatus } from "../../equicordplugins/questify/utils/components";
 import { fetchAndDispatchQuests, getQuestStatus, normalizeQuestName, refreshQuest, reportPlayGameQuestProgress, reportVideoQuestProgress, waitUntilEnrolled } from "../../equicordplugins/questify/utils/misc";
@@ -67,6 +67,29 @@ async function acceptQuest(quest: Quest): Promise<boolean> {
 
             // Trigger quest fetch to update the store
             await fetchAndDispatchQuests("AutoQuestAccepter", AutoQuestLogger);
+
+            // Refresh the quest to ensure userStatus is updated
+            quest = refreshQuest(quest);
+
+            // Start completion if auto-complete is enabled and quest is enrolled
+            if (settings.store.autoCompleteEnabled && quest.userStatus?.enrolledAt) {
+                // Determine quest type and start appropriate completion
+                const hasVideoTask = quest.config.taskConfigV2?.tasks.WATCH_VIDEO ||
+                    quest.config.taskConfigV2?.tasks.WATCH_VIDEO_ON_MOBILE;
+                const hasPlayTask = quest.config.taskConfigV2?.tasks.PLAY_ON_DESKTOP ||
+                    quest.config.taskConfigV2?.tasks.PLAY_ON_XBOX ||
+                    quest.config.taskConfigV2?.tasks.PLAY_ON_PLAYSTATION ||
+                    quest.config.taskConfigV2?.tasks.PLAY_ACTIVITY;
+
+                if (hasVideoTask) {
+                    await startVideoQuestCompletion(quest);
+                } else if (hasPlayTask) {
+                    await startPlayQuestCompletion(quest);
+                } else {
+                    AutoQuestLogger.warn(`[${new Date().toLocaleString()}] Unsupported quest type for: ${questName}`);
+                }
+            }
+
             return true;
         }
     } catch (error) {
@@ -316,6 +339,42 @@ function stopAutoCompleting(): void {
     }
 }
 
+async function acceptAllQuests(): Promise<void> {
+    try {
+        const quests = Array.from(QuestsStore.quests.values()) as Quest[];
+
+        for (const quest of quests) {
+            const questStatus = getQuestStatus(quest, false);
+
+            // Check if quest is available to accept (not claimed, not completed, not expired, not already enrolled)
+            if (questStatus === QuestStatus.Unclaimed &&
+                !quest.userStatus?.enrolledAt &&
+                !quest.userStatus?.completedAt &&
+                new Date(quest.config.expiresAt) > new Date()) {
+
+                const accepted = await acceptQuest(quest);
+                if (accepted) {
+                    // Wait 1000ms before processing the next quest
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        }
+    } catch (error) {
+        AutoQuestLogger.error(`[${new Date().toLocaleString()}] Error in acceptAllQuests:`, error);
+    }
+}
+
+function renderAcceptAllButton(): JSX.Element {
+    return (
+        <Button
+            size={Button.Sizes.SMALL}
+            onClick={acceptAllQuests}
+        >
+            Accept All Quests
+        </Button>
+    );
+}
+
 export default definePlugin({
     name: "AutoQuestAccepter",
     description: "Automatically accepts and completes Discord quests in the background using existing quest mechanics",
@@ -345,6 +404,16 @@ export default definePlugin({
 
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] AutoQuestAccepter plugin stopped`);
     },
+
+    patches: [
+        {
+            find: "headingControls,children:",
+            replacement: {
+                match: /return\{headingControls,children:/,
+                replace: "return{headingControls:[$self.renderAcceptAllButton(),...headingControls],children:"
+            }
+        }
+    ],
 
     flux: {
         // Listen for quest updates and check for new quests
