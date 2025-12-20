@@ -7,19 +7,18 @@
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
-import { ErrorBoundary } from "@components/index";
 import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
+import { findByPropsLazy } from "@webpack";
 import { MediaEngineStore, React, showToast, Toasts, UserStore, VoiceStateStore } from "@webpack/common";
+import { UserAreaButton } from "@api/UserArea";
 
 type LoopbackActions = {
     setLoopback(tag: string, enabled: boolean): unknown;
     toggleSelfDeaf(): unknown;
 };
 
-const PanelButton = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
 const VoiceActions = findByPropsLazy("setLoopback", "toggleSelfDeaf") as unknown as LoopbackActions | null;
 
 const ShowCurrentGame = getUserSettingLazy<boolean>("status", "showCurrentGame")!;
@@ -188,13 +187,12 @@ function MicLoopbackButton() {
     }, []);
 
     return (
-        <PanelButton
+        <UserAreaButton
             tooltipText="Mic Test Loopback"
-            icon={() => <MicLoopbackIcon active={loopbackActive} />}
+            icon={<MicLoopbackIcon active={loopbackActive} />}
             role="switch"
             aria-checked={loopbackActive}
             onClick={handleToggle}
-            selected={loopbackActive}
             className={`vc-betterusertools-btn${loopbackActive ? " danger" : ""}`}
         />
     );
@@ -269,29 +267,30 @@ function OffTheRadarButton() {
             forceUpdate();
         } catch (err) {
             log.error("OffTheRadar toggle failed", err);
-            Toasts.open({ message: "OffTheRadar toggle failed", type: Toasts.Type.FAILURE });
+            showToast("OffTheRadar toggle failed", Toasts.Type.FAILURE);
         }
     };
 
     return (
-        <PanelButton
+        <UserAreaButton
             tooltipText={otrState.enabled ? "Off The Radar (on)" : "Off The Radar (off)"}
-            icon={() => <RadarIcon active={otrState.enabled} />}
+            icon={<RadarIcon active={otrState.enabled} />}
             role="switch"
             aria-checked={otrState.enabled}
             onClick={toggle}
-            selected={otrState.enabled}
             className={`vc-betterusertools-btn${otrState.enabled ? " danger" : ""}`}
         />
     );
 }
 
-function UserToolsButtons() {
-    const { micLoopbackButton, offTheRadarButton } = settings.use(["micLoopbackButton", "offTheRadarButton"]);
-    const buttons = [];
-    if (micLoopbackButton) buttons.push(<MicLoopbackButton key="mic-loopback" />);
-    if (offTheRadarButton) buttons.push(<OffTheRadarButton key="off-the-radar" />);
-    return buttons.length ? buttons : null;
+function renderMicLoopbackButton() {
+    const { micLoopbackButton } = settings.store;
+    return micLoopbackButton ? <MicLoopbackButton /> : null;
+}
+
+function renderOffTheRadarButton() {
+    const { offTheRadarButton } = settings.store;
+    return offTheRadarButton ? <OffTheRadarButton /> : null;
 }
 
 const styles = `
@@ -306,21 +305,12 @@ export default definePlugin({
     settings,
     styles,
 
-    patches: [
-        {
-            find: "#{intl::ACCOUNT_SPEAKING_WHILE_MUTED}",
-            replacement: {
-                match: /className:\i\.buttons,.{0,80}?children:\[/,
-                replace: "$&$self.renderUserButtons(),",
-            },
-        }
-    ],
-
-    renderUserButtons: ErrorBoundary.wrap(UserToolsButtons, { noop: true }),
-
     async start() {
         await loadOtrState();
         if (otrState.enabled) await applyOtrEnable();
+
+        Vencord.Api.UserArea.addUserAreaButton("better-user-tools-mic-loopback", renderMicLoopbackButton);
+        Vencord.Api.UserArea.addUserAreaButton("better-user-tools-off-the-radar", renderOffTheRadarButton);
     },
 
     stop() {
@@ -330,5 +320,8 @@ export default definePlugin({
         missingModuleNotified = false;
 
         if (otrState.enabled) void applyOtrDisable();
+
+        Vencord.Api.UserArea.removeUserAreaButton("better-user-tools-mic-loopback");
+        Vencord.Api.UserArea.removeUserAreaButton("better-user-tools-off-the-radar");
     },
 });
