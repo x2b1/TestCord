@@ -101,15 +101,13 @@ export async function uploadFileToCatboxNative(_, url: string, fileBuffer: Array
 }
 
 export async function uploadFileToLitterboxNative(_, url: string, fileBuffer: ArrayBuffer, fileName: string, fileType: string, time: string): Promise<string> {
-    const litterboxUrl = "https://litterbox.catbox.moe/resources/internals/api.php";
-
     const formData = new FormData();
     formData.append("reqtype", "fileupload");
     const file = new Blob([fileBuffer], { type: fileType || "application/octet-stream" });
     formData.append("fileToUpload", new File([file], fileName));
     formData.append("time", time);
 
-    const response = await safeFetch(litterboxUrl, { method: "POST", body: formData });
+    const response = await fetch(url, { method: "POST", body: formData });
     const result = await response.text();
     const trimmed = result.trim();
     if (!response.ok) throw new Error(`Litterbox: HTTP ${response.status}`);
