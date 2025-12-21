@@ -5,12 +5,13 @@
  */
 
 import { Devs } from "@utils/constants";
-import definePlugin from "@utils/types";
+import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 
 import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
 import { DataStore } from "@api/index";
+import { definePluginSettings } from "@api/Settings";
 
 import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
@@ -20,6 +21,22 @@ const os = (window as any).require?.("os");
 const path = (window as any).require?.("path");
 
 const log = new Logger("LastOnline");
+
+const settings = definePluginSettings({
+    filePath: {
+        type: OptionType.STRING,
+        description: "Path to save the online list JSON file. Use {downloads} for Downloads folder.",
+        default: "{downloads}/onlinelist.json"
+    }
+});
+
+function getFilePath() {
+    let filePath = settings.store.filePath;
+    if (filePath.includes("{downloads}")) {
+        filePath = filePath.replace("{downloads}", path.join(os.homedir(), "Downloads"));
+    }
+    return path.resolve(filePath);
+}
 
 interface PresenceStatus {
     hasBeenOnline: boolean;
@@ -32,7 +49,7 @@ function saveOnlineList() {
     const data = Object.fromEntries(recentlyOnlineList);
     DataStore.set("lastOnlineData", data);
     if (fs && os && path) {
-        const filePath = path.join(os.homedir(), "Downloads", "onlinelist.json");
+        const filePath = getFilePath();
         try {
             fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
         } catch (e) {
@@ -43,7 +60,7 @@ function saveOnlineList() {
 
 function loadOnlineList() {
     if (fs && os && path) {
-        const filePath = path.join(os.homedir(), "Downloads", "onlinelist.json");
+        const filePath = getFilePath();
         try {
             if (fs.existsSync(filePath)) {
                 const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -100,6 +117,7 @@ export default definePlugin({
     name: "LastOnline",
     description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
     authors: [TestcordDevs.x2b],
+    settings,
     flux: {
         PRESENCE_UPDATES({ updates }) {
             log.debug(`Received PRESENCE_UPDATES with ${updates.length} updates`);
