@@ -23,19 +23,16 @@ const path = (window as any).require?.("path");
 const log = new Logger("LastOnline");
 
 const settings = definePluginSettings({
-    filePath: {
+    dirname: {
         type: OptionType.STRING,
-        description: "Path to save the online list JSON file. Use {downloads} for Downloads folder.",
-        default: "{downloads}/onlinelist.json"
+        description: "Directory to save the online list JSON file to. Leave empty to use Downloads folder.",
+        default: ""
     }
 });
 
 function getFilePath() {
-    let filePath = settings.store.filePath;
-    if (filePath.includes("{downloads}")) {
-        filePath = filePath.replace("{downloads}", path.join(os.homedir(), "Downloads"));
-    }
-    return path.resolve(filePath);
+    const dirname = settings.store.dirname || path.join((process as any).env.APPDATA || os.homedir(), "testcord", "onlinedata");
+    return path.join(dirname, "onlinelist.json");
 }
 
 interface PresenceStatus {
