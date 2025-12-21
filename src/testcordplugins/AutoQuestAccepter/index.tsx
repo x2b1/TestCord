@@ -19,30 +19,21 @@ import {
 import {
     fetchAndDispatchQuests,
     getQuestStatus,
-    normalizeQuestName,
-    reportPlayGameQuestProgress,
-    reportVideoQuestProgress
+    normalizeQuestName
 } from "../../equicordplugins/questify/utils/misc";
-
-import { activeQuestIntervals } from "../../equicordplugins/questify/index";
 
 const QuestsStore = findByPropsLazy("getQuest");
 const QuestIcon = findComponentByCodeLazy("10.47a.76.76");
 const log = new Logger("AutoQuestAccepter");
 
 let acceptInterval: NodeJS.Timeout | null = null;
-let completeInterval: NodeJS.Timeout | null = null;
+let claimInterval: NodeJS.Timeout | null = null;
 
 const settings = definePluginSettings({
     autoAccept: {
         type: OptionType.BOOLEAN,
         default: true,
         description: "Automatically accept new quests"
-    },
-    autoComplete: {
-        type: OptionType.BOOLEAN,
-        default: true,
-        description: "Automatically complete supported quests"
     },
     autoClaim: {
         type: OptionType.BOOLEAN,
@@ -93,104 +84,13 @@ async function autoAccept() {
         ) {
             await acceptQuest(q);
             await new Promise(r => setTimeout(r, 2000));
-
-            // If it's a video quest, start the video completion process immediately
-            const tasks = q.config.taskConfigV2?.tasks;
-            if (tasks && settings.store.autoComplete) {
-                if (tasks.WATCH_VIDEO || tasks.WATCH_VIDEO_ON_MOBILE) {
-                    log.info(`Starting video quest completion for ${normalizeQuestName(q.config.messages.questName)} after acceptance`);
-                    await startVideoQuest(q);
-                }
-            }
-
             await new Promise(r => setTimeout(r, 3000)); // Additional delay between quests
         }
     }
 }
 
 
-// ---------------- COMPLETE ----------------
 
-async function startVideoQuest(quest: Quest) {
-    if (activeQuestIntervals.has(quest.id)) return;
-
-    const task =
-        quest.config.taskConfigV2?.tasks.WATCH_VIDEO ??
-        quest.config.taskConfigV2?.tasks.WATCH_VIDEO_ON_MOBILE;
-
-    if (!task) return;
-
-    let progress = quest.userStatus?.progress?.WATCH_VIDEO?.value ?? 0;
-    const target = task.target;
-
-    log.info(`Starting video quest: ${normalizeQuestName(quest.config.messages.questName)}`);
-
-    const interval = setInterval(async () => {
-        if (progress >= target) {
-            clearInterval(interval);
-            activeQuestIntervals.delete(quest.id);
-            // Complete the quest properly instead of leaving at 99%
-            await reportVideoQuestProgress(quest, target, log);
-            return;
-        }
-
-        await reportVideoQuestProgress(quest, Math.min(progress + 10, target), log);
-        progress = Math.min(progress + 10, target);
-
-    }, 10_000);
-
-    activeQuestIntervals.set(quest.id, {
-        progressTimeout: interval,
-        rerenderTimeout: null as any,
-        progress,
-        duration: target,
-        type: "watch"
-    });
-}
-
-async function startPlayQuest(quest: Quest) {
-    if (activeQuestIntervals.has(quest.id)) return;
-
-    log.info(`Starting play quest: ${normalizeQuestName(quest.config.messages.questName)}`);
-
-    const interval = setInterval(async () => {
-        await reportPlayGameQuestProgress(quest, false, log);
-    }, 20_000);
-
-    activeQuestIntervals.set(quest.id, {
-        progressTimeout: interval,
-        rerenderTimeout: null as any,
-        progress: 0,
-        duration: 0,
-        type: "play"
-    });
-}
-
-async function autoComplete() {
-    if (!settings.store.autoComplete) return;
-
-    const quests = Array.from(QuestsStore.quests.values()) as Quest[];
-
-    for (const q of quests) {
-        if (
-            q.userStatus?.enrolledAt &&
-            !q.userStatus?.completedAt &&
-            !activeQuestIntervals.has(q.id)
-        ) {
-            const tasks = q.config.taskConfigV2?.tasks;
-            if (!tasks) continue;
-
-            if (tasks.WATCH_VIDEO || tasks.WATCH_VIDEO_ON_MOBILE) {
-                await startVideoQuest(q);
-            } else if (
-                tasks.PLAY_ON_DESKTOP ||
-                tasks.PLAY_ACTIVITY
-            ) {
-                await startPlayQuest(q);
-            }
-        }
-    }
-}
 
 
 // ---------------- CLAIM ----------------
@@ -209,7 +109,7 @@ async function autoClaim() {
             const name = normalizeQuestName(q.config.messages.questName);
 
             try {
-                const res = await RestAPI.put({
+                const res = await RestAPI.post({
                     url: `/quests/${q.id}/claim-reward`,
                     body: {}
                 });
@@ -368,121 +268,52 @@ async function acceptAllQuests(): Promise<void> {
 
 async function claimAllQuests(): Promise<void> {
     try {
-        log.info(`Starting claimAllQuests - using DOM click simulation with RestAPI fallback`);
+        log.info(`Starting claimAllQuests - using RestAPI`);
 
         // Temporarily disable auto-claim to avoid conflicts
         const wasAutoClaimEnabled = settings.store.autoClaim;
         settings.store.autoClaim = false;
 
-        // Wait a bit before starting to ensure page is ready
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
         let totalClaimed = 0;
-        let attempts = 0;
-        const maxAttempts = 10; // Reduced attempts since we have fallback
 
-        while (attempts < maxAttempts) {
-            // Scroll to load more quests if possible
-            window.scrollTo(0, document.body.scrollHeight);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        // Get all available quests
+        const quests = Array.from(QuestsStore.quests.values()) as Quest[];
 
-            // Find all quest claim buttons - more specific selectors
-            const claimButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"], [class*="button"]'))
-                .filter(btn => {
-                    const button = btn as HTMLElement;
-                    const buttonText = button.textContent?.toLowerCase() || '';
-                    const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
-                    const dataTestId = button.getAttribute('data-testid')?.toLowerCase() || '';
-                    const className = button.className?.toLowerCase() || '';
-
-                    // Check if button is visible and enabled
-                    const rect = button.getBoundingClientRect();
-                    const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.top < window.innerHeight;
-                    const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
-
-                    // More specific conditions for quest claim buttons
-                    const isClaimButton = (
-                        (buttonText.includes('claim') && buttonText.includes('quest')) ||
-                        (ariaLabel.includes('claim') && ariaLabel.includes('quest')) ||
-                        buttonText.includes('collect reward') ||
-                        buttonText.includes('claim reward') ||
-                        dataTestId.includes('claim') ||
-                        dataTestId.includes('collect') ||
-                        (className.includes('claim') && className.includes('quest')) ||
-                        (className.includes('collect') && className.includes('quest'))
-                    );
-
-                    return isVisible && isEnabled && isClaimButton;
-                }) as HTMLElement[];
-
-            log.info(`Found ${claimButtons.length} potential claim buttons on attempt ${attempts + 1}`);
-
-            if (claimButtons.length === 0) {
-                attempts++;
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                continue;
-            }
-
-            for (const button of claimButtons) {
-                const buttonText = button.textContent?.toLowerCase() || '';
-                log.info(`Attempting to claim quest via button: "${buttonText}"`);
+        for (const q of quests) {
+            if (
+                q.userStatus?.completedAt &&
+                !q.userStatus?.claimedAt &&
+                new Date(q.config.expiresAt) > new Date()
+            ) {
+                const name = normalizeQuestName(q.config.messages.questName);
 
                 try {
-                    // Try DOM click first
-                    button.focus();
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    log.info(`Claiming quest: ${name}`);
 
-                    button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    button.click();
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    button.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                    const res = await RestAPI.post({
+                        url: `/quests/${q.id}/claim-reward`,
+                        body: {}
+                    });
 
-                    log.info(`Successfully clicked claim button for quest`);
-                    totalClaimed++;
-
-                    // Wait between clicks
-                    const delay = 6000 + Math.random() * 3000; // 6-9 seconds
-                    log.info(`Waiting ${Math.round(delay / 1000)}s before next action`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-
-                } catch (clickError) {
-                    log.warn(`DOM click failed, attempting RestAPI fallback:`, clickError);
-
-                    // Fallback: Try to find quest ID from nearby elements and use RestAPI
-                    const questContainer = button.closest('[data-quest-id], [class*="quest"], [class*="card"]');
-                    if (questContainer) {
-                        const questId = questContainer.getAttribute('data-quest-id') ||
-                            questContainer.getAttribute('data-id') ||
-                            questContainer.id;
-
-                        if (questId) {
-                            try {
-                                const res = await RestAPI.put({
-                                    url: `/quests/${questId}/claim-reward`,
-                                    body: {}
-                                });
-
-                                if (res?.status === 200 || res?.status === 204) {
-                                    log.info(`Claimed quest ${questId} via RestAPI fallback`);
-                                    totalClaimed++;
-                                } else {
-                                    log.warn(`RestAPI fallback failed for quest ${questId}: ${res?.status}`);
-                                }
-                            } catch (apiError) {
-                                log.error(`RestAPI fallback error for quest ${questId}:`, apiError);
-                            }
-                        }
+                    if (res?.status === 200 || res?.status === 204) {
+                        log.info(`Claimed quest: ${name}`);
+                        totalClaimed++;
+                        showNotification({
+                            title: "Quest Claimed",
+                            body: name,
+                            dismissOnClick: true
+                        });
+                    } else {
+                        log.warn(`Claim failed for ${name} (${res?.status})`);
                     }
+
+                    // Wait between claims
+                    await new Promise(r => setTimeout(r, 1000));
+
+                } catch (e) {
+                    log.error(`Claim error for ${name}`, e);
                 }
             }
-
-            attempts++;
-            await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
         // Force refresh quests to update UI
@@ -569,7 +400,7 @@ export default definePlugin({
 
     stop() {
         if (acceptInterval) clearInterval(acceptInterval);
-        if (completeInterval) clearInterval(completeInterval);
+        if (claimInterval) clearInterval(claimInterval);
         log.info("Plugin stopped");
     }
 });

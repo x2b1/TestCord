@@ -1,19 +1,15 @@
-# TODO: Fix AutoQuestAccepter and lastOnline Plugins - Round 2
+# AutoQuestAccepter Fixes
 
-## AutoQuestAccepter Fixes
-- [x] Change accept interval to 20 seconds instead of 30
-- [x] Fix completion logic - currently sets to 99% instead of properly completing quests like questify
-- [x] Fix rate limiting - only 1 quest accepted, others failed
-- [x] Add video quest auto-completion after acceptance
-- [ ] Test manual accept/claim functions
+## Issues to Fix
+- [ ] Accept only works if in quest screen - switch manual acceptAllQuests to RestAPI instead of DOM clicks
+- [ ] Doesn't accept video quests properly via manual method - RestAPI will fix
+- [ ] Fails to claim quests - change PUT to POST for claim-reward
+- [ ] Questify has to complete quests since AutoQuestAccepter wrongly does it - remove autoComplete functionality
+- [ ] TypeError in claimAllQuests: className?.toLowerCase is not a function - fix className handling
 
-## lastOnline Fixes
-- [x] Fix indicator text - changed "Online X ago" to "Last online X ago"
-- [ ] Fix indicator visibility - last online text not showing anywhere
-- [ ] Add decorators to additional locations (DM lists, user popups, etc.)
-
-## Testing
-- [ ] Test updated accept interval
-- [ ] Test proper quest completion
-- [ ] Test last online indicators
-- [ ] Monitor logs for rate limiting and errors
+## Changes Needed
+- [ ] Update claimAllQuests to use RestAPI.post loop instead of DOM
+- [ ] Update acceptAllQuests to use RestAPI loop instead of DOM
+- [ ] Remove autoComplete settings and functions
+- [ ] Remove completeInterval from start/stop
+- [ ] Fix className handling in DOM filters (optional since removing DOM)
