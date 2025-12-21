@@ -2,12 +2,13 @@
  * AutoQuestAccepter – fixed version
  */
 
+import { HeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { RestAPI } from "@webpack/common";
+import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
+import { ContextMenuApi, Menu, RestAPI } from "@webpack/common";
 import { TestcordDevs } from "@utils/constants";
 
 import {
@@ -26,6 +27,7 @@ import {
 import { activeQuestIntervals } from "../../equicordplugins/questify/index";
 
 const QuestsStore = findByPropsLazy("getQuest");
+const QuestIcon = findComponentByCodeLazy("10.47a.76.76");
 const log = new Logger("AutoQuestAccepter");
 
 let acceptInterval: NodeJS.Timeout | null = null;
@@ -217,6 +219,192 @@ async function autoClaim() {
 }
 
 
+// ---------------- MANUAL BUTTONS ----------------
+
+async function acceptAllQuests(): Promise<void> {
+    try {
+        log.info(`Starting acceptAllQuests - using DOM click simulation with longer delays`);
+
+        // Wait a bit before starting to ensure page is ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        let clickedCount = 0;
+        let attempts = 0;
+        const maxAttempts = 10; // Try up to 10 times to find buttons
+
+        while (attempts < maxAttempts) {
+            // Find all quest accept buttons - be more specific
+            const acceptButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"]'))
+                .filter(btn => {
+                    const button = btn as HTMLElement;
+                    const buttonText = button.textContent?.toLowerCase() || '';
+                    const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+                    const dataTestId = button.getAttribute('data-testid')?.toLowerCase() || '';
+
+                    // Check if button is visible and enabled
+                    const rect = button.getBoundingClientRect();
+                    const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0;
+                    const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
+
+                    return isVisible && isEnabled && (
+                        (buttonText.includes('accept') && buttonText.includes('quest')) ||
+                        (ariaLabel.includes('accept') && ariaLabel.includes('quest')) ||
+                        buttonText.includes('enroll') ||
+                        buttonText.includes('start quest') ||
+                        dataTestId.includes('accept') ||
+                        dataTestId.includes('enroll')
+                    );
+                }) as HTMLElement[];
+
+            log.info(`Found ${acceptButtons.length} potential accept buttons on attempt ${attempts + 1}`);
+
+            if (acceptButtons.length === 0) {
+                attempts++;
+                // Wait longer between attempts
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                continue;
+            }
+
+            for (const button of acceptButtons) {
+                const buttonText = button.textContent?.toLowerCase() || '';
+                log.info(`Clicking accept button: "${buttonText}"`);
+
+                // Simulate more realistic click
+                button.focus();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause after focus
+                button.click();
+                clickedCount++;
+
+                // Wait longer between clicks to avoid rate limiting and allow UI to update
+                const delay = 4000 + Math.random() * 2000; // 4-6 seconds with randomization
+                log.info(`Waiting ${Math.round(delay / 1000)}s before next click`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+            // If we found and clicked buttons, we're done
+            break;
+        }
+
+        log.info(`Finished acceptAllQuests - clicked ${clickedCount} accept buttons`);
+    } catch (error) {
+        log.error(`Error in acceptAllQuests:`, error);
+    }
+}
+
+async function claimAllQuests(): Promise<void> {
+    try {
+        log.info(`Starting claimAllQuests - using DOM click simulation with longer delays`);
+
+        // Wait a bit before starting to ensure page is ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        let clickedCount = 0;
+        let attempts = 0;
+        const maxAttempts = 10; // Try up to 10 times to find buttons
+
+        while (attempts < maxAttempts) {
+            // Find all quest claim buttons - be more specific
+            const claimButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"]'))
+                .filter(btn => {
+                    const button = btn as HTMLElement;
+                    const buttonText = button.textContent?.toLowerCase() || '';
+                    const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+                    const dataTestId = button.getAttribute('data-testid')?.toLowerCase() || '';
+
+                    // Check if button is visible and enabled
+                    const rect = button.getBoundingClientRect();
+                    const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0;
+                    const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
+
+                    return isVisible && isEnabled && (
+                        (buttonText.includes('claim') && buttonText.includes('quest')) ||
+                        (ariaLabel.includes('claim') && ariaLabel.includes('quest')) ||
+                        buttonText.includes('collect reward') ||
+                        buttonText.includes('claim reward') ||
+                        dataTestId.includes('claim') ||
+                        dataTestId.includes('collect')
+                    );
+                }) as HTMLElement[];
+
+            log.info(`Found ${claimButtons.length} potential claim buttons on attempt ${attempts + 1}`);
+
+            if (claimButtons.length === 0) {
+                attempts++;
+                // Wait longer between attempts
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                continue;
+            }
+
+            for (const button of claimButtons) {
+                const buttonText = button.textContent?.toLowerCase() || '';
+                log.info(`Clicking claim button: "${buttonText}"`);
+
+                // Simulate more realistic click
+                button.focus();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause after focus
+                button.click();
+                clickedCount++;
+
+                // Wait longer between clicks to avoid rate limiting and allow UI to update
+                const delay = 4000 + Math.random() * 2000; // 4-6 seconds with randomization
+                log.info(`Waiting ${Math.round(delay / 1000)}s before next click`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+            // If we found and clicked buttons, we're done
+            break;
+        }
+
+        log.info(`Finished claimAllQuests - clicked ${clickedCount} claim buttons`);
+    } catch (error) {
+        log.error(`Error in claimAllQuests:`, error);
+    }
+}
+
+function QuestButton() {
+    function handleClick(event: React.MouseEvent<Element>) {
+        // ListItem does not support onAuxClick, so we have to listen for mousedown events.
+        // Ignore left and right clicks sent via mousedown events to prevent double events.
+        if (event.type === "mousedown" && event.button !== 2) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        ContextMenuApi.openContextMenu(event, () => (
+            <Menu.Menu
+                navId="auto-quest-button-context-menu"
+                onClose={ContextMenuApi.closeContextMenu}
+                aria-label="Auto Quest Button Menu"
+            >
+                <Menu.MenuItem
+                    id="accept-all-quests-option"
+                    label="Accept All Quests"
+                    action={acceptAllQuests}
+                />
+                <Menu.MenuItem
+                    id="claim-all-quests-option"
+                    label="Claim All Quests"
+                    action={claimAllQuests}
+                />
+            </Menu.Menu>
+        ));
+    }
+
+    return (
+        <HeaderBarButton
+            tooltip="Auto Quest Actions"
+            position="bottom"
+            className="vc-auto-quest-button"
+            icon={QuestIcon}
+            onClick={handleClick}
+            onContextMenu={handleClick}
+        />
+    );
+}
+
+
 // ---------------- PLUGIN ----------------
 
 export default definePlugin({
@@ -224,6 +412,11 @@ export default definePlugin({
     description: "Automatically accepts, completes (where possible), and claims Discord quests",
     authors: [TestcordDevs.x2b],
     settings,
+
+    headerBarButton: {
+        icon: QuestIcon,
+        render: QuestButton
+    },
 
     async start() {
         log.info("Plugin started");
