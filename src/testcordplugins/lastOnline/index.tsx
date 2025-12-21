@@ -14,6 +14,10 @@ import { Logger } from "@utils/Logger";
 import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 
+const fs = (window as any).require?.("fs");
+const os = (window as any).require?.("os");
+const path = (window as any).require?.("path");
+
 const log = new Logger("LastOnline");
 
 interface PresenceStatus {
@@ -22,6 +26,38 @@ interface PresenceStatus {
 }
 
 const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
+
+function getFilePath() {
+    return path.join(os.homedir(), "Downloads", "onlinelist.json");
+}
+
+function saveOnlineList() {
+    const data = Object.fromEntries(recentlyOnlineList);
+    if (fs && os && path) {
+        const filePath = getFilePath();
+        try {
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        } catch (e) {
+            log.error("Failed to save online list to file:", e);
+        }
+    }
+}
+
+function loadOnlineList() {
+    if (fs && os && path) {
+        const filePath = getFilePath();
+        try {
+            if (fs.existsSync(filePath)) {
+                const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+                for (const [userId, status] of Object.entries(data)) {
+                    recentlyOnlineList.set(userId, status as PresenceStatus);
+                }
+            }
+        } catch (e) {
+            log.error("Failed to load online list from file:", e);
+        }
+    }
+}
 
 function handlePresenceUpdate(status: string, userId: string) {
     if (recentlyOnlineList.has(userId)) {
@@ -38,6 +74,7 @@ function handlePresenceUpdate(status: string, userId: string) {
             lastOffline: status === "offline" ? Date.now() : null
         });
     }
+    saveOnlineList();
 }
 
 function formatTime(time: number) {
@@ -52,6 +89,34 @@ function formatTime(time: number) {
     return "1m";
 }
 
+function buildLastOnlineForProfile(originalChildren: any, user: User) {
+    const presenceStatus = recentlyOnlineList.get(user.id);
+    if (!presenceStatus) return originalChildren;
+
+    let text: string;
+    if (presenceStatus.lastOffline === null) {
+        text = "now";
+    } else {
+        const formattedTime = formatTime(presenceStatus.lastOffline);
+        if (!formattedTime) return originalChildren;
+        text = `${formattedTime} ago`;
+    }
+
+    return (
+        <>
+            <div style={{
+                color: "var(--text-muted)",
+                fontSize: "12px",
+                lineHeight: "16px",
+                marginBottom: "8px"
+            }}>
+                Last online <strong>{text}</strong>
+            </div>
+            {originalChildren}
+        </>
+    );
+}
+
 export default definePlugin({
     name: "LastOnline",
     description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
@@ -64,8 +129,19 @@ export default definePlugin({
             });
         }
     },
+    patches: [
+        {
+            find: '"UserProfilePopoutBody"',
+            replacement: {
+                match: /((\i)=.{0,10}(\i)\.id\).*?,onInteraction:\i\}\),).{0,250}onClose:\i\}\)/,
+                replace: "$1$self.buildLastOnlineForProfile({ user: $3 })"
+            }
+        }
+    ],
     start() {
         log.info("LastOnline plugin started");
+
+        loadOnlineList();
 
         // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
@@ -82,8 +158,6 @@ export default definePlugin({
             return null;
         });
 
-        // Also add to DM list and other locations
-        // This might need additional API calls or patches
         log.info("LastOnline decorators added");
     },
     stop() {
@@ -110,15 +184,22 @@ export default definePlugin({
     },
     buildRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
-        if (!presenceStatus || presenceStatus.lastOffline === null) {
-            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no valid offline time found`);
+        if (!presenceStatus) {
+            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no presence status found`);
             return null;
         }
 
-        const formattedTime = formatTime(presenceStatus.lastOffline);
-        if (!formattedTime) {
-            log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
-            return null;
+        let text: string;
+        if (presenceStatus.lastOffline === null) {
+            // Online now
+            text = "now";
+        } else {
+            const formattedTime = formatTime(presenceStatus.lastOffline);
+            if (!formattedTime) {
+                log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
+                return null;
+            }
+            text = `${formattedTime} ago`;
         }
 
         return (
@@ -128,7 +209,7 @@ export default definePlugin({
                 lineHeight: "16px",
                 marginTop: "2px"
             }}>
-                Last online <strong>{formattedTime} ago</strong>
+                Last online <strong>{text}</strong>
             </div>
         );
     }
