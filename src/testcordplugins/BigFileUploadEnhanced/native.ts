@@ -85,7 +85,7 @@ export async function uploadFileToGofileNative(_, fileBuffer: ArrayBuffer, fileN
     return downloadPage;
 }
 
-export async function uploadFileToCatboxNative(_, fileBuffer: ArrayBuffer, fileName: string, fileType: string, userHash?: string): Promise<string> {
+export async function uploadFileToCatboxNative(fileBuffer: ArrayBuffer, fileName: string, fileType: string, userHash?: string): Promise<string> {
     const url = "https://catbox.moe/user/api.php";
 
     const formData = new FormData();
