@@ -356,31 +356,66 @@ function stopAutoCompleting(): void {
 
 async function acceptAllQuests(): Promise<void> {
     try {
-        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Starting acceptAllQuests - using DOM click simulation`);
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Starting acceptAllQuests - using DOM click simulation with longer delays`);
 
-        // Find all quest accept buttons and click them
-        const acceptButtons = document.querySelectorAll('[role="button"]:not([disabled]):not([aria-disabled="true"])');
+        // Wait a bit before starting to ensure page is ready
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         let clickedCount = 0;
-        for (const button of acceptButtons) {
-            const buttonText = button.textContent?.toLowerCase() || '';
-            const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+        let attempts = 0;
+        const maxAttempts = 10; // Try up to 10 times to find buttons
 
-            // Look for buttons that contain "accept" or similar text
-            if ((buttonText.includes('accept') && buttonText.includes('quest')) ||
-                (ariaLabel.includes('accept') && ariaLabel.includes('quest')) ||
-                buttonText.includes('enroll') ||
-                buttonText.includes('start quest')) {
+        while (attempts < maxAttempts) {
+            // Find all quest accept buttons - be more specific
+            const acceptButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"]'))
+                .filter(btn => {
+                    const button = btn as HTMLElement;
+                    const buttonText = button.textContent?.toLowerCase() || '';
+                    const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+                    const dataTestId = button.getAttribute('data-testid')?.toLowerCase() || '';
 
+                    // Check if button is visible and enabled
+                    const rect = button.getBoundingClientRect();
+                    const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0;
+                    const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
+
+                    return isVisible && isEnabled && (
+                        (buttonText.includes('accept') && buttonText.includes('quest')) ||
+                        (ariaLabel.includes('accept') && ariaLabel.includes('quest')) ||
+                        buttonText.includes('enroll') ||
+                        buttonText.includes('start quest') ||
+                        dataTestId.includes('accept') ||
+                        dataTestId.includes('enroll')
+                    );
+                }) as HTMLElement[];
+
+            AutoQuestLogger.info(`[${new Date().toLocaleString()}] Found ${acceptButtons.length} potential accept buttons on attempt ${attempts + 1}`);
+
+            if (acceptButtons.length === 0) {
+                attempts++;
+                // Wait longer between attempts
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                continue;
+            }
+
+            for (const button of acceptButtons) {
+                const buttonText = button.textContent?.toLowerCase() || '';
                 AutoQuestLogger.info(`[${new Date().toLocaleString()}] Clicking accept button: "${buttonText}"`);
 
-                // Simulate click
-                (button as HTMLElement).click();
+                // Simulate more realistic click
+                button.focus();
+                await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause after focus
+                button.click();
                 clickedCount++;
 
-                // Wait between clicks to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Wait longer between clicks to avoid rate limiting and allow UI to update
+                const delay = 4000 + Math.random() * 2000; // 4-6 seconds with randomization
+                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Waiting ${Math.round(delay / 1000)}s before next click`);
+                await new Promise(resolve => setTimeout(resolve, delay));
             }
+
+            // If we found and clicked buttons, we're done
+            break;
         }
 
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] Finished acceptAllQuests - clicked ${clickedCount} accept buttons`);
