@@ -10,9 +10,14 @@ import { User } from "@vencord/discord-types";
 
 import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
+import { DataStore } from "@api/index";
 
 import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
+
+const fs = (window as any).require?.("fs");
+const os = (window as any).require?.("os");
+const path = (window as any).require?.("path");
 
 const log = new Logger("LastOnline");
 
@@ -22,6 +27,44 @@ interface PresenceStatus {
 }
 
 const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
+
+function saveOnlineList() {
+    const data = Object.fromEntries(recentlyOnlineList);
+    DataStore.set("lastOnlineData", data);
+    if (fs && os && path) {
+        const filePath = path.join(os.homedir(), "Downloads", "onlinelist.json");
+        try {
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+        } catch (e) {
+            log.error("Failed to save online list to file:", e);
+        }
+    }
+}
+
+function loadOnlineList() {
+    if (fs && os && path) {
+        const filePath = path.join(os.homedir(), "Downloads", "onlinelist.json");
+        try {
+            if (fs.existsSync(filePath)) {
+                const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+                for (const [userId, status] of Object.entries(data)) {
+                    recentlyOnlineList.set(userId, status as PresenceStatus);
+                }
+                return;
+            }
+        } catch (e) {
+            log.error("Failed to load online list from file:", e);
+        }
+    }
+    // Fallback to DataStore
+    DataStore.get("lastOnlineData").then((data: any) => {
+        if (data) {
+            for (const [userId, status] of Object.entries(data)) {
+                recentlyOnlineList.set(userId, status as PresenceStatus);
+            }
+        }
+    });
+}
 
 function handlePresenceUpdate(status: string, userId: string) {
     if (recentlyOnlineList.has(userId)) {
@@ -38,6 +81,7 @@ function handlePresenceUpdate(status: string, userId: string) {
             lastOffline: status === "offline" ? Date.now() : null
         });
     }
+    saveOnlineList();
 }
 
 function formatTime(time: number) {
@@ -64,8 +108,20 @@ export default definePlugin({
             });
         }
     },
-    start() {
+    patches: [
+        {
+            find: '"UserProfilePopoutBody"',
+            replacement: {
+                match: /(?<=(\i)\.id\)\}\)\),(\i).*?)\(0,.{0,100}\i\.id,onClose:\i\}\)/,
+                replace: "$self.buildRecentlyOffline({ id: $1.id })"
+            },
+            predicate: () => true
+        }
+    ],
+    async start() {
         log.info("LastOnline plugin started");
+
+        await loadOnlineList();
 
         // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
@@ -96,29 +152,39 @@ export default definePlugin({
             return false;
         }
 
-        const shouldShow = presenceStatus.hasBeenOnline && presenceStatus.lastOffline !== null;
-        if (shouldShow) {
-            const timeSinceOffline = Date.now() - (presenceStatus.lastOffline || 0);
-            // Only show if offline for less than 7 days (604800000 ms)
-            if (timeSinceOffline > 604800000) {
-                log.debug(`User ${user.username}#${user.discriminator} offline too long (${Math.floor(timeSinceOffline / 86400000)} days), not showing indicator`);
-                return false;
-            }
+        // Show if online or recently offline
+        if (presenceStatus.lastOffline === null) {
+            // Online now
+            return true;
         }
 
-        return shouldShow;
+        const timeSinceOffline = Date.now() - (presenceStatus.lastOffline || 0);
+        // Only show if offline for less than 7 days (604800000 ms)
+        if (timeSinceOffline > 604800000) {
+            log.debug(`User ${user.username}#${user.discriminator} offline too long (${Math.floor(timeSinceOffline / 86400000)} days), not showing indicator`);
+            return false;
+        }
+
+        return true;
     },
     buildRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
-        if (!presenceStatus || presenceStatus.lastOffline === null) {
-            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no valid offline time found`);
+        if (!presenceStatus) {
+            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no presence status found`);
             return null;
         }
 
-        const formattedTime = formatTime(presenceStatus.lastOffline);
-        if (!formattedTime) {
-            log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
-            return null;
+        let text: string;
+        if (presenceStatus.lastOffline === null) {
+            // Online now
+            text = "now";
+        } else {
+            const formattedTime = formatTime(presenceStatus.lastOffline);
+            if (!formattedTime) {
+                log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
+                return null;
+            }
+            text = `${formattedTime} ago`;
         }
 
         return (
@@ -128,7 +194,7 @@ export default definePlugin({
                 lineHeight: "16px",
                 marginTop: "2px"
             }}>
-                Last online <strong>{formattedTime} ago</strong>
+                Last online <strong>{text}</strong>
             </div>
         );
     }
