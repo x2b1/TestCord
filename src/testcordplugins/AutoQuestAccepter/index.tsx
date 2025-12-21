@@ -27,7 +27,7 @@ const QuestIcon = findComponentByCodeLazy("10.47a.76.76");
 const log = new Logger("AutoQuestAccepter");
 
 let acceptInterval: NodeJS.Timeout | null = null;
-let claimInterval: NodeJS.Timeout | null = null;
+let completeInterval: NodeJS.Timeout | null = null;
 
 const settings = definePluginSettings({
     autoAccept: {
@@ -290,9 +290,9 @@ async function claimAllQuests(): Promise<void> {
                 try {
                     log.info(`Claiming quest: ${name}`);
 
-                    const res = await RestAPI.post({
+                    const res = await RestAPI.put({
                         url: `/quests/${q.id}/claim-reward`,
-                        body: {}
+                        body: { signature: "test" }
                     });
 
                     if (res?.status === 200 || res?.status === 204) {
@@ -392,10 +392,7 @@ export default definePlugin({
         await fetchAndDispatchQuests("AutoQuestAccepter", log);
 
         acceptInterval = setInterval(autoAccept, 20_000);
-        completeInterval = setInterval(() => {
-            autoComplete();
-            autoClaim();
-        }, 60_000);
+        completeInterval = setInterval(autoClaim, 60_000);
     },
 
     stop() {
