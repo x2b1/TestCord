@@ -308,7 +308,8 @@ export const fileUrlPlugin = {
             },
         }));
         build.onLoad({ filter, namespace: "file-uri" }, async ({ pluginData: { path, uri } }) => {
-            const { searchParams } = new URL(uri);
+            const [pathPart, query] = uri.split("?");
+            const searchParams = query ? new URLSearchParams(query) : new URLSearchParams();
             const base64 = searchParams.has("base64");
             const minify = searchParams.has("minify");
             const noTrim = searchParams.get("trim") === "false";
@@ -354,6 +355,8 @@ export const fileUrlPlugin = {
 
                 if (base64 && !content.startsWith("data:"))
                     content = Buffer.from(content).toString("base64");
+
+                return { contents: content, loader: 'text' };
             }
         );
     },
