@@ -92,8 +92,8 @@ const settings = definePluginSettings({
         description: "Uploader service",
         hidden: true,
         options: [
-            { label: "Catbox", value: "Catbox", default: true },
-            { label: "Litterbox (Catbox)", value: "Litterbox" },
+            { label: "Catbox (200MB max)", value: "Catbox", default: true },
+            { label: "Litterbox (Catbox) (1GB max)", value: "Litterbox" },
             { label: "GoFile", value: "GoFile" },
             { label: "Custom (ShareX-compatible)", value: "Custom" },
         ]
@@ -850,7 +850,7 @@ function SettingsComponent() {
 }
 
 export default definePlugin({
-    name: "BigFileUpload Enhanced",
+    name: "BigFileUploadEnhanced",
     description: "Bypass Discord's upload limit by uploading files to a third-party host and sending the link in chat. now without dom manipulation.",
     authors: [EquicordDevs.Benjii, TestcordDevs.x2b],
     settings,
