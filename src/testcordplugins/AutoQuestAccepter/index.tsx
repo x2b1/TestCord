@@ -19,7 +19,9 @@ import {
 import {
     fetchAndDispatchQuests,
     getQuestStatus,
-    normalizeQuestName
+    normalizeQuestName,
+    reportVideoQuestProgress,
+    reportPlayGameQuestProgress
 } from "../../equicordplugins/questify/utils/misc";
 
 const QuestsStore = findByPropsLazy("getQuest");
@@ -28,12 +30,18 @@ const log = new Logger("AutoQuestAccepter");
 
 let acceptInterval: NodeJS.Timeout | null = null;
 let completeInterval: NodeJS.Timeout | null = null;
+let completionTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
 const settings = definePluginSettings({
     autoAccept: {
         type: OptionType.BOOLEAN,
         default: true,
         description: "Automatically accept new quests"
+    },
+    autoComplete: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Automatically complete quests (video, activity)"
     },
     autoClaim: {
         type: OptionType.BOOLEAN,
@@ -127,6 +135,96 @@ async function autoClaim() {
             }
 
             await new Promise(r => setTimeout(r, 1000));
+        }
+    }
+}
+
+// ---------------- COMPLETE ----------------
+
+async function completeQuest(quest: Quest) {
+    const name = normalizeQuestName(quest.config.messages.questName);
+    const questId = quest.id;
+
+    // Skip if already being completed
+    if (completionTimeouts.has(questId)) {
+        log.debug(`Quest ${name} is already being completed`);
+        return;
+    }
+
+    // Determine quest type
+    const taskName = ["WATCH_VIDEO", "PLAY_ON_DESKTOP", "STREAM_ON_DESKTOP", "PLAY_ACTIVITY", "WATCH_VIDEO_ON_MOBILE", "ACHIEVEMENT_IN_ACTIVITY"].find(x => quest.config.taskConfigV2?.tasks[x] != null);
+
+    if (!taskName) {
+        log.debug(`Unknown quest type for ${name}, skipping auto completion`);
+        return;
+    }
+
+    const secondsNeeded = quest.config.taskConfigV2.tasks[taskName].target;
+    const currentProgress = quest.userStatus?.progress?.[taskName]?.value ?? 0;
+
+    if (currentProgress >= secondsNeeded) {
+        log.debug(`Quest ${name} is already completed (${currentProgress}/${secondsNeeded})`);
+        return;
+    }
+
+    log.info(`Starting auto completion for ${name} (${taskName})`);
+
+    if (taskName === "WATCH_VIDEO" || taskName === "WATCH_VIDEO_ON_MOBILE") {
+        // Video quest completion
+        const timeout = setTimeout(async () => {
+            try {
+                const success = await reportVideoQuestProgress(quest, secondsNeeded, log);
+                if (success) {
+                    log.info(`Successfully completed video quest: ${name}`);
+                } else {
+                    log.warn(`Failed to complete video quest: ${name}`);
+                }
+            } catch (error) {
+                log.error(`Error completing video quest ${name}:`, error);
+            } finally {
+                completionTimeouts.delete(questId);
+            }
+        }, 1000); // Start after 1 second
+
+        completionTimeouts.set(questId, timeout);
+
+    } else if (taskName === "PLAY_ACTIVITY") {
+        // Activity quest completion
+        const timeout = setTimeout(async () => {
+            try {
+                const result = await reportPlayGameQuestProgress(quest, false, log);
+                if (result.progress !== null) {
+                    log.info(`Successfully started activity quest completion: ${name}`);
+                } else {
+                    log.warn(`Failed to start activity quest completion: ${name}`);
+                }
+            } catch (error) {
+                log.error(`Error starting activity quest completion ${name}:`, error);
+            } finally {
+                completionTimeouts.delete(questId);
+            }
+        }, 1000); // Start after 1 second
+
+        completionTimeouts.set(questId, timeout);
+
+    } else {
+        log.debug(`Quest type ${taskName} not supported for auto completion: ${name}`);
+    }
+}
+
+async function autoComplete() {
+    if (!settings.store.autoComplete) return;
+
+    const quests = Array.from(QuestsStore.quests.values()) as Quest[];
+
+    for (const q of quests) {
+        if (
+            q.userStatus?.enrolledAt &&
+            !q.userStatus?.completedAt &&
+            new Date(q.config.expiresAt) > new Date()
+        ) {
+            await completeQuest(q);
+            await new Promise(r => setTimeout(r, 500)); // Small delay between quests
         }
     }
 }
@@ -392,12 +490,22 @@ export default definePlugin({
         await fetchAndDispatchQuests("AutoQuestAccepter", log);
 
         acceptInterval = setInterval(autoAccept, 20_000);
-        completeInterval = setInterval(autoClaim, 60_000);
+        completeInterval = setInterval(() => {
+            autoComplete();
+            autoClaim();
+        }, 60_000);
     },
 
     stop() {
         if (acceptInterval) clearInterval(acceptInterval);
         if (completeInterval) clearInterval(completeInterval);
+
+        // Clear all completion timeouts
+        for (const timeout of completionTimeouts.values()) {
+            clearTimeout(timeout);
+        }
+        completionTimeouts.clear();
+
         log.info("Plugin stopped");
     }
 });
