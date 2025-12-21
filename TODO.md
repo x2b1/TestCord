@@ -1,17 +1,19 @@
-# TODO: Fix AutoQuestAccepter and lastOnline Plugins
+# TODO: Fix AutoQuestAccepter and lastOnline Plugins - Round 2
 
 ## AutoQuestAccepter Fixes
-- [x] Refine DOM selectors in acceptAllQuests and claimAllQuests for more specific targeting
-- [x] Add detailed logging for button detection and click attempts
-- [x] Implement RestAPI fallback for manual actions if DOM clicks fail
-- [x] Add force refresh of quests after manual actions to prevent stuck states
+- [x] Change accept interval to 20 seconds instead of 30
+- [x] Fix completion logic - currently sets to 99% instead of properly completing quests like questify
+- [x] Fix rate limiting - only 1 quest accepted, others failed
+- [x] Add video quest auto-completion after acceptance
+- [ ] Test manual accept/claim functions
 
 ## lastOnline Fixes
-- [x] Add logging to PRESENCE_UPDATES to verify events are received
-- [x] Ensure decorator is correctly added and check for rendering issues
-- [x] Adjust display logic to show indicators more reliably
+- [x] Fix indicator text - changed "Online X ago" to "Last online X ago"
+- [ ] Fix indicator visibility - last online text not showing anywhere
+- [ ] Add decorators to additional locations (DM lists, user popups, etc.)
 
 ## Testing
-- [x] Test AutoQuestAccepter for proper quest acceptance/claiming
-- [x] Test lastOnline for indicator display
-- [x] Monitor logs for errors or missed events
+- [ ] Test updated accept interval
+- [ ] Test proper quest completion
+- [ ] Test last online indicators
+- [ ] Monitor logs for rate limiting and errors

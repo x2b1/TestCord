@@ -65,12 +65,22 @@ export default definePlugin({
         }
     },
     start() {
+        log.info("LastOnline plugin started");
+
+        // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
+            log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
             if (this.shouldShowRecentlyOffline(props.user)) {
+                log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
                 return this.buildRecentlyOffline(props.user);
             }
+            log.debug(`Not showing last online for user ${props.user.username}#${props.user.discriminator}`);
             return null;
         });
+
+        // Also add to DM list and other locations
+        // This might need additional API calls or patches
+        log.info("LastOnline decorators added");
     },
     stop() {
         removeMemberListDecorator("last-online-indicator");
@@ -112,7 +122,7 @@ export default definePlugin({
         return (
             <div className={activityClass.activity}>
                 <div className={activityClass.activityText}>
-                    <>Online <strong>{formattedTime} ago</strong></>
+                    <>Last online <strong>{formattedTime} ago</strong></>
                 </div>
             </div>
         );

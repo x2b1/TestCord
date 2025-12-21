@@ -92,7 +92,18 @@ async function autoAccept() {
             new Date(q.config.expiresAt) > new Date()
         ) {
             await acceptQuest(q);
-            await new Promise(r => setTimeout(r, 1500));
+            await new Promise(r => setTimeout(r, 2000));
+
+            // If it's a video quest, start the video completion process immediately
+            const tasks = q.config.taskConfigV2?.tasks;
+            if (tasks && settings.store.autoComplete) {
+                if (tasks.WATCH_VIDEO || tasks.WATCH_VIDEO_ON_MOBILE) {
+                    log.info(`Starting video quest completion for ${normalizeQuestName(q.config.messages.questName)} after acceptance`);
+                    await startVideoQuest(q);
+                }
+            }
+
+            await new Promise(r => setTimeout(r, 3000)); // Additional delay between quests
         }
     }
 }
@@ -118,11 +129,13 @@ async function startVideoQuest(quest: Quest) {
         if (progress >= target) {
             clearInterval(interval);
             activeQuestIntervals.delete(quest.id);
+            // Complete the quest properly instead of leaving at 99%
+            await reportVideoQuestProgress(quest, target, log);
             return;
         }
 
-        await reportVideoQuestProgress(quest, progress + 10, log);
-        progress += 10;
+        await reportVideoQuestProgress(quest, Math.min(progress + 10, target), log);
+        progress = Math.min(progress + 10, target);
 
     }, 10_000);
 
@@ -547,7 +560,7 @@ export default definePlugin({
 
         await fetchAndDispatchQuests("AutoQuestAccepter", log);
 
-        acceptInterval = setInterval(autoAccept, 30_000);
+        acceptInterval = setInterval(autoAccept, 20_000);
         completeInterval = setInterval(() => {
             autoComplete();
             autoClaim();
