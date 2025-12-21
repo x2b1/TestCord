@@ -5,82 +5,16 @@
  */
 
 import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
+import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 
-import { moment, React, Button, TextInput, UserStore } from "@webpack/common";
+import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
-import { definePluginSettings } from "@api/Settings";
-
-const { useRef, useState } = React;
 
 import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 
-const fs = (window as any).require?.("fs");
-const os = (window as any).require?.("os");
-const path = (window as any).require?.("path");
-
 const log = new Logger("LastOnline");
-
-function FolderPathComponent() {
-    const [value, setValue] = useState(settings.store.dirname);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleBrowse = () => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            const file = files[0];
-            const path = (file as any).path || file.webkitRelativePath;
-            if (path) {
-                const dir = path.replace(/[/\\][^/\\]*$/, '');
-                setValue(dir);
-                settings.store.dirname = dir;
-            }
-        }
-    };
-
-    return (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <TextInput
-                value={value}
-                onChange={setValue}
-                placeholder="Enter directory path"
-                style={{ flex: 1 }}
-            />
-            <Button onClick={handleBrowse} size={Button.Sizes.SMALL}>
-                Browse
-            </Button>
-            <input
-                ref={fileInputRef}
-                type="file"
-                {...({ webkitdirectory: "" } as any)}
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-            />
-        </div>
-    );
-}
-
-const settings = definePluginSettings({
-    dirname: {
-        type: OptionType.COMPONENT,
-        description: "Directory to save the online list JSON file to. Leave empty to use default location.",
-        component: FolderPathComponent,
-        default: ""
-    }
-});
-
-function getFilePath() {
-    const dirname = settings.store.dirname || path.join((process as any).env.APPDATA || os.homedir(), "testcord", "onlinedata");
-    return path.join(dirname, "onlinelist.json");
-}
 
 interface PresenceStatus {
     hasBeenOnline: boolean;
@@ -88,34 +22,6 @@ interface PresenceStatus {
 }
 
 const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
-
-function saveOnlineList() {
-    const data = Object.fromEntries(recentlyOnlineList);
-    if (fs && os && path) {
-        const filePath = getFilePath();
-        try {
-            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        } catch (e) {
-            log.error("Failed to save online list to file:", e);
-        }
-    }
-}
-
-function loadOnlineList() {
-    if (fs && os && path) {
-        const filePath = getFilePath();
-        try {
-            if (fs.existsSync(filePath)) {
-                const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-                for (const [userId, status] of Object.entries(data)) {
-                    recentlyOnlineList.set(userId, status as PresenceStatus);
-                }
-            }
-        } catch (e) {
-            log.error("Failed to load online list from file:", e);
-        }
-    }
-}
 
 function handlePresenceUpdate(status: string, userId: string) {
     if (recentlyOnlineList.has(userId)) {
@@ -132,7 +38,6 @@ function handlePresenceUpdate(status: string, userId: string) {
             lastOffline: status === "offline" ? Date.now() : null
         });
     }
-    saveOnlineList();
 }
 
 function formatTime(time: number) {
@@ -151,7 +56,6 @@ export default definePlugin({
     name: "LastOnline",
     description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
     authors: [TestcordDevs.x2b],
-    settings,
     flux: {
         PRESENCE_UPDATES({ updates }) {
             log.debug(`Received PRESENCE_UPDATES with ${updates.length} updates`);
@@ -160,10 +64,8 @@ export default definePlugin({
             });
         }
     },
-    async start() {
+    start() {
         log.info("LastOnline plugin started");
-
-        await loadOnlineList();
 
         // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
@@ -172,10 +74,6 @@ export default definePlugin({
                 return null;
             }
             log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
-            // Only show in DMs, not in guild member lists
-            if (props.type !== "dm") {
-                return null;
-            }
             if (this.shouldShowRecentlyOffline(props.user)) {
                 log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
                 return this.buildRecentlyOffline(props.user);
@@ -198,42 +96,29 @@ export default definePlugin({
             return false;
         }
 
-        // Show if online or recently offline
-        if (presenceStatus.lastOffline === null) {
-            // Online now
-            return true;
+        const shouldShow = presenceStatus.hasBeenOnline && presenceStatus.lastOffline !== null;
+        if (shouldShow) {
+            const timeSinceOffline = Date.now() - (presenceStatus.lastOffline || 0);
+            // Only show if offline for less than 7 days (604800000 ms)
+            if (timeSinceOffline > 604800000) {
+                log.debug(`User ${user.username}#${user.discriminator} offline too long (${Math.floor(timeSinceOffline / 86400000)} days), not showing indicator`);
+                return false;
+            }
         }
 
-        const timeSinceOffline = Date.now() - (presenceStatus.lastOffline || 0);
-        // Only show if offline for less than 7 days (604800000 ms)
-        if (timeSinceOffline > 604800000) {
-            log.debug(`User ${user.username}#${user.discriminator} offline too long (${Math.floor(timeSinceOffline / 86400000)} days), not showing indicator`);
-            return false;
-        }
-
-        return true;
+        return shouldShow;
     },
-    buildRecentlyOffline({ id }: { id: string; }) {
-        const user = UserStore.getUser(id);
-        if (!user) return null;
-
+    buildRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
-        if (!presenceStatus) {
-            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no presence status found`);
+        if (!presenceStatus || presenceStatus.lastOffline === null) {
+            log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no valid offline time found`);
             return null;
         }
 
-        let text: string;
-        if (presenceStatus.lastOffline === null) {
-            // Online now
-            text = "now";
-        } else {
-            const formattedTime = formatTime(presenceStatus.lastOffline);
-            if (!formattedTime) {
-                log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
-                return null;
-            }
-            text = `${formattedTime} ago`;
+        const formattedTime = formatTime(presenceStatus.lastOffline);
+        if (!formattedTime) {
+            log.warn(`formatTime returned empty string for user ${user.username}#${user.discriminator}`);
+            return null;
         }
 
         return (
@@ -243,13 +128,8 @@ export default definePlugin({
                 lineHeight: "16px",
                 marginTop: "2px"
             }}>
-                Last online <strong>{text}</strong>
+                Last online <strong>{formattedTime} ago</strong>
             </div>
         );
     }
 });
-
-
-
-
-
