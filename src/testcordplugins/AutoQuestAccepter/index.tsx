@@ -196,7 +196,7 @@ async function autoClaim() {
             const name = normalizeQuestName(q.config.messages.questName);
 
             try {
-                const res = await RestAPI.post({
+                const res = await RestAPI.put({
                     url: `/quests/${q.id}/claim-reward`,
                     body: {}
                 });
