@@ -61,7 +61,7 @@ async function acceptQuest(quest: Quest) {
         log.info(`Accepting quest: ${name}`);
 
         const res = await RestAPI.post({
-            url: `/quests/${quest.id}/accept`,
+            url: `/quests/${quest.id}/enroll`,
             body: {}
         });
 
