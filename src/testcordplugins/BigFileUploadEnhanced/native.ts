@@ -86,19 +86,15 @@ export async function uploadFileToGofileNative(_, fileBuffer: ArrayBuffer, fileN
 }
 
 export async function uploadFileToCatboxNative(_, fileBuffer: ArrayBuffer, fileName: string, fileType: string, userHash?: string): Promise<string> {
-    const url = userHash ? "https://catbox.moe/user/api.php" : "https://catbox.moe/api.php";
+    const url = "https://catbox.moe/user/api.php";
 
     const formData = new FormData();
+    formData.append("reqtype", "fileupload");
     const file = new Blob([fileBuffer], { type: fileType || "application/octet-stream" });
-    if (userHash) {
-        formData.append("reqtype", "fileupload");
-        formData.append("fileToUpload", new File([file], fileName));
-        formData.append("userhash", userHash);
-    } else {
-        formData.append("file", new File([file], fileName));
-    }
+    formData.append("fileToUpload", new File([file], fileName));
+    formData.append("userhash", userHash || "");
 
-    const response = await safeFetch(url, { method: "POST", body: formData });
+    const response = await fetch(url, { method: "POST", body: formData });
     const result = await response.text();
     const trimmed = result.trim();
     if (!response.ok) throw new Error(`Catbox: HTTP ${response.status}`);
