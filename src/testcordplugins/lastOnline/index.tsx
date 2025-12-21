@@ -8,11 +8,9 @@ import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 
-import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
 
 import { TestcordDevs } from "../../utils/constants";
-import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 
 const fs = (window as any).require?.("fs");
 const os = (window as any).require?.("os");
@@ -78,10 +76,10 @@ function handlePresenceUpdate(status: string, userId: string) {
 }
 
 function formatTime(time: number) {
-    const diff = moment.duration(moment().diff(time));
-    const d = Math.floor(diff.asDays());
-    const h = Math.floor(diff.asHours());
-    const m = Math.floor(diff.asMinutes());
+    const diff = Date.now() - time;
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
     if (d > 0) return `${d}d`;
     if (h > 0) return `${h}h`;
@@ -102,18 +100,17 @@ function buildLastOnlineForProfile(originalChildren: any, user: User) {
         text = `${formattedTime} ago`;
     }
 
-    return (
-        <>
-            <div style={{
+    const React = (globalThis as any).Vencord.Webpack.Common.React;
+    return React.createElement(React.Fragment, null,
+        React.createElement("div", {
+            style: {
                 color: "var(--text-muted)",
                 fontSize: "12px",
                 lineHeight: "16px",
                 marginBottom: "8px"
-            }}>
-                Last online <strong>{text}</strong>
-            </div>
-            {originalChildren}
-        </>
+            }
+        }, "Last online ", React.createElement("strong", null, text)),
+        originalChildren
     );
 }
 
@@ -143,6 +140,9 @@ export default definePlugin({
 
         loadOnlineList();
 
+        // Lazy import to avoid early execution
+        const { addMemberListDecorator } = require("@api/MemberListDecorators");
+
         // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
             if (!props.user) {
@@ -161,6 +161,7 @@ export default definePlugin({
         log.info("LastOnline decorators added");
     },
     stop() {
+        const { removeMemberListDecorator } = require("@api/MemberListDecorators");
         removeMemberListDecorator("last-online-indicator");
     },
     shouldShowRecentlyOffline(user: User) {
@@ -202,15 +203,14 @@ export default definePlugin({
             text = `${formattedTime} ago`;
         }
 
-        return (
-            <div style={{
+        const React = (globalThis as any).Vencord.Webpack.Common.React;
+        return React.createElement("div", {
+            style: {
                 color: "var(--text-muted)",
                 fontSize: "12px",
                 lineHeight: "16px",
                 marginTop: "2px"
-            }}>
-                Last online <strong>{text}</strong>
-            </div>
-        );
+            }
+        }, "Last online ", React.createElement("strong", null, text));
     }
 });
