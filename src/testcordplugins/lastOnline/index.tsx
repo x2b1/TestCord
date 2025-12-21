@@ -4,13 +4,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import {Devs} from "@utils/constants";
+import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { findByProps } from "@webpack";
 import { moment, React } from "@webpack/common";
 
 import { TestcordDevs } from "@utils/constants";
+import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 
 interface PresenceStatus {
     hasBeenOnline: boolean;
@@ -59,22 +60,17 @@ export default definePlugin({
             });
         }
     },
-    patches: [
-        {
-            find: "Z.MEMBER_LIST_ITEM_AVATAR_DECORATION_PADDING);",
-            replacement: {
-                match: /(\(0,\i.Z\)\(\i,(\i),\i\);)(return\(0,\i.jsx)/,
-                replace: "$1if($self.shouldShowRecentlyOffline($2)){return $self.buildRecentlyOffline($2)}$3"
+    start() {
+        addMemberListDecorator("last-online-indicator", (props) => {
+            if (this.shouldShowRecentlyOffline(props.user)) {
+                return this.buildRecentlyOffline(props.user);
             }
-        },
-        {
-            find: "PrivateChannel.renderAvatar",
-            replacement: {
-                match: /(user:(\i)}\):)/,
-                replace: "$1$self.shouldShowRecentlyOffline($2)?$self.buildRecentlyOffline($2):"
-            }
-        }
-    ],
+            return null;
+        });
+    },
+    stop() {
+        removeMemberListDecorator("last-online-indicator");
+    },
     shouldShowRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
         return presenceStatus && presenceStatus.hasBeenOnline && presenceStatus.lastOffline !== null;
