@@ -10,7 +10,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { ChannelToolbarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
-import { EquicordDevs, TestcordDevs } from "../../utils/constants";
+import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { closeModal, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
