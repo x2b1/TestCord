@@ -11,7 +11,7 @@ import { User } from "@vencord/discord-types";
 import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
 
-import { TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 
 const log = new Logger("LastOnline");

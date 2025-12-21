@@ -16,7 +16,7 @@ import { definePluginSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { OpenExternalIcon } from "@components/Icons";
-import { EquicordDevs } from "@utils/constants";
+import { EquicordDevs, TestcordDevs } from "../../utils/constants";
 import { copyWithToast, insertTextIntoChatInputBox, openImageModal, sendMessage } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
@@ -617,7 +617,7 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
             label={
                 <div className={OptionClasses.optionLabel}>
                     <OpenExternalIcon className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>Upload a Big File</div>
+                    <div className={OptionClasses.optionName}>Upload a Big File (Enhanced)</div>
                 </div>
             }
             action={() => runUploadFlow(props.channel.id)}
@@ -852,7 +852,7 @@ function SettingsComponent() {
 export default definePlugin({
     name: "BigFileUpload Enhanced",
     description: "Bypass Discord's upload limit by uploading files to a third-party host and sending the link in chat. now without dom manipulation.",
-    authors: [EquicordDevs.benjii, TestcordDevs.x2b],
+    authors: [EquicordDevs.Benjii, TestcordDevs.x2b],
     settings,
 
     contextMenus: {
