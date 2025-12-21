@@ -223,7 +223,7 @@ async function autoClaim() {
 
 async function acceptAllQuests(): Promise<void> {
     try {
-        log.info(`Starting acceptAllQuests - using DOM click simulation with extended delays`);
+        log.info(`Starting acceptAllQuests - using DOM click simulation with RestAPI fallback`);
 
         // Temporarily disable auto-accept to avoid conflicts
         const wasAutoAcceptEnabled = settings.store.autoAccept;
@@ -232,16 +232,16 @@ async function acceptAllQuests(): Promise<void> {
         // Wait a bit before starting to ensure page is ready
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        let totalClicked = 0;
+        let totalAccepted = 0;
         let attempts = 0;
-        const maxAttempts = 15; // Try more times to find all buttons
+        const maxAttempts = 10; // Reduced attempts since we have fallback
 
         while (attempts < maxAttempts) {
             // Scroll to load more quests if possible
             window.scrollTo(0, document.body.scrollHeight);
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Find all quest accept buttons - be more comprehensive
+            // Find all quest accept buttons - more specific selectors
             const acceptButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"], [class*="button"]'))
                 .filter(btn => {
                     const button = btn as HTMLElement;
@@ -255,78 +255,107 @@ async function acceptAllQuests(): Promise<void> {
                     const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.top < window.innerHeight;
                     const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
 
-                    return isVisible && isEnabled && (
+                    // More specific conditions for quest accept buttons
+                    const isAcceptButton = (
                         (buttonText.includes('accept') && buttonText.includes('quest')) ||
                         (ariaLabel.includes('accept') && ariaLabel.includes('quest')) ||
                         buttonText.includes('enroll') ||
                         buttonText.includes('start quest') ||
                         dataTestId.includes('accept') ||
                         dataTestId.includes('enroll') ||
-                        className.includes('accept') ||
-                        className.includes('enroll')
+                        (className.includes('accept') && className.includes('quest')) ||
+                        (className.includes('enroll') && className.includes('quest'))
                     );
+
+                    return isVisible && isEnabled && isAcceptButton;
                 }) as HTMLElement[];
 
             log.info(`Found ${acceptButtons.length} potential accept buttons on attempt ${attempts + 1}`);
 
             if (acceptButtons.length === 0) {
                 attempts++;
-                // Wait longer between attempts
                 await new Promise(resolve => setTimeout(resolve, 4000));
                 continue;
             }
 
             for (const button of acceptButtons) {
                 const buttonText = button.textContent?.toLowerCase() || '';
-                log.info(`Clicking accept button: "${buttonText}"`);
+                log.info(`Attempting to accept quest via button: "${buttonText}"`);
 
-                // Simulate more realistic click with mouse events
-                button.focus();
-                await new Promise(resolve => setTimeout(resolve, 800));
+                try {
+                    // Try DOM click first
+                    button.focus();
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Dispatch mouse events for more realistic interaction
-                button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 200));
-                button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 100));
-                button.click();
-                await new Promise(resolve => setTimeout(resolve, 100));
-                button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 200));
-                button.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                    button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    button.click();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    button.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
 
-                totalClicked++;
+                    log.info(`Successfully clicked accept button for quest`);
+                    totalAccepted++;
 
-                // Wait much longer between clicks to allow full UI updates and avoid rate limiting
-                const delay = 8000 + Math.random() * 4000; // 8-12 seconds with randomization
-                log.info(`Waiting ${Math.round(delay / 1000)}s before next click`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
+                    // Wait between clicks
+                    const delay = 6000 + Math.random() * 3000; // 6-9 seconds
+                    log.info(`Waiting ${Math.round(delay / 1000)}s before next action`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
 
-            // Check if we got all buttons or if we're done
-            if (acceptButtons.length === 0) {
-                break;
+                } catch (clickError) {
+                    log.warn(`DOM click failed, attempting RestAPI fallback:`, clickError);
+
+                    // Fallback: Try to find quest ID from nearby elements and use RestAPI
+                    const questContainer = button.closest('[data-quest-id], [class*="quest"], [class*="card"]');
+                    if (questContainer) {
+                        const questId = questContainer.getAttribute('data-quest-id') ||
+                            questContainer.getAttribute('data-id') ||
+                            questContainer.id;
+
+                        if (questId) {
+                            try {
+                                const res = await RestAPI.post({
+                                    url: `/quests/${questId}/enroll`,
+                                    body: {}
+                                });
+
+                                if (res?.status === 200 || res?.status === 204) {
+                                    log.info(`Accepted quest ${questId} via RestAPI fallback`);
+                                    totalAccepted++;
+                                } else {
+                                    log.warn(`RestAPI fallback failed for quest ${questId}: ${res?.status}`);
+                                }
+                            } catch (apiError) {
+                                log.error(`RestAPI fallback error for quest ${questId}:`, apiError);
+                            }
+                        }
+                    }
+                }
             }
 
             attempts++;
-            // Wait between batches
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
         }
+
+        // Force refresh quests to update UI
+        await fetchAndDispatchQuests("AutoQuestAccepter - Manual Accept", log);
 
         // Re-enable auto-accept if it was enabled
         settings.store.autoAccept = wasAutoAcceptEnabled;
 
-        log.info(`Finished acceptAllQuests - clicked ${totalClicked} accept buttons total`);
+        log.info(`Finished acceptAllQuests - accepted ${totalAccepted} quests total`);
     } catch (error) {
         log.error(`Error in acceptAllQuests:`, error);
-        // Make sure to re-enable auto-accept on error
         settings.store.autoAccept = true;
     }
 }
 
 async function claimAllQuests(): Promise<void> {
     try {
-        log.info(`Starting claimAllQuests - using DOM click simulation with extended delays`);
+        log.info(`Starting claimAllQuests - using DOM click simulation with RestAPI fallback`);
 
         // Temporarily disable auto-claim to avoid conflicts
         const wasAutoClaimEnabled = settings.store.autoClaim;
@@ -335,16 +364,16 @@ async function claimAllQuests(): Promise<void> {
         // Wait a bit before starting to ensure page is ready
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        let totalClicked = 0;
+        let totalClaimed = 0;
         let attempts = 0;
-        const maxAttempts = 15; // Try more times to find all buttons
+        const maxAttempts = 10; // Reduced attempts since we have fallback
 
         while (attempts < maxAttempts) {
             // Scroll to load more quests if possible
             window.scrollTo(0, document.body.scrollHeight);
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Find all quest claim buttons - be more comprehensive
+            // Find all quest claim buttons - more specific selectors
             const claimButtons = Array.from(document.querySelectorAll('[role="button"], button, [data-testid*="button"], [class*="button"]'))
                 .filter(btn => {
                     const button = btn as HTMLElement;
@@ -358,71 +387,100 @@ async function claimAllQuests(): Promise<void> {
                     const isVisible = rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.top < window.innerHeight;
                     const isEnabled = !button.hasAttribute('disabled') && !button.getAttribute('aria-disabled');
 
-                    return isVisible && isEnabled && (
+                    // More specific conditions for quest claim buttons
+                    const isClaimButton = (
                         (buttonText.includes('claim') && buttonText.includes('quest')) ||
                         (ariaLabel.includes('claim') && ariaLabel.includes('quest')) ||
                         buttonText.includes('collect reward') ||
                         buttonText.includes('claim reward') ||
                         dataTestId.includes('claim') ||
                         dataTestId.includes('collect') ||
-                        className.includes('claim') ||
-                        className.includes('collect')
+                        (className.includes('claim') && className.includes('quest')) ||
+                        (className.includes('collect') && className.includes('quest'))
                     );
+
+                    return isVisible && isEnabled && isClaimButton;
                 }) as HTMLElement[];
 
             log.info(`Found ${claimButtons.length} potential claim buttons on attempt ${attempts + 1}`);
 
             if (claimButtons.length === 0) {
                 attempts++;
-                // Wait longer between attempts
                 await new Promise(resolve => setTimeout(resolve, 4000));
                 continue;
             }
 
             for (const button of claimButtons) {
                 const buttonText = button.textContent?.toLowerCase() || '';
-                log.info(`Clicking claim button: "${buttonText}"`);
+                log.info(`Attempting to claim quest via button: "${buttonText}"`);
 
-                // Simulate more realistic click with mouse events
-                button.focus();
-                await new Promise(resolve => setTimeout(resolve, 800));
+                try {
+                    // Try DOM click first
+                    button.focus();
+                    await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Dispatch mouse events for more realistic interaction
-                button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 200));
-                button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 100));
-                button.click();
-                await new Promise(resolve => setTimeout(resolve, 100));
-                button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 200));
-                button.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                    button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    button.click();
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    button.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    button.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
 
-                totalClicked++;
+                    log.info(`Successfully clicked claim button for quest`);
+                    totalClaimed++;
 
-                // Wait much longer between clicks to allow full UI updates and avoid rate limiting
-                const delay = 8000 + Math.random() * 4000; // 8-12 seconds with randomization
-                log.info(`Waiting ${Math.round(delay / 1000)}s before next click`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
+                    // Wait between clicks
+                    const delay = 6000 + Math.random() * 3000; // 6-9 seconds
+                    log.info(`Waiting ${Math.round(delay / 1000)}s before next action`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
 
-            // Check if we got all buttons or if we're done
-            if (claimButtons.length === 0) {
-                break;
+                } catch (clickError) {
+                    log.warn(`DOM click failed, attempting RestAPI fallback:`, clickError);
+
+                    // Fallback: Try to find quest ID from nearby elements and use RestAPI
+                    const questContainer = button.closest('[data-quest-id], [class*="quest"], [class*="card"]');
+                    if (questContainer) {
+                        const questId = questContainer.getAttribute('data-quest-id') ||
+                            questContainer.getAttribute('data-id') ||
+                            questContainer.id;
+
+                        if (questId) {
+                            try {
+                                const res = await RestAPI.put({
+                                    url: `/quests/${questId}/claim-reward`,
+                                    body: {}
+                                });
+
+                                if (res?.status === 200 || res?.status === 204) {
+                                    log.info(`Claimed quest ${questId} via RestAPI fallback`);
+                                    totalClaimed++;
+                                } else {
+                                    log.warn(`RestAPI fallback failed for quest ${questId}: ${res?.status}`);
+                                }
+                            } catch (apiError) {
+                                log.error(`RestAPI fallback error for quest ${questId}:`, apiError);
+                            }
+                        }
+                    }
+                }
             }
 
             attempts++;
-            // Wait between batches
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
         }
+
+        // Force refresh quests to update UI
+        await fetchAndDispatchQuests("AutoQuestAccepter - Manual Claim", log);
 
         // Re-enable auto-claim if it was enabled
         settings.store.autoClaim = wasAutoClaimEnabled;
 
-        log.info(`Finished claimAllQuests - clicked ${totalClicked} claim buttons total`);
+        log.info(`Finished claimAllQuests - claimed ${totalClaimed} quests total`);
     } catch (error) {
         log.error(`Error in claimAllQuests:`, error);
-        // Make sure to re-enable auto-claim on error
         settings.store.autoClaim = true;
     }
 }
