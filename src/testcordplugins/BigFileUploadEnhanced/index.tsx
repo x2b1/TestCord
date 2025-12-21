@@ -496,7 +496,7 @@ async function uploadToService(uploader: Uploader, payload: UploadPayload): Prom
 
     switch (uploader) {
         case "GoFile": {
-            return await Native.uploadFileToGofileNative("https://gofile.io/uploadFile", payload.fileBuffer, payload.fileName, payload.fileType, settings.store.gofileToken?.trim() || undefined);
+            return await Native.uploadFileToGofileNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.gofileToken?.trim() || undefined);
         }
         case "Catbox": {
             return await Native.uploadFileToCatboxNative("https://catbox.moe/user/api.php", payload.fileBuffer, payload.fileName, payload.fileType, settings.store.catboxUserHash?.trim() || undefined);
