@@ -109,7 +109,7 @@ async function autoClaim() {
             const name = normalizeQuestName(q.config.messages.questName);
 
             try {
-                const res = await RestAPI.post({
+                const res = await RestAPI.put({
                     url: `/quests/${q.id}/claim-reward`,
                     body: {}
                 });
@@ -397,7 +397,7 @@ export default definePlugin({
 
     stop() {
         if (acceptInterval) clearInterval(acceptInterval);
-        if (claimInterval) clearInterval(claimInterval);
+        if (completeInterval) clearInterval(completeInterval);
         log.info("Plugin stopped");
     }
 });

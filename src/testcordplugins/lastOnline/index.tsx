@@ -7,7 +7,7 @@
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
-import { findByProps } from "@webpack";
+
 import { moment, React } from "@webpack/common";
 import { Logger } from "@utils/Logger";
 
@@ -109,8 +109,6 @@ export default definePlugin({
         return shouldShow;
     },
     buildRecentlyOffline(user: User) {
-        const activityClass = findByProps("interactiveSelected", "interactiveSystemDM", "activity", "activityText", "subtext");
-
         const presenceStatus = recentlyOnlineList.get(user.id);
         if (!presenceStatus || presenceStatus.lastOffline === null) {
             log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no valid offline time found`);
@@ -124,10 +122,13 @@ export default definePlugin({
         }
 
         return (
-            <div className={activityClass.activity}>
-                <div className={activityClass.activityText}>
-                    <>Last online <strong>{formattedTime} ago</strong></>
-                </div>
+            <div style={{
+                color: "var(--text-muted)",
+                fontSize: "12px",
+                lineHeight: "16px",
+                marginTop: "2px"
+            }}>
+                Last online <strong>{formattedTime} ago</strong>
             </div>
         );
     }
