@@ -69,6 +69,10 @@ export default definePlugin({
 
         // Add decorator to member list
         addMemberListDecorator("last-online-indicator", (props) => {
+            if (!props.user) {
+                log.debug(`Decorator called with no user, type: ${props.type}`);
+                return null;
+            }
             log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
             if (this.shouldShowRecentlyOffline(props.user)) {
                 log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
