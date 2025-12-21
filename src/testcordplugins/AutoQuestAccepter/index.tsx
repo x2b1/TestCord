@@ -51,10 +51,13 @@ async function acceptQuest(quest: Quest): Promise<boolean> {
     const questName = normalizeQuestName(quest.config.messages.questName);
 
     try {
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Making API call to enroll in quest: ${questName} (ID: ${quest.id})`);
         const response = await RestAPI.post({
             url: `/quests/${quest.id}/enroll`,
             body: {}
         });
+
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] API response for ${questName}: status=${response?.status}, body=`, response?.body);
 
         if (response?.status === 200 || response?.status === 204) {
             AutoQuestLogger.info(`[${new Date().toLocaleString()}] Successfully accepted quest: ${questName}`);
@@ -93,6 +96,9 @@ async function acceptQuest(quest: Quest): Promise<boolean> {
             }
 
             return true;
+        } else {
+            AutoQuestLogger.warn(`[${new Date().toLocaleString()}] Unexpected response status for ${questName}: ${response?.status}`);
+            return false;
         }
     } catch (error) {
         AutoQuestLogger.error(`[${new Date().toLocaleString()}] Failed to accept quest ${questName}:`, error);
