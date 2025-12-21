@@ -356,35 +356,34 @@ function stopAutoCompleting(): void {
 
 async function acceptAllQuests(): Promise<void> {
     try {
-        const quests = Array.from(QuestsStore.quests.values()) as Quest[];
-        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Starting acceptAllQuests with ${quests.length} quests`);
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Starting acceptAllQuests - using DOM click simulation`);
 
-        for (const quest of quests) {
-            const questStatus = getQuestStatus(quest, false);
-            const questName = normalizeQuestName(quest.config.messages.questName);
+        // Find all quest accept buttons and click them
+        const acceptButtons = document.querySelectorAll('[role="button"]:not([disabled]):not([aria-disabled="true"])');
 
-            AutoQuestLogger.info(`[${new Date().toLocaleString()}] Checking quest: ${questName}, status: ${questStatus}, enrolled: ${!!quest.userStatus?.enrolledAt}, completed: ${!!quest.userStatus?.completedAt}, expired: ${new Date(quest.config.expiresAt) <= new Date()}`);
+        let clickedCount = 0;
+        for (const button of acceptButtons) {
+            const buttonText = button.textContent?.toLowerCase() || '';
+            const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
 
-            // Check if quest is available to accept (not claimed, not completed, not expired, not already enrolled)
-            if (questStatus === QuestStatus.Unclaimed &&
-                !quest.userStatus?.enrolledAt &&
-                !quest.userStatus?.completedAt &&
-                new Date(quest.config.expiresAt) > new Date()) {
+            // Look for buttons that contain "accept" or similar text
+            if ((buttonText.includes('accept') && buttonText.includes('quest')) ||
+                (ariaLabel.includes('accept') && ariaLabel.includes('quest')) ||
+                buttonText.includes('enroll') ||
+                buttonText.includes('start quest')) {
 
-                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Accepting quest: ${questName}`);
-                const accepted = await acceptQuest(quest);
-                if (accepted) {
-                    AutoQuestLogger.info(`[${new Date().toLocaleString()}] Successfully accepted quest: ${questName}`);
-                    // Wait 1000ms before processing the next quest
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } else {
-                    AutoQuestLogger.warn(`[${new Date().toLocaleString()}] Failed to accept quest: ${questName}`);
-                }
-            } else {
-                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Skipping quest: ${questName} - not eligible`);
+                AutoQuestLogger.info(`[${new Date().toLocaleString()}] Clicking accept button: "${buttonText}"`);
+
+                // Simulate click
+                (button as HTMLElement).click();
+                clickedCount++;
+
+                // Wait between clicks to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1500));
             }
         }
-        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Finished acceptAllQuests`);
+
+        AutoQuestLogger.info(`[${new Date().toLocaleString()}] Finished acceptAllQuests - clicked ${clickedCount} accept buttons`);
     } catch (error) {
         AutoQuestLogger.error(`[${new Date().toLocaleString()}] Error in acceptAllQuests:`, error);
     }
