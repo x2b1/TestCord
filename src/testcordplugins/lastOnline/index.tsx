@@ -8,10 +8,12 @@ import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 
-import { moment, React } from "@webpack/common";
+import { moment, React, Button, TextInput, PresenceStore } from "@webpack/common";
 import { Logger } from "@utils/Logger";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+
+const { useRef, useState } = React;
 
 import { TestcordDevs } from "../../utils/constants";
 import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
@@ -22,10 +24,56 @@ const path = (window as any).require?.("path");
 
 const log = new Logger("LastOnline");
 
+function FolderPathComponent() {
+    const [value, setValue] = useState(settings.store.dirname);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleBrowse = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const path = (file as any).path || file.webkitRelativePath;
+            if (path) {
+                const dir = path.replace(/[/\\][^/\\]*$/, '');
+                setValue(dir);
+                settings.store.dirname = dir;
+            }
+        }
+    };
+
+    return (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <TextInput
+                value={value}
+                onChange={setValue}
+                placeholder="Enter directory path"
+                style={{ flex: 1 }}
+            />
+            <Button onClick={handleBrowse} size={Button.Sizes.SMALL}>
+                Browse
+            </Button>
+            <input
+                ref={fileInputRef}
+                type="file"
+                {...({ webkitdirectory: "" } as any)}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+            />
+        </div>
+    );
+}
+
 const settings = definePluginSettings({
     dirname: {
-        type: OptionType.STRING,
-        description: "Directory to save the online list JSON file to. Leave empty to use Downloads folder.",
+        type: OptionType.COMPONENT,
+        description: "Directory to save the online list JSON file to. Leave empty to use default location.",
+        component: FolderPathComponent,
         default: ""
     }
 });
@@ -123,16 +171,6 @@ export default definePlugin({
             });
         }
     },
-    patches: [
-        {
-            find: '"UserProfilePopoutBody"',
-            replacement: {
-                match: /(?<=(\i)\.id\)\}\)\),(\i).*?)\(0,.{0,100}\i\.id,onClose:\i\}\)/,
-                replace: "$self.buildRecentlyOffline({ id: $1.id })"
-            },
-            predicate: () => true
-        }
-    ],
     async start() {
         log.info("LastOnline plugin started");
 
@@ -145,6 +183,10 @@ export default definePlugin({
                 return null;
             }
             log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
+            // Only show in DMs, not in guild member lists
+            if (props.type !== "dm") {
+                return null;
+            }
             if (this.shouldShowRecentlyOffline(props.user)) {
                 log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
                 return this.buildRecentlyOffline(props.user);
@@ -160,6 +202,15 @@ export default definePlugin({
     stop() {
         removeMemberListDecorator("last-online-indicator");
     },
+    patches: [
+        {
+            find: '"UserProfilePopoutBody"',
+            replacement: {
+                match: /children:\[/,
+                replace: "children: [$self.buildRecentlyOffline(arguments[0].user),"
+            }
+        }
+    ],
     shouldShowRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
         if (!presenceStatus) {
