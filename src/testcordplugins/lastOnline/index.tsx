@@ -87,36 +87,11 @@ function formatTime(time: number) {
     return "1m";
 }
 
-function buildLastOnlineForProfile(originalChildren: any, user: User) {
-    const presenceStatus = recentlyOnlineList.get(user.id);
-    if (!presenceStatus) return originalChildren;
 
-    let text: string;
-    if (presenceStatus.lastOffline === null) {
-        text = "now";
-    } else {
-        const formattedTime = formatTime(presenceStatus.lastOffline);
-        if (!formattedTime) return originalChildren;
-        text = `${formattedTime} ago`;
-    }
-
-    const React = (globalThis as any).Vencord.Webpack.Common.React;
-    return React.createElement(React.Fragment, null,
-        React.createElement("div", {
-            style: {
-                color: "var(--text-muted)",
-                fontSize: "12px",
-                lineHeight: "16px",
-                marginBottom: "8px"
-            }
-        }, "Last online ", React.createElement("strong", null, text)),
-        originalChildren
-    );
-}
 
 export default definePlugin({
     name: "LastOnline",
-    description: "Adds a last online indicator under usernames in your DM list and guild and GDM member list",
+    description: "Adds a last online indicator under usernames in your DM list and guild member list",
     authors: [TestcordDevs.x2b],
     flux: {
         PRESENCE_UPDATES({ updates }) {
@@ -126,15 +101,7 @@ export default definePlugin({
             });
         }
     },
-    patches: [
-        {
-            find: '"UserProfilePopoutBody"',
-            replacement: {
-                match: /((\i)=.{0,10}(\i)\.id\).*?,onInteraction:\i\}\),).{0,250}onClose:\i\}\)/,
-                replace: "$1$self.buildLastOnlineForProfile({ user: $3 })"
-            }
-        }
-    ],
+
     start() {
         log.info("LastOnline plugin started");
 
