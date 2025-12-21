@@ -173,10 +173,6 @@ export const Devs = /* #__PURE__*/ Object.freeze({
         name: "BigDuck",
         id: 1024588272623681609n
     },
-    benjii: {
-        name: "Benjii",
-        id: 463702169443368970n
-    },
     AverageReactEnjoyer: {
         name: "Average React Enjoyer",
         id: 1004904120056029256n
@@ -872,6 +868,10 @@ export const EquicordDevs = Object.freeze({
     bep: {
         name: "bep",
         id: 0n
+    },
+    Benjii: {
+        name: "Benjii",
+        id: 463702169443368970n
     },
     llytz: {
         name: "llytz",

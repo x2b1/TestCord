@@ -10,7 +10,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { ChannelToolbarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { closeModal, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
@@ -149,7 +149,7 @@ function GalleryToolbarButton() {
 export default definePlugin({
     name: "ChannelGallery",
     description: "Adds a Gallery view for images in the current channel",
-    authors: [Devs.benjii, TestcordDevs.x2b],
+    authors: [EquicordDevs.Benjii, TestcordDevs.x2b],
     dependencies: ["HeaderBarAPI"],
 
     settings,
