@@ -191,16 +191,6 @@ export default definePlugin({
     stop() {
         removeMemberListDecorator("last-online-indicator");
     },
-    patches: [
-        {
-            find: '"UserProfilePopoutBody"',
-            replacement: {
-                match: /(?<=(\i)\.id\)\}\)\),(\i).*?)\(0,.{0,100}\i\.id,onClose:\i\}\)/,
-                replace: "$self.buildRecentlyOffline({ id: $1.id })"
-            },
-            predicate: () => true
-        }
-    ],
     shouldShowRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
         if (!presenceStatus) {
