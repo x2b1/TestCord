@@ -16,7 +16,7 @@ import { definePluginSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { OpenExternalIcon } from "@components/Icons";
-import { EquicordDevs, TestcordDevs } from "../../utils/constants";
+import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { copyWithToast, insertTextIntoChatInputBox, openImageModal, sendMessage } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
@@ -92,8 +92,8 @@ const settings = definePluginSettings({
         description: "Uploader service",
         hidden: true,
         options: [
-            { label: "Catbox (200MB max)", value: "Catbox", default: true },
-            { label: "Litterbox (Catbox) (1GB max)", value: "Litterbox" },
+            { label: "Catbox (max 200mb)", value: "Catbox", default: true },
+            { label: "Litterbox (Catbox but temporary upload, 1GB)", value: "Litterbox" },
             { label: "GoFile", value: "GoFile" },
             { label: "Custom (ShareX-compatible)", value: "Custom" },
         ]
@@ -499,10 +499,10 @@ async function uploadToService(uploader: Uploader, payload: UploadPayload): Prom
             return await Native.uploadFileToGofileNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.gofileToken?.trim() || undefined);
         }
         case "Catbox": {
-            return await Native.uploadFileToCatboxNative("https://catbox.moe/user/api.php", payload.fileBuffer, payload.fileName, payload.fileType, settings.store.catboxUserHash?.trim() || undefined);
+            return await Native.uploadFileToCatboxNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.catboxUserHash?.trim() || undefined);
         }
         case "Litterbox": {
-            return await Native.uploadFileToLitterboxNative("https://litterbox.catbox.moe/resources/internals/api.php", payload.fileBuffer, payload.fileName, payload.fileType, settings.store.litterboxTime);
+            return await Native.uploadFileToLitterboxNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.litterboxTime);
         }
         case "Custom": {
             const validated = validateCustomSettings();
@@ -613,11 +613,11 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 
     children.push(
         <Menu.MenuItem
-            id="vc-big-file-upload"
+            id="vc-big-file-upload-enhanced"
             label={
                 <div className={OptionClasses.optionLabel}>
                     <OpenExternalIcon className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>Upload a Big File (Enhanced)</div>
+                    <div className={OptionClasses.optionName}>Upload Big File (Enhanced)</div>
                 </div>
             }
             action={() => runUploadFlow(props.channel.id)}
@@ -851,7 +851,7 @@ function SettingsComponent() {
 
 export default definePlugin({
     name: "BigFileUploadEnhanced",
-    description: "Bypass Discord's upload limit by uploading files to a third-party host and sending the link in chat. now without dom manipulation.",
+    description: "Bypass Discord's upload limit by uploading files to a third-party host and sending the link in chat, this version offers (soon more options) and not using dom manipulation (faster)",
     authors: [EquicordDevs.Benjii, TestcordDevs.x2b],
     settings,
 
