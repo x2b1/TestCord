@@ -52,10 +52,18 @@ async function acceptQuest(quest: Quest): Promise<boolean> {
 
     try {
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] Making API call to enroll in quest: ${questName} (ID: ${quest.id})`);
-        const response = await RestAPI.post({
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('API call timeout')), 10000)
+        );
+
+        const apiPromise = RestAPI.post({
             url: `/quests/${quest.id}/enroll`,
             body: {}
         });
+
+        const response = await Promise.race([apiPromise, timeoutPromise]) as any;
 
         AutoQuestLogger.info(`[${new Date().toLocaleString()}] API response for ${questName}: status=${response?.status}, body=`, response?.body);
 
@@ -102,9 +110,8 @@ async function acceptQuest(quest: Quest): Promise<boolean> {
         }
     } catch (error) {
         AutoQuestLogger.error(`[${new Date().toLocaleString()}] Failed to accept quest ${questName}:`, error);
+        return false;
     }
-
-    return false;
 }
 
 async function checkAndAcceptQuests(): Promise<void> {
