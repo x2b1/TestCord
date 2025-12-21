@@ -71,7 +71,7 @@ export async function uploadFileToGofileNative(_, url: string, fileBuffer: Array
     const formData = buildFileFormData(fileBuffer, fileName, fileType);
     if (token) formData.append("token", token);
 
-    const response = await safeFetch(uploadUrl, { method: "POST", body: formData });
+    const response = await fetch(uploadUrl, { method: "POST", body: formData });
     const result = await response.json().catch(() => null) as any;
     if (!response.ok) {
         const msg = result?.message ? ` (${String(result.message)})` : "";
