@@ -8,9 +8,8 @@ import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 
-import { moment, React, Button, TextInput, PresenceStore } from "@webpack/common";
+import { moment, React, Button, TextInput, UserStore } from "@webpack/common";
 import { Logger } from "@utils/Logger";
-import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 
 const { useRef, useState } = React;
@@ -92,7 +91,6 @@ const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
 
 function saveOnlineList() {
     const data = Object.fromEntries(recentlyOnlineList);
-    DataStore.set("lastOnlineData", data);
     if (fs && os && path) {
         const filePath = getFilePath();
         try {
@@ -112,20 +110,11 @@ function loadOnlineList() {
                 for (const [userId, status] of Object.entries(data)) {
                     recentlyOnlineList.set(userId, status as PresenceStatus);
                 }
-                return;
             }
         } catch (e) {
             log.error("Failed to load online list from file:", e);
         }
     }
-    // Fallback to DataStore
-    DataStore.get("lastOnlineData").then((data: any) => {
-        if (data) {
-            for (const [userId, status] of Object.entries(data)) {
-                recentlyOnlineList.set(userId, status as PresenceStatus);
-            }
-        }
-    });
 }
 
 function handlePresenceUpdate(status: string, userId: string) {
@@ -206,9 +195,10 @@ export default definePlugin({
         {
             find: '"UserProfilePopoutBody"',
             replacement: {
-                match: /children:\[/,
-                replace: "children: [$self.buildRecentlyOffline(arguments[0].user),"
-            }
+                match: /(?<=(\i)\.id\)\}\)\),(\i).*?)\(0,.{0,100}\i\.id,onClose:\i\}\)/,
+                replace: "$self.buildRecentlyOffline({ id: $1.id })"
+            },
+            predicate: () => true
         }
     ],
     shouldShowRecentlyOffline(user: User) {
@@ -233,7 +223,10 @@ export default definePlugin({
 
         return true;
     },
-    buildRecentlyOffline(user: User) {
+    buildRecentlyOffline({ id }: { id: string; }) {
+        const user = UserStore.getUser(id);
+        if (!user) return null;
+
         const presenceStatus = recentlyOnlineList.get(user.id);
         if (!presenceStatus) {
             log.warn(`buildRecentlyOffline called for user ${user.username}#${user.discriminator} but no presence status found`);
