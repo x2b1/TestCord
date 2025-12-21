@@ -248,7 +248,7 @@ async function acceptAllQuests(): Promise<void> {
                     const buttonText = button.textContent?.toLowerCase() || '';
                     const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
                     const dataTestId = button.getAttribute('data-testid')?.toLowerCase() || '';
-                    const className = button.className?.toLowerCase() || '';
+                    const className = (typeof button.className === 'string' ? button.className.toLowerCase() : '') || '';
 
                     // Check if button is visible and enabled
                     const rect = button.getBoundingClientRect();
