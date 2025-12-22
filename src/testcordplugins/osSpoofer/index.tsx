@@ -1,73 +1,106 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2023 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { definePluginSettings } from "@api/Settings";
 import { Notice } from "@components/Notice";
-import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { UserStore } from "@webpack/common";
+import { TestcordDevs } from "@utils/constants";
 
 const settings = definePluginSettings({
     os: {
         type: OptionType.SELECT,
-        description: "What operating system to spoof as",
+        description: "Operating system to spoof",
         restartNeeded: true,
         options: [
-            {
-                label: "Linux",
-                value: "linux",
-                default: true,
-            },
-            {
-                label: "Windows",
-                value: "windows",
-            },
-            {
-                label: "macOS",
-                value: "macos",
-            },
+            { label: "Ubuntu Linux", value: "linux", default: true },
+            { label: "Windows 11", value: "windows" },
+            { label: "macOS Ventura", value: "macos" }
         ]
     }
 });
 
 export default definePlugin({
     name: "OSSpoofer",
-    description: "Spoof your operating system",
-    authors: [EquicordDevs.Drag], // You can change this to your name if needed
+    description: "Maximum possible OS spoofing at plugin level",
+    authors: [TestcordDevs.x2b],
+    settings,
     settingsAboutComponent: () => (
         <Notice.Warning>
-            We can't guarantee this plugin won't get you warned or banned.
+            This modifies IDENTIFY and client metadata. Risk is non-zero.
         </Notice.Warning>
     ),
-    settings: settings,
+
     patches: [
         {
             find: "_doIdentify(){",
             replacement: {
-                match: /(\[IDENTIFY\].*let.{0,5}=\{.*properties:)(.*),presence/,
-                replace: "$1{...$2,...$self.getOS(true)},presence"
+                match: /(\[IDENTIFY\].*?let.{0,5}=\{)/,
+                replace: "$1...$self.getIdentifyOverrides(),"
             }
         }
     ],
-    getOS(bypass) {
+
+    getIdentifyOverrides() {
         const os = settings.store.os ?? "linux";
 
-        if (bypass) {
-            switch (os) {
-                case "linux":
-                    return { os: "Linux" };
-                case "macos":
-                    return { os: "Mac OS X 10.15.7" };
-                case "windows":
-                    return { os: "Windows NT 10.0" };
-                default:
-                    return {};
-            }
-        }
+        const base = {
+            browser: "Chrome",
+            device: "",
+            system_locale: "en-US",
+            referrer: "",
+            referring_domain: "",
+            release_channel: "stable",
+            client_version: "1.0.9000",
+            client_build_number: 999999
+        };
 
-        return {};
+        switch (os) {
+            case "windows":
+                return {
+                    properties: {
+                        os: "Windows",
+                        browser: "Chrome",
+                        device: "",
+                        system_locale: "en-US"
+                    },
+                    os_version: "10.0.22631",
+                    browser_user_agent:
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    browser_version: "120.0.0.0",
+                    ...base
+                };
+
+            case "macos":
+                return {
+                    properties: {
+                        os: "Mac OS X",
+                        browser: "Chrome",
+                        device: "",
+                        system_locale: "en-US"
+                    },
+                    os_version: "13.6.1",
+                    browser_user_agent:
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    browser_version: "120.0.0.0",
+                    ...base
+                };
+
+            case "linux":
+            default:
+                return {
+                    properties: {
+                        os: "Linux",
+                        browser: "Chrome",
+                        device: "",
+                        system_locale: "en-US"
+                    },
+                    os_version: "6.6.0",
+                    browser_user_agent:
+                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    browser_version: "120.0.0.0",
+                    ...base
+                };
+        }
     }
 });
