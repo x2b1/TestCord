@@ -1,4 +1,4 @@
-# [`<img src="https://raw.githubusercontent.com/x2b1/TestCord/refs/heads/main/browser/icon.png" width="40" align="left" alt="Testcord">`](https://github.com/x2b1/Testcord) Testcord
+# [`<img src="./browser/icon.png" width="40" align="left" alt="Testcord">`](https://github.com/x2b1/Testcord) Testcord
 
 [![Equibop](https://img.shields.io/badge/Equibop-grey?style=flat)](https://github.com/Equicord/Equibop)
 [![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
