@@ -99,7 +99,7 @@ export default definePlugin({
             elements.forEach((el: Element) => {
                 const text = el.textContent?.trim();
                 if (text && userNames.includes(text)) {
-                    (el as HTMLElement).style.fontFamily = fontFamily;
+                    (el as HTMLElement).style.setProperty('font-family', fontFamily, 'important');
                 }
             });
         });
