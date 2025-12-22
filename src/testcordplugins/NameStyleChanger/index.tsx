@@ -98,7 +98,7 @@ export default definePlugin({
             const elements = document.querySelectorAll(selector);
             elements.forEach((el: Element) => {
                 const text = el.textContent?.trim();
-                if (text && userNames.includes(text)) {
+                if (text && userNames.some(name => text.includes(name))) {
                     (el as HTMLElement).style.setProperty('font-family', fontFamily, 'important');
                 }
             });
