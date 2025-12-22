@@ -6,6 +6,8 @@ import { definePluginSettings } from "@api/Settings";
 import { Notice } from "@components/Notice";
 import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
+import { findByProps } from "@webpack";
+import { sendBotMessage } from "@api/Commands/commandHelpers";
 
 const settings = definePluginSettings({
     os: {
@@ -13,9 +15,9 @@ const settings = definePluginSettings({
         description: "Operating system to spoof",
         restartNeeded: true,
         options: [
-            { label: "Ubuntu Linux", value: "linux", default: true },
-            { label: "Windows 11", value: "windows" },
-            { label: "macOS Ventura", value: "macos" }
+            { label: "Linux", value: "linux", default: true },
+            { label: "Windows", value: "windows" },
+            { label: "macOS", value: "macos" }
         ]
     }
 });
@@ -102,5 +104,28 @@ export default definePlugin({
                     ...base
                 };
         }
-    }
+    },
+
+    commands: [
+        {
+            name: "verify-os",
+            description: "Verify the spoofed OS by triggering a reconnect and displaying the current spoofed OS.",
+            execute: (args, ctx) => {
+                const os = settings.store.os ?? "linux";
+                const osName = os === "linux" ? "Linux" : os === "windows" ? "Windows" : "macOS";
+                sendBotMessage(ctx.channel.id, {
+                    content: `Current spoofed OS: ${osName}. Triggering reconnect to send IDENTIFY payload.`,
+                    author: {
+                        username: "OSSpoofer"
+                    }
+                });
+                // Trigger reconnect
+                const gateway = findByProps("connect", "destroy");
+                if (gateway) {
+                    gateway.destroy();
+                    setTimeout(() => gateway.connect(), 1000);
+                }
+            }
+        }
+    ]
 });
