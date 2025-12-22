@@ -4,36 +4,36 @@
 [![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
 [![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://equicord.org/discord)
 
-Equicord is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 300+ plugins.
+Testcord is a fork of [Equicord](https://github.com/Equicord/Equicord) which is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 480 plugins.
 
-You can join our [Discord server](https://equicord.org/discord) for commits, changes, chatting, or even support.
+You can join our [Discord server](https://discord.gg/6gXfZjcFxH) for commits, changes, chatting, or even support.
 
 ### Included Plugins
 
-Our included plugins can be found [here](https://equicord.org/plugins).
+Equicord's included plugins can be found [here](https://equicord.org/plugins), We currently don't have a website.
 
 ## Installing / Uninstalling
 
-Windows
+Windows - currently unsupported (this downloads Equicord)
 
 - [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.exe)
 - [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli.exe)
 
-MacOS
+MacOS - currently unsupported (this downloads Equicord)
 
 - [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.MacOS.zip)
 
-Linux
+Linux - currently unsupported (this downloads Equicord)
 
 - [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x11)
 - [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-Linux)
 - [AUR](https://aur.archlinux.org/packages?O=0&K=equicord)
 
-```shell
+```shell - currently unsupported (this downloads Equicord)
 sh -c "$(curl -sS https://raw.githubusercontent.com/Equicord/Equicord/refs/heads/main/misc/install.sh)"
 ```
 
-## Installing Equicord Devbuild
+## Installing Testcord Devbuild - only working option for now
 
 ### Dependencies
 
@@ -52,8 +52,8 @@ npm i -g pnpm
 Clone Equicord:
 
 ```shell
-git clone https://github.com/Equicord/Equicord
-cd Equicord
+git clone https://github.com/x2b1/Testcord
+cd Testcord
 ```
 
 Install dependencies:
@@ -68,25 +68,30 @@ Build Equicord:
 pnpm build
 ```
 
-Inject Equicord into your desktop client:
+You can also build dev (additional plugins) (not required):
+```shell
+pnpm dev
+```
+
+Inject Testcord into your desktop client:
 
 ```shell
 pnpm inject
 ```
 
-Build Equicord for web:
+Build Testcord for web:
 
 ```shell
 pnpm buildWeb
 ```
 
-After building Equicord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser’s guide for installing custom extensions, if supported.
+After building Testcord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser’s guide for installing custom extensions, if supported.
 
 Note: Firefox extension zip requires Firefox for developers
 
 ## Credits
 
-Thank you to [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord) & [Suncord](https://github.com/verticalsync/Suncord) by [verticalsync](https://github.com/verticalsync) for helping when needed.
+Thank you to [Thororen](https://github.com/thororen1234) for creating [Equicord](https://github.com/Equicord/Equicord) & [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord) & [Suncord](https://github.com/verticalsync/Suncord) by [verticalsync](https://github.com/verticalsync).
 
 ## Star History
 
@@ -102,17 +107,18 @@ Thank you to [Vendicated](https://github.com/Vendicated) for creating [Vencord](
 
 Discord is trademark of Discord Inc., and solely mentioned for the sake of descriptivity.
 Mentioning it does not imply any affiliation with or endorsement by Discord Inc.
-Vencord is not connected to Equicord and as such, all donation links go to Vendicated's donation link.
+Testcord isnt affiliated with Equicord or Vencord!
 
 <details>
-<summary>Using Equicord violates Discord's terms of service</summary>
+<summary>Using Testcord, Equicord or Vencord violates Discord's terms of service</summary>
 
 Client modifications are against Discord’s Terms of Service.
 
-However, Discord is pretty indifferent about them and there are no known cases of users getting banned for using client mods! So you should generally be fine if you don’t use plugins that implement abusive behaviour. But no worries, all inbuilt plugins are safe to use!
+However, Discord is pretty indifferent about them and there are little to no known cases of users getting banned for using client mods! So you should generally be fine if you don’t use plugins that implement abusive behaviour (e.g. Selfbots, message deleter, dynamic status...). But no worries, most inbuilt plugins are safe to use, unless stated otherwise in the plugin description!
 
-Regardless, if your account is essential to you and getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Equicord), just to be safe.
+Regardless, if your account is essential to you and getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Testcord), just to be safe.
 
-Additionally, make sure not to post screenshots with Equicord in a server where you might get banned for it.
+Additionally, make sure not to post screenshots with Testcord in a server where you might get banned for it.
+Server owners often don't like people using client mods since it might give you some advantages or it might make trolling easier, so in most cases the owner won't risk it and just ban you.
 
 </details>
