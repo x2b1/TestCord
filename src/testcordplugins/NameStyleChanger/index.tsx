@@ -1,7 +1,7 @@
-import { definePluginSettings } from "@api/Settings";
+import { definePluginSettings, Settings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { UserStore } from "@webpack/common";
+import { ChannelStore, UserStore } from "@webpack/common";
 
 import "./styles.css";
 
@@ -30,37 +30,47 @@ const fontMap: Record<string, string> = {
 const settings = definePluginSettings({
     font: {
         type: OptionType.SELECT,
-        description: "Font style for your username",
+        description: "Font style for your name",
         options: fontOptions
     }
 });
 
 export default definePlugin({
     name: "NameStyleChanger",
-    description: "Changes the font of your username in chat",
+    description: "Change the font style of your own username and display name, like Discord's paid feature",
     authors: [TestcordDevs.x2b],
     settings,
 
+
+
     observer: null as MutationObserver | null,
-    currentFont: "",
 
     start() {
         this.currentFont = settings.store.font;
-        this.applyFont();
+        this.applyFontToNames();
         this.setupObserver();
+        this.timer = setInterval(() => {
+            if (this.currentFont !== settings.store.font) {
+                this.currentFont = settings.store.font;
+                this.applyFontToNames();
+            }
+        }, 1000);
     },
 
     stop() {
-        this.observer?.disconnect();
-        this.observer = null;
+        if (this.observer) {
+            this.observer.disconnect();
+            this.observer = null;
+        }
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
     },
 
     setupObserver() {
         this.observer = new MutationObserver(() => {
-            if (this.currentFont !== settings.store.font) {
-                this.currentFont = settings.store.font;
-            }
-            this.applyFont();
+            this.applyFontToNames();
         });
 
         this.observer.observe(document.body, {
@@ -69,19 +79,29 @@ export default definePlugin({
         });
     },
 
-    applyFont() {
+    applyFontToNames() {
         const currentUser = UserStore.getCurrentUser();
         if (!currentUser) return;
 
-        const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];
-        const userId = currentUser.id;
+        const userNames = [currentUser.username];
+        if (currentUser.globalName) userNames.push(currentUser.globalName);
 
-        const elements = document.querySelectorAll<HTMLElement>(
-            `[data-user-id="${userId}"]`
-        );
+        const fontFamily = fontMap[settings.store.font] || fontMap["gg-sans"];
 
-        for (const el of elements) {
-            el.style.fontFamily = fontFamily;
-        }
+        const selectors = [
+            ".c19a557985eb7793-username",
+            ".c19a557985eb7793-clickable",
+            ".b6c092614b8d59f3-title"
+        ];
+
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((el: Element) => {
+                const text = el.textContent?.trim();
+                if (text && userNames.includes(text)) {
+                    (el as HTMLElement).style.fontFamily = fontFamily;
+                }
+            });
+        });
     }
 });
