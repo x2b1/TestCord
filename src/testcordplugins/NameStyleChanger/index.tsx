@@ -1,7 +1,7 @@
 import { definePluginSettings, Settings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { UserStore } from "@webpack/common";
+import { ChannelStore, UserStore } from "@webpack/common";
 
 import "./styles.css";
 
@@ -40,6 +40,44 @@ export default definePlugin({
     description: "Change the font style of your own username and display name, like Discord's paid feature",
     authors: [TestcordDevs.x2b],
     settings,
+
+    patches: [
+        {
+            find: '="SYSTEM_TAG"',
+            replacement: {
+                match: /(?<=colorString:\i,colorStrings:\i,colorRoleName:\i.*?}=)(\i),/,
+                replace: "$self.wrapMessageColorProps($1, arguments[0]),"
+            },
+            noWarn: true
+        },
+        {
+            find: "PrivateChannel.renderAvatar",
+            replacement: {
+                match: /(withDisplayNameStyles\]:\i\}\),children:\i\}\),)/,
+                replace: "$1style:{fontFamily:`${$self.fontDMDisplayName(arguments[0])}`},"
+            },
+        },
+        {
+            find: '"AvatarWithText"',
+            replacement: [
+                {
+                    match: /(\}=\i)/,
+                    replace: ",style$1"
+                },
+                {
+                    match: /(?<=nameAndDecorators,)/,
+                    replace: "style:style||{},"
+                },
+            ],
+        },
+        {
+            find: '"Reply Chain Nudge")',
+            replacement: {
+                match: /(className:.{0,15},colorString:)(\i),/,
+                replace: "$1$self.fontInReplyingTo(arguments[0]) ?? $2,"
+            },
+        },
+    ],
 
     observer: null as MutationObserver | null,
 
@@ -89,9 +127,7 @@ export default definePlugin({
         const selectors = [
             ".c19a557985eb7793-username",
             ".c19a557985eb7793-clickable",
-            ".b6c092614b8d59f3-title",
-            "._63ed30c16c7151f2-clickableUsername",
-            "._63ed30c16c7151f2-userTagUsername"
+            ".b6c092614b8d59f3-title"
         ];
 
         selectors.forEach(selector => {
