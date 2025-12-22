@@ -1,7 +1,7 @@
-import { definePluginSettings, Settings } from "@api/Settings";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, UserStore } from "@webpack/common";
+import { UserStore } from "@webpack/common";
 
 import "./styles.css";
 
@@ -30,83 +30,37 @@ const fontMap: Record<string, string> = {
 const settings = definePluginSettings({
     font: {
         type: OptionType.SELECT,
-        description: "Font style for your name",
+        description: "Font style for your username",
         options: fontOptions
     }
 });
 
 export default definePlugin({
     name: "NameStyleChanger",
-    description: "Change the font style of your own username and display name, like Discord's paid feature",
+    description: "Changes the font of your username in chat",
     authors: [TestcordDevs.x2b],
     settings,
 
-    patches: [
-        {
-            find: '="SYSTEM_TAG"',
-            replacement: {
-                match: /(?<=colorString:\i,colorStrings:\i,colorRoleName:\i.*?}=)(\i),/,
-                replace: "$self.wrapMessageColorProps($1, arguments[0]),"
-            },
-            noWarn: true
-        },
-        {
-            find: "PrivateChannel.renderAvatar",
-            replacement: {
-                match: /(withDisplayNameStyles\]:\i\}\),children:\i\}\),)/,
-                replace: "$1style:{fontFamily:`${$self.fontDMDisplayName(arguments[0])}`},"
-            },
-        },
-        {
-            find: '"AvatarWithText"',
-            replacement: [
-                {
-                    match: /(\}=\i)/,
-                    replace: ",style$1"
-                },
-                {
-                    match: /(?<=nameAndDecorators,)/,
-                    replace: "style:style||{},"
-                },
-            ],
-        },
-        {
-            find: '"Reply Chain Nudge")',
-            replacement: {
-                match: /(className:.{0,15},colorString:)(\i),/,
-                replace: "$1$self.fontInReplyingTo(arguments[0]) ?? $2,"
-            },
-        },
-    ],
-
     observer: null as MutationObserver | null,
+    currentFont: "",
 
     start() {
         this.currentFont = settings.store.font;
-        this.applyFontToNames();
+        this.applyFont();
         this.setupObserver();
-        this.timer = setInterval(() => {
-            if (this.currentFont !== settings.store.font) {
-                this.currentFont = settings.store.font;
-                this.applyFontToNames();
-            }
-        }, 1000);
     },
 
     stop() {
-        if (this.observer) {
-            this.observer.disconnect();
-            this.observer = null;
-        }
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
+        this.observer?.disconnect();
+        this.observer = null;
     },
 
     setupObserver() {
         this.observer = new MutationObserver(() => {
-            this.applyFontToNames();
+            if (this.currentFont !== settings.store.font) {
+                this.currentFont = settings.store.font;
+            }
+            this.applyFont();
         });
 
         this.observer.observe(document.body, {
@@ -115,29 +69,19 @@ export default definePlugin({
         });
     },
 
-    applyFontToNames() {
+    applyFont() {
         const currentUser = UserStore.getCurrentUser();
         if (!currentUser) return;
 
-        const userNames = [currentUser.username];
-        if (currentUser.globalName) userNames.push(currentUser.globalName);
+        const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];
+        const userId = currentUser.id;
 
-        const fontFamily = fontMap[settings.store.font] || fontMap["gg-sans"];
+        const elements = document.querySelectorAll<HTMLElement>(
+            `[data-user-id="${userId}"]`
+        );
 
-        const selectors = [
-            ".c19a557985eb7793-username",
-            ".c19a557985eb7793-clickable",
-            ".b6c092614b8d59f3-title"
-        ];
-
-        selectors.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((el: Element) => {
-                const text = el.textContent?.trim();
-                if (text && userNames.includes(text)) {
-                    (el as HTMLElement).style.fontFamily = fontFamily;
-                }
-            });
-        });
+        for (const el of elements) {
+            el.style.fontFamily = fontFamily;
+        }
     }
 });
