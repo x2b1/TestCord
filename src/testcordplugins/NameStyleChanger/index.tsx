@@ -1,4 +1,4 @@
-import { definePluginSettings } from "@api/Settings";
+import { definePluginSettings, Settings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { UserStore } from "@webpack/common";
@@ -44,14 +44,25 @@ export default definePlugin({
     observer: null as MutationObserver | null,
 
     start() {
+        this.currentFont = settings.store.font;
         this.applyFontToNames();
         this.setupObserver();
+        this.timer = setInterval(() => {
+            if (this.currentFont !== settings.store.font) {
+                this.currentFont = settings.store.font;
+                this.applyFontToNames();
+            }
+        }, 1000);
     },
 
     stop() {
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
+        }
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
         }
     },
 
@@ -78,7 +89,9 @@ export default definePlugin({
         const selectors = [
             ".c19a557985eb7793-username",
             ".c19a557985eb7793-clickable",
-            ".b6c092614b8d59f3-title"
+            ".b6c092614b8d59f3-title",
+            "._63ed30c16c7151f2-clickableUsername",
+            "._63ed30c16c7151f2-userTagUsername"
         ];
 
         selectors.forEach(selector => {
