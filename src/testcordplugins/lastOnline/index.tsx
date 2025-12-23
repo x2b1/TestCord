@@ -4,13 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
 
-import { Logger } from "@utils/Logger";
-
-import { TestcordDevs } from "../../utils/constants";
 
 const fs = (window as any).require?.("fs");
 const os = (window as any).require?.("os");
@@ -111,7 +109,7 @@ export default definePlugin({
         const { addMemberListDecorator } = require("@api/MemberListDecorators");
 
         // Add decorator to member list
-        addMemberListDecorator("last-online-indicator", (props) => {
+        addMemberListDecorator("last-online-indicator", props => {
             if (!props.user) {
                 log.debug(`Decorator called with no user, type: ${props.type}`);
                 return null;
@@ -170,7 +168,7 @@ export default definePlugin({
             text = `${formattedTime} ago`;
         }
 
-        const React = (globalThis as any).Vencord.Webpack.Common.React;
+        const { React } = (globalThis as any).Vencord.Webpack.Common;
         return React.createElement("div", {
             style: {
                 color: "var(--text-muted)",

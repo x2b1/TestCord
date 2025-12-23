@@ -1,13 +1,15 @@
 /*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { sendBotMessage } from "@api/Commands/commandHelpers";
 import { definePluginSettings } from "@api/Settings";
 import { Notice } from "@components/Notice";
-import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 import { findByProps } from "@webpack";
-import { sendBotMessage } from "@api/Commands/commandHelpers";
 
 const settings = definePluginSettings({
     os: {
