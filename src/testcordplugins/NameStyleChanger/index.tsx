@@ -1,9 +1,15 @@
-import { definePluginSettings, Settings } from "@api/Settings";
-import { TestcordDevs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, UserStore } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import "./styles.css";
+
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { UserStore } from "@webpack/common";
 
 const fontOptions = [
     { label: "gg sans", value: "gg-sans", default: true },
@@ -99,7 +105,7 @@ export default definePlugin({
             elements.forEach((el: Element) => {
                 const text = el.textContent?.trim();
                 if (text && userNames.some(name => text.includes(name))) {
-                    (el as HTMLElement).style.setProperty('font-family', fontFamily, 'important');
+                    (el as HTMLElement).style.setProperty("font-family", fontFamily, "important");
                 }
             });
         });
