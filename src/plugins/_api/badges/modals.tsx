@@ -69,7 +69,6 @@ export function TestCordDonorModal() {
     const modalKey = openModal(props => (
         <ErrorBoundary noop onError={() => {
             closeModal(modalKey);
-            // Will get my own in the future
             VencordNative.native.openExternal("https://ko-fi.com/x2bkaneki");
         }}>
             <ModalRoot {...props}>

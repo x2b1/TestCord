@@ -1,15 +1,13 @@
 /*
- * ChannelGallery — view all images in the current channel in a combined gallery.
- *
- * Limitations:
- * - Only loads images from message history via paginated API requests (no global indexing).
- * - Spoilered attachments are intentionally excluded to avoid bypassing gating.
+ * Vencord, a Discord client mod
+ * Copyright (c) 2025 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import ErrorBoundary from "@components/ErrorBoundary";
 import { ChannelToolbarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { closeModal, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
@@ -74,7 +72,7 @@ function isSupportedChannel(channel: any): boolean {
     if (typeof channel.isMultiUserDM === "function" && channel.isMultiUserDM()) return false;
 
     // Prefer Discord's own channel type sets when available.
-    const type = channel.type;
+    const { type } = channel;
     if (ChannelTypes?.DM != null && type === ChannelTypes.DM) return false;
     if (ChannelTypesSets?.ALL_DMS?.has?.(type)) return false;
 

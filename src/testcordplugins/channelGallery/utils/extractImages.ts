@@ -1,3 +1,9 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2025 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "avif"]);
 
 function getExt(name?: string): string {
@@ -21,7 +27,6 @@ function isAllowedImageFilename(name: string | undefined, includeGifs: boolean) 
 
 function isImageAttachment(att: any, includeGifs: boolean): boolean {
     if (!att?.url) return false;
-    if (isSpoiler(att)) return false;
 
     const ct = String(att?.content_type ?? "").toLowerCase();
     if (ct.startsWith("image/")) {
