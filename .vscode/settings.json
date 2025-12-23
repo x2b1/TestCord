@@ -23,5 +23,6 @@
     "css.format.spaceAroundSelectorSeparator": true,
     "[css]": {
         "editor.defaultFormatter": "vscode.css-language-features"
-    }
+    },
+    "sarif-viewer.connectToGithubCodeScanning": "off"
 }
