@@ -11,7 +11,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingPrimary } from "@components/Heading";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
-import { EquicordDevsById, VencordDevsById, TestcordDevsById } from "@utils/constants";
+import { EquicordDevsById, TestcordDevsById, VencordDevsById } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { fetchUserProfile } from "@utils/discord";
 import { pluralise } from "@utils/misc";
@@ -51,8 +51,9 @@ function ContributorModal({ user }: { user: User; }) {
 
     const plugins = useMemo(() => {
         const allPlugins = Object.values(Plugins);
-        const pluginsByAuthor = (VencordDevsById[user.id] || EquicordDevsById[user.id])
-            ? allPlugins.filter(p => p.authors.includes(VencordDevsById[user.id] || EquicordDevsById[user.id]))
+        const dev = VencordDevsById[user.id] || EquicordDevsById[user.id] || TestcordDevsById[user.id];
+        const pluginsByAuthor = dev
+            ? allPlugins.filter(p => p.authors.includes(dev))
             : allPlugins.filter(p =>
                 PluginMeta[p.name]?.userPlugin && p.authors.some(a => a.id.toString() === user.id)
                 || p.authors.some(a => a.name === user.username)
