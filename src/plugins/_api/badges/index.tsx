@@ -30,11 +30,11 @@ import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { VencordDonorModal, TestCordDonorModal } from "./modals";
+import { TestCordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
-const TESTCORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
+const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/x2b1/TestCord/main/browser/icon.png";
 const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
 
 const ContributorBadge: ProfileBadge = {
@@ -189,7 +189,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, EquicordContributorBadge, TestcordContributorBadge, UserPluginContributorBadge],
 
     async start() {
         await loadAllBadges();

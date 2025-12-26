@@ -18,9 +18,8 @@
 
 import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
-import { definePluginSettings, Settings } from "@api/Settings";
+import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
-import { BaseText } from "@components/BaseText";
 import { Card } from "@components/Card";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
@@ -239,14 +238,14 @@ export default definePlugin({
 
                     const parts: string[][] = [];
                     let currentPart: string[] = [];
-                    let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length; // estimate header length
+                    let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + "\n```".length; // estimate header length
 
                     for (const plugin of plugins) {
                         const pluginWithComma = plugin + ", ";
                         if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
                             parts.push(currentPart);
                             currentPart = [plugin];
-                            currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length + plugin.length;
+                            currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + "\n```".length + plugin.length;
                         } else {
                             currentPart.push(plugin);
                             currentLength += pluginWithComma.length;
@@ -388,14 +387,14 @@ export default definePlugin({
 
                                 const parts: string[][] = [];
                                 let currentPart: string[] = [];
-                                let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length; // estimate header length
+                                let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + "\n```".length; // estimate header length
 
                                 for (const plugin of plugins) {
                                     const pluginWithComma = plugin + ", ";
                                     if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
                                         parts.push(currentPart);
                                         currentPart = [plugin];
-                                        currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + `\n\`\`\``.length + plugin.length;
+                                        currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + "\n```".length + plugin.length;
                                     } else {
                                         currentPart.push(plugin);
                                         currentLength += pluginWithComma.length;
@@ -462,9 +461,9 @@ export default definePlugin({
 
         return (
             <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Equicord & Vencord plugin developers for support!
+                Please do not private message Testcord / Equicord / Vencord Developers / Plugin Devs for support!
                 <br />
-                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
+                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1434211283317690502/1434228141123047434")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}
             </Card>
         );

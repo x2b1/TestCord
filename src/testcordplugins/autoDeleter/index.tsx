@@ -24,15 +24,15 @@ interface TrackedMessage {
     channelId: string;
     guildId?: string;
     timestamp: number;
-    scheduledTime: number; // Timestamp absolu de suppression programmée
-    timeoutId?: NodeJS.Timeout; // Optionnel car pas sauvegardé
-    content?: string; // Contenu original pour debug
-    length?: number; // Longueur du message
+    scheduledTime: number; // Absolute timestamp of scheduled deletion
+    timeoutId?: NodeJS.Timeout; // Optional because not saved
+    content?: string; // Original content for debug
+    length?: number; // Message length
     hasEmbed?: boolean;
     hasAttachment?: boolean;
     hasReactions?: boolean;
-    deletionMode?: string; // Mode de suppression spécifique
-    priority?: number; // Priorité de suppression (1-10)
+    deletionMode?: string; // Specific deletion mode
+    priority?: number; // Deletion priority (1-10)
 }
 
 interface DeletionStats {
@@ -247,30 +247,30 @@ const settings = definePluginSettings({
     },
     batchDelete: {
         type: OptionType.BOOLEAN,
-        description: "Suppression par lots pour optimiser les performances",
+        description: "Batch deletion to optimize performance",
         default: false,
     },
     batchSize: {
         type: OptionType.NUMBER,
-        description: "Taille des lots de suppression",
+        description: "Batch size for deletion",
         default: 5,
         min: 1,
         max: 20,
     },
     batchDelay: {
         type: OptionType.NUMBER,
-        description: "Délai entre les lots (ms)",
+        description: "Delay between batches (ms)",
         default: 200,
     },
     emergencyStop: {
         type: OptionType.BOOLEAN,
-        description: "Arrêt d'urgence - annule toutes les suppressions programmées",
+        description: "Emergency stop - cancels all scheduled deletions",
         default: false,
     },
     maxMessagesPerHour: {
         type: OptionType.NUMBER,
         description:
-            "Nombre maximum de messages à supprimer par heure (0 = illimité)",
+            "Maximum number of messages to delete per hour (0 = unlimited)",
         default: 0,
         min: 0,
         max: 1000,
@@ -279,7 +279,7 @@ const settings = definePluginSettings({
 
 const STORAGE_KEY = "AutoDeleter_TrackedMessages";
 
-// Fonctions pour la suppression AntiLog
+// Functions for AntiLog deletion
 function messageSendWrapper(content: string, nonce: string, channelId: string) {
     const wrapperResponse = RestAPI.post({
         url: Constants.Endpoints.MESSAGES(channelId),
@@ -314,13 +314,13 @@ export default definePlugin({
         , TestcordDevs.x2b],
     settings,
 
-    // Map pour suivre les messages en attente de suppression
+    // Map to track messages pending deletion
     trackedMessages: new Map<string, TrackedMessage>(),
 
-    // Fonction liée pour l'événement MESSAGE_CREATE
+    // Bound function for MESSAGE_CREATE event
     boundOnMessageCreate: null as any,
 
-    // Statistiques avancées
+    // Advanced statistics
     stats: {
         messagesDeleted: 0,
         messagesSaved: 0,
@@ -334,7 +334,7 @@ export default definePlugin({
         channelStats: {} as Record<string, number>,
     } as DeletionStats,
 
-    // Cache pour optimiser les performances
+    // Cache to optimize performance
     messageCache: new Map<string, any>(),
     channelCache: new Map<string, any>(),
 
@@ -346,7 +346,7 @@ export default definePlugin({
     }>,
     batchProcessor: null as NodeJS.Timeout | null,
 
-    // Gestion des rate limits avancée
+    // Advanced rate limit management
     rateLimitInfo: {
         isRateLimited: false,
         retryAfter: 0,
@@ -361,7 +361,7 @@ export default definePlugin({
         lastSuccessfulDeletion: 0,
     },
 
-    // Cache des tentatives de suppression
+    // Cache of deletion attempts
     retryQueue: [] as Array<{
         messageId: string;
         channelId: string;
@@ -371,7 +371,7 @@ export default definePlugin({
     }>,
     retryProcessor: null as NodeJS.Timeout | null,
 
-    // Throttling intelligent
+    // Intelligent throttling
     throttlingInfo: {
         lastDeletionTime: 0,
         deletionCount: 0,
@@ -381,42 +381,42 @@ export default definePlugin({
     },
 
     async start() {
-        this.log("Plugin AutoDeleter démarré");
+        this.log("AutoDeleter plugin started");
 
-        // Lier le contexte pour onMessageCreate
+        // Bind context for onMessageCreate
         this.boundOnMessageCreate = this.onMessageCreate.bind(this);
 
-        // Écouter les nouveaux messages
+        // Listen for new messages
         FluxDispatcher.subscribe("MESSAGE_CREATE", this.boundOnMessageCreate);
 
-        // Restaurer les messages depuis le stockage
+        // Restore messages from storage
         await this.restoreTrackedMessages();
 
         this.log(
-            `Restauration terminée: ${this.stats.restoredFromStorage} messages restaurés`
+            `Restoration completed: ${this.stats.restoredFromStorage} messages restored`
         );
     },
 
     stop() {
-        this.log("Plugin AutoDeleter arrêté");
+        this.log("AutoDeleter plugin stopped");
 
-        // Arrêter d'écouter les messages
+        // Stop listening for messages
         if (this.boundOnMessageCreate) {
             FluxDispatcher.unsubscribe("MESSAGE_CREATE", this.boundOnMessageCreate);
         }
 
-        // Annuler tous les timeouts en cours
+        // Cancel all ongoing timeouts
         this.trackedMessages.forEach(message => {
             if (message.timeoutId) {
                 clearTimeout(message.timeoutId);
             }
         });
 
-        // Sauvegarder les messages restants
+        // Save remaining messages
         this.saveTrackedMessages();
     },
 
-    // Sauvegarder les messages programmés
+    // Save scheduled messages
     async saveTrackedMessages() {
         try {
             const messagesToSave = Array.from(this.trackedMessages.values()).map(
@@ -429,13 +429,13 @@ export default definePlugin({
             );
 
             await DataStore.set(STORAGE_KEY, messagesToSave);
-            this.debug(`Sauvegarde: ${messagesToSave.length} messages sauvegardés`);
+            this.debug(`Save: ${messagesToSave.length} messages saved`);
         } catch (error) {
-            this.error("Erreur lors de la sauvegarde des messages:", error);
+            this.error("Error saving messages:", error);
         }
     },
 
-    // Restaurer les messages depuis le stockage
+    // Restore messages from storage
     async restoreTrackedMessages() {
         try {
             const savedMessages = await DataStore.get<TrackedMessage[]>(STORAGE_KEY);
@@ -451,36 +451,36 @@ export default definePlugin({
             for (const savedMsg of savedMessages) {
                 const timeUntilDeletion = savedMsg.scheduledTime - now;
 
-                // Si le message aurait dû être supprimé, le supprimer maintenant
+                // If the message should have been deleted, delete it now
                 if (timeUntilDeletion <= 0) {
                     this.debug(
-                        `Message ${savedMsg.id} aurait dû être supprimé, suppression immédiate`
+                        `Message ${savedMsg.id} should have been deleted, immediate deletion`
                     );
                     await this.deleteMessage(savedMsg.id, savedMsg.channelId);
                     continue;
                 }
 
-                // Vérifier si le message existe encore
+                // Check if the message still exists
                 try {
                     const message = MessageStore.getMessage(
                         savedMsg.channelId,
                         savedMsg.id
                     );
                     if (!message) {
-                        this.debug(`Message ${savedMsg.id} n'existe plus, ignoré`);
+                        this.debug(`Message ${savedMsg.id} no longer exists, ignored`);
                         continue;
                     }
 
-                    // Reprogrammer la suppression
+                    // Reschedule deletion
                     this.scheduleMessageDeletionFromRestore(savedMsg, timeUntilDeletion);
                     restoredCount++;
                 } catch (error) {
-                    this.debug(`Message ${savedMsg.id} introuvable, ignoré`);
+                    this.debug(`Message ${savedMsg.id} not found, ignored`);
                 }
             }
 
             this.stats.restoredFromStorage = restoredCount;
-            this.debug(`Restauration: ${restoredCount} messages reprogrammés`);
+            this.debug(`Restoration: ${restoredCount} messages rescheduled`);
         } catch (error) {
             this.error("Erreur lors de la restauration des messages:", error);
         }
@@ -503,25 +503,25 @@ export default definePlugin({
                 return;
             }
 
-            // Vérifier le circuit breaker
+            // Check circuit breaker
             if (this.rateLimitInfo.circuitBreakerOpen) {
                 const now = Date.now();
                 if (now < this.rateLimitInfo.circuitBreakerUntil) {
-                    this.debug("Circuit breaker ouvert - suppression ignorée");
+                    this.debug("Circuit breaker open - deletion ignored");
                     return;
                 } else {
-                    // Reset du circuit breaker
+                    // Reset circuit breaker
                     this.rateLimitInfo.circuitBreakerOpen = false;
                     this.rateLimitInfo.circuitBreakerUntil = 0;
-                    this.log("Circuit breaker fermé - reprise des suppressions");
+                    this.log("Circuit breaker closed - resuming deletions");
                 }
             }
 
-            // Vérifier le cooldown global
+            // Check global cooldown
             if (this.rateLimitInfo.globalCooldown) {
                 const now = Date.now();
                 if (now < this.rateLimitInfo.globalCooldownUntil) {
-                    this.debug("Cooldown global actif - suppression ignorée");
+                    this.debug("Global cooldown active - deletion ignored");
                     return;
                 } else {
                     this.rateLimitInfo.globalCooldown = false;
@@ -529,15 +529,15 @@ export default definePlugin({
                 }
             }
 
-            // Vérifier la limite horaire
+            // Check hourly limit
             if (!this.checkHourlyLimit()) {
-                this.debug("Limite horaire de suppression atteinte");
+                this.debug("Hourly deletion limit reached");
                 return;
             }
 
-            // Vérifier le throttling intelligent
+            // Check intelligent throttling
             if (!this.checkThrottlingLimits()) {
-                this.debug("Limites de throttling atteintes");
+                this.debug("Throttling limits reached");
                 return;
             }
 
@@ -547,27 +547,27 @@ export default definePlugin({
                 return;
             }
 
-            // Vérifier les filtres de serveur
+            // Check server filters
             if (!this.shouldProcessGuild(message.guild_id)) {
-                this.debug(`Serveur ${message.guild_id} ignoré par les filtres`);
+                this.debug(`Server ${message.guild_id} ignored by filters`);
                 return;
             }
 
-            // Vérifier les mots-clés à préserver
+            // Check keywords to preserve
             if (this.shouldPreserveMessage(message)) {
-                this.debug(`Message préservé à cause des filtres: ${message.content}`);
+                this.debug(`Message preserved due to filters: ${message.content}`);
                 this.stats.messagesSaved++;
                 return;
             }
 
-            // Vérifier les mots-clés de suppression immédiate
+            // Check immediate deletion keywords
             if (this.shouldDeleteImmediately(message.content)) {
-                this.debug(`Suppression immédiate demandée: ${message.content}`);
-                this.scheduleMessageDeletion(message, 2000); // 2 secondes minimum
+                this.debug(`Immediate deletion requested: ${message.content}`);
+                this.scheduleMessageDeletion(message, 2000); // 2 seconds minimum
                 return;
             }
 
-            // Programmer la suppression avec délai intelligent
+            // Schedule deletion with smart delay
             const delay = this.calculateSmartDelay(message);
             this.scheduleMessageDeletion(message, delay);
         } catch (error) {
@@ -613,7 +613,7 @@ export default definePlugin({
     shouldPreserveMessage(message: any): boolean {
         const content = message.content || "";
 
-        // Vérifier les mots-clés de préservation
+        // Check preservation keywords
         const keywords = settings.store.preserveKeywords
             .split(",")
             .map(keyword => keyword.trim().toLowerCase())
@@ -626,7 +626,7 @@ export default definePlugin({
             }
         }
 
-        // Vérifier la longueur du message
+        // Check message length
         if (
             settings.store.maxMessageLength > 0 &&
             content.length > settings.store.maxMessageLength
@@ -641,7 +641,7 @@ export default definePlugin({
             return true;
         }
 
-        // Vérifier les embeds
+        // Check embeds
         if (
             settings.store.preserveEmbeds &&
             message.embeds &&
@@ -650,7 +650,7 @@ export default definePlugin({
             return true;
         }
 
-        // Vérifier les fichiers joints
+        // Check attachments
         if (
             settings.store.preserveAttachments &&
             message.attachments &&
@@ -659,7 +659,7 @@ export default definePlugin({
             return true;
         }
 
-        // Vérifier les réactions
+        // Check reactions
         if (
             settings.store.preserveReactions &&
             message.reactions &&
@@ -693,10 +693,10 @@ export default definePlugin({
         const baseDelay = this.getDelayInMs();
         const contentLength = (message.content || "").length;
 
-        // Délai basé sur la longueur : plus le message est long, plus on attend
-        const lengthMultiplier = Math.min(1 + contentLength / 1000, 3); // Max 3x le délai de base
+        // Delay based on length: longer messages wait longer
+        const lengthMultiplier = Math.min(1 + contentLength / 1000, 3); // Max 3x base delay
 
-        // Délai basé sur les embeds/attachments
+        // Delay based on embeds/attachments
         const mediaMultiplier =
             (message.embeds?.length || 0) > 0 ||
                 (message.attachments?.length || 0) > 0
@@ -710,7 +710,7 @@ export default definePlugin({
         const now = Date.now();
         const hourInMs = 60 * 60 * 1000;
 
-        // Reset du compteur horaire si nécessaire
+        // Reset hourly counter if necessary
         if (now - this.stats.lastHourReset > hourInMs) {
             this.stats.hourlyDeletions = 0;
             this.stats.lastHourReset = now;
@@ -736,10 +736,10 @@ export default definePlugin({
             this.throttlingInfo.windowStart = now;
         }
 
-        // Vérifier le nombre de suppressions par minute
+        // Check number of deletions per minute
         const maxPerMinute = settings.store.maxDeletionsPerMinute;
         if (this.throttlingInfo.deletionCount >= maxPerMinute) {
-            this.debug(`Limite de ${maxPerMinute} suppressions par minute atteinte`);
+            this.debug(`Limit of ${maxPerMinute} deletions per minute reached`);
             return false;
         }
 
@@ -767,8 +767,8 @@ export default definePlugin({
         const { deletionMode } = settings.store;
 
         this.debug(
-            `Programmation suppression message ${message.id
-            } dans ${delay}ms (${new Date(
+            `Scheduling message deletion ${message.id
+            } in ${delay}ms (${new Date(
                 scheduledTime
             ).toLocaleString()}) - Mode: ${deletionMode}`
         );
@@ -781,7 +781,7 @@ export default definePlugin({
             }
         }, delay);
 
-        // Suivre le message avec plus d'informations
+        // Track message with more information
         const trackedMessage: TrackedMessage = {
             id: message.id,
             channelId: message.channel_id,
@@ -801,19 +801,19 @@ export default definePlugin({
         this.trackedMessages.set(message.id, trackedMessage);
         this.messageCache.set(message.id, message);
 
-        // Sauvegarder immédiatement
+        // Save immediately
         this.saveTrackedMessages();
     },
 
     calculatePriority(message: any): number {
-        let priority = 5; // Priorité par défaut
+        let priority = 5; // Default priority
 
-        // Messages plus longs = priorité plus élevée
+        // Longer messages = higher priority
         const contentLength = (message.content || "").length;
         if (contentLength > 500) priority += 2;
         if (contentLength > 1000) priority += 1;
 
-        // Messages avec médias = priorité plus élevée
+        // Messages with media = higher priority
         if (message.embeds?.length > 0 || message.attachments?.length > 0) {
             priority += 1;
         }
@@ -857,7 +857,7 @@ export default definePlugin({
 
     scheduleMessageDeletionFromRestore(savedMsg: TrackedMessage, delay: number) {
         this.debug(
-            `Reprogrammation suppression message ${savedMsg.id} dans ${delay}ms`
+            `Rescheduling message deletion ${savedMsg.id} in ${delay}ms`
         );
 
         const timeoutId = setTimeout(() => {
@@ -894,12 +894,12 @@ export default definePlugin({
                     Date.now() - this.rateLimitInfo.lastRateLimit;
                 if (timeSinceLastRateLimit < this.rateLimitInfo.retryAfter * 1000) {
                     this.debug(
-                        `Rate limit actif, ajout à la queue de retry: ${messageId}`
+                        `Rate limit active, adding to retry queue: ${messageId}`
                     );
                     this.addToRetryQueue(messageId, channelId, deletionMode, attempt);
                     return;
                 } else {
-                    // Reset du rate limit
+                    // Reset rate limit
                     this.rateLimitInfo.isRateLimited = false;
                     this.rateLimitInfo.consecutiveRateLimits = 0;
                     this.rateLimitInfo.backoffMultiplier = 1;
@@ -913,7 +913,7 @@ export default definePlugin({
                 return;
             }
 
-            // Mettre à jour les statistiques
+            // Update statistics
             this.stats.hourlyDeletions++;
             this.stats.deletionModes[deletionMode] =
                 (this.stats.deletionModes[deletionMode] || 0) + 1;
@@ -1045,14 +1045,14 @@ export default definePlugin({
             this.log(`Cooldown global activé pour ${cooldownDuration}ms`);
         }
 
-        // Ouvrir le circuit breaker si trop de rate limits consécutifs
+        // Open circuit breaker if too many consecutive rate limits
         const threshold = settings.store.circuitBreakerThreshold;
         if (this.rateLimitInfo.consecutiveRateLimits >= threshold) {
-            const duration = settings.store.circuitBreakerDuration * 60 * 1000; // Convertir en ms
+            const duration = settings.store.circuitBreakerDuration * 60 * 1000; // Convert to ms
             this.rateLimitInfo.circuitBreakerOpen = true;
             this.rateLimitInfo.circuitBreakerUntil = Date.now() + duration;
             this.log(
-                `Circuit breaker ouvert pour ${settings.store.circuitBreakerDuration} minutes`
+                `Circuit breaker opened for ${settings.store.circuitBreakerDuration} minutes`
             );
         }
 
