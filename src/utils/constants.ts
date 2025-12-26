@@ -1233,6 +1233,10 @@ export const TestcordDevs = Object.freeze({
         name: "x2b",
         id: 996137713432530976n
     },
+    Benjii: {
+        name: "Benjii",
+        id: 463702169443368970n
+    },
 } satisfies Record<string, Dev>);
 
 // iife so #__PURE__ works correctly
