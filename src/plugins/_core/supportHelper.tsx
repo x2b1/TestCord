@@ -150,7 +150,7 @@ async function generateDebugInfoMessage() {
     };
 
     const potentiallyProblematicPlugins = ([
-        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge", "ClientTheme", "Ingtoninator", "NeverPausePreviews",
+        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "Ingtoninator", "NeverPausePreviews",
         "IdleAutoRestart",
     ].filter(Vencord.Plugins.isPluginEnabled) ?? []).sort();
 
@@ -307,7 +307,7 @@ export default definePlugin({
                     body: <div>
                         <Paragraph>You are using an externally updated TestCord version, the ability to help you here may be limited.</Paragraph>
                         <Paragraph className={Margins.top8}>
-                            Please join the <Link href="https://equicord.org/discord">TestCord Server</Link> for support,
+                            Please join the <Link href="https://discord.gg/KTNXyDTXGb">TestCord Server</Link> for support,
                             or if this issue persists on Vencord, continue on.
                         </Paragraph>
                     </div>
