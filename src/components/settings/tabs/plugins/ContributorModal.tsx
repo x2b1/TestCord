@@ -64,7 +64,7 @@ function ContributorModal({ user }: { user: User; }) {
             .sort((a, b) => Number(a.required ?? false) - Number(b.required ?? false));
     }, [user.id, user.username]);
 
-    const ContributedHyperLink = <Link href="https://github.com/x2b1/TestCord">contributed</Link>;
+    const ContributedHyperLink = <Link href="https://github.com/Equicord/Equicord">contributed</Link>;
 
     const hasLinks = website || githubName;
 
