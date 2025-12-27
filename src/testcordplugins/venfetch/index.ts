@@ -8,13 +8,13 @@ import { ApplicationCommandInputType, Argument, CommandContext } from "@api/Comm
 import { gitHash } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
+import { isPluginDev, tryOrElse } from "@utils/misc";
 import definePlugin, { Plugin, PluginNative } from "@utils/types";
+import { findByCodeLazy } from "@webpack";
 import { GuildMemberStore, UserStore } from "@webpack/common";
 
 import { PluginMeta } from "~plugins";
 
-import { isPluginDev, tryOrElse } from "@utils/misc";
-import { findByCodeLazy } from "@webpack";
 import { getUserSettingLazy } from "../../api/UserSettings.js";
 import SettingsPlugin from "../../plugins/_core/settings";
 
@@ -25,11 +25,10 @@ const clientVersion = () => {
     // @ts-ignore
     const name = IS_DISCORD_DESKTOP ? "Desktop" : IS_VESKTOP ? "Vesktop" : typeof unsafeWindow !== "undefined" ? "UserScript" : "Web";
 
-    return `${name}${version ? ` v${version}` : ''}`;
+    return `${name}${version ? ` v${version}` : ""}`;
 };
 
-const COLOR_TEST = '[2;40m[2;30m███[0m[2;40m[0m[2;31m[0m[2;30m███[0m[2;31m███[0m[2;32m███[0m[2;33m███[0m[2;34m███[0m[2;35m███[0m[2;36m███[0m[2;37m███[0m';
-
+const COLOR_TEST = "[2;40m[2;30m███[0m[2;40m[0m[2;31m[0m[2;30m███[0m[2;31m███[0m[2;32m███[0m[2;33m███[0m[2;34m███[0m[2;35m███[0m[2;36m███[0m[2;37m███[0m";
 
 const LOGO_WITH_ANSI = `\
 \n\
@@ -85,7 +84,7 @@ function getEnabledPlugins() {
         }
     };
 
-    Object.values(Vencord.Plugins.plugins).filter((plugin) => !isApiPlugin(plugin)).forEach((plugin) => {
+    Object.values(Vencord.Plugins.plugins).filter(plugin => !isApiPlugin(plugin)).forEach(plugin => {
         if (PluginMeta[plugin.name]?.userPlugin) {
             if (plugin.started) counters.user.enabled++;
             counters.user.total++;
@@ -98,18 +97,17 @@ function getEnabledPlugins() {
     return `${counters.official.enabled} / ${counters.official.total} (official)` + (counters.user.total ? `, ${counters.user.enabled} / ${counters.user.total} (userplugins)` : "");
 }
 function getDonorStatus() {
-    return GuildMemberStore.getMember("1015060230222131221", UserStore.getCurrentUser().id).roles.includes("1042507929485586532");
+    const member = GuildMemberStore.getMember("1015060230222131221", UserStore.getCurrentUser().id);
+    return member ? member.roles.includes("1042507929485586532") : false;
 }
 function getContribStatus() {
     const userId = UserStore.getCurrentUser().id;
-    return isPluginDev(userId) || GuildMemberStore.getMember("1015060230222131221", userId).roles.includes("1026534353167208489");
+    const member = GuildMemberStore.getMember("1015060230222131221", userId);
+    return isPluginDev(userId) || (member ? member.roles.includes("1026534353167208489") : false);
 }
-
-
 
 const getVersions = findByCodeLazy("logsUploaded:new Date().toISOString(),");
 const ShowCurrentGame = getUserSettingLazy<boolean>("status", "showCurrentGame")!;
-
 
 export default definePlugin({
     name: "venfetch",
@@ -132,10 +130,10 @@ export default definePlugin({
                 const { username } = UserStore.getCurrentUser();
                 const versions = getVersions();
                 const info: Record<string, string | null> = {
-                    version: `${VERSION} ~ ${gitHash}${SettingsPlugin.additionalInfo} - ${Intl.DateTimeFormat(navigator.language, { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}${!IS_STANDALONE ? ` ~ dev` : ""}`,
+                    version: `${VERSION} ~ ${gitHash}${SettingsPlugin.additionalInfo} - ${Intl.DateTimeFormat(navigator.language, { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}${!IS_STANDALONE ? " ~ dev" : ""}`,
                     client: `${t(window.GLOBAL_ENV.RELEASE_CHANNEL)} ~ ${clientVersion()}`,
-                    'Build Number': `${versions.buildNumber} ~ Hash: ${versions.versionHash?.slice(0, 7) ?? 'unknown'}`,
-                    issues: Object.entries(commonIssues).filter(([_, value]) => value).map(([key]) => key).join(", ") || '',
+                    "Build Number": `${versions.buildNumber} ~ Hash: ${versions.versionHash?.slice(0, 7) ?? "unknown"}`,
+                    issues: Object.entries(commonIssues).filter(([_, value]) => value).map(([key]) => key).join(", ") || "",
 
                     _: null,
 
@@ -143,7 +141,7 @@ export default definePlugin({
                     platform: navigator.userAgentData?.platform ? `${navigator.userAgentData?.platform} (${navigator.platform})` : navigator.platform,
                     plugins: getEnabledPlugins(),
                     uptime: `${~~((Date.now() - window.GLOBAL_ENV.HTML_TIMESTAMP) / 1000)}s`,
-                    memory: memory ? `${humanFileSize(memory.heapUsed)} / ${humanFileSize(memory.heapTotal)}` : '',
+                    memory: memory ? `${humanFileSize(memory.heapUsed)} / ${humanFileSize(memory.heapTotal)}` : "",
 
                     __: null,
 
@@ -179,7 +177,7 @@ export default definePlugin({
                         str += `[2;35m${key[0].toUpperCase()}${key.slice(1)}: [0m${value}`;
                     }
 
-                    str += '\n';
+                    str += "\n";
                 }
 
                 str += `${" ".repeat(MAGIC_NUMBER)}${COLOR_TEST}\n`;
@@ -211,7 +209,6 @@ function humanFileSize(bytes, si = false, dp = 1) {
         bytes /= thresh;
         ++u;
     } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
-
 
     return bytes.toFixed(dp) + " " + units[u];
 }
