@@ -7,10 +7,10 @@
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import customRPC from "@plugins/customRPC";
-import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { Devs, EquicordDevs, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
 import { isAnyPluginDev } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { Alerts, NavigationRouter, UserStore } from "@webpack/common";
+import { Alerts, UserStore } from "@webpack/common";
 
 import { PluginButtons } from "./pluginButtons";
 import { PluginCards } from "./pluginCards";
@@ -152,10 +152,10 @@ export default definePlugin({
             if (VC_SUPPORT_CHANNEL_IDS.includes(channelId) && !clicked) {
                 return Alerts.show({
                     title: "Vencord Support Channel Warning",
-                    body: "Before asking for help. Check updates and if this issue is actually caused by Equicord!",
-                    confirmText: "Equicord Support",
+                    body: "Before asking for help. Check updates and if this issue is actually caused by Vencord, if not then please go to Testcord's support channel instead!",
+                    confirmText: "Testcord Support",
                     onConfirm() {
-                        NavigationRouter.transitionTo(`/channels/${GUILD_ID}/${SUPPORT_CHANNEL_ID}`);
+                        window.open("https://discord.gg/KTNXyDTXGb");
                     },
                     cancelText: "Okay continue",
                     onCancel() {
