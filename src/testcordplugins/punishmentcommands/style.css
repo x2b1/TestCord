@@ -1,0 +1,55 @@
+/* stylelint-disable selector-id-pattern */
+/* stylelint-disable declaration-block-no-redundant-longhand-properties */
+#user-context-vc-staff--mute-1h {
+    color: var(--status-danger);
+}
+
+#user-context-vc-staff--mute-1h[class*="focused"] {
+    background-color: var(--menu-item-danger-hover-bg);
+    color: white;
+}
+
+#user-context-vc-staff--mute-2h {
+    color: var(--status-danger);
+}
+
+#user-context-vc-staff--mute-2h[class*="focused"] {
+    background-color: var(--menu-item-danger-hover-bg);
+    color: white;
+}
+
+#user-context-vc-staff--mute-custom {
+    color: var(--status-danger);
+}
+
+#user-context-vc-staff--mute-custom[class*="focused"] {
+    background-color: var(--menu-item-danger-hover-bg);
+    color: white;
+}
+
+.vc-punishcommands-reason {
+    margin: 20px;
+    min-width: 500px;
+}
+
+.vc-punishcommands-button-container * {
+    margin-left: auto;
+    margin-right: 20px;
+    margin-bottom: 20px;
+}
+
+.vc-punishcommands-duration-c {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    min-width: 500px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.vc-punishcommands-reason-c {
+    margin-bottom: 20px;
+    min-width: 500px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+

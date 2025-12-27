@@ -1,0 +1,30 @@
+.vc-jstr-first-row div {
+	flex: 1 !important;
+}
+
+.vc-jstr-delete {
+	margin-top: 1px;
+
+	&:hover {
+		color: var(--status-danger);
+	}
+}
+
+.vc-jstr-replacement-btn {
+	height: 100%;
+}
+
+.vc-jstr-rule {
+	padding-top: 10px;
+	border-top: 2px solid var(--background-modifier-accent);
+}
+
+.vc-jstr-editor {
+	display: none;
+	border-radius: 8px;
+}
+
+.vc-jstr-active-editor {
+	display: block;
+	height: 160px;
+}

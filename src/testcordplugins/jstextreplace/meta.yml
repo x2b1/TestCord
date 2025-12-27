@@ -1,0 +1,5 @@
+hide: false
+unlist: false
+warnings:
+    - Only use this if you have good knowledge of JS. Pasting rules from someone else can be a security risk.
+thread: "1424432166003019807"

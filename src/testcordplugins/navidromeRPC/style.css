@@ -1,0 +1,20 @@
+.vc-navidrome-rpc-server-config-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.vc-navidrome-rpc-settings-header {
+	display: block;
+	font-size: 1.1rem;
+	font-weight: 500;
+}
+
+.vc-navidrome-rpc-first-row {
+	flex-grow: 1;
+	gap: 0.5rem;
+	margin-right: 5px;
+
+	div {
+		flex: 1 !important;
+	}
+}
