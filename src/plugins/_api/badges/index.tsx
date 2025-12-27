@@ -218,7 +218,6 @@ export default definePlugin({
         return <Component {...badge} />;
     }, { noop: true }),
 
-
     getBadgeMouseEventHandlers(badge: ProfileBadge & BadgeUserArgs) {
         const handlers = {} as Record<string, (e: React.MouseEvent) => void>;
 
