@@ -510,6 +510,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
         name: "Sqaaakoi",
         id: 259558259491340288n
     },
+    iamme: {
+        name: "i am me",
+        id: 984392761929256980n
+    },
     Byeoon: {
         name: "byeoon",
         id: 1167275288036655133n
@@ -638,10 +642,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
         name: "VV",
         id: 254866377087778816n
     },
-    cooper: {
-        name: "Cooper",
-        id: 0n
-    },
+    u32: {
+        name: "u32",
+        id: 1063237286818488351n,
+    }
 } satisfies Record<string, Dev>);
 
 export const EquicordDevs = Object.freeze({
@@ -1230,7 +1234,7 @@ export const EquicordDevs = Object.freeze({
         name: "Benjii",
         id: 463702169443368970n
     },
-    keircn: {
+    keyages: {
         name: "Key",
         id: 1230319937155760131n
     },
