@@ -7,8 +7,7 @@
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, ModalSize } from "@utils/modal";
 import { useAwaiter } from "@utils/react";
 import { findByPropsLazy } from "@webpack";
-import { Button, GuildMemberStore, GuildStore, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SnowflakeUtils, Text, useEffect,UserStore, useState } from "@webpack/common";
-import { GuildMemberCountStore } from "plugins/memberCount";
+import { Button, GuildMemberCountStore, GuildMemberStore, GuildStore, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SnowflakeUtils, Text, useEffect, UserStore, useState } from "@webpack/common";
 
 import constants from "../constants";
 import { cl } from "../index";
@@ -45,31 +44,26 @@ export function GuildPruneModal(props) {
 
     const [waited, setWaited] = useState(false);
     function ProcessNext(shouldLeave) {
-        if(shouldLeave)
-        {
+        if (shouldLeave) {
             leaveGuild(joinedServers[index].id);
         }
-        if(joinedServers[index + 1])
-        {
+        if (joinedServers[index + 1]) {
             setIndex(index + 1);
             setMessages("??");
             setRecentMessages("??");
             setWaited(false);
         }
-        else
-        {
+        else {
             props.onClose();
         }
     }
 
     useEffect(() => {
-        const timer = setTimeout(() =>
-        {
+        const timer = setTimeout(() => {
             setWaited(true);
         }, 2000);
         return () => clearTimeout(timer);
     }, [index]);
-
 
     useAwaiter(async () => {
         const response = await RestAPI.get(
@@ -83,10 +77,10 @@ export function GuildPruneModal(props) {
         setMessages(response.body.total_results.toString());
         setRecentMessages(recentResponse.body.total_results.toString());
     },
-    {
-        deps: [index],
-        fallbackValue: null
-    });
+        {
+            deps: [index],
+            fallbackValue: null
+        });
 
     return (
         <ModalRoot {...props} size={ModalSize.MEDIUM}>
@@ -97,7 +91,7 @@ export function GuildPruneModal(props) {
                 <ModalCloseButton onClick={props.onClose} />
             </ModalHeader>
             <ModalContent scrollbarType="none">
-                <ServerInfoComponent server={joinedServers[index]} messages={messages} recentMessages={recentMessages}/>
+                <ServerInfoComponent server={joinedServers[index]} messages={messages} recentMessages={recentMessages} />
                 <div className={cl("buttongroup")}>
                     <Button onClick={() => ProcessNext(false)} disabled={!waited} color={Button.Colors.GREEN}>Keep</Button>
                     <Button onClick={() => ProcessNext(true)} disabled={!waited} color={Button.Colors.RED}>Leave</Button>
@@ -106,5 +100,3 @@ export function GuildPruneModal(props) {
         </ModalRoot>
     );
 }
-
-

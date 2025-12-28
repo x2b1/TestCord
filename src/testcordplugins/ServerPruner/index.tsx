@@ -10,8 +10,7 @@ import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, Mod
 import { useAwaiter } from "@utils/react";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { Button, GuildMemberStore, GuildStore, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SnowflakeUtils, Text, useEffect,UserStore, useState } from "@webpack/common";
-import { GuildMemberCountStore } from "plugins/memberCount";
+import { Button, GuildMemberCountStore, GuildMemberStore, GuildStore, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SnowflakeUtils, Text, useEffect, UserStore, useState } from "@webpack/common";
 
 import style from "./style.css?managed";
 
@@ -19,19 +18,17 @@ const cl = classNameFactory("serverpruner-");
 
 const { leaveGuild } = findByPropsLazy("deleteGuild", "leaveGuild");
 
-function InfoWithIcon(props)
-{
+function InfoWithIcon(props) {
     const { svg, children } = props;
     return (
         <div className={cl("infowithicon")}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d={svg}/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d={svg} /></svg>
             <Text color="header-primary" variant="heading-md/semibold">{children}</Text>
         </div>
     );
 }
 
-function ServerInfoComponent(props)
-{
+function ServerInfoComponent(props) {
     const { server, messages, recentMessages } = props;
     const serverIcon = server?.getIconSource("256", true)?.uri;
 
@@ -50,8 +47,7 @@ function ServerInfoComponent(props)
     );
 }
 
-function PruneModal(props: ModalProps)
-{
+function PruneModal(props: ModalProps) {
     const joinedServers = Object.values(GuildStore.getGuilds()).filter(e => e.ownerId !== UserStore.getCurrentUser().id);
 
     const [index, setIndex] = useState(0);
@@ -60,52 +56,44 @@ function PruneModal(props: ModalProps)
     const [recentMessages, setRecentMessages] = useState("");
 
     const [waited, setWaited] = useState(false);
-    function ProcessNext(shouldLeave)
-    {
-        if(shouldLeave)
-        {
+    function ProcessNext(shouldLeave) {
+        if (shouldLeave) {
             leaveGuild(joinedServers[index].id);
         }
-        if(joinedServers[index + 1])
-        {
+        if (joinedServers[index + 1]) {
             setIndex(index + 1);
             setMessages("??");
             setRecentMessages("??");
             setWaited(false);
         }
-        else
-        {
+        else {
             props.onClose();
         }
     }
 
-    useEffect(() =>
-    {
-        const timer = setTimeout(() =>
-        {
-          setWaited(true);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setWaited(true);
         }, 2000);
         return () => clearTimeout(timer);
     }, [index]);
 
-
-    useAwaiter(async () =>
-    {
+    useAwaiter(async () => {
         const response = await RestAPI.get(
-        {
-            url: `/guilds/${joinedServers[index].id}/messages/search?author_id=${UserStore.getCurrentUser().id}`
-        });
+            {
+                url: `/guilds/${joinedServers[index].id}/messages/search?author_id=${UserStore.getCurrentUser().id}`
+            });
         const recentResponse = await RestAPI.get(
-        {
-            url: `/guilds/${joinedServers[index].id}/messages/search?author_id=${UserStore.getCurrentUser().id}&min_id=${SnowflakeUtils.fromTimestamp(Date.now() - (7 * 24 * 60 * 60 * 1000))}`
-        });
+            {
+                url: `/guilds/${joinedServers[index].id}/messages/search?author_id=${UserStore.getCurrentUser().id}&min_id=${SnowflakeUtils.fromTimestamp(Date.now() - (7 * 24 * 60 * 60 * 1000))}`
+            });
         setMessages(response.body.total_results.toString());
         setRecentMessages(recentResponse.body.total_results.toString());
     },
-    {
-        deps: [index],
-        fallbackValue: null
-    });
+        {
+            deps: [index],
+            fallbackValue: null
+        });
 
     return (
         <ModalRoot {...props} size={ModalSize.MEDIUM}>
@@ -116,7 +104,7 @@ function PruneModal(props: ModalProps)
                 <ModalCloseButton onClick={props.onClose} />
             </ModalHeader>
             <ModalContent scrollbarType="none">
-                <ServerInfoComponent server={joinedServers[index]} messages={messages} recentMessages={recentMessages}/>
+                <ServerInfoComponent server={joinedServers[index]} messages={messages} recentMessages={recentMessages} />
                 <div className={cl("buttongroup")}>
                     <Button onClick={() => ProcessNext(false)} disabled={!waited} color={Button.Colors.GREEN}>Keep</Button>
                     <Button onClick={() => ProcessNext(true)} disabled={!waited} color={Button.Colors.RED}>Leave</Button>
@@ -131,9 +119,8 @@ export default definePlugin({
     description: "Adds a modal to easily prune your servers with information and stats. Right click the home button!",
     authors: [
         Devs.Samwich
-    , TestcordDevs.x2b],
-    onContextMenu()
-    {
+        , TestcordDevs.x2b],
+    onContextMenu() {
         openModal(props => <PruneModal {...props} />);
     },
     patches: [
@@ -145,16 +132,10 @@ export default definePlugin({
             }
         }
     ],
-    start()
-    {
+    start() {
         enableStyle(style);
     },
-    stop()
-    {
+    stop() {
         disableStyle(style);
     }
 });
-
-
-
-
