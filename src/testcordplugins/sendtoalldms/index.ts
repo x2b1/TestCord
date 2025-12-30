@@ -6,7 +6,7 @@
 
 import { ApplicationCommandInputType, findOption, RequiredMessageOption } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
-import { TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants"; // Ensure this exists in your constants, otherwise replace with VencordDevs FIX: Imported from correct location
 import { sendMessage } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { CommandArgument, CommandContext } from "@vencord/discord-types";
@@ -15,7 +15,7 @@ import { ChannelActionCreators, ChannelStore, RelationshipStore } from "@webpack
 export default definePlugin({
     name: "SendToAllDMs",
     description: "Adds a command to send a message to all friends' DMs with blacklist/whitelist settings",
-    authors: [TestcordDevs.x2b], // Placeholder, adjust as needed
+    authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
         useWhitelist: {
             type: OptionType.BOOLEAN,
@@ -40,6 +40,9 @@ export default definePlugin({
 
                 let friends = RelationshipStore.getFriendIDs();
 
+                // Access settings safely.
+                // Note: If this crashes, 'settings' might not be initialized correctly,
+                // but usually this works if the plugin loads.
                 const { useWhitelist, userIds } = (Vencord.Plugins.plugins.SendToAllDMs as any).settings.store;
                 const idList = userIds.split(",").map(id => id.trim()).filter(id => id);
 
@@ -49,12 +52,17 @@ export default definePlugin({
                     friends = friends.filter(id => !idList.includes(id));
                 }
 
+                const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
                 for (const userId of friends) {
                     try {
-                        ChannelActionCreators.openPrivateChannel(userId);
+                        // Ensure channel is open
+                        await ChannelActionCreators.openPrivateChannel(userId);
                         const channelId = ChannelStore.getDMFromUserId(userId);
                         if (channelId) {
                             await sendMessage(channelId, { content: message });
+                            // Rate limit delay to prevent account action
+                            await sleep(1000);
                         }
                     } catch (e) {
                         console.error(`Failed to send message to ${userId}:`, e);
@@ -64,5 +72,3 @@ export default definePlugin({
         }
     ]
 });
-
-const selfPlugin = Vencord.Plugins.plugins.SendToAllDMs;
