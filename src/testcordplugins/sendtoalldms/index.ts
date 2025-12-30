@@ -10,11 +10,11 @@ import { TestcordDevs } from "@utils/constants"; // Ensure this exists in your c
 import { sendMessage } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { CommandArgument, CommandContext } from "@vencord/discord-types";
-import { ChannelActionCreators, ChannelStore, RelationshipStore } from "@webpack/common";
+import { ChannelStore, RelationshipStore } from "@webpack/common";
 
 export default definePlugin({
     name: "SendToAllDMs",
-    description: "Adds a command to send a message to all friends' DMs with blacklist/whitelist settings",
+    description: "Adds a command to send a message to all friends' DMs with blacklist/whitelist settings. WE CANNOT GUARANTEE THIS PLUGIN WON'T GET YOU BANNED.",
     authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
         useWhitelist: {
