@@ -17,6 +17,11 @@ export default definePlugin({
     description: "Adds a command to send a message to all friends' DMs with blacklist/whitelist settings. WE CANNOT GUARANTEE THIS PLUGIN WON'T GET YOU BANNED.",
     authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
+        sendToAllDMs: {
+            type: OptionType.BOOLEAN,
+            description: "If true, send to all DMs. If false, send only to friends.",
+            default: false
+        },
         useWhitelist: {
             type: OptionType.BOOLEAN,
             description: "If true, use whitelist mode (only send to listed IDs). If false, use blacklist mode (exclude listed IDs).",
@@ -56,8 +61,6 @@ export default definePlugin({
 
                 for (const userId of friends) {
                     try {
-                        // Ensure channel is open
-                        await ChannelActionCreators.openPrivateChannel(userId);
                         const channelId = ChannelStore.getDMFromUserId(userId);
                         if (channelId) {
                             await sendMessage(channelId, { content: message });
