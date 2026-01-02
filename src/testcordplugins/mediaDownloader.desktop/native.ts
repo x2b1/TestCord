@@ -209,13 +209,14 @@ async function remux({ file, videoTitle }: { file: string; videoTitle: string; }
     let ext: string;
     switch (format) {
         case "audio":
-            baseArgs = ["-i", p(file), "-b:a", `${kilobits}k`, "-maxrate", `${kilobits}k`, "-bufsize", "1M", "-y"];
+            const audioKilobits = Math.max(kilobits, 320);
+            baseArgs = ["-i", p(file), "-b:a", `${audioKilobits}k`, "-maxrate", `${audioKilobits}k`, "-bufsize", "1M", "-y"];
             ext = "mp3";
             break;
         case "video":
         default:
-            // Dynamically resize based on target bitrate
-            const height = kilobits <= 100 ? 480 : kilobits <= 500 ? 720 : 1080;
+            // Default to 1080p
+            const height = 1080;
             baseArgs = ["-i", p(file), "-b:v", `${~~(kilobits * 0.8)}k`, "-b:a", `${~~(kilobits * 0.2)}k`, "-maxrate", `${kilobits}k`, "-bufsize", "1M", "-y", "-filter:v", `scale=-1:${height}`];
             ext = "mp4";
             break;
@@ -310,5 +311,3 @@ export async function interrupt(_: IpcMainInvokeEvent) {
 export const getStdout = () => stdout_global;
 export const isYtdlpAvailable = () => ytdlpAvailable;
 export const isFfmpegAvailable = () => ffmpegAvailable;
-
-
