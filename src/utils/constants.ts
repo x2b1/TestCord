@@ -1251,7 +1251,7 @@ export const TestcordDevs = Object.freeze({
     },
     babystarsz: {
         name: "babystarsz",
-        id: 1442716213586432162n
+        id: 1455985625441501209n
     },
     vampireslover: {
         name: "vampireslover",

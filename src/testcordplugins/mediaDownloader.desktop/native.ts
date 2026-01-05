@@ -196,7 +196,8 @@ async function remux({ file, videoTitle }: { file: string; videoTitle: string; }
     const isFileSizeAcceptable = (!maxFileSize || fileSize <= maxFileSize);
     const hasCustomArgs = customArgs.length > 0;
     const isGif = format === "gif";
-    if (isFormatAcceptable && isFileSizeAcceptable && !hasCustomArgs && !isGif)
+    const isAudio = format === "audio";
+    if (isFormatAcceptable && isFileSizeAcceptable && !hasCustomArgs && !isGif && !isAudio)
         return log("Skipping remux, file type and size are good, and no ffmpeg arguments were specified."), { file, videoTitle, extension: sourceExtension };
 
     const duration = parseFloat(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", p(file)]).toString());
