@@ -8,12 +8,11 @@ import { findGroupChildrenByChildId } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import { FormSwitch } from "@components/FormSwitch";
-import { Devs, TestcordDevs } from "@utils/constants";
-import { getCurrentChannel } from "@utils/discord";
+import { TestcordDevs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
-import { Button, Menu, TextInput, UploadHandler, useEffect, useState } from "@webpack/common";
+import { Button, Menu, TextInput, useEffect, useState } from "@webpack/common";
 
 import { QuoteIcon } from "./components";
 import { createQuoteImage, ensureFontLoaded, generateFileNamePreview, QuoteFont, resetFontLoading, sizeUpgrade } from "./utils";
@@ -33,7 +32,7 @@ const settings = definePluginSettings({
     watermark: {
         type: OptionType.STRING,
         description: "Custom watermark text (max 32 characters)",
-        default: "Made with Equicord"
+        default: "Made with https://github.com/x2b1/Testcord"
     },
     grayscale: {
         type: OptionType.BOOLEAN,
@@ -141,19 +140,21 @@ function QuoteModal({ message, ...props }: ModalProps & { message: Message; }) {
 
     const SendInChat = () => {
         if (!quoteImage) return;
+        const channel = getCurrentChannel();
+        if (!channel) return;
         const preview = generateFileNamePreview(safeContent);
         const extension = saveAsGif ? "gif" : "png";
         const mimeType = saveAsGif ? "image/gif" : "image/png";
         const file = new File([quoteImage], `${preview} - ${message.author.username}.${extension}`, { type: mimeType });
-        // @ts-expect-error typing issue
-        UploadHandler.promptToUpload([file], getCurrentChannel(), 0);
+        const UploadHandler = findByPropsLazy("promptToUpload");
+        UploadHandler.promptToUpload([file], channel, 0);
         props.onClose?.();
     };
 
     return (
         <ModalRoot {...props} size={ModalSize.MEDIUM}>
             <ModalHeader separator={false}>
-                <BaseText color="header-primary" size="lg" weight="semibold" tag="h1" style={{ flexGrow: 1 }}>
+                <BaseText color="text-strong" size="lg" weight="semibold" tag="h1" style={{ flexGrow: 1 }}>
                     Catch Them In 4K.
                 </BaseText>
                 <ModalCloseButton onClick={props.onClose} />
@@ -198,8 +199,3 @@ function QuoteModal({ message, ...props }: ModalProps & { message: Message; }) {
         </ModalRoot>
     );
 }
-
-
-
-
-
