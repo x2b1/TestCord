@@ -37,23 +37,32 @@ export default definePlugin({
 
                 /* 4. Remove annoying outlines */
                 outline: none !important;
+
+                /* 5. Position relative for absolute cursor positioning */
+                position: relative !important;
             }
 
             /* Custom smooth cursor */
             .vc-custom-cursor {
                 position: absolute;
-                width: 2px;
-                height: 1.5em;
-                background: #007acc;
+                width: 3px;
+                height: 1.2em;
+                background: white;
+                border-radius: 2px;
                 transition: left 0.1s ease, top 0.1s ease;
                 pointer-events: none;
                 z-index: 1000;
-                animation: blink 1s infinite;
+                animation: blink 2s infinite;
+            }
+
+            .vc-custom-cursor.active {
+                animation: none;
+                opacity: 1;
             }
 
             @keyframes blink {
-                0%, 50% { opacity: 1; }
-                51%, 100% { opacity: 0; }
+                0%, 80% { opacity: 1; }
+                81%, 100% { opacity: 0; }
             }
 
             /* Highlight Selection Color to match VS Code Dark+ */
@@ -65,7 +74,7 @@ export default definePlugin({
         document.head.appendChild(style);
 
         // Smooth cursor animation logic
-        const charWidth = 8; // Approximate width for 15px monospace font
+        const charWidth = 9; // Approximate width for 15px monospace font
 
         function updateCursor(input: HTMLElement) {
             let cursor = input.querySelector(".vc-custom-cursor") as HTMLElement;
@@ -75,14 +84,53 @@ export default definePlugin({
                 input.appendChild(cursor);
             }
 
-            const text = (input as HTMLInputElement).value || input.textContent || "";
-            const lines = text.split("\n");
-            const lastLine = lines[lines.length - 1];
-            const left = charWidth * lastLine.length;
-            const top = (lines.length - 1) * 22.5; // line-height 1.5 * 15px
+            // Add active class to stop blinking while typing
+            cursor.classList.add("active");
+            clearTimeout((cursor as any).blinkTimeout);
+            (cursor as any).blinkTimeout = setTimeout(() => {
+                cursor.classList.remove("active");
+            }, 1000); // Remove active after 1 second of no updates
 
-            cursor.style.left = `${left}px`;
-            cursor.style.top = `${top}px`;
+            // Get padding to offset cursor position
+            const style = getComputedStyle(input);
+            const paddingLeft = parseFloat(style.paddingLeft) || 0;
+            const paddingTop = parseFloat(style.paddingTop) || 0;
+
+            if (input.tagName === "TEXTAREA" || input.tagName === "INPUT") {
+                const inputEl = input as HTMLInputElement | HTMLTextAreaElement;
+                const text = inputEl.value;
+                const lines = text.split("\n");
+                const cursorPos = inputEl.selectionStart || 0;
+                let lineIndex = 0;
+                let charIndex = cursorPos;
+                for (let i = 0; i < lines.length; i++) {
+                    if (charIndex <= lines[i].length) {
+                        lineIndex = i;
+                        break;
+                    }
+                    charIndex -= lines[i].length + 1; // +1 for \n
+                }
+                const left = charWidth * charIndex;
+                const top = lineIndex * 22.5;
+                cursor.style.left = `${left + paddingLeft}px`;
+                cursor.style.top = `${top + paddingTop}px`;
+            } else if (input.contentEditable === "true") {
+                const selection = window.getSelection();
+                if (selection && selection.rangeCount > 0 && selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    const inputRect = input.getBoundingClientRect();
+                    cursor.style.left = `${rect.left - inputRect.left}px`;
+                    cursor.style.top = `${rect.top - inputRect.top}px`;
+                    cursor.style.display = "block";
+                } else {
+                    cursor.style.display = "none";
+                }
+            } else {
+                // Fallback
+                cursor.style.left = `${paddingLeft}px`;
+                cursor.style.top = `${paddingTop}px`;
+            }
         }
 
         const focusInHandler = (e: FocusEvent) => {
@@ -99,6 +147,21 @@ export default definePlugin({
             }
         };
 
+        const keydownHandler = (e: KeyboardEvent) => {
+            const input = e.target as HTMLElement;
+            if (input.matches('div[role="textbox"], textarea, div[contenteditable="true"]')) {
+                // Update cursor on keydown for smoother animation
+                setTimeout(() => updateCursor(input), 0);
+            }
+        };
+
+        const selectionChangeHandler = () => {
+            const activeElement = document.activeElement as HTMLElement;
+            if (activeElement && activeElement.matches('div[role="textbox"], textarea, div[contenteditable="true"]')) {
+                updateCursor(activeElement);
+            }
+        };
+
         const focusOutHandler = (e: FocusEvent) => {
             const input = e.target as HTMLElement;
             if (input.matches('div[role="textbox"], textarea, div[contenteditable="true"]')) {
@@ -109,11 +172,16 @@ export default definePlugin({
 
         document.addEventListener("focusin", focusInHandler);
         document.addEventListener("input", inputHandler);
+        document.addEventListener("keydown", keydownHandler);
+        document.addEventListener("keyup", keyupHandler);
+        document.addEventListener("selectionchange", selectionChangeHandler);
         document.addEventListener("focusout", focusOutHandler);
 
         // Store handlers for removal
         (this as any).focusInHandler = focusInHandler;
         (this as any).inputHandler = inputHandler;
+        (this as any).keydownHandler = keydownHandler;
+        (this as any).selectionChangeHandler = selectionChangeHandler;
         (this as any).focusOutHandler = focusOutHandler;
     },
 
@@ -124,6 +192,9 @@ export default definePlugin({
         // Remove event listeners
         if ((this as any).focusInHandler) document.removeEventListener("focusin", (this as any).focusInHandler);
         if ((this as any).inputHandler) document.removeEventListener("input", (this as any).inputHandler);
+        if ((this as any).keydownHandler) document.removeEventListener("keydown", (this as any).keydownHandler);
+        if ((this as any).keyupHandler) document.removeEventListener("keyup", (this as any).keyupHandler);
+        if ((this as any).selectionChangeHandler) document.removeEventListener("selectionchange", (this as any).selectionChangeHandler);
         if ((this as any).focusOutHandler) document.removeEventListener("focusout", (this as any).focusOutHandler);
 
         // Remove any remaining custom cursors
