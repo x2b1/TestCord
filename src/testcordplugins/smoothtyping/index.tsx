@@ -148,10 +148,13 @@ export default definePlugin({
         };
 
         const keydownHandler = (e: KeyboardEvent) => {
+            // No update here; handled by keyup and selectionchange
+        };
+
+        const keyupHandler = (e: KeyboardEvent) => {
             const input = e.target as HTMLElement;
             if (input.matches('div[role="textbox"], textarea, div[contenteditable="true"]')) {
-                // Update cursor on keydown for smoother animation
-                setTimeout(() => updateCursor(input), 0);
+                updateCursor(input);
             }
         };
 
