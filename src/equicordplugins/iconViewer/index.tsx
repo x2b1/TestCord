@@ -5,7 +5,7 @@
  */
 
 import { MagnifyingGlassIcon } from "@components/Icons";
-import SettingsPlugin from "@plugins/_core/settings";
+import SettingsPlugin, { settingsSectionMap } from "@plugins/_core/settings";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { StartAt } from "@utils/types";
 import { LazyComponentWebpack } from "@webpack";
@@ -40,6 +40,8 @@ export default definePlugin({
             className: "vc-discord-icons",
             id: "IconViewer"
         }));
+
+        settingsSectionMap.push(["EquicordDiscordIcons", "equicord_icon_viewer"]);
     },
     stop() {
         const { customEntries, customSections } = SettingsPlugin;
