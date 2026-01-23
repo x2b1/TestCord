@@ -121,17 +121,17 @@ export default definePlugin({
 
     patches: [
         {
-            find: ".usernameSpeaking]",
+            find: "VOICE_PANEL}};",
             predicate: () => settings.store.allCallTimers,
             replacement: [
                 {
-                    match: /(?<=user:(\i).*?)iconGroup,.{0,200}children:\[/,
-                    replace: "$&$self.renderTimer($1.id),",
+                    match: /(?<=\.EMBEDDED.{0,250}className:)\i\.\i,.{0,200}children:\[/,
+                    replace: "$&$self.renderTimer(arguments[0].id),",
                     predicate: () => !settings.store.showWithoutHover,
                 },
                 {
-                    match: /function \i\(\)\{.+:""(?=.*?userId:(\i))/,
-                    replace: "$&,$self.renderTimer($1.id),",
+                    match: /#{intl::GUEST_NAME_SUFFIX}\)\]\}\):""/,
+                    replace: "$&,$self.renderTimer(arguments[0].id)",
                     predicate: () => settings.store.showWithoutHover,
                 }
             ]
