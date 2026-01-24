@@ -25,7 +25,7 @@ import { EquicordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Message } from "@vencord/discord-types";
-import { findByCodeLazy } from "@webpack";
+import { findByCodeLazy, findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 import { ChannelStore, Menu } from "@webpack/common";
 
 import { Popover as NoteButtonPopover, Popover } from "./components/icons/NoteButton";
@@ -34,6 +34,13 @@ import { noteHandler, noteHandlerCache } from "./NoteHandler";
 import { DataStoreToCache, HolyNoteStore } from "./utils";
 
 export const MessageType = findByCodeLazy("isEdited(){");
+export const { statusTagGreen } = findCssClassesLazy("statusTagGreen");
+export const iconClasses = findCssClassesLazy("iconWrapper", "clickable");
+export const resultsClasses = findCssClassesLazy("emptyResultsWrap", "emptyResultsContent", "errorImage", "emptyResultsText", "noResultsImage", "alt");
+export const quickSelectClasses = findCssClassesLazy("quickSelect", "quickSelectLabel", "quickSelectClick", "quickSelectValue", "quickSelectArrow");
+export const messageClasses = findCssClassesLazy("message", "groupStart", "cozyMessage");
+export const Channel = findByCodeLazy("computeLurkerPermissionsAllowList(){");
+export const ChannelMessage = findComponentByCodeLazy("Message must not be a thread");
 
 const messageContextMenuPatch: NavContextMenuPatchCallback = async (children, { message }: { message: Message; }) => {
     children.push(
@@ -49,6 +56,18 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = async (children, { 
         </Menu.MenuItem>
     );
 };
+
+function ToolBarHeader() {
+    return (
+        <HeaderBarButton
+            tooltip="Holy Notes"
+            position="bottom"
+            className={classes("vc-note-button", iconClasses.iconWrapper, iconClasses.clickable)}
+            icon={Popover}
+            onClick={() => openModal(props => <NoteModal {...props} />)}
+        />
+    );
+}
 
 export default definePlugin({
     name: "HolyNotes",

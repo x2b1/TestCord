@@ -30,11 +30,13 @@ export default definePlugin({
 
     patches: [
         {
-            find: "MemberListItem",
-            replacement: {
-                match: /(?<=GuildIcon:\i}=\i.{0,30}Fragment,\{children:\[)/,
-                replace: "Vencord.Api.MemberListDecorators.__getDecorators(arguments[0],'guild'),"
-            }
+            find: "#{intl::GUILD_OWNER}),children:",
+            replacement: [
+                {
+                    match: /children:\[(?=.{0,300},lostPermissionTooltipText:)/,
+                    replace: "children:[Vencord.Api.MemberListDecorators.__getDecorators(arguments[0],'guild'),"
+                }
+            ]
         },
         {
             find: "PrivateChannel.renderAvatar",

@@ -98,7 +98,7 @@ export default definePlugin({
         },
         ...[
             '"Message Username"', // Messages
-            '?"white":"black",width', // Nameplate preview
+            "#{intl::COLLECTIBLES_NAMEPLATE_PREVIEW_A11Y}", // Nameplate preview
             "#{intl::ayozFl::raw}", // Avatar preview
         ].map(find => ({
             find,
@@ -109,6 +109,14 @@ export default definePlugin({
                 }
             ]
         })),
+        // Patch avatar decoration preview to display Decor avatar decorations as if they are purchased
+        {
+            find: "#{intl::PREMIUM_UPSELL_PROFILE_AVATAR_DECO_INLINE_UPSELL_DESCRIPTION}",
+            replacement: {
+                match: /(#{intl::PREMIUM_UPSELL_PROFILE_AVATAR_DECO_INLINE_UPSELL_DESCRIPTION}.+?return null!=(\i)&&\()(null==\i)/,
+                replace: (_, rest, avatarDecoration, hasPurchase) => `${rest}(${avatarDecoration}.skuId!==$self.SKU_ID&&${hasPurchase})`
+            }
+        }
     ],
     settings,
 

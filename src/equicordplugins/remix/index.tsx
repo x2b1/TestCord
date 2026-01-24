@@ -77,7 +77,6 @@ export default definePlugin({
         "channel-attach": UploadContextMenuPatch,
         "message": MessageContextMenuPatch,
     },
-
     async start() {
 
         await requireCreateStickerModal();
