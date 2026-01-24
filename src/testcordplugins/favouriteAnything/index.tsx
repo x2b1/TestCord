@@ -6,7 +6,7 @@
 
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
+import { findComponentByCodeLazy } from "@webpack";
 
 enum Format {
     NONE = 0,
@@ -35,7 +35,7 @@ interface AccessoryProps
     video?: boolean;
 }
 
-const Classes = findByPropsLazy("gifFavoriteButton", "ctaButtonContainer");
+const Classes = {};
 
 export default definePlugin({
     name: "FavouriteAnything",
@@ -89,7 +89,7 @@ export default definePlugin({
         return (
             <FavoriteButton
                 format={video ? Format.VIDEO : Format.IMAGE}
-                className={Classes?.gifFavoriteButton}
+                className={Classes?.gifFavoriteButton || "vc-favorite-button"}
                 src={proxyUrl ?? url}
                 url={url}
                 width={width}

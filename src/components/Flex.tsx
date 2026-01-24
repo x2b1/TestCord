@@ -18,6 +18,36 @@
 
 import type { CSSProperties, HTMLAttributes } from "react";
 
+export const Direction = {
+    VERTICAL: "column",
+    HORIZONTAL: "row",
+    VERTICAL_REVERSE: "column-reverse",
+    HORIZONTAL_REVERSE: "row-reverse"
+} as const;
+
+export const Justify = {
+    START: "flex-start",
+    END: "flex-end",
+    CENTER: "center",
+    BETWEEN: "space-between",
+    AROUND: "space-around",
+    EVENLY: "space-evenly"
+} as const;
+
+export const Align = {
+    START: "flex-start",
+    END: "flex-end",
+    CENTER: "center",
+    STRETCH: "stretch",
+    BASELINE: "baseline"
+} as const;
+
+export const Wrap = {
+    NO_WRAP: "nowrap",
+    WRAP: "wrap",
+    WRAP_REVERSE: "wrap-reverse"
+} as const;
+
 export interface FlexProps extends HTMLAttributes<HTMLDivElement> {
     flexDirection?: CSSProperties["flexDirection"];
     gap?: CSSProperties["gap"];
@@ -43,3 +73,9 @@ export function Flex({ flexDirection, gap = "1em", justifyContent, alignItems, f
         </div>
     );
 }
+
+// Attach enums to the Flex function for plugin compatibility
+Flex.Direction = Direction;
+Flex.Justify = Justify;
+Flex.Align = Align;
+Flex.Wrap = Wrap;

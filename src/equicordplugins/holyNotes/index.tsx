@@ -19,14 +19,13 @@
 import "./style.css";
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { HeaderBarButton } from "@api/HeaderBar";
+import { addHeaderBarButton, HeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
-import { classes } from "@utils/misc";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Message } from "@vencord/discord-types";
-import { findByCodeLazy, findByProps } from "@webpack";
+import { findByCodeLazy } from "@webpack";
 import { ChannelStore, Menu } from "@webpack/common";
 
 import { Popover as NoteButtonPopover, Popover } from "./components/icons/NoteButton";
@@ -51,20 +50,6 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = async (children, { 
     );
 };
 
-function ToolBarHeader() {
-    const iconClasses = findByProps("iconWrapper", "clickable");
-
-    return (
-        <HeaderBarButton
-            tooltip="Holy Notes"
-            position="bottom"
-            className={classes("vc-note-button", iconClasses.iconWrapper, iconClasses.clickable)}
-            icon={Popover}
-            onClick={() => openModal(props => <NoteModal {...props} />)}
-        />
-    );
-}
-
 export default definePlugin({
     name: "HolyNotes",
     description: "Holy Notes allows you to save messages",
@@ -80,9 +65,21 @@ export default definePlugin({
         "message": messageContextMenuPatch
     },
 
-    headerBarButton: {
-        icon: Popover,
-        render: ToolBarHeader
+    async start() {
+        addHeaderBarButton("holy-notes", () => (
+            <HeaderBarButton
+                icon={Popover}
+                tooltip="Holy Notes"
+                onClick={() => openModal(props => <NoteModal {...props} />)}
+            />
+        ));
+
+        if (await DataStore.keys(HolyNoteStore).then(keys => !keys.includes("Main"))) return noteHandler.newNoteBook("Main");
+        if (!noteHandlerCache.has("Main")) await DataStoreToCache();
+    },
+
+    stop() {
+        // The API handles cleanup automatically
     },
 
     messagePopoverButton: {
@@ -97,9 +94,5 @@ export default definePlugin({
 
             };
         }
-    },
-    async start() {
-        if (await DataStore.keys(HolyNoteStore).then(keys => !keys.includes("Main"))) return noteHandler.newNoteBook("Main");
-        if (!noteHandlerCache.has("Main")) await DataStoreToCache();
     },
 });
