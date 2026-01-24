@@ -140,17 +140,14 @@ export default definePlugin({
             find: "renderConnectionStatus(){",
             replacement: {
                 match: /(lineClamp:1,children:)(\i)(?=,|}\))/,
-                replace: "$1[$2,this.props.channel ? $self.renderConnectionTimer(this.props.channel.id) : null]"
+                replace: "$1[$2,$self.renderConnectionTimer(this.props.channel.id)]"
             }
         }
     ],
 
     flux: {
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
-            if (!voiceStates) return;
-            const currentUser = UserStore.getCurrentUser();
-            if (!currentUser) return;
-            const myId = currentUser.id;
+            const myId = UserStore.getCurrentUser().id;
 
             for (const state of voiceStates) {
                 const { userId, channelId, guildId } = state;
@@ -250,17 +247,15 @@ export default definePlugin({
     },
 
     renderTimer(userId: string) {
-        if (!userId) return null;
         // get the user join time from the users object
         const joinTime = userJoinTimes.get(userId);
         if (!joinTime?.time) {
             // join time is unknown
-            return null;
+            return;
         }
-        const currentUser = UserStore.getCurrentUser();
-        if (!currentUser || (userId === currentUser.id && !settings.store.trackSelf)) {
-            // don't show for self or if no current user
-            return null;
+        if (userId === UserStore.getCurrentUser().id && !settings.store.trackSelf) {
+            // don't show for self
+            return;
         }
 
         return (
@@ -270,19 +265,7 @@ export default definePlugin({
         );
     },
 
-    renderTimerText(userId: string) {
-        if (!userId) return "";
-        const joinTime = userJoinTimes.get(userId);
-        if (!joinTime?.time) return "";
-        const currentUser = UserStore.getCurrentUser();
-        if (!currentUser || (userId === currentUser.id && !settings.store.trackSelf)) return "";
-        const durationMs = Date.now() - joinTime.time;
-        const formatted = formatDurationMs(durationMs, settings.store.format === "human", settings.store.showSeconds);
-        return formatted;
-    },
-
     renderConnectionTimer(channelId: string) {
-        if (!channelId) return;
         return <ErrorBoundary noop>
             <this.ConnectionTimer channelId={channelId} />
         </ErrorBoundary>;

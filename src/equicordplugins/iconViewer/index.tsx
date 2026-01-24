@@ -8,8 +8,10 @@ import { MagnifyingGlassIcon } from "@components/Icons";
 import SettingsPlugin, { settingsSectionMap } from "@plugins/_core/settings";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { StartAt } from "@utils/types";
-import { LazyComponentWebpack } from "@webpack";
 import { openUserSettingsPanel } from "@webpack/common";
+
+import IconsTab from "./components/IconsTab";
+import { SettingsAbout } from "./components/Modals";
 
 export default definePlugin({
     name: "IconViewer",
@@ -22,21 +24,21 @@ export default definePlugin({
             openUserSettingsPanel("equicord_icon_viewer");
         },
     },
-    settingsAboutComponent: LazyComponentWebpack(() => import("./components/Modals").then(m => m.SettingsAbout)),
+    settingsAboutComponent: SettingsAbout,
     start() {
         const { customEntries, customSections } = SettingsPlugin;
 
         customEntries.push({
             key: "equicord_icon_viewer",
             title: "Icon Finder",
-            Component: LazyComponentWebpack(() => import("./components/IconsTab").then(m => m.default)),
+            Component: IconsTab,
             Icon: MagnifyingGlassIcon
         });
 
         customSections.push(() => ({
             section: "EquicordDiscordIcons",
             label: "Icon Finder",
-            element: LazyComponentWebpack(() => import("./components/IconsTab").then(m => m.default)),
+            element: IconsTab,
             className: "vc-discord-icons",
             id: "IconViewer"
         }));

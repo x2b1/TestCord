@@ -48,8 +48,6 @@ function sendPatch(channel: Channel, body: Record<string, any>, bypass = false) 
     });
 }
 
-export { sendPatch };
-
 interface VoiceChannelContextProps {
     channel: Channel;
 }

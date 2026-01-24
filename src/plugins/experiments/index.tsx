@@ -147,7 +147,7 @@ export default definePlugin({
             </Paragraph>
 
             <Paragraph className={Margins.top8}>
-                Only use experiments if you know what you're doing. TestCord is not responsible for any damage caused by enabling experiments.
+                Only use experiments if you know what you're doing. Equicord is not responsible for any damage caused by enabling experiments.
 
                 If you don't know what an experiment does, ignore it. Do not ask us what experiments do either, we probably don't know.
             </Paragraph>

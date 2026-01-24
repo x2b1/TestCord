@@ -19,9 +19,10 @@
 import "./style.css";
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { addHeaderBarButton, HeaderBarButton } from "@api/HeaderBar";
+import { HeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
 import { EquicordDevs } from "@utils/constants";
+import { classes } from "@utils/misc";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Message } from "@vencord/discord-types";
@@ -84,37 +85,26 @@ export default definePlugin({
         "message": messageContextMenuPatch
     },
 
-    async start() {
-        addHeaderBarButton("holy-notes", () => (
-            <HeaderBarButton
-                icon={Popover}
-                tooltip="Holy Notes"
-                onClick={() => openModal(props => <NoteModal {...props} />)}
-            />
-        ));
-
-        if (await DataStore.keys(HolyNoteStore).then(keys => !keys.includes("Main"))) return noteHandler.newNoteBook("Main");
-        if (!noteHandlerCache.has("Main")) await DataStoreToCache();
-    },
-
-    stop() {
-        // The API handles cleanup automatically
+    headerBarButton: {
+        icon: Popover,
+        render: ToolBarHeader
     },
 
     messagePopoverButton: {
         icon: NoteButtonPopover,
         render(message) {
-            if (!message || !message.channel_id) return null;
-            const channel = ChannelStore.getChannel(message.channel_id);
-            if (!channel) return null;
             return {
                 label: "Save Note",
                 icon: NoteButtonPopover,
                 message: message,
-                channel: channel,
+                channel: ChannelStore.getChannel(message.channel_id),
                 onClick: () => noteHandler.addNote(message, "Main")
 
             };
         }
+    },
+    async start() {
+        if (await DataStore.keys(HolyNoteStore).then(keys => !keys.includes("Main"))) return noteHandler.newNoteBook("Main");
+        if (!noteHandlerCache.has("Main")) await DataStoreToCache();
     },
 });
