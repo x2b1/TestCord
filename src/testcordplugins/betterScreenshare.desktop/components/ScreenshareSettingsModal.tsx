@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Card } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
 import { ModalSize, openModalLazy } from "@utils/modal";
-import { Button, Card, Forms, React, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
+import { Button, Forms, React, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
 
 import { MicrophoneSettingsModal } from "../../betterMicrophone.desktop/components";
 import {
@@ -132,7 +133,6 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
         getCurrentProfile,
         getProfiles
     } = screenshareStore.use();
-
 
     const {
         name,
@@ -421,7 +421,6 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
             <Switch checked={simpleMode ?? false} disabled={isSaving} onChange={checked => setSimpleMode(checked)} />
         </Flex>;
 
-
     return (
         <SettingsModal
             size={simpleMode ? ModalSize.DYNAMIC : ModalSize.LARGE}
@@ -468,5 +467,3 @@ export const ScreenshareSettingsModal = (props: ScreenshareSettingsModalProps) =
         </SettingsModal>
     );
 };
-
-

@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Card } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
 import { ModalSize } from "@utils/modal";
-import { Card, Forms, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
+import { Forms, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
 
 import {
     ProfilableStore,
@@ -330,5 +331,3 @@ export const MicrophoneSettingsModal = (props: MicrophoneSettingsModalProps) => 
         </SettingsModal>
     );
 };
-
-

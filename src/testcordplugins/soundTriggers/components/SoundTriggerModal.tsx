@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { Card } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { DeleteIcon } from "@components/Icons";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
-import { Button, Card, Forms, Slider, Switch, Text, TextInput, useEffect, useState } from "@webpack/common";
+import { Button, Forms, Slider, Switch, Text, TextInput, useEffect, useState } from "@webpack/common";
 
 import { classFactory, EMPTY_TRIGGER, settings, SoundTrigger } from "../index";
 import { failToast, successToast, triggersAreUnique, triggersEqual, validateAndFormatTrigger } from "../util";
@@ -153,5 +154,3 @@ export function SoundTriggerModal(props: SoundTriggerModalProps) {
         </ModalRoot >
     );
 }
-
-

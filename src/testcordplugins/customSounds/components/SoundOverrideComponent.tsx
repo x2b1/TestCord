@@ -5,12 +5,13 @@
  */
 
 import { classNameFactory } from "@api/Styles";
+import { Card } from "@components/Card";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
 import { useForceUpdater } from "@utils/react";
 import { makeRange } from "@utils/types";
 import { findByCodeLazy, findLazy } from "@webpack";
-import { Button, Card, Forms, React, Select, Slider, Switch } from "@webpack/common";
+import { Button, Forms, React, Select, Slider, Switch } from "@webpack/common";
 import { ComponentType, Ref, SyntheticEvent } from "react";
 
 import { SoundOverride, SoundPlayer, SoundType } from "../types";
@@ -291,5 +292,3 @@ export function SoundOverrideComponent({ type, override, onChange, overrides }: 
         </Card>
     );
 }
-
-

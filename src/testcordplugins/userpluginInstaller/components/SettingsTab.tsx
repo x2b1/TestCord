@@ -6,6 +6,7 @@
 
 import { BaseText } from "@components/BaseText";
 import { Button } from "@components/Button";
+import { Card } from "@components/Card";
 import { CheckedTextInput } from "@components/CheckedTextInput";
 import { HeadingTertiary } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
@@ -13,7 +14,7 @@ import { SettingsTab as STab, wrapTab } from "@components/settings/tabs/BaseTab"
 import { PluginCard } from "@components/settings/tabs/plugins/PluginCard";
 import { classes, isObjectEmpty } from "@utils/misc";
 import { relaunch } from "@utils/native";
-import { Alerts, Card, Toasts, useEffect, useState } from "@webpack/common";
+import { Alerts, Toasts, useEffect, useState } from "@webpack/common";
 
 import userpluginInstaller, { Native } from "..";
 import { cl, CLONE_LINK_REGEX, showInstallFinishedAlert } from "../misc/constants";

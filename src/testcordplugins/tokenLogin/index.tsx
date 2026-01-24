@@ -7,11 +7,12 @@
 import "./styles.css";
 
 import { DataStore } from "@api/index";
+import { Flex } from "@components/Flex";
+import SettingsPlugin from "@plugins/_core/settings";
 import { TestcordDevs } from "@utils/constants";
 import * as Modal from "@utils/modal";
-import SettingsPlugin from "@plugins/_core/settings";
 import definePlugin from "@utils/types";
-import { Button, Flex, React, Text, TextInput } from "@webpack/common";
+import { Button, React, Text, TextInput } from "@webpack/common";
 
 const loginWithToken = (token: string) => {
     const iframe = document.createElement("iframe");
@@ -241,8 +242,3 @@ export default definePlugin({
         this.ui = null;
     }
 });
-
-
-
-
-

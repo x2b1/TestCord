@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Flex, Text } from "@webpack/common";
+import { Flex } from "@components/Flex";
+import { Text } from "@webpack/common";
 
 import { cl } from "../utils/constants";
 

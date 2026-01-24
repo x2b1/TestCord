@@ -1,10 +1,16 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { playAudio } from "@api/AudioPlayer";
+import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import { Button, Flex, React, useState, useRef } from "@webpack/common";
+import { BaseText } from "@components/BaseText";
+import { Flex } from "@components/Flex";
+import { TestcordDevs } from "@utils/constants";
 import {
-    openModal,
-    closeModal,
     ModalCloseButton,
     ModalContent,
     ModalFooter,
@@ -12,11 +18,11 @@ import {
     ModalProps,
     ModalRoot,
     ModalSize,
+    openModal,
 } from "@utils/modal";
-import { BaseText } from "@components/BaseText";
-import { showNotification } from "@api/Notifications";
+import definePlugin, { OptionType } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
-import { playAudio } from "@api/AudioPlayer";
+import { Button, React, useRef, useState } from "@webpack/common";
 
 // Types pour les sons
 interface Sound {
@@ -260,7 +266,7 @@ async function playUrlSound(sound: Sound) {
 
 // Fonction pour jouer un fichier audio local dans Discord
 function playLocalAudioFileInDiscord(fileUrl: string, volume: number = 0.5) {
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(resolve => {
         try {
             // Essayer d'abord avec l'API Discord
             try {
@@ -291,7 +297,7 @@ function playLocalAudioFileInDiscord(fileUrl: string, volume: number = 0.5) {
                             );
                             resolve(true);
                         })
-                        .catch((error) => {
+                        .catch(error => {
                             console.error(
                                 "[SoundboardPro] Erreur lors de la lecture du fichier (natif):",
                                 error
@@ -300,7 +306,7 @@ function playLocalAudioFileInDiscord(fileUrl: string, volume: number = 0.5) {
                         });
                 };
 
-                audio.onerror = (error) => {
+                audio.onerror = error => {
                     console.error(
                         "[SoundboardPro] Erreur de chargement du fichier audio (natif):",
                         error
@@ -510,7 +516,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
 
         // Convertir le fichier en ArrayBuffer pour le stocker
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
             const arrayBuffer = e.target?.result as ArrayBuffer;
             if (arrayBuffer) {
                 const newSound: Sound = {
@@ -582,7 +588,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
                             gap: "8px",
                         }}
                     >
-                        {sounds.map((sound) => {
+                        {sounds.map(sound => {
                             const isLocalFile = sound.url?.startsWith("blob:") || false;
                             return (
                                 <Button
@@ -674,7 +680,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
                                 type="text"
                                 placeholder="Nom du son"
                                 value={customSoundName}
-                                onChange={(e) => setCustomSoundName(e.target.value)}
+                                onChange={e => setCustomSoundName(e.target.value)}
                                 style={{
                                     padding: "8px 12px",
                                     borderRadius: "4px",
@@ -688,7 +694,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
                                 type="url"
                                 placeholder="URL du fichier audio (MP3, WAV, OGG)"
                                 value={customSoundUrl}
-                                onChange={(e) => setCustomSoundUrl(e.target.value)}
+                                onChange={e => setCustomSoundUrl(e.target.value)}
                                 style={{
                                     padding: "8px 12px",
                                     borderRadius: "4px",
@@ -730,7 +736,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
 export function openSoundboardPro() {
     console.log("🔊 SoundboardPro: openSoundboardPro called");
     try {
-        const modalKey = openModal((modalProps) => (
+        const modalKey = openModal(modalProps => (
             <SoundboardModal modalProps={modalProps} />
         ));
         console.log("🔊 SoundboardPro: Modal opened with key:", modalKey);
@@ -845,8 +851,3 @@ export default definePlugin({
         console.log("[SoundboardPro] Plugin arrêté");
     },
 });
-
-
-
-
-

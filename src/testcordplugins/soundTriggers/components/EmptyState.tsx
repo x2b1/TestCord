@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Card, Text } from "@webpack/common";
+import { Card } from "@components/Card";
+import { Text } from "@webpack/common";
 
 interface EmptyStateProps {
     text: string;
@@ -17,5 +18,3 @@ export function EmptyState(props: EmptyStateProps) {
         </Card>
     );
 }
-
-

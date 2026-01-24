@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Card } from "@components/Card";
 import { Switch } from "@components/Switch";
-import { Card, Forms } from "@webpack/common";
+import { Forms } from "@webpack/common";
 import React from "react";
 
 export interface SettingsModalItemProps extends Pick<React.ComponentProps<"div">,
@@ -81,5 +82,3 @@ export const SettingsModalCard = ({ children, title, switchProps, switchEnabled,
         </Card >
     );
 };
-
-

@@ -6,13 +6,14 @@
 
 import { ChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { Card } from "@components/Card";
+import { IpcEvents } from "@shared/IpcEvents";
+import { TestcordDevs } from "@utils/constants";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { showItemInFolder } from "@utils/native";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
-import { Button, Card, ChannelStore, Constants, ContextMenuApi, GuildStore, Menu, MessageActions, React, RelationshipStore, RestAPI, Toasts, UserStore } from "@webpack/common";
-import { IpcEvents } from "@shared/IpcEvents";
+import { Button, ChannelStore, Constants, ContextMenuApi, GuildStore, Menu, React, RelationshipStore, RestAPI, Toasts, UserStore } from "@webpack/common";
 
 type DeletedLogItem = {
     channelId: string;
@@ -205,7 +206,7 @@ function ProgressModal({ modalProps, onClose, progressRef, onStop }: { modalProp
             setEstimatedTime(0);
             return;
         }
-        
+
         // Calculate average deletions per second from recent history (last 30 deletions)
         const now = Date.now();
         const recentTimes = deletedTimesRef.current.filter(t => now - t < 30000); // Last 30 seconds
@@ -219,7 +220,7 @@ function ProgressModal({ modalProps, onClose, progressRef, onStop }: { modalProp
                 return;
             }
         }
-        
+
         // Fallback: use overall rate if we have enough data
         const totalElapsed = (now - startTimeRef.current) / 1000;
         if (totalElapsed > 0 && deletedCount > 0) {
@@ -1017,8 +1018,3 @@ export default definePlugin({
         );
     }
 });
-
-
-
-
-
