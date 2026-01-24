@@ -69,7 +69,14 @@ export const NoteModal = (props: ModalProps & { onClose: () => void; }) => {
     const [sortDirection, setSortDirection] = React.useState(true);
     const [currentNotebook, setCurrentNotebook] = React.useState("Main");
 
-    const { quickSelect, quickSelectLabel, quickSelectQuick, quickSelectValue, quickSelectArrow } = findByProps("quickSelect") || {};
+    const quickSelectClasses = (() => {
+        try {
+            return findByProps("quickSelect") || {};
+        } catch {
+            return {};
+        }
+    })();
+    const { quickSelect, quickSelectLabel, quickSelectQuick, quickSelectValue, quickSelectArrow } = quickSelectClasses;
 
     const forceUpdate = React.useReducer(() => ({}), {})[1] as () => void;
 

@@ -71,11 +71,10 @@ export const RenderMessage = ({
             }}
             onContextMenu={(event: any) => {
                 if (!fromDeleteModal)
-                    // @ts-ignore
-                    return ContextMenuApi.openContextMenu(event, (props: any) => (
-                        // @ts-ignore
+                    ContextMenuApi.openContextMenu(event, (props: any) => (
                         <NoteContextMenu
-                            {...Object.assign({}, props, { onClose: close })}
+                            {...props}
+                            onClose={() => FluxDispatcher.dispatch({ type: "CONTEXT_MENU_CLOSE" })}
                             note={note}
                             notebook={notebook}
                             updateParent={updateParent}
@@ -94,7 +93,7 @@ export const RenderMessage = ({
                 isLastItem={false}
                 renderContentOnly={false}
                 // @ts-ignore
-                channel={new Channel({ id: "holy-notes" })}
+                channel={new Channel({ id: "holy-notes", guild_id: note.guild_id ?? null })}
                 message={
                     new MessageType(
                         Object.assign(
@@ -128,6 +127,8 @@ const NoteContextMenu = (
         closeModal?: () => void;
     }) => {
     const { note, notebook, updateParent, closeModal } = props;
+
+    if (!note) return null;
 
     return (
         <Menu.Menu

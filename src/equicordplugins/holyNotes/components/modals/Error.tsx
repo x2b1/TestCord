@@ -7,7 +7,13 @@
 import { findByProps } from "@webpack";
 
 export default ({ error }: { error?: Error; } = {}) => {
-    const classes = findByProps("emptyResultsWrap");
+    const classes = (() => {
+        try {
+            return findByProps("emptyResultsWrap");
+        } catch {
+            return {};
+        }
+    })();
 
     if (error) {
         // Error
