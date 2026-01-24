@@ -93,13 +93,13 @@ export const RenderMessage = ({
                 isLastItem={false}
                 renderContentOnly={false}
                 // @ts-ignore
-                channel={new Channel({ id: "holy-notes", guild_id: note.guild_id ?? null })}
+                channel={ChannelStore.getChannel(note.channel_id) || new Channel({ id: "123456789012345678", guild_id: note.guild_id })}
                 message={
                     new MessageType(
                         Object.assign(
                             { ...note },
                             {
-                                author: makeDummyUser(note?.author),
+                                author: makeDummyUser(note?.author || { username: "Unknown" }),
                                 timestamp: new Date(note?.timestamp),
                                 // @ts-ignore
                                 embeds: note?.embeds?.map((embed: { timestamp: string | number | Date; }) =>

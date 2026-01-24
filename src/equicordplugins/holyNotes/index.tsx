@@ -85,11 +85,14 @@ export default definePlugin({
     messagePopoverButton: {
         icon: NoteButtonPopover,
         render(message) {
+            if (!message || !message.channel_id) return null;
+            const channel = ChannelStore.getChannel(message.channel_id);
+            if (!channel) return null;
             return {
                 label: "Save Note",
                 icon: NoteButtonPopover,
                 message: message,
-                channel: ChannelStore.getChannel(message.channel_id),
+                channel: channel,
                 onClick: () => noteHandler.addNote(message, "Main")
 
             };

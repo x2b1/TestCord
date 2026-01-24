@@ -126,12 +126,12 @@ export default definePlugin({
             replacement: [
                 {
                     match: /(?<=\.EMBEDDED.{0,250}className:)\i\.\i,.{0,200}children:\[/,
-                    replace: "$&$self.renderTimer(arguments[0].id),",
+                    replace: "$&(arguments[0]?.id ? $self.renderTimer(arguments[0].id) + ',' : '')",
                     predicate: () => !settings.store.showWithoutHover,
                 },
                 {
                     match: /#{intl::GUEST_NAME_SUFFIX}\)\]\}\):""/,
-                    replace: "$&,$self.renderTimer(arguments[0].id)",
+                    replace: "$&(arguments[0]?.id ? ',' + $self.renderTimer(arguments[0].id) : '')",
                     predicate: () => settings.store.showWithoutHover,
                 }
             ]
@@ -140,14 +140,17 @@ export default definePlugin({
             find: "renderConnectionStatus(){",
             replacement: {
                 match: /(lineClamp:1,children:)(\i)(?=,|}\))/,
-                replace: "$1[$2,$self.renderConnectionTimer(this.props.channel.id)]"
+                replace: "$1[$2,this.props.channel ? $self.renderConnectionTimer(this.props.channel.id) : null]"
             }
         }
     ],
 
     flux: {
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
-            const myId = UserStore.getCurrentUser().id;
+            if (!voiceStates) return;
+            const currentUser = UserStore.getCurrentUser();
+            if (!currentUser) return;
+            const myId = currentUser.id;
 
             for (const state of voiceStates) {
                 const { userId, channelId, guildId } = state;
@@ -247,15 +250,17 @@ export default definePlugin({
     },
 
     renderTimer(userId: string) {
+        if (!userId) return null;
         // get the user join time from the users object
         const joinTime = userJoinTimes.get(userId);
         if (!joinTime?.time) {
             // join time is unknown
-            return;
+            return null;
         }
-        if (userId === UserStore.getCurrentUser().id && !settings.store.trackSelf) {
-            // don't show for self
-            return;
+        const currentUser = UserStore.getCurrentUser();
+        if (!currentUser || (userId === currentUser.id && !settings.store.trackSelf)) {
+            // don't show for self or if no current user
+            return null;
         }
 
         return (
@@ -265,7 +270,19 @@ export default definePlugin({
         );
     },
 
+    renderTimerText(userId: string) {
+        if (!userId) return "";
+        const joinTime = userJoinTimes.get(userId);
+        if (!joinTime?.time) return "";
+        const currentUser = UserStore.getCurrentUser();
+        if (!currentUser || (userId === currentUser.id && !settings.store.trackSelf)) return "";
+        const durationMs = Date.now() - joinTime.time;
+        const formatted = formatDurationMs(durationMs, settings.store.format === "human", settings.store.showSeconds);
+        return formatted;
+    },
+
     renderConnectionTimer(channelId: string) {
+        if (!channelId) return;
         return <ErrorBoundary noop>
             <this.ConnectionTimer channelId={channelId} />
         </ErrorBoundary>;
