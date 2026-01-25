@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
     - name: Checkout code
@@ -25,8 +27,11 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
-    - name: Build
+    - name: Build desktop
       run: pnpm build
+
+    - name: Build web
+      run: pnpm buildWeb
 
     - name: Upload to latest release
       uses: softprops/action-gh-release@v2
