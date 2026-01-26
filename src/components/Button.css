@@ -144,7 +144,7 @@
 }
 
 .vc-btn-positive {
-    background-color: var(--redesign-button-positive-background, var(--green-430));
+    background-color: var(--status-positive-background);
     color: var(--white);
 
     &:hover {
