@@ -11,6 +11,7 @@ import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, GuildStore, Menu, NavigationRouter, UserStore } from "@webpack/common"; // Added NavigationRouter
 
+import { TestcordDevs } from "../../utils/constants";
 import * as status from "./status";
 import * as voice from "./voice";
 
@@ -192,8 +193,8 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
 
 export default definePlugin({
     name: "Stalker",
-    description: "Notifies you whenever a target user changes status, joins VC, or sends a message.",
-    authors: [{ name: "Reycko", id: 1123725368004726794n }],
+    description: "Notifies you whenever a target user changes status, joins VC, or sends a message. (fixed by x2b)",
+    authors: [{ name: "Reycko", id: 1123725368004726794n }, TestcordDevs.x2b],
 
     contextMenus: {
         "user-context": patchUserContext,
