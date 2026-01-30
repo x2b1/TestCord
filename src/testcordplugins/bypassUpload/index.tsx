@@ -5,12 +5,53 @@
  */
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { definePluginSettings } from "@api/Settings";
 import { OpenExternalIcon } from "@components/Icons";
 import { TestcordDevs } from "@utils/constants";
-import definePlugin, { PluginNative } from "@utils/types";
-import { Menu, PermissionsBits, PermissionStore, SelectedChannelStore, showToast } from "@webpack/common";
+import { insertTextIntoChatInputBox } from "@utils/discord";
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
+import { Menu, PermissionsBits, PermissionStore, SelectedChannelStore, showToast, Toasts } from "@webpack/common";
 
 const Native = VencordNative.pluginHelpers.BigFileUpload as PluginNative<typeof import("./native")>;
+
+const settings = definePluginSettings({
+    fileUploader: {
+        type: OptionType.SELECT,
+        options: [
+            { label: "Catbox", value: "Catbox", default: true },
+            { label: "Litterbox", value: "Litterbox" },
+            { label: "GoFile", value: "GoFile" },
+        ],
+        description: "Select the file uploader service",
+        hidden: true
+    },
+    autoSend: {
+        type: OptionType.SELECT,
+        options: [
+            { label: "Yes", value: "Yes" },
+            { label: "No", value: "No", default: true },
+        ],
+        description: "Auto-Send",
+        hidden: true
+    },
+    catboxUserHash: {
+        type: OptionType.STRING,
+        default: "",
+        description: "User hash for Catbox uploader (optional)",
+        hidden: true
+    },
+    litterboxTime: {
+        type: OptionType.SELECT,
+        options: [
+            { label: "1 hour", value: "1h", default: true },
+            { label: "12 hours", value: "12h" },
+            { label: "24 hours", value: "24h" },
+            { label: "72 hours", value: "72h" },
+        ],
+        description: "Duration for files on Litterbox before they are deleted",
+        hidden: true
+    },
+});
 
 async function uploadFile(file: File, channelId: string) {
     try {
@@ -82,8 +123,9 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 
 export default definePlugin({
     name: "BigFileUpload",
-    description: "Bypass Discord's upload limit by uploading files using the 'Upload a Big File' button and they'll get uploaded as links into chat via Catbox.",
+    description: "Bypass Discord's upload limit by uploading files using the 'Upload a Big File' button and they'll get uploaded as links into chat via file uploaders.",
     authors: [TestcordDevs.x2b],
+    settings,
 
     contextMenus: {
         "channel-attach": ctxMenuPatch,
