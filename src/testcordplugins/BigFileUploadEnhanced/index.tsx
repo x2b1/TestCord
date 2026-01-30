@@ -21,7 +21,6 @@ import { copyWithToast, insertTextIntoChatInputBox, openImageModal, sendMessage 
 import { Margins } from "@utils/margins";
 import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import { chooseFile } from "@utils/web";
-import { findByPropsLazy } from "@webpack";
 import { Alerts, Button, DraftType, Forms, Menu, PermissionsBits, PermissionStore, React, Select, showToast, TextArea, TextInput, Toasts, UploadManager, useMemo } from "@webpack/common";
 
 type Uploader = "GoFile" | "Catbox" | "Litterbox" | "Custom";
@@ -43,8 +42,6 @@ type UploadPayload = {
 const Native: PluginNative<typeof import("./native")> | null = IS_DISCORD_DESKTOP
     ? (VencordNative.pluginHelpers.BigFileUpload as PluginNative<typeof import("./native")>)
     : null;
-
-const OptionClasses = findByPropsLazy("optionName", "optionIcon", "optionLabel");
 
 const VIDEO_EXTENSIONS = [
     ".mp4", ".mkv", ".webm", ".avi", ".mov", ".flv", ".wmv", ".m4v", ".mpg", ".mpeg", ".3gp", ".ogv"
@@ -611,13 +608,13 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
     if (children.find(c => c?.props?.id === "vc-big-file-upload")) return;
     if (props.channel.guild_id && !PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) return;
 
-    children.push(
+    children.splice(1, 0,
         <Menu.MenuItem
-            id="vc-big-file-upload-enhanced"
+            id="vc-big-file-upload"
             label={
-                <div className={OptionClasses.optionLabel}>
-                    <OpenExternalIcon className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>Upload Big File (Enhanced)</div>
+                <div>
+                    <OpenExternalIcon height={24} width={24} />
+                    <div>Upload Big File (Enhanced)</div>
                 </div>
             }
             action={() => runUploadFlow(props.channel.id)}
