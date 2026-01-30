@@ -19,7 +19,7 @@ export default definePlugin({
     settings,
     toolboxActions: {
         "Open Theme Library": () => {
-            openUserSettingsPanel("theme_library");
+            openUserSettingsPanel("equicord_theme_library");
         },
     },
 
@@ -27,7 +27,7 @@ export default definePlugin({
         const { customEntries, customSections } = SettingsPlugin;
 
         customEntries.push({
-            key: "equicord_theme_library",
+            key: "theme_library",
             title: "Theme Library",
             Component: require("./components/ThemeTab").default,
             Icon: ColorPaletteIcon

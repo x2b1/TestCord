@@ -35,7 +35,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { chooseFile } from "@utils/web";
 import { CloudUpload } from "@vencord/discord-types";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
-import { findCssClassesLazy, findLazy, findStoreLazy } from "@webpack";
+import { findLazy, findStoreLazy } from "@webpack";
 import { Button, Constants, FluxDispatcher, Forms, lodash, Menu, MessageActions, PermissionsBits, PermissionStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Toasts, useEffect, useState } from "@webpack/common";
 
 import { VoiceRecorderDesktop } from "./components/DesktopRecorder";
@@ -58,7 +58,6 @@ const EMPTY_META: AudioMetadata = {
 
 const CloudUploadConstructor = findLazy(m => m.prototype?.trackUploadFinished) as typeof CloudUpload;
 const PendingReplyStore = findStoreLazy("PendingReplyStore");
-const OptionClasses = findCssClassesLazy("optionName", "optionIcon", "optionLabel");
 
 export const cl = classNameFactory("vc-vmsg-");
 
@@ -159,9 +158,9 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
         <Menu.MenuItem
             id="vc-send-vmsg"
             label={
-                <div className={OptionClasses.optionLabel}>
-                    <Microphone className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>
+                <div>
+                    <Microphone height={24} width={24} />
+                    <div>
                         Send Voice Message
                         {!hasPermission && <span style={{ fontSize: "smaller", opacity: 0.6 }}> (Missing Permissions)</span>}
                     </div>
