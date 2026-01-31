@@ -1,15 +1,13 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
-import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { UserStore } from "@webpack/common";
+import { React, UserStore } from "@webpack/common";
 
 const fontOptions = [
     { label: "gg sans", value: "gg-sans", default: true },
@@ -43,71 +41,25 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "NameStyleChanger",
-    description: "Change the font style of your own username and display name, like Discord's paid feature",
+    description: "Change the font style of your own username and display name. (basically Display Name Styles but free)",
     authors: [TestcordDevs.x2b],
     settings,
 
-
-
-    observer: null as MutationObserver | null,
-
-    start() {
-        this.currentFont = settings.store.font;
-        this.applyFontToNames();
-        this.setupObserver();
-        this.timer = setInterval(() => {
-            if (this.currentFont !== settings.store.font) {
-                this.currentFont = settings.store.font;
-                this.applyFontToNames();
+    patches: [
+        {
+            find: '="SYSTEM_TAG"',
+            replacement: {
+                match: /(onContextMenu:\i,children:)(.{0,250}?),"data-text":(\i\+\i)/,
+                replace: "$1$self.applyNameStyle({author:arguments[0].message?.author},$2),\"data-text\":$3"
             }
-        }, 1000);
-    },
-
-    stop() {
-        if (this.observer) {
-            this.observer.disconnect();
-            this.observer = null;
         }
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
-        }
-    },
+    ],
 
-    setupObserver() {
-        this.observer = new MutationObserver(() => {
-            this.applyFontToNames();
-        });
+    applyNameStyle(props: { author: any; }, originalChildren: React.ReactNode) {
+        if (props.author.id !== UserStore.getCurrentUser()?.id) return originalChildren;
 
-        this.observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    },
+        const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];
 
-    applyFontToNames() {
-        const currentUser = UserStore.getCurrentUser();
-        if (!currentUser) return;
-
-        const userNames = [currentUser.username];
-        if (currentUser.globalName) userNames.push(currentUser.globalName);
-
-        const fontFamily = fontMap[settings.store.font] || fontMap["gg-sans"];
-
-        const selectors = [
-            ".c19a557985eb7793-username",
-            ".c19a557985eb7793-clickable",
-            ".b6c092614b8d59f3-title"
-        ];
-
-        selectors.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            elements.forEach((el: Element) => {
-                const text = el.textContent?.trim();
-                if (text && userNames.some(name => text.includes(name))) {
-                    (el as HTMLElement).style.setProperty("font-family", fontFamily, "important");
-                }
-            });
-        });
+        return <span style={{ fontFamily }}>{originalChildren}</span>;
     }
 });

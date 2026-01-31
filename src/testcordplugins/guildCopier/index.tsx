@@ -44,6 +44,10 @@ interface BackupChannel {
     rate_limit_per_user?: number;
     bitrate?: number;
     user_limit?: number;
+    default_auto_archive_duration?: number;
+    rtc_region?: string | null;
+    video_quality_mode?: number;
+    default_thread_rate_limit_per_user?: number;
 }
 
 interface BackupEmote {
@@ -195,6 +199,10 @@ async function copyGuild(guildId: string): Promise<void> {
                     rate_limit_per_user: channelData.rateLimitPerUser,
                     bitrate: channelData.bitrate,
                     user_limit: channelData.userLimit,
+                    default_auto_archive_duration: channelData.defaultAutoArchiveDuration,
+                    rtc_region: channelData.rtcRegion,
+                    video_quality_mode: channelData.videoQualityMode,
+                    default_thread_rate_limit_per_user: channelData.defaultThreadRateLimitPerUser,
                 });
             }
         }
@@ -324,7 +332,16 @@ async function copyGuild(guildId: string): Promise<void> {
                     if (channel.rate_limit_per_user)
                         channelBody.rate_limit_per_user = channel.rate_limit_per_user;
                     if (channel.bitrate) channelBody.bitrate = channel.bitrate;
+                    else if (channel.type === 2) channelBody.bitrate = 96000; // Default 96kbps for voice channels
                     if (channel.user_limit) channelBody.user_limit = channel.user_limit;
+                    if (channel.default_auto_archive_duration)
+                        channelBody.default_auto_archive_duration = channel.default_auto_archive_duration;
+                    else if (channel.type === 5) channelBody.default_auto_archive_duration = 1440; // Default 1 day for announcement channels
+                    if (channel.rtc_region && channel.rtc_region !== null) channelBody.rtc_region = channel.rtc_region;
+                    if (channel.video_quality_mode)
+                        channelBody.video_quality_mode = channel.video_quality_mode;
+                    if (channel.default_thread_rate_limit_per_user)
+                        channelBody.default_thread_rate_limit_per_user = channel.default_thread_rate_limit_per_user;
 
                     const { body } = await RestAPI.post({
                         url: `/guilds/${newGuildId}/channels`,
