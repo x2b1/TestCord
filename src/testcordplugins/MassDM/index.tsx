@@ -10,7 +10,7 @@ import { TestcordDevs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, GuildMemberStore, GuildStore, React, RelationshipStore, UserStore } from "@webpack/common";
+import { ChannelStore, React, RelationshipStore, UserStore } from "@webpack/common";
 
 const logger = new Logger("MassDM");
 
@@ -30,15 +30,10 @@ const settings = definePluginSettings({
         description: "Only message friends (requires Friends to be enabled)",
         default: false,
     },
-    randomPeople: {
+    allOpenDMs: {
         type: OptionType.BOOLEAN,
-        description: "Include random people from servers",
+        description: "Send to all open DMs instead of friends",
         default: false,
-    },
-    randomPeopleLimit: {
-        type: OptionType.NUMBER,
-        description: "Maximum number of random people to message",
-        default: 10,
     },
     autoResponses: {
         type: OptionType.BOOLEAN,
@@ -99,30 +94,17 @@ function ResponsesSettings() {
 }
 
 function getUsersToMessage() {
+    if (settings.store.allOpenDMs) {
+        // Get all user IDs that have DM channels
+        const dmMap = ChannelStore.getMutableDMsByUserIds();
+        return Object.keys(dmMap).filter(id => id !== UserStore.getCurrentUser().id);
+    }
+
     const users: string[] = [];
 
     if (settings.store.friends) {
         const friendIds = RelationshipStore.getFriendIDs();
         users.push(...friendIds);
-    }
-
-    if (settings.store.randomPeople) {
-        const guildIds = Object.keys(GuildStore.getGuilds());
-        const randomUsers: string[] = [];
-
-        for (const guildId of guildIds) {
-            const members = GuildMemberStore.getMembers(guildId);
-            for (const member of members) {
-                const memberId = member.userId;
-                if (!users.includes(memberId) && RelationshipStore.getRelationshipType(memberId) !== 2) { // not blocked
-                    randomUsers.push(memberId);
-                }
-            }
-        }
-
-        // Shuffle and limit
-        const shuffled = randomUsers.sort(() => 0.5 - Math.random());
-        users.push(...shuffled.slice(0, settings.store.randomPeopleLimit));
     }
 
     if (settings.store.onlyFriends && settings.store.friends) {
@@ -180,7 +162,18 @@ export default definePlugin({
                 for (let i = 0; i < users.length; i++) {
                     const userId = users[i];
                     try {
-                        const channelId = ChannelStore.getDMFromUserId(userId);
+                        let channelId = ChannelStore.getDMFromUserId(userId);
+                        if (!channelId) {
+                            // Dispatch DM_OPEN to create the DM channel
+                            FluxDispatcher.dispatch({
+                                type: "DM_OPEN",
+                                userId: userId,
+                                channelId: null,
+                            });
+                            // Wait a bit for the channel to be created
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            channelId = ChannelStore.getDMFromUserId(userId);
+                        }
                         if (channelId) {
                             sendMessage(channelId, { content: message });
                         }
