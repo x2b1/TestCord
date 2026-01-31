@@ -5,8 +5,9 @@
  */
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
-import definePlugin from "@utils/types";
+import definePlugin, { OptionType } from "@utils/types";
 import { findByCodeLazy } from "@webpack";
 import {
     ChannelStore,
@@ -15,13 +16,10 @@ import {
     GuildRoleStore,
     GuildStore,
     Menu,
-    PermissionsBits,
-    PermissionStore,
     RestAPI,
     showToast,
     StickersStore,
     Toasts,
-    UserStore,
 } from "@webpack/common";
 
 interface BackupRole {
@@ -76,6 +74,39 @@ const StickerExtMap = {
 const MAX_EMOJI_SIZE_BYTES = 256 * 1024;
 const MAX_STICKER_SIZE_BYTES = 512 * 1024;
 
+const settings = definePluginSettings({
+    copyRoles: {
+        type: OptionType.BOOLEAN,
+        description: "Copy roles from the original guild",
+        default: true,
+    },
+    copyChannels: {
+        type: OptionType.BOOLEAN,
+        description: "Copy channels and categories from the original guild",
+        default: true,
+    },
+    copyEmojis: {
+        type: OptionType.BOOLEAN,
+        description: "Copy emojis from the original guild",
+        default: true,
+    },
+    copyStickers: {
+        type: OptionType.BOOLEAN,
+        description: "Copy stickers from the original guild",
+        default: true,
+    },
+    emojiCount: {
+        type: OptionType.NUMBER,
+        description: "Maximum number of emojis to copy (per type: PNG and GIF)",
+        default: 50,
+    },
+    stickerCount: {
+        type: OptionType.NUMBER,
+        description: "Maximum number of stickers to copy",
+        default: 5,
+    },
+});
+
 async function fetchBlob(url: string, maxSize: number) {
     for (let size = 4096; size >= 16; size /= 2) {
         const res = await fetch(`${url}?size=${size}&lossless=true&animated=true`);
@@ -126,13 +157,6 @@ async function copyGuild(guildId: string): Promise<void> {
             throw new Error("Guild not found");
         }
 
-        // Check permissions
-        const currentUser = UserStore.getCurrentUser();
-        if (guild.ownerId !== currentUser.id && !PermissionStore.can(PermissionsBits.MANAGE_GUILD, guild)) {
-            showToast("You don't have permission to copy this guild", Toasts.Type.FAILURE);
-            return;
-        }
-
         showToast("Starting guild copy process...", Toasts.Type.SUCCESS);
 
         // Get roles
@@ -175,14 +199,18 @@ async function copyGuild(guildId: string): Promise<void> {
             }
         }
 
-        // Get emotes (limit to 50 PNG and 50 GIF as per free limits)
+        // Sort channels by position to preserve order
+        backupChannels.sort((a, b) => a.position - b.position);
+
+        // Get emotes
+        const emojiCount = settings.store.emojiCount || 50;
         const allEmotes = EmojiStore.getGuildEmoji(guildId) || [];
         const pngEmotes = allEmotes.filter((emote: any) => !emote.animated);
         const gifEmotes = allEmotes.filter((emote: any) => emote.animated);
 
-        // Take up to 50 of each type
-        const selectedPngEmotes = pngEmotes.slice(0, 50);
-        const selectedGifEmotes = gifEmotes.slice(0, 50);
+        // Take up to emojiCount of each type
+        const selectedPngEmotes = pngEmotes.slice(0, emojiCount);
+        const selectedGifEmotes = gifEmotes.slice(0, emojiCount);
 
         const backupEmotes: BackupEmote[] = [...selectedPngEmotes, ...selectedGifEmotes].map((emote: any) => ({
             name: emote.name,
@@ -191,11 +219,12 @@ async function copyGuild(guildId: string): Promise<void> {
             url: `https://cdn.discordapp.com/emojis/${emote.id}.${emote.animated ? "gif" : "png"}`,
         }));
 
-        // Get stickers (limit to 5 random stickers)
+        // Get stickers
+        const stickerCount = settings.store.stickerCount || 5;
         const allStickers = StickersStore.getStickersByGuildId(guildId) || [];
-        // Shuffle and take up to 5 stickers
+        // Shuffle and take up to stickerCount stickers
         const shuffledStickers = allStickers.sort(() => 0.5 - Math.random());
-        const selectedStickers = shuffledStickers.slice(0, 5);
+        const selectedStickers = shuffledStickers.slice(0, stickerCount);
 
         const backupStickers: BackupSticker[] = selectedStickers.map((sticker: any) => ({
             name: sticker.name,
@@ -221,107 +250,115 @@ async function copyGuild(guildId: string): Promise<void> {
 
         // Copy roles
         const roleMapping: Record<string, string> = {};
-        for (const role of backupRoles) {
-            try {
-                const { body } = await RestAPI.post({
-                    url: `/guilds/${newGuildId}/roles`,
-                    body: {
-                        name: role.name,
-                        permissions: role.permissions,
-                        color: role.color,
-                        hoist: role.hoist,
-                        mentionable: role.mentionable,
-                    },
-                });
-                roleMapping[role.id] = body.id;
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error creating role ${role.name}:`, error);
+        if (settings.store.copyRoles) {
+            for (const role of backupRoles) {
+                try {
+                    const { body } = await RestAPI.post({
+                        url: `/guilds/${newGuildId}/roles`,
+                        body: {
+                            name: role.name,
+                            permissions: role.permissions,
+                            color: role.color,
+                            hoist: role.hoist,
+                            mentionable: role.mentionable,
+                        },
+                    });
+                    roleMapping[role.id] = body.id;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error creating role ${role.name}:`, error);
+                }
             }
         }
 
         // Copy channels (categories first, then others)
-        const categories = backupChannels.filter(c => c.type === 4);
-        const otherChannels = backupChannels.filter(c => c.type !== 4);
         const channelMapping: Record<string, string> = {};
+        if (settings.store.copyChannels) {
+            const categories = backupChannels.filter(c => c.type === 4);
+            const otherChannels = backupChannels.filter(c => c.type !== 4);
 
-        // Create categories first
-        for (const channel of categories) {
-            try {
-                const permissionOverwrites = channel.permission_overwrites.map(
-                    (overwrite: any) => ({
-                        ...overwrite,
-                        id: roleMapping[overwrite.id] || overwrite.id,
-                    })
-                );
+            // Create categories first
+            for (const channel of categories) {
+                try {
+                    const permissionOverwrites = channel.permission_overwrites.map(
+                        (overwrite: any) => ({
+                            ...overwrite,
+                            id: roleMapping[overwrite.id] || overwrite.id,
+                        })
+                    );
 
-                const { body } = await RestAPI.post({
-                    url: `/guilds/${newGuildId}/channels`,
-                    body: {
+                    const { body } = await RestAPI.post({
+                        url: `/guilds/${newGuildId}/channels`,
+                        body: {
+                            name: channel.name,
+                            type: channel.type,
+                            permission_overwrites: permissionOverwrites,
+                        },
+                    });
+                    channelMapping[channel.id] = body.id;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error creating category ${channel.name}:`, error);
+                }
+            }
+
+            // Create other channels
+            for (const channel of otherChannels) {
+                try {
+                    const permissionOverwrites = channel.permission_overwrites.map(
+                        (overwrite: any) => ({
+                            ...overwrite,
+                            id: roleMapping[overwrite.id] || overwrite.id,
+                        })
+                    );
+
+                    const channelBody: any = {
                         name: channel.name,
                         type: channel.type,
                         permission_overwrites: permissionOverwrites,
-                    },
-                });
-                channelMapping[channel.id] = body.id;
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error creating category ${channel.name}:`, error);
-            }
-        }
+                        parent_id: channelMapping[channel.parent_id!] || null,
+                    };
 
-        // Create other channels
-        for (const channel of otherChannels) {
-            try {
-                const permissionOverwrites = channel.permission_overwrites.map(
-                    (overwrite: any) => ({
-                        ...overwrite,
-                        id: roleMapping[overwrite.id] || overwrite.id,
-                    })
-                );
+                    if (channel.topic) channelBody.topic = channel.topic;
+                    if (channel.nsfw !== undefined) channelBody.nsfw = channel.nsfw;
+                    if (channel.rate_limit_per_user)
+                        channelBody.rate_limit_per_user = channel.rate_limit_per_user;
+                    if (channel.bitrate) channelBody.bitrate = channel.bitrate;
+                    if (channel.user_limit) channelBody.user_limit = channel.user_limit;
 
-                const channelBody: any = {
-                    name: channel.name,
-                    type: channel.type,
-                    permission_overwrites: permissionOverwrites,
-                    parent_id: channelMapping[channel.parent_id!] || null,
-                };
-
-                if (channel.topic) channelBody.topic = channel.topic;
-                if (channel.nsfw !== undefined) channelBody.nsfw = channel.nsfw;
-                if (channel.rate_limit_per_user)
-                    channelBody.rate_limit_per_user = channel.rate_limit_per_user;
-                if (channel.bitrate) channelBody.bitrate = channel.bitrate;
-                if (channel.user_limit) channelBody.user_limit = channel.user_limit;
-
-                const { body } = await RestAPI.post({
-                    url: `/guilds/${newGuildId}/channels`,
-                    body: channelBody,
-                });
-                channelMapping[channel.id] = body.id;
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error creating channel ${channel.name}:`, error);
+                    const { body } = await RestAPI.post({
+                        url: `/guilds/${newGuildId}/channels`,
+                        body: channelBody,
+                    });
+                    channelMapping[channel.id] = body.id;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error creating channel ${channel.name}:`, error);
+                }
             }
         }
 
         // Copy emotes
-        for (const emote of backupEmotes) {
-            try {
-                await cloneEmoji(newGuildId, emote);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error creating emote ${emote.name}:`, error);
+        if (settings.store.copyEmojis) {
+            for (const emote of backupEmotes) {
+                try {
+                    await cloneEmoji(newGuildId, emote);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error creating emote ${emote.name}:`, error);
+                }
             }
         }
 
         // Copy stickers
-        for (const sticker of backupStickers) {
-            try {
-                await cloneSticker(newGuildId, sticker);
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error creating sticker ${sticker.name}:`, error);
+        if (settings.store.copyStickers) {
+            for (const sticker of backupStickers) {
+                try {
+                    await cloneSticker(newGuildId, sticker);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error(`Error creating sticker ${sticker.name}:`, error);
+                }
             }
         }
 
@@ -350,6 +387,8 @@ export default definePlugin({
     description: "Copy an entire guild including channels, roles, permissions, emotes, stickers, and categories to create a new identical guild.",
     authors: [TestcordDevs.x2b],
     dependencies: [],
+
+    settings,
 
     contextMenus: {
         "guild-context": ctxMenuPatch,

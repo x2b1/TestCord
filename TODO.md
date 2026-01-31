@@ -1,0 +1,9 @@
+- [ ] Import definePluginSettings, Settings, OptionType
+- [ ] Define settings object with toggles and counts
+- [ ] Sort backupChannels by position
+- [ ] Add conditional copying for roles
+- [ ] Add conditional copying for channels
+- [ ] Add conditional copying for emojis with configurable count
+- [ ] Add conditional copying for stickers with configurable count
+- [ ] Add settings to plugin definition
+- [ ] Test the changes
