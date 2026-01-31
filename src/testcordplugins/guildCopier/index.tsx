@@ -11,7 +11,6 @@ import definePlugin, { OptionType } from "@utils/types";
 import { findByCodeLazy } from "@webpack";
 import {
     ChannelStore,
-    Constants,
     EmojiStore,
     GuildRoleStore,
     GuildStore,
@@ -133,7 +132,7 @@ async function cloneSticker(guildId: string, sticker: BackupSticker) {
     data.append("file", await fetchBlob(sticker.url, MAX_STICKER_SIZE_BYTES));
 
     await RestAPI.post({
-        url: Constants.Endpoints.GUILD_STICKER_PACKS(guildId),
+        url: `/guilds/${guildId}/stickers`,
         body: data,
     });
 }
@@ -189,7 +188,7 @@ async function copyGuild(guildId: string): Promise<void> {
 
                 backupChannels.push({
                     name: channelData.name,
-                    type: channelData.type,
+                    type: channelData.type === 5 ? 0 : channelData.type,
                     topic: channelData.topic,
                     nsfw: channelData.nsfw,
                     parent_id: channelData.parent_id,
@@ -256,8 +255,28 @@ async function copyGuild(guildId: string): Promise<void> {
         const newGuildId = newGuild.id;
         showToast(`Created new guild: ${newGuild.name}`, Toasts.Type.SUCCESS);
 
+        // Delete default channels
+        try {
+            const { body: defaultChannels } = await RestAPI.get({
+                url: `/guilds/${newGuildId}/channels`,
+            });
+            // Delete non-category channels first, then categories
+            const nonCategories = defaultChannels.filter((c: any) => c.type !== 4);
+            const categories = defaultChannels.filter((c: any) => c.type === 4);
+            const allToDelete = [...nonCategories, ...categories];
+            for (const channel of allToDelete) {
+                await RestAPI.del({
+                    url: `/channels/${channel.id}`,
+                });
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        } catch (error) {
+            console.error("Error deleting default channels:", error);
+        }
+
         // Copy roles
         const roleMapping: Record<string, string> = {};
+        roleMapping[guild.id] = newGuildId;
         if (settings.store.copyRoles) {
             for (const role of backupRoles) {
                 try {
@@ -279,7 +298,7 @@ async function copyGuild(guildId: string): Promise<void> {
             }
         }
 
-        // Copy channels (categories first, then others)
+        // Copy channels (categories first, then others grouped by parent with forums last)
         const channelMapping: Record<string, string> = {};
         if (settings.store.copyChannels) {
             const categories = backupChannels.filter(c => c.type === 4);
@@ -310,47 +329,62 @@ async function copyGuild(guildId: string): Promise<void> {
                 }
             }
 
-            // Create other channels
+            // Group other channels by parent_id
+            const channelsByParent: Record<string, BackupChannel[]> = {};
             for (const channel of otherChannels) {
-                try {
-                    const permissionOverwrites = channel.permission_overwrites.map(
-                        (overwrite: any) => ({
-                            ...overwrite,
-                            id: roleMapping[overwrite.id] || overwrite.id,
-                        })
-                    );
+                const parentKey = channel.parent_id || "none";
+                if (!channelsByParent[parentKey]) channelsByParent[parentKey] = [];
+                channelsByParent[parentKey].push(channel);
+            }
 
-                    const channelBody: any = {
-                        name: channel.name,
-                        type: channel.type,
-                        permission_overwrites: permissionOverwrites,
-                        parent_id: channelMapping[channel.parent_id!] || null,
-                    };
+            // Create channels for each group, with forums last
+            for (const parentKey of Object.keys(channelsByParent)) {
+                const groupChannels = channelsByParent[parentKey];
+                const nonForums = groupChannels.filter(c => c.type !== 15).sort((a, b) => a.position - b.position);
+                const forums = groupChannels.filter(c => c.type === 15).sort((a, b) => a.position - b.position);
+                const orderedChannels = [...nonForums, ...forums];
 
-                    if (channel.topic) channelBody.topic = channel.topic;
-                    if (channel.nsfw !== undefined) channelBody.nsfw = channel.nsfw;
-                    if (channel.rate_limit_per_user)
-                        channelBody.rate_limit_per_user = channel.rate_limit_per_user;
-                    if (channel.bitrate) channelBody.bitrate = channel.bitrate;
-                    else if (channel.type === 2) channelBody.bitrate = 96000; // Default 96kbps for voice channels
-                    if (channel.user_limit) channelBody.user_limit = channel.user_limit;
-                    if (channel.default_auto_archive_duration)
-                        channelBody.default_auto_archive_duration = channel.default_auto_archive_duration;
-                    else if (channel.type === 5) channelBody.default_auto_archive_duration = 1440; // Default 1 day for announcement channels
-                    if (channel.rtc_region && channel.rtc_region !== null) channelBody.rtc_region = channel.rtc_region;
-                    if (channel.video_quality_mode)
-                        channelBody.video_quality_mode = channel.video_quality_mode;
-                    if (channel.default_thread_rate_limit_per_user)
-                        channelBody.default_thread_rate_limit_per_user = channel.default_thread_rate_limit_per_user;
+                for (const channel of orderedChannels) {
+                    try {
+                        const permissionOverwrites = channel.permission_overwrites.map(
+                            (overwrite: any) => ({
+                                ...overwrite,
+                                id: roleMapping[overwrite.id] || overwrite.id,
+                            })
+                        );
 
-                    const { body } = await RestAPI.post({
-                        url: `/guilds/${newGuildId}/channels`,
-                        body: channelBody,
-                    });
-                    channelMapping[channel.id] = body.id;
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (error) {
-                    console.error(`Error creating channel ${channel.name}:`, error);
+                        const channelBody: any = {
+                            name: channel.name,
+                            type: channel.type,
+                            permission_overwrites: permissionOverwrites,
+                            parent_id: channelMapping[channel.parent_id!] || null,
+                        };
+
+                        if (channel.topic) channelBody.topic = channel.topic;
+                        if (channel.nsfw !== undefined) channelBody.nsfw = channel.nsfw;
+                        if (channel.rate_limit_per_user)
+                            channelBody.rate_limit_per_user = channel.rate_limit_per_user;
+                        if (channel.bitrate) channelBody.bitrate = channel.bitrate;
+                        else if (channel.type === 2) channelBody.bitrate = 96000; // Default 96kbps for voice channels
+                        if (channel.user_limit) channelBody.user_limit = channel.user_limit;
+                        if (channel.default_auto_archive_duration)
+                            channelBody.default_auto_archive_duration = channel.default_auto_archive_duration;
+                        else if (channel.type === 5) channelBody.default_auto_archive_duration = 1440; // Default 1 day for announcement channels
+                        if (channel.rtc_region && channel.rtc_region !== null) channelBody.rtc_region = channel.rtc_region;
+                        if (channel.video_quality_mode)
+                            channelBody.video_quality_mode = channel.video_quality_mode;
+                        if (channel.default_thread_rate_limit_per_user)
+                            channelBody.default_thread_rate_limit_per_user = channel.default_thread_rate_limit_per_user;
+
+                        const { body } = await RestAPI.post({
+                            url: `/guilds/${newGuildId}/channels`,
+                            body: channelBody,
+                        });
+                        channelMapping[channel.id] = body.id;
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } catch (error) {
+                        console.error(`Error creating channel ${channel.name}:`, error);
+                    }
                 }
             }
         }
