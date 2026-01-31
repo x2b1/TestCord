@@ -175,18 +175,29 @@ async function copyGuild(guildId: string): Promise<void> {
             }
         }
 
-        // Get emotes
-        const emotes = EmojiStore.getGuildEmoji(guildId) || [];
-        const backupEmotes: BackupEmote[] = emotes.map((emote: any) => ({
+        // Get emotes (limit to 50 PNG and 50 GIF as per free limits)
+        const allEmotes = EmojiStore.getGuildEmoji(guildId) || [];
+        const pngEmotes = allEmotes.filter((emote: any) => !emote.animated);
+        const gifEmotes = allEmotes.filter((emote: any) => emote.animated);
+
+        // Take up to 50 of each type
+        const selectedPngEmotes = pngEmotes.slice(0, 50);
+        const selectedGifEmotes = gifEmotes.slice(0, 50);
+
+        const backupEmotes: BackupEmote[] = [...selectedPngEmotes, ...selectedGifEmotes].map((emote: any) => ({
             name: emote.name,
             id: emote.id,
             animated: emote.animated,
             url: `https://cdn.discordapp.com/emojis/${emote.id}.${emote.animated ? "gif" : "png"}`,
         }));
 
-        // Get stickers
-        const stickers = StickersStore.getStickersByGuildId(guildId) || [];
-        const backupStickers: BackupSticker[] = stickers.map((sticker: any) => ({
+        // Get stickers (limit to 5 random stickers)
+        const allStickers = StickersStore.getStickersByGuildId(guildId) || [];
+        // Shuffle and take up to 5 stickers
+        const shuffledStickers = allStickers.sort(() => 0.5 - Math.random());
+        const selectedStickers = shuffledStickers.slice(0, 5);
+
+        const backupStickers: BackupSticker[] = selectedStickers.map((sticker: any) => ({
             name: sticker.name,
             id: sticker.id,
             format_type: sticker.format_type,
@@ -297,18 +308,7 @@ async function copyGuild(guildId: string): Promise<void> {
         // Copy emotes
         for (const emote of backupEmotes) {
             try {
-                // Fetch emote image
-                const response = await fetch(emote.url);
-                const blob = await response.blob();
-
-                const formData = new FormData();
-                formData.append("name", emote.name);
-                formData.append("image", blob, `${emote.name}.${emote.animated ? "gif" : "png"}`);
-
-                await RestAPI.post({
-                    url: `/guilds/${newGuildId}/emojis`,
-                    body: formData,
-                });
+                await cloneEmoji(newGuildId, emote);
                 await new Promise(resolve => setTimeout(resolve, 500));
             } catch (error) {
                 console.error(`Error creating emote ${emote.name}:`, error);
@@ -318,19 +318,7 @@ async function copyGuild(guildId: string): Promise<void> {
         // Copy stickers
         for (const sticker of backupStickers) {
             try {
-                // Fetch sticker image
-                const response = await fetch(sticker.url);
-                const blob = await response.blob();
-
-                const formData = new FormData();
-                formData.append("name", sticker.name);
-                formData.append("file", blob, `${sticker.name}.${sticker.format_type === 1 ? "png" : sticker.format_type === 2 ? "apng" : "lottie"}`);
-                formData.append("tags", "copied"); // Required field
-
-                await RestAPI.post({
-                    url: `/guilds/${newGuildId}/stickers`,
-                    body: formData,
-                });
+                await cloneSticker(newGuildId, sticker);
                 await new Promise(resolve => setTimeout(resolve, 500));
             } catch (error) {
                 console.error(`Error creating sticker ${sticker.name}:`, error);
