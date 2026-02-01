@@ -101,6 +101,7 @@ const enum SearchStatus {
     ENABLED,
     DISABLED,
     EQUICORD,
+    TESTCORD,
     VENCORD,
     NEW,
     USER_PLUGINS,
@@ -224,6 +225,9 @@ export default function PluginSettings() {
                 break;
             case SearchStatus.EQUICORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
+                break;
+            case SearchStatus.TESTCORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/testcordplugins/")) return false;
                 break;
             case SearchStatus.VENCORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;
@@ -418,6 +422,7 @@ export default function PluginSettings() {
                                 { label: "Show Enabled", value: SearchStatus.ENABLED },
                                 { label: "Show Disabled", value: SearchStatus.DISABLED },
                                 { label: "Show Equicord", value: SearchStatus.EQUICORD },
+                                { label: "Show Testcord", value: SearchStatus.TESTCORD },
                                 { label: "Show Vencord", value: SearchStatus.VENCORD },
                                 { label: "Show New", value: SearchStatus.NEW },
                                 hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },
