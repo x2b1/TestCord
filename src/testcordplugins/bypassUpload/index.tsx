@@ -23,7 +23,7 @@ const settings = definePluginSettings({
             { label: "GoFile", value: "GoFile" },
         ],
         description: "Select the file uploader service",
-        hidden: true
+        hidden: false
     },
     autoSend: {
         type: OptionType.SELECT,
@@ -32,13 +32,13 @@ const settings = definePluginSettings({
             { label: "No", value: "No", default: true },
         ],
         description: "Auto-Send",
-        hidden: true
+        hidden: false
     },
     catboxUserHash: {
         type: OptionType.STRING,
         default: "",
         description: "User hash for Catbox uploader (optional)",
-        hidden: true
+        hidden: false
     },
     litterboxTime: {
         type: OptionType.SELECT,
@@ -49,7 +49,7 @@ const settings = definePluginSettings({
             { label: "72 hours", value: "72h" },
         ],
         description: "Duration for files on Litterbox before they are deleted",
-        hidden: true
+        hidden: false
     },
 });
 
@@ -59,6 +59,8 @@ async function uploadFile(file: File, channelId: string) {
         const fileName = file.name;
         const fileSizeMB = file.size / (1024 * 1024);
 
+        // Note: This logic always uploads to Catbox based on your native function usage below.
+        // If you want to use the other services, you need to pass the selection from settings here.
         const uploadResult = await Native.uploadFileToCatboxNative("https://catbox.moe/user/api.php", arrayBuffer, fileName, file.type, "");
 
         if (uploadResult.startsWith("https://") || uploadResult.startsWith("http://")) {

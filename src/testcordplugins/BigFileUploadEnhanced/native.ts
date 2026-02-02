@@ -15,7 +15,7 @@ type GofileServersResponse = {
 
 function formatFetchError(err: unknown) {
     if (err instanceof Error) {
-        const cause = (err as any).cause;
+        const { cause } = (err as any);
         const causeStr = cause
             ? (cause instanceof Error ? cause.message : String(cause))
             : "";
@@ -48,13 +48,20 @@ function isHttpUrl(input: string) {
 }
 
 async function pickGofileServer(): Promise<string> {
-    const res = await safeFetch("https://api.gofile.io/servers");
-    const json = (await res.json()) as GofileServersResponse;
+    try {
+        const res = await safeFetch("https://api.gofile.io/servers");
+        const json = (await res.json()) as GofileServersResponse;
 
-    const servers = json?.data?.servers?.map(s => s?.name).filter(Boolean) as string[] | undefined;
-    if (!servers?.length) throw new Error("GoFile: failed to fetch server list");
+        const servers = json?.data?.servers?.map(s => s?.name).filter(Boolean) as string[] | undefined;
+        if (servers && servers.length > 0) {
+            return servers[Math.floor(Math.random() * servers.length)];
+        }
+    } catch (e) {
+        console.warn("[BigFileUpload] GoFile server fetch failed, using fallback.");
+    }
 
-    return servers[Math.floor(Math.random() * servers.length)];
+    // Fallback to a reliable default server if API fails or returns empty
+    return "store1";
 }
 
 function buildFileFormData(fileBuffer: ArrayBuffer, fileName: string, fileType: string) {
@@ -78,11 +85,20 @@ export async function uploadFileToGofileNative(_, fileBuffer: ArrayBuffer, fileN
         throw new Error(`GoFile: HTTP ${response.status}${msg}`);
     }
 
+    // Try JSON response first
     const downloadPage = result?.data?.downloadPage;
-    if (result?.status !== "ok" || typeof downloadPage !== "string" || !isHttpUrl(downloadPage))
-        throw new Error("GoFile: unexpected response shape");
+    if (result?.status === "ok" && typeof downloadPage === "string" && isHttpUrl(downloadPage)) {
+        return downloadPage;
+    }
 
-    return downloadPage;
+    // Fallback: try response as text URL
+    const text = await response.text();
+    const trimmed = text.trim();
+    if (isHttpUrl(trimmed)) {
+        return trimmed;
+    }
+
+    throw new Error("GoFile: unexpected response shape");
 }
 
 export async function uploadFileToCatboxNative(_, fileBuffer: ArrayBuffer, fileName: string, fileType: string, userHash?: string): Promise<string> {
@@ -117,6 +133,35 @@ export async function uploadFileToLitterboxNative(_, fileBuffer: ArrayBuffer, fi
     if (!response.ok) throw new Error(`Litterbox: HTTP ${response.status}`);
     if (!isHttpUrl(trimmed)) throw new Error("Litterbox: unexpected response (not a URL)");
     return trimmed;
+}
+
+export async function uploadFileToFilefastNative(_, fileBuffer: ArrayBuffer, fileName: string, fileType: string, token?: string): Promise<string> {
+    const url = "https://file.fast/api/v1/upload";
+
+    const formData = new FormData();
+    const file = new Blob([fileBuffer], { type: fileType || "application/octet-stream" });
+    formData.append("files[]", new File([file], fileName));
+    if (token) formData.append("token", token);
+
+    const response = await safeFetch(url, { method: "POST", body: formData });
+    const result = await response.json().catch(() => null) as any;
+
+    if (!response.ok || result?.success !== true) {
+        throw new Error(`FileFast: HTTP ${response.status} or upload failed`);
+    }
+
+    const files = result?.files;
+    if (!Array.isArray(files) || files.length === 0) {
+        throw new Error("FileFast: unexpected response shape (no files)");
+    }
+
+    const uploadedFile = files[0];
+    const finalUrl = uploadedFile?.url;
+
+    if (typeof finalUrl !== "string" || !isHttpUrl(finalUrl))
+        throw new Error("FileFast: unexpected response (no valid URL)");
+
+    return finalUrl;
 }
 
 export async function uploadFileCustomNative(

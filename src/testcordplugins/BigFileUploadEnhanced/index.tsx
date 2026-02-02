@@ -4,13 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-/**
- * Why these changes:
- * - File picking uses `DiscordNative.fileManager.openFiles` (or `chooseFile` on web) instead of creating/clicking DOM `<input>` nodes.
- * - Uploads are always user-initiated and gated behind an optional confirmation dialog that shows the destination host + URL (especially important for custom uploaders).
- * - Secrets (tokens/userhash/custom headers/args) are stored via `definePluginSettings().withPrivateSettings()`.
- */
-
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { Divider } from "@components/Divider";
@@ -23,7 +16,9 @@ import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import { chooseFile } from "@utils/web";
 import { Alerts, Button, DraftType, Forms, Menu, PermissionsBits, PermissionStore, React, Select, showToast, TextArea, TextInput, Toasts, UploadManager, useMemo } from "@webpack/common";
 
-type Uploader = "GoFile" | "Catbox" | "Litterbox" | "Custom";
+// Added FileFast to Uploader type
+// TODO: fix the fucking gofile upload and the fucking filefast. i hate them both and they are harder to fix than catbox. 
+type Uploader = "GoFile" | "Catbox" | "Litterbox" | "Custom" | "FileFast";
 type CustomResponseType = "Text" | "JSON";
 
 type PickedFile = {
@@ -92,6 +87,7 @@ const settings = definePluginSettings({
             { label: "Catbox (max 200mb)", value: "Catbox", default: true },
             { label: "Litterbox (Catbox but temporary upload, 1GB)", value: "Litterbox" },
             { label: "GoFile", value: "GoFile" },
+            { label: "FileFast (Fast)", value: "FileFast" }, // Added FileFast
             { label: "Custom (ShareX-compatible)", value: "Custom" },
         ]
     },
@@ -121,7 +117,7 @@ const settings = definePluginSettings({
     },
     renderImagePreviews: {
         type: OptionType.BOOLEAN,
-        description: "Render inline image previews for Catbox/Litter links even if Discord doesn't embed them",
+        description: "Render inline image previews for Catbox/Litter/GoFile links even if Discord doesn't embed them",
         hidden: true,
         default: true
     },
@@ -179,6 +175,7 @@ const settings = definePluginSettings({
 }).withPrivateSettings<{
     gofileToken?: string;
     catboxUserHash?: string;
+    filefastToken?: string;
     customHeadersJson?: string;
     customArgsJson?: string;
 }>();
@@ -186,6 +183,8 @@ const settings = definePluginSettings({
 const CATBOX_IMAGE_HOSTS = [
     "files.catbox.moe",
     "litter.catbox.moe",
+    "gofile.io", // Added for preview
+    "File.fast" // Added for preview
 ] as const;
 
 const PREVIEW_IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp"] as const;
@@ -232,7 +231,9 @@ function getDestination(uploader: Uploader): { host: string; url: string; note?:
         case "Litterbox":
             return { host: "litterbox.catbox.moe", url: "https://litterbox.catbox.moe/resources/internals/api.php" };
         case "GoFile":
-            return { host: "gofile.io", url: "https://*.gofile.io/uploadFile", note: "Server is selected automatically by GoFile." };
+            return { host: "gofile.io", url: "https://upload.gofile.io/uploadFile", note: "Server is selected automatically by GoFile." };
+        case "FileFast":
+            return { host: "file.fast", url: "https://file.fast/api/v1/upload", note: "Fast uploads." };
         case "Custom": {
             const url = settings.store.customRequestUrl?.trim() ?? "";
             let host = "";
@@ -501,6 +502,9 @@ async function uploadToService(uploader: Uploader, payload: UploadPayload): Prom
         case "Litterbox": {
             return await Native.uploadFileToLitterboxNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.litterboxTime);
         }
+        case "FileFast": {
+            return await Native.uploadFileToFilefastNative(payload.fileBuffer, payload.fileName, payload.fileType, settings.store.filefastToken?.trim() || undefined);
+        }
         case "Custom": {
             const validated = validateCustomSettings();
             if (!validated.ok) throw new Error(validated.error);
@@ -679,6 +683,7 @@ function SettingsComponent() {
                         { label: "Catbox", value: "Catbox" },
                         { label: "Litterbox (Catbox)", value: "Litterbox" },
                         { label: "GoFile", value: "GoFile" },
+                        { label: "FileFast", value: "FileFast" },
                         { label: "Custom (ShareX-compatible)", value: "Custom" },
                     ]}
                     serialize={v => v}
@@ -739,6 +744,23 @@ function SettingsComponent() {
                         value={settings.store.catboxUserHash ?? ""}
                         placeholder="Catbox user hash"
                         onChange={v => settings.store.catboxUserHash = v}
+                    />
+                </>
+            )}
+
+            {uploader === "FileFast" && (
+                <>
+                    <Divider className={Margins.bottom16} />
+                    <Forms.FormTitle>FileFast</Forms.FormTitle>
+                    <Forms.FormText className={Margins.bottom8}>
+                        Fast file uploads. Files do not expire.
+                    </Forms.FormText>
+                    <TextInput
+                        label="Token (optional, stored privately)"
+                        type="password"
+                        value={settings.store.filefastToken ?? ""}
+                        placeholder="FileFast token"
+                        onChange={v => settings.store.filefastToken = v}
                     />
                 </>
             )}
