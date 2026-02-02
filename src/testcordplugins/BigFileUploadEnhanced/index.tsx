@@ -17,7 +17,7 @@ import { chooseFile } from "@utils/web";
 import { Alerts, Button, DraftType, Forms, Menu, PermissionsBits, PermissionStore, React, Select, showToast, TextArea, TextInput, Toasts, UploadManager, useMemo } from "@webpack/common";
 
 // Added FileFast to Uploader type
-// TODO: fix the fucking gofile upload and the fucking filefast. i hate them both and they are harder to fix than catbox. 
+// TODO: fix the fucking gofile upload and the fucking filefast. i hate them both and they are harder to fix than catbox.
 type Uploader = "GoFile" | "Catbox" | "Litterbox" | "Custom" | "FileFast";
 type CustomResponseType = "Text" | "JSON";
 
