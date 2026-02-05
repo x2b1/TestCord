@@ -20,7 +20,7 @@ import { React } from "@webpack/common";
 import hideBugReport from "./hideBugReport.css?managed";
 
 const KbdStyles = findByPropsLazy("key", "combo");
-const BugReporterExperiment = findLazy(m => m?.definition?.id === "2024-09_bug_reporter");
+const BugReporterExperiment = findLazy(m => m?.definition?.name === "2026-01-bug-reporter");
 
 const modKey = IS_MAC ? "cmd" : "ctrl";
 const altKey = IS_MAC ? "opt" : "alt";
@@ -97,10 +97,11 @@ export default definePlugin({
         },
         // Enable experiment embed on sent experiment links
         {
-            find: '"Clear Treatment "',
+            find: "Clear Treatment ",
             replacement: [
                 {
-                    match: /\i\.isStaff\(\)/,
+                    // TODO: stable compat optional chaining remove once some time has passed
+                    match: /\i\??\.isStaff\(\)/,
                     replace: "true"
                 },
                 // Fix some tricky experiments name causing a client crash
@@ -130,7 +131,7 @@ export default definePlugin({
         },
         {
             // Expands the experiment regex to allow negative numbers as well as text in the last segment of the URL.
-            find: "?\"dev://experiment/\".concat",
+            find: '"^dev://experiment/',
             replacement: {
                 match: /(\[0-9\]\+)/,
                 replace: "[a-zA-Z0-9-]+"
@@ -139,11 +140,6 @@ export default definePlugin({
         {
             find: ".EXPERIMENT_TREATMENT&&null",
             replacement: [
-                {
-                    // Uses the label instead of the value for the button text in the experiment embed.
-                    match: /"Clear Treatment ".concat\((\i).value\):"Apply Treatment ".concat\(\i.value\)/,
-                    replace: '"Clear Treatment: ".concat($1.label):"Apply Treatment: ".concat($1.label)'
-                },
                 {
                     // Allow linking experiments by their label instead of their value.
                     match: /(?<=find\(\i=>)((\i).value===\i)/,
@@ -160,7 +156,7 @@ export default definePlugin({
         return !!labelCleaned && urlEndCleaned !== undefined && labelCleaned === urlEndCleaned;
     },
 
-    start: () => !BugReporterExperiment.getCurrentConfig().hasBugReporterAccess && enableStyle(hideBugReport),
+    start: () => !BugReporterExperiment.getConfig().hasBugReporterAccess && enableStyle(hideBugReport),
     stop: () => disableStyle(hideBugReport),
 
     settingsAboutComponent: () => {
