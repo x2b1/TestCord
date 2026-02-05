@@ -183,9 +183,18 @@ function generatePluginList() {
     const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin]?.required;
 
     // Get all enabled plugins from PluginMeta (includes both stock and user plugins)
-    const allEnabledPlugins = Object.keys(PluginMeta).filter(p => isPluginEnabled(p) && !isApiPlugin(p)).sort();
+    const allEnabledPlugins = Object.keys(PluginMeta).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
-    return `**Plugins enabled (${allEnabledPlugins.length}):**\n${makeCodeblock(allEnabledPlugins.join(", "))}`;
+    const enabledStockPlugins = allEnabledPlugins.filter(p => !PluginMeta[p].userPlugin).sort();
+    const enabledUserPlugins = allEnabledPlugins.filter(p => PluginMeta[p].userPlugin).sort();
+
+    let content = `**Enabled Plugins (${enabledStockPlugins.length}):\n${makeCodeblock(enabledStockPlugins.join(", "))}`;
+
+    if (enabledUserPlugins.length) {
+        content += `\n\n**Enabled UserPlugins (${enabledUserPlugins.length}):\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
+    }
+
+    return content;
 }
 
 const checkForUpdatesOnce = onlyOnce(checkForUpdates);
