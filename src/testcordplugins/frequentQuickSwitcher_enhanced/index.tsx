@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, UserSettingsActionCreators } from "@webpack/common";
 
@@ -25,7 +25,7 @@ const settings = definePluginSettings({
 function modifyResults(query, originalResults) {
     if (!settings.store.enabled) return originalResults;
 
-    let frequentChannels = Object.entries(UserSettingsActionCreators.FrecencyUserSettingsActionCreators.getCurrentValue().guildAndChannelFrecency.guildAndChannels)
+    const frequentChannels = Object.entries(UserSettingsActionCreators.FrecencyUserSettingsActionCreators.getCurrentValue().guildAndChannelFrecency.guildAndChannels)
         .map(([key, value]) => key)
         .filter(id => ChannelStore.getChannel(id) != null)
         .filter(id => query === "" || ChannelStore.getChannel(id).name.toLowerCase().includes(query.toLowerCase()))
@@ -64,13 +64,9 @@ export default definePlugin({
         {
             find: "#{intl::QUICKSWITCHER_PLACEHOLDER}",
             replacement: {
-                match: /let{selectedIndex:\i,results:\i}=this\.props/,
-                replace: "let{selectedIndex:$1,results:$2}=this.props; this.props.results = $self.modifyResults(this.state.query, $2);"
+                match: /let{selectedIndex:\i,results:(\i)}=this\.props/,
+                replace: "$&; $1 = $self.modifyResults(this.state.query, $1)"
             },
         }
     ]
 });
-
-
-
-

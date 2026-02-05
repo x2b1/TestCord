@@ -29,14 +29,16 @@ export default definePlugin({
             replacement: {
                 match: /,?(?=\i\(this,"idleTimeout",new \i\.\i\))/,
                 replace: ";return;"
-            }
+            },
+            noWarn: true
         },
         {
             find: "handleIdleUpdate(){",
             replacement: {
                 match: /(?<=_initialize\(\){)/,
                 replace: "return;"
-            }
+            },
+            noWarn: true
         }
     ]
 });
