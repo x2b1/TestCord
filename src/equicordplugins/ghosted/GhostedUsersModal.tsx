@@ -30,6 +30,7 @@ function GroupDmsIcon({ channel }: { channel: Channel; }) {
         aria-label={channel?.name || "Unnamed Group"}
     /> : <GroupDmsRecipientsIcon
         recipients={channel?.recipients ?? []}
+        channel={channel}
         size="SIZE_40"
         isTyping={null}
     />;
