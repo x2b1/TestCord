@@ -100,14 +100,9 @@ export default definePlugin({
         {
             find: "this.renderArtisanalHack()",
             replacement: [
-                { // Fade in on layer
-                    // class Layer {
-                    // static contextType = ...;
-                    // ...
-                    // }
-                    // class OtherClass {
-                    match: /(static contextType=\i\.\i;.+?})(?=class)(?<=class (\i).+?)/,
-                    replace: (_, before, Layer) => `${before};${Layer}=$self.Layer;`,
+                {
+                    match: /class (\i)(?= extends \i\.PureComponent.+?static contextType=.+?jsx\)\(\1,\{mode:)/,
+                    replace: "var $1=$self.Layer;class VencordPatchedOldFadeLayer",
                     predicate: () => settings.store.disableFade
                 },
                 { // Lazy-load contents
