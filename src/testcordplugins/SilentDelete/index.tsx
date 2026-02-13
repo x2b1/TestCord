@@ -1,6 +1,12 @@
-import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
-import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
+import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Constants, Menu, RestAPI, UserStore } from "@webpack/common";
@@ -66,12 +72,12 @@ async function silentDeleteMessage(channelId: string, messageId: string, deleteO
 
         await sleep(deleteDelay);
         await RestAPI.del({ url: Constants.Endpoints.MESSAGE(channelId, response.body.id) });
-        
+
         if (deleteOriginal && shouldDelete) {
             await sleep(100);
             await RestAPI.del({ url: Constants.Endpoints.MESSAGE(channelId, messageId) });
         }
-        
+
         return true;
     } catch (error) {
         console.error("[SilentDelete] Error:", error);
@@ -81,7 +87,7 @@ async function silentDeleteMessage(channelId: string, messageId: string, deleteO
 
 const messageContextMenuPatch: NavContextMenuPatchCallback = (children, { message }) => {
     if (!message || message.author.id !== UserStore.getCurrentUser().id || !message.deleted) return;
-    
+
     const group = findGroupChildrenByChildId("remove-message-history", children) ?? children;
     group.push(
         <Menu.MenuItem
@@ -102,11 +108,11 @@ export default definePlugin({
     ],
     dependencies: ["MessagePopoverAPI", "CommandsAPI"],
     settings,
-    
+
     contextMenus: {
         "message": messageContextMenuPatch
     },
-    
+
     commands: [
         {
             name: "silentpurge",
@@ -131,23 +137,23 @@ export default definePlugin({
                     try {
                         const userMessages: any[] = [];
                         let lastMessageId: string | undefined;
-                        
+
                         while (userMessages.length < count) {
                             const response = await RestAPI.get({
                                 url: Constants.Endpoints.MESSAGES(channelId),
                                 query: { limit: 100, ...(lastMessageId && { before: lastMessageId }) }
                             });
-                            
+
                             const messages = response.body;
                             if (!messages?.length) break;
-                            
+
                             for (const msg of messages) {
                                 if (msg.author?.id === currentUserId) {
                                     userMessages.push(msg);
                                     if (userMessages.length >= count) break;
                                 }
                             }
-                            
+
                             lastMessageId = messages[messages.length - 1].id;
                             if (messages.length < 100) break;
                             await sleep(100);
@@ -171,7 +177,7 @@ export default definePlugin({
             }
         }
     ],
-    
+
     start() {
         addButton("SilentDelete", msg => {
             if (msg.author.id !== UserStore.getCurrentUser().id || msg.deleted) return null;

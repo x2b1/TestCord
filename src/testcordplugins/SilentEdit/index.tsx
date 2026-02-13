@@ -1,8 +1,14 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
+import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
 
 const MessageActions = findByPropsLazy("deleteMessage", "startEditMessage");
 
@@ -82,7 +88,7 @@ export default definePlugin({
 
                 const originalEditMessage = MessageActions.editMessage;
 
-                MessageActions.editMessage = async function(channelId: string, messageId: string, content: any) {
+                MessageActions.editMessage = async function (channelId: string, messageId: string, content: any) {
                     MessageActions.editMessage = originalEditMessage;
 
                     if (messageId !== msg.id) {

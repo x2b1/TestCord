@@ -1,10 +1,15 @@
-import { definePluginSettings } from "@api/Settings";
-import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
-import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
-import { findByPropsLazy } from "@webpack";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
+import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy } from "@webpack";
+import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
 const MessageActions = findByPropsLazy("deleteMessage", "startEditMessage");
 
 const settings = definePluginSettings({
@@ -49,7 +54,7 @@ function messageSendWrapper(content, nonce, channelId) {
 }
 
 async function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function messageDeleteWrapper(channelId, messageId) {
@@ -66,7 +71,7 @@ export default definePlugin({
         addButton("AntiLog", msg => {
             // sanity checks for people who randomly do shit
             const isMessageOwner = msg.author.id === UserStore.getCurrentUser().id;
-            const channel_id = msg.channel_id;
+            const { channel_id } = msg;
             if (!isMessageOwner) return null;
 
             // async so promise can resolve
@@ -100,8 +105,3 @@ export default definePlugin({
         removeButton("AntiLog");
     }
 });
-
-
-
-
-
