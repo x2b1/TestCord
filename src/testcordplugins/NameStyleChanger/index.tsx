@@ -50,16 +50,17 @@ export default definePlugin({
             find: '="SYSTEM_TAG"',
             replacement: {
                 match: /(onContextMenu:\i,children:)(.{0,250}?),"data-text":(\i\+\i)/,
-                replace: "$1$self.applyNameStyle({author:arguments[0].message?.author},$2),\"data-text\":$3"
+                replace: "$1$self.getMessageNameElement(arguments[0])??($2),\"data-text\":$3"
             }
         }
     ],
 
-    applyNameStyle(props: { author: any; }, originalChildren: React.ReactNode) {
-        if (props.author.id !== UserStore.getCurrentUser()?.id) return originalChildren;
+    getMessageNameElement(props: any) {
+        const { author } = props;
+        if (author.id !== UserStore.getCurrentUser()?.id) return null;
 
         const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];
 
-        return <span style={{ fontFamily }}>{originalChildren}</span>;
+        return <span style={{ fontFamily }}>{props.children}</span>;
     }
 });

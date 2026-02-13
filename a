@@ -1,0 +1,41 @@
+[1mdiff --git a/src/testcordplugins/NameStyleChanger/index.tsx b/src/testcordplugins/NameStyleChanger/index.tsx[m
+[1mindex ce96ae4a..3071e0e7 100644[m
+[1m--- a/src/testcordplugins/NameStyleChanger/index.tsx[m
+[1m+++ b/src/testcordplugins/NameStyleChanger/index.tsx[m
+[36m@@ -50,16 +50,17 @@[m [mexport default definePlugin({[m
+             find: '="SYSTEM_TAG"',[m
+             replacement: {[m
+                 match: /(onContextMenu:\i,children:)(.{0,250}?),"data-text":(\i\+\i)/,[m
+[31m-                replace: "$1$self.applyNameStyle({author:arguments[0].message?.author},$2),\"data-text\":$3"[m
+[32m+[m[32m                replace: "$1$self.getMessageNameElement(arguments[0])??($2),\"data-text\":$3"[m
+             }[m
+         }[m
+     ],[m
+ [m
+[31m-    applyNameStyle(props: { author: any; }, originalChildren: React.ReactNode) {[m
+[31m-        if (props.author.id !== UserStore.getCurrentUser()?.id) return originalChildren;[m
+[32m+[m[32m    getMessageNameElement(props: any) {[m
+[32m+[m[32m        const { author } = props;[m
+[32m+[m[32m        if (author.id !== UserStore.getCurrentUser()?.id) return null;[m
+ [m
+         const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];[m
+ [m
+[31m-        return <span style={{ fontFamily }}>{originalChildren}</span>;[m
+[32m+[m[32m        return <span style={{ fontFamily }}>{props.children}</span>;[m
+     }[m
+ });[m
+[1mdiff --git a/src/utils/constants.ts b/src/utils/constants.ts[m
+[1mindex 54456f45..0a10cd53 100644[m
+[1m--- a/src/utils/constants.ts[m
+[1m+++ b/src/utils/constants.ts[m
+[36m@@ -1281,6 +1281,10 @@[m [mexport const TestcordDevs = Object.freeze({[m
+         name: "vampireslover",[m
+         id: 1455033270709256284n[m
+     },[m
+[32m+[m[32m    czox: {[m
+[32m+[m[32m        name: "czokapika",[m
+[32m+[m[32m        id: 484404620580618250n[m
+[32m+[m[32m    },[m
+ } satisfies Record<string, Dev>);[m
+ [m
+ // iife so #__PURE__ works correctly[m
