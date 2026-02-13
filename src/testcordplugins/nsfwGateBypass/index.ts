@@ -1,46 +1,45 @@
 /*
- * Vencord, a modification for Discord's desktop app
- * Copyright (c) 2025 Vendicated and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
-import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
+import { findByProps } from "@webpack";
 
 export default definePlugin({
     name: "NSFWGateBypass",
-    description: "Allows you to access NSFW channels without setting/verifying your age",
-    authors: [TestcordDevs.x2b],
-    patches: [
-        {
-            find: ".nsfwAllowed=null",
-            replacement: [
-                {
-                    match: /(?<=\.nsfwAllowed=)null!=.+?(?=[,;])/,
-                    replace: "true",
-                },
-                {
-                    match: /(?<=\.ageVerificationStatus=)null!=.+?(?=[,;])/,
-                    replace: "3", // VERIFIED_ADULT
+    description: "Stable bypass for NSFW age gates.",
+    authors: [{
+        name: "dxrx99",
+        id: 1463629522359423152n
+    }],
+
+    start() {
+        const UserStore = findByProps("getCurrentUser");
+        if (!UserStore) return;
+
+        const patchInterval = setInterval(() => {
+            const user = UserStore.getCurrentUser();
+            if (user) {
+
+                user.ageVerificationStatus = 3;
+                user.nsfwAllowed = true;
+
+                if (typeof user.flags === "number") {
+                    user.flags |= 2;
                 }
-            ],
+
+                clearInterval(patchInterval);
+            }
+        }, 1000);
+
+        const ChannelNSFW = findByProps("isNSFW");
+        if (ChannelNSFW) {
+            Object.defineProperty(ChannelNSFW, "isNSFW", {
+                get: () => () => false,
+                configurable: true
+            });
         }
-    ],
+    }
 });
-
-
-
-
-
