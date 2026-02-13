@@ -233,8 +233,8 @@ export default definePlugin({
         {
             find: ']="BADGES"',
             replacement: {
-                match: /(?<="username"===.{0,100})(onClick:\i,onContextMenu:\i,)(?=children:)/,
-                replace: "$1draggable:!0,onDragStart:e=>$self.onUserDragStart(e,arguments[0].author),\"data-dragify-user\":!0,\"data-user-id\":arguments[0].author.id,"
+                match: /(?<=textDecorationColor:.{0,300})(?=onClick:\i,onContextMenu:\i,)/,
+                replace: "draggable:!0,onDragStart:e=>$self.onUserDragStart(e,arguments[0].author),\"data-dragify-user\":!0,\"data-user-id\":arguments[0].author.id,"
             }
         },
         // Call avatars (DM/group call tiles)
