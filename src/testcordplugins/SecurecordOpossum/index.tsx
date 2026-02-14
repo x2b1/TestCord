@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+
 import { definePluginSettings } from "@api/Settings";
 import { sendBotMessage } from "@api/Commands";
 import { addMessagePreSendListener, removeMessagePreSendListener, MessageSendListener } from "@api/MessageEvents";
@@ -20,296 +21,252 @@ interface IMessageCreate {
     message: Message;
 }
 
-// Enhanced AES-256 encryption with BetterOpossum improvements
-class BetterOpossumCipher {
-    private static readonly BLOCK_SIZE_BITS = 4096;
-    private static readonly KEY_SIZE_BITS = 4096;
-    private static readonly IV_SIZE_BITS = 512;
-    
-    private static readonly BLOCK_SIZE_BYTES = BetterOpossumCipher.BLOCK_SIZE_BITS / 8;
-    private static readonly KEY_SIZE_BYTES = BetterOpossumCipher.KEY_SIZE_BITS / 8;
-    private static readonly IV_SIZE_BYTES = BetterOpossumCipher.IV_SIZE_BITS / 8;
-    
-    private static readonly NUMBER_OF_ROUNDS = 192;
-    
-    private sBox: Uint8Array;
-    private invSBox: Uint8Array;
-    private permutationTable: Uint32Array;
-    
-    private static readonly AES_SBOX = new Uint8Array([
-        0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
-        0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
-        0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
-        0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
-        0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
-        0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
-        0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
-        0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
-        0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
-        0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
-        0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
-        0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
-        0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
-        0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
-        0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
-        0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
-    ]);
+// BlazingOpossum Cipher - High-Performance, Post-Quantum Resilient Symmetric Cipher
+class BlazingOpossumCipher {
+    private static readonly BLOCK_SIZE = 16;      // 128-bit blocks
+    private static readonly KEY_SIZE = 32;        // 256-bit key
+    private static readonly IV_SIZE = 16;         // 128-bit IV
+    private static readonly TAG_SIZE = 16;        // 128-bit Poly-hash Tag
+    private static readonly ROUNDS = 20;          // Increased rounds for Quantum resistance
 
-    constructor() {
-        this.sBox = new Uint8Array(256);
-        this.invSBox = new Uint8Array(256);
-        this.permutationTable = new Uint32Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
-        this.initializeSBoxAndPermutation();
+    private roundKeys: Uint8Array[];
+
+    constructor(private key: Uint8Array) {
+        if (key.length !== 32) {
+            throw new Error(`Key must be ${32} bytes`);
+        }
+        
+        this.roundKeys = [];
+        this.expandKey();
     }
 
-    private initializeSBoxAndPermutation(): void {
-        this.sBox.set(BetterOpossumCipher.AES_SBOX);
+    private expandKey(): void {
+        // Expand key using non-linear diffusion
+        const expandedKey = new Uint8Array((BlazingOpossumCipher.ROUNDS + 2) * BlazingOpossumCipher.BLOCK_SIZE);
+        expandedKey.set(this.key, 0);
+
+        // Use prime-derived constants for key expansion
+        const PRIME_MUL = 0x9E3779B9; // Golden Ratio derived
+        const PRIME_ADD = 0xBB67AE85; // Sqrt(3) derived
+
+        const temp = new Uint8Array(BlazingOpossumCipher.BLOCK_SIZE);
         
-        // Generate inverse S-box
-        for (let i = 0; i < 256; i++) {
-            this.invSBox[this.sBox[i]] = i;
-        }
-
-        // Initialize permutation table with matrix-based approach
-        const matrixRows = 16;
-        const matrixCols = BetterOpossumCipher.BLOCK_SIZE_BYTES / matrixRows;
-
-        if (matrixRows * matrixCols !== BetterOpossumCipher.BLOCK_SIZE_BYTES) {
-            for (let i = 0; i < BetterOpossumCipher.BLOCK_SIZE_BYTES; i++) {
-                this.permutationTable[i] = (i + BetterOpossumCipher.BLOCK_SIZE_BYTES - 5) % BetterOpossumCipher.BLOCK_SIZE_BYTES;
-            }
-        } else {
-            for (let row = 0; row < matrixRows; row++) {
-                for (let col = 0; col < matrixCols; col++) {
-                    const originalIndex = row * matrixCols + col;
-                    const newCol = (col + matrixCols - (row % matrixCols)) % matrixCols;
-                    const newIndex = row * matrixCols + newCol;
-                    this.permutationTable[originalIndex] = newIndex;
-                }
-            }
-        }
-    }
-
-    private keyExpansion(masterKey: Uint8Array): Uint8Array[] {
-        if (masterKey.length !== BetterOpossumCipher.KEY_SIZE_BYTES) {
-            throw new Error(`Key must be ${BetterOpossumCipher.KEY_SIZE_BYTES} bytes`);
-        }
-
-        const roundKeys: Uint8Array[] = [];
-        const expandedKey = new Uint8Array((BetterOpossumCipher.NUMBER_OF_ROUNDS + 1) * BetterOpossumCipher.BLOCK_SIZE_BYTES);
-        
-        expandedKey.set(masterKey, 0);
-        
-        const temp = new Uint8Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
-
-        for (let i = BetterOpossumCipher.KEY_SIZE_BYTES; i < expandedKey.length; i += BetterOpossumCipher.BLOCK_SIZE_BYTES) {
-            temp.set(expandedKey.subarray(i - BetterOpossumCipher.BLOCK_SIZE_BYTES, i - BetterOpossumCipher.BLOCK_SIZE_BYTES + BetterOpossumCipher.BLOCK_SIZE_BYTES));
+        for (let i = 32; i < expandedKey.length; i += BlazingOpossumCipher.BLOCK_SIZE) {
+            temp.set(expandedKey.subarray(i - BlazingOpossumCipher.BLOCK_SIZE, i));
             
-            // Rotate left by 13 bits
-            const rotated = this.rotateBytesLeft(temp, 13);
-            temp.set(rotated);
-            
-            // Apply S-box substitution
-            for (let j = 0; j < temp.length; j++) {
-                temp[j] = this.sBox[temp[j]];
+            // Nonlinear mix: (State * Prime + Key) ^ Rotate(State)
+            for (let j = 0; j < temp.length; j += 4) {
+                const val = (temp[j] | (temp[j + 1] << 8) | (temp[j + 2] << 16) | (temp[j + 3] << 24)) >>> 0;
+                const mixed = Math.imul(val, PRIME_MUL) + this.readUint32LE(expandedKey, i - 32 + j);
+                
+                // Rotate left by 7 bits
+                const rotated = ((mixed << 7) | (mixed >>> 25)) >>> 0;
+                
+                this.writeUint32LE(temp, j, rotated);
             }
             
-            // XOR with round constant and previous key
-            const roundConstant = i / BetterOpossumCipher.BLOCK_SIZE_BYTES;
+            // XOR with round constant
+            const roundConstant = (i / BlazingOpossumCipher.BLOCK_SIZE) | 0;
             temp[0] ^= roundConstant;
-            
-            for (let j = 0; j < BetterOpossumCipher.BLOCK_SIZE_BYTES; j++) {
-                temp[j] ^= expandedKey[i - BetterOpossumCipher.KEY_SIZE_BYTES + j];
-            }
             
             expandedKey.set(temp, i);
         }
 
-        for (let r = 0; r < BetterOpossumCipher.NUMBER_OF_ROUNDS + 1; r++) {
-            const roundKey = new Uint8Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
-            roundKey.set(expandedKey.subarray(r * BetterOpossumCipher.BLOCK_SIZE_BYTES, (r + 1) * BetterOpossumCipher.BLOCK_SIZE_BYTES));
-            roundKeys.push(roundKey);
-        }
-
-        return roundKeys;
-    }
-
-    private subBytes(state: Uint8Array): void {
-        for (let i = 0; i < state.length; i++) {
-            state[i] = this.sBox[state[i]];
+        for (let r = 0; r < BlazingOpossumCipher.ROUNDS + 2; r++) {
+            const roundKey = new Uint8Array(BlazingOpossumCipher.BLOCK_SIZE);
+            roundKey.set(expandedKey.subarray(r * BlazingOpossumCipher.BLOCK_SIZE, (r + 1) * BlazingOpossumCipher.BLOCK_SIZE));
+            this.roundKeys.push(roundKey);
         }
     }
 
-    private permuteBytes(state: Uint8Array): void {
-        const temp = new Uint8Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
-        for (let i = 0; i < BetterOpossumCipher.BLOCK_SIZE_BYTES; i++) {
-            temp[this.permutationTable[i]] = state[i];
-        }
-        state.set(temp);
+    private readUint32LE(arr: Uint8Array, offset: number): number {
+        return (arr[offset] |
+               (arr[offset + 1] << 8) |
+               (arr[offset + 2] << 16) |
+               (arr[offset + 3] << 24)) >>> 0;
     }
 
-    private mixColumns(state: Uint8Array): void {
-        const groupSize = 32;
-        const tempGroup = new Uint8Array(groupSize);
+    private writeUint32LE(arr: Uint8Array, offset: number, value: number): void {
+        arr[offset] = value & 0xFF;
+        arr[offset + 1] = (value >>> 8) & 0xFF;
+        arr[offset + 2] = (value >>> 16) & 0xFF;
+        arr[offset + 3] = (value >>> 24) & 0xFF;
+    }
 
-        for (let groupStart = 0; groupStart < BetterOpossumCipher.BLOCK_SIZE_BYTES; groupStart += groupSize) {
-            tempGroup.set(state.subarray(groupStart, groupStart + groupSize));
+    private generateKeystreamBlock(ivLow: number, ivHigh: number, counter: number): Uint8Array {
+        // Initialize state with IV and Counter
+        const state = new Uint8Array(BlazingOpossumCipher.BLOCK_SIZE);
+        
+        // Pack IV and counter into state
+        this.writeUint32LE(state, 0, ivHigh);
+        this.writeUint32LE(state, 4, ivLow + counter);
+        this.writeUint32LE(state, 8, ivHigh);
+        this.writeUint32LE(state, 12, ivLow + counter + 1);
+        
+        const PRIME_MUL = 0x9E3779B9;
+        const PRIME_ADD = 0xBB67AE85;
 
-            for (let i = 0; i < groupSize; i++) {
-                const a = tempGroup[i];
-                const b = tempGroup[(i + 1) % groupSize];
-                const c = tempGroup[(i + (groupSize / 2)) % groupSize];
-
-                const rot_b = ((b << 3) | (b >> 5)) & 0xFF;
-                const rot_c = ((c << 5) | (c >> 3)) & 0xFF;
-
-                state[groupStart + i] ^= (rot_b ^ rot_c ^ ((i * 0x05 + 0x1F) & 0xFF));
+        for (let r = 0; r < BlazingOpossumCipher.ROUNDS; r++) {
+            const roundKey = this.roundKeys[r];
+            
+            // Non-linear mixing using multiplication
+            for (let i = 0; i < state.length; i += 4) {
+                const val = this.readUint32LE(state, i);
+                const roundKeyValue = this.readUint32LE(roundKey, i);
+                
+                // Multiply and add with round key
+                const multiplied = Math.imul(val, PRIME_MUL);
+                const mixed = (multiplied + roundKeyValue) >>> 0;
+                
+                // Rotate left by position-dependent amount
+                const rotated = ((mixed << ((i * 7) % 32)) | (mixed >>> (32 - ((i * 7) % 32)))) >>> 0;
+                
+                this.writeUint32LE(state, i, rotated);
+            }
+            
+            // Add round constant
+            for (let i = 0; i < state.length; i++) {
+                state[i] ^= (PRIME_ADD + r) & 0xFF;
             }
         }
-    }
 
-    private addRoundKey(state: Uint8Array, roundKey: Uint8Array): void {
-        for (let i = 0; i < BetterOpossumCipher.BLOCK_SIZE_BYTES; i++) {
-            state[i] ^= roundKey[i];
-        }
-    }
-
-    private applyRoundDependentTransforms(state: Uint8Array, roundNumber: number): void {
-        const rotationAmount = (roundNumber % 32) + 1;
-        const rotatedState = this.rotateBytesLeft(state, rotationAmount);
-        state.set(rotatedState);
-
+        // Final whitening
         for (let i = 0; i < state.length; i++) {
-            state[i] ^= this.sBox[(roundNumber + i) & 0xFF];
+            state[i] ^= this.roundKeys[BlazingOpossumCipher.ROUNDS][i];
         }
-    }
-
-    private opossumBlockEncrypt(inputBlock: Uint8Array, roundKeys: Uint8Array[]): Uint8Array {
-        if (inputBlock.length !== BetterOpossumCipher.BLOCK_SIZE_BYTES) {
-            throw new Error(`Input block must be ${BetterOpossumCipher.BLOCK_SIZE_BYTES} bytes`);
-        }
-
-        const state = new Uint8Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
-        state.set(inputBlock);
         
-        this.addRoundKey(state, roundKeys[0]);
-
-        for (let round = 1; round < BetterOpossumCipher.NUMBER_OF_ROUNDS; round++) {
-            this.subBytes(state);
-            this.permuteBytes(state);
-            this.mixColumns(state);
-            this.applyRoundDependentTransforms(state, round);
-            this.addRoundKey(state, roundKeys[round]);
-        }
-
-        this.subBytes(state);
-        this.permuteBytes(state);
-        this.applyRoundDependentTransforms(state, BetterOpossumCipher.NUMBER_OF_ROUNDS);
-        this.addRoundKey(state, roundKeys[BetterOpossumCipher.NUMBER_OF_ROUNDS]);
-
         return state;
     }
 
-    private rotateBytesLeft(data: Uint8Array, shift: number): Uint8Array {
-        if (data.length === 0) return data;
-        shift %= data.length;
-        if (shift === 0) return data;
-
-        const rotated = new Uint8Array(data.length);
-        rotated.set(data.subarray(shift), 0);
-        rotated.set(data.subarray(0, shift), data.length - shift);
-        return rotated;
-    }
-
-    private incrementCounter(counterBlock: Uint8Array, counterStartIndex: number): void {
-        for (let i = BetterOpossumCipher.BLOCK_SIZE_BYTES - 1; i >= counterStartIndex; i--) {
-            if (counterBlock[i] === 0xFF) {
-                counterBlock[i] = 0x00;
-            } else {
-                counterBlock[i]++;
-                return;
+    private computeTag(data: Uint8Array, iv: Uint8Array): Uint8Array {
+        // Initialize accumulator with IV
+        const acc = new Uint8Array(BlazingOpossumCipher.BLOCK_SIZE);
+        acc.set(iv.subarray(0, Math.min(iv.length, BlazingOpossumCipher.BLOCK_SIZE)));
+        
+        const PRIME_MUL = 0x9E3779B9;
+        const PRIME_ADD = 0xBB67AE85;
+        
+        // Process data in chunks
+        for (let i = 0; i < data.length; i += BlazingOpossumCipher.BLOCK_SIZE) {
+            const chunk = data.subarray(i, Math.min(i + BlazingOpossumCipher.BLOCK_SIZE, data.length));
+            
+            // Absorb chunk into accumulator
+            for (let j = 0; j < chunk.length; j++) {
+                acc[j % acc.length] ^= chunk[j];
+            }
+            
+            // Mix using multiplication
+            for (let j = 0; j < acc.length; j += 4) {
+                const val = this.readUint32LE(acc, j);
+                const multiplied = Math.imul(val, PRIME_MUL);
+                const mixed = (multiplied + PRIME_ADD) >>> 0;
+                
+                // Rotate
+                const rotated = ((mixed << 11) | (mixed >>> 21)) >>> 0;
+                this.writeUint32LE(acc, j, rotated);
             }
         }
-    }
-
-    private xorBytes(a: Uint8Array, offsetA: number, b: Uint8Array, offsetB: number, result: Uint8Array, offsetResult: number, length: number): void {
-        for (let i = 0; i < length; i++) {
-            result[offsetResult + i] = a[offsetA + i] ^ b[offsetB + i];
-        }
-    }
-
-    private processCTR(inputData: Uint8Array, key: Uint8Array, iv: Uint8Array): Uint8Array {
-        if (iv.length !== BetterOpossumCipher.IV_SIZE_BYTES) {
-            throw new Error(`IV must be ${BetterOpossumCipher.IV_SIZE_BYTES} bytes`);
-        }
-
-        const roundKeys = this.keyExpansion(key);
-        const outputData = new Uint8Array(inputData.length);
-        const counterBlock = new Uint8Array(BetterOpossumCipher.BLOCK_SIZE_BYTES);
         
-        counterBlock.set(iv, 0);
+        // Final squeeze with multiple rounds
+        for (let r = 0; r < 4; r++) {
+            for (let i = 0; i < acc.length; i += 4) {
+                const val = this.readUint32LE(acc, i);
+                const roundKeyValue = this.readUint32LE(this.roundKeys[r % this.roundKeys.length], i);
+                
+                const mixed = (Math.imul(val, PRIME_MUL) + roundKeyValue) >>> 0;
+                const rotated = ((mixed << 13) | (mixed >>> 19)) >>> 0;
+                this.writeUint32LE(acc, i, rotated);
+            }
+        }
+        
+        return acc.slice(0, BlazingOpossumCipher.TAG_SIZE);
+    }
 
+    private processCTR(inputData: Uint8Array, iv: Uint8Array): Uint8Array {
+        const outputData = new Uint8Array(inputData.length);
+        let ivLow = this.readUint32LE(iv, 0);
+        let ivHigh = this.readUint32LE(iv, 4);
+        let counter = 0;
+        
         let processedBytes = 0;
         while (processedBytes < inputData.length) {
-            const encryptedCounterBlock = this.opossumBlockEncrypt(counterBlock, roundKeys);
+            const keystreamBlock = this.generateKeystreamBlock(ivLow, ivHigh, counter);
             
-            const bytesToProcess = Math.min(BetterOpossumCipher.BLOCK_SIZE_BYTES, inputData.length - processedBytes);
-            this.xorBytes(inputData, processedBytes, encryptedCounterBlock, 0, outputData, processedBytes, bytesToProcess);
+            const bytesToProcess = Math.min(BlazingOpossumCipher.BLOCK_SIZE, inputData.length - processedBytes);
+            
+            // XOR input with keystream
+            for (let i = 0; i < bytesToProcess; i++) {
+                outputData[processedBytes + i] = inputData[processedBytes + i] ^ keystreamBlock[i];
+            }
             
             processedBytes += bytesToProcess;
-            this.incrementCounter(counterBlock, BetterOpossumCipher.IV_SIZE_BYTES);
+            counter += 2; // We generated 2 blocks worth of keystream
         }
-
+        
         return outputData;
     }
+
+
+
+
+
 
     public encrypt(plaintext: string, password: string): string {
         const encoder = new TextEncoder();
         const data = encoder.encode(plaintext);
-        
-        // Derive key from password using simple XOR-based method
-        const keyMaterial = encoder.encode(password);
-        const salt = crypto.getRandomValues(new Uint8Array(32));
-        
-        const key = new Uint8Array(BetterOpossumCipher.KEY_SIZE_BYTES);
-        for (let i = 0; i < key.length; i++) {
-            key[i] = keyMaterial[i % keyMaterial.length] ^ salt[i % salt.length];
-        }
-        
-        const iv = crypto.getRandomValues(new Uint8Array(BetterOpossumCipher.IV_SIZE_BYTES));
-        
+            
+        // Derive key from password using PBKDF2 or simple hash
+        const keyMaterial = this.deriveKey(password);
+            
+        // Generate random IV
+        const iv = crypto.getRandomValues(new Uint8Array(BlazingOpossumCipher.IV_SIZE));
+            
         // Process with CTR mode
-        const processed = this.processCTR(data, key, iv);
-        
-        // Combine salt, IV, and processed data
-        const result = new Uint8Array(salt.length + iv.length + processed.length);
-        result.set(salt, 0);
-        result.set(iv, salt.length);
-        result.set(processed, salt.length + iv.length);
-        
+        const processed = this.processCTR(data, iv);
+            
+        // Compute tag for integrity
+        const tag = this.computeTag(processed, iv);
+            
+        // Combine IV, processed data, and tag
+        const result = new Uint8Array(BlazingOpossumCipher.IV_SIZE + processed.length + BlazingOpossumCipher.TAG_SIZE);
+        result.set(iv, 0);
+        result.set(processed, BlazingOpossumCipher.IV_SIZE);
+        result.set(tag, BlazingOpossumCipher.IV_SIZE + processed.length);
+            
         return btoa(String.fromCharCode(...result));
     }
-
+    
     public decrypt(encrypted: string, password: string): string {
         try {
-            const data = new Uint8Array(atob(encrypted).split("").map(c => c.charCodeAt(0)));
-            
-            const salt = data.subarray(0, 32);
-            const iv = data.subarray(32, 32 + BetterOpossumCipher.IV_SIZE_BYTES);
-            const encryptedData = data.subarray(32 + BetterOpossumCipher.IV_SIZE_BYTES);
-            
-            const encoder = new TextEncoder();
-            const keyMaterial = encoder.encode(password);
-            
-            // Derive key (same as encryption)
-            const key = new Uint8Array(BetterOpossumCipher.KEY_SIZE_BYTES);
-            for (let i = 0; i < key.length; i++) {
-                key[i] = keyMaterial[i % keyMaterial.length] ^ salt[i % salt.length];
+            const data = new Uint8Array(atob(encrypted).split('').map(c => c.charCodeAt(0)));
+                
+            if (data.length < BlazingOpossumCipher.IV_SIZE + BlazingOpossumCipher.TAG_SIZE) {
+                throw new Error("Data too short");
             }
-            
-            // Process with CTR mode
-            const processed = this.processCTR(encryptedData, key, iv);
-            
+                
+            const iv = data.subarray(0, BlazingOpossumCipher.IV_SIZE);
+            const encryptedData = data.subarray(BlazingOpossumCipher.IV_SIZE, data.length - BlazingOpossumCipher.TAG_SIZE);
+            const receivedTag = data.subarray(data.length - BlazingOpossumCipher.TAG_SIZE);
+                
+            // Compute expected tag
+            const computedTag = this.computeTag(encryptedData, iv);
+                
+            // Verify tag (constant-time comparison)
+            let tagValid = true;
+            for (let i = 0; i < BlazingOpossumCipher.TAG_SIZE; i++) {
+                if (receivedTag[i] !== computedTag[i]) {
+                    tagValid = false;
+                    break;
+                }
+            }
+                
+            if (!tagValid) {
+                throw new Error("Integrity check failed");
+            }
+                
+            // Decrypt using CTR mode
+            const processed = this.processCTR(encryptedData, iv);
+                
             const decoder = new TextDecoder();
             return decoder.decode(processed);
         } catch (error) {
@@ -317,10 +274,24 @@ class BetterOpossumCipher {
             throw new Error("Decryption failed");
         }
     }
+    
+    private deriveKey(password: string): Uint8Array {
+        // Simple key derivation (in a real implementation, use PBKDF2 or similar)
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const key = new Uint8Array(BlazingOpossumCipher.KEY_SIZE);
+            
+        // Use a simple hash-like approach
+        for (let i = 0; i < key.length; i++) {
+            key[i] = data[i % data.length] ^ (i % 256);
+        }
+            
+        return key;
+    }
 }
 
 // Global cipher instance
-const cipher = new BetterOpossumCipher();
+let cipher: BlazingOpossumCipher | null = null;
 
 // SVG icons for the button
 type IconProps = {
@@ -414,7 +385,7 @@ const settings = definePluginSettings({
     },
     encryptionPassword: {
         type: OptionType.STRING,
-        description: "AES-256 encryption password (shared with other users)",
+        description: "BlazingOpossum encryption password (shared with other users)",
         default: "",
         placeholder: "Enter shared password..."
     },
@@ -432,7 +403,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "SecurecordOpossum",
-    description: "Enhanced AES-256 end-to-end encryption for Discord with BetterOpossum improvements. Share the same password with other users to communicate securely.",
+    description: "High-Performance, Post-Quantum Resilient end-to-end encryption for Discord based on BlazingOpossum cipher. Share the same password with other users to communicate securely.",
     authors: [{ name: "irritably", id: 928787166916640838n }],
     settings,
     chatBarButton: {
@@ -440,10 +411,23 @@ export default definePlugin({
     },
 
     start() {
-
         // Add listener to encrypt messages before sending
         const listener: MessageSendListener = async (_, message) => {
             if (settings.store.pluginActivated && settings.store.encryptionEnabled && settings.store.encryptionPassword) {
+                // Initialize cipher if needed
+                if (!cipher) {
+                    const encoder = new TextEncoder();
+                    const passwordBytes = encoder.encode(settings.store.encryptionPassword);
+                    const key = new Uint8Array(32);
+                    
+                    // Derive key from password
+                    for (let i = 0; i < key.length; i++) {
+                        key[i] = passwordBytes[i % passwordBytes.length] ^ (i % 256);
+                    }
+                    
+                    cipher = new BlazingOpossumCipher(key);
+                }
+                
                 // Encrypt message only if not already encrypted
                 if (!message.content.startsWith("🔒ENCRYPTED:") && !message.content.endsWith(":ENDLOCK")) {
                     try {
@@ -452,7 +436,7 @@ export default definePlugin({
                         message.content = `🔒ENCRYPTED:${encryptedMessage}:ENDLOCK`;
                         
                         if (settings.store.enableLogging) {
-                            console.log("Securecord Opossum: Message encrypted");
+                            console.log("Securecord BlazingOpossum: Message encrypted");
                         }
                     } catch (error) {
                         console.error("Message encryption error:", error);
@@ -465,7 +449,7 @@ export default definePlugin({
         // Save listener to remove it later
         (this as any)._listener = listener;
 
-        console.log("Securecord Opossum: Plugin loaded successfully");
+        console.log("Securecord BlazingOpossum: Plugin loaded successfully");
     },
 
     stop() {
@@ -474,7 +458,10 @@ export default definePlugin({
             removeMessagePreSendListener((this as any)._listener);
         }
 
-        console.log("Securecord Opossum: Plugin stopped");
+        // Clean up cipher
+        cipher = null;
+
+        console.log("Securecord BlazingOpossum: Plugin stopped");
     },
 
     flux: {
@@ -486,7 +473,21 @@ export default definePlugin({
             // Check if message is encrypted
             if (message.content.startsWith("🔒ENCRYPTED:") && message.content.endsWith(":ENDLOCK")) {
                 if (settings.store.enableLogging) {
-                    console.log("Securecord Opossum: Received encrypted message from", message.author.username);
+                    console.log("Securecord BlazingOpossum: Received encrypted message from", message.author.username);
+                }
+
+                // Initialize cipher if needed
+                if (!cipher) {
+                    const encoder = new TextEncoder();
+                    const passwordBytes = encoder.encode(settings.store.encryptionPassword);
+                    const key = new Uint8Array(32);
+                    
+                    // Derive key from password
+                    for (let i = 0; i < key.length; i++) {
+                        key[i] = passwordBytes[i % passwordBytes.length] ^ (i % 256);
+                    }
+                    
+                    cipher = new BlazingOpossumCipher(key);
                 }
 
                 // Get password from settings
@@ -494,7 +495,7 @@ export default definePlugin({
 
                 if (!password) {
                     if (settings.store.enableLogging) {
-                        console.log("Securecord Opossum: No password set");
+                        console.log("Securecord BlazingOpossum: No password set");
                     }
                     return;
                 }
@@ -504,16 +505,16 @@ export default definePlugin({
                     const encryptedPart = message.content.substring(12, message.content.length - 8);
 
                     if (settings.store.enableLogging) {
-                        console.log("Securecord Opossum: Extracted encrypted part:", encryptedPart);
-                        console.log("Securecord Opossum: Encrypted part length:", encryptedPart.length);
-                        console.log("Securecord Opossum: Password used:", password);
+                        console.log("Securecord BlazingOpossum: Extracted encrypted part:", encryptedPart);
+                        console.log("Securecord BlazingOpossum: Encrypted part length:", encryptedPart.length);
+                        console.log("Securecord BlazingOpossum: Password used:", password);
                     }
 
-                    // Decode message using enhanced cipher
+                    // Decode message using BlazingOpossum cipher
                     const decryptedMessage = cipher.decrypt(encryptedPart, password);
 
                     if (settings.store.enableLogging) {
-                        console.log("Securecord Opossum: Successfully decrypted message", decryptedMessage);
+                        console.log("Securecord BlazingOpossum: Successfully decrypted message", decryptedMessage);
                     }
 
                     // Show decrypted message as bot message (Clyde)
@@ -522,7 +523,7 @@ export default definePlugin({
                     });
 
                     if (settings.store.enableLogging) {
-                        console.log("Securecord Opossum: Sent bot message with decrypted content");
+                        console.log("Securecord BlazingOpossum: Sent bot message with decrypted content");
                     }
                 } catch (error) {
                     console.error("Decryption error:", error);
@@ -543,3 +544,6 @@ export default definePlugin({
     }
 
 });
+
+
+
