@@ -6,7 +6,7 @@
 
 import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
-import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 const CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789._";
@@ -133,6 +133,18 @@ function isValidUsername(username: string): boolean {
     return username.length > 0 && username[username.length - 1] !== "." && username[username.length - 1] !== "_";
 }
 
+// Check if a URL uses an IP address
+function usesIpAddress(url: string): boolean {
+    try {
+        const urlObj = new URL(url);
+        const { hostname } = urlObj;
+        // Check if hostname is an IP address (no dots, or starts with numbers and has no dots)
+        return !hostname.includes(".") || /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+    } catch {
+        return false;
+    }
+}
+
 // Check username availability using Discord API
 async function checkUsernameAvailability(username: string, proxyUrl?: string): Promise<boolean> {
     const timestamp = Date.now();
@@ -162,7 +174,10 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
     try {
         // Build request URL
         const baseUrl = proxyUrl || "https://discord.com/api/v10";
-        const url = `${baseUrl}/users/@me/username`;
+
+        // Use HTTP for IP addresses to avoid certificate errors
+        const protocol = usesIpAddress(baseUrl) ? "http" : new URL(baseUrl).protocol;
+        const url = `${protocol}://${baseUrl}/users/@me/username`;
 
         // Try to use the username - we use the current user's session
         const response = await fetch(url, {
@@ -381,7 +396,7 @@ const snipeUserCommand = {
 export default definePlugin({
     name: "Usernamesniper",
     description: "Find available Discord usernames by checking combinations. ⚠️ This plugin is bannable. Use at your own risk.",
-    authors: [Devs.Arjix],
+    authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [snipeUserCommand],
