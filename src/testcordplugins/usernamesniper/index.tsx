@@ -93,21 +93,30 @@ function isValidUsername(username: string): boolean {
 
 // Build full URL from base URL and path
 function buildUrl(baseUrl: string, path: string): string {
+    console.log(`[Usernamesniper] buildUrl called: baseUrl='${baseUrl}', path='${path}'`);
+
     // Check if baseUrl already has a protocol
     if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+        console.log(`[Usernamesniper] baseUrl has protocol, returning: ${baseUrl}${path}`);
         return `${baseUrl}${path}`;
     }
 
     // Extract the hostname part (before first slash)
     const hostname = baseUrl.split("/")[0];
+    console.log(`[Usernamesniper] hostname: '${hostname}'`);
     const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+    console.log(`[Usernamesniper] isIP: ${isIP}`);
 
     if (isIP) {
-        return `http://${baseUrl}${path}`;
+        const result = `http://${baseUrl}${path}`;
+        console.log(`[Usernamesniper] Using HTTP for IP, returning: ${result}`);
+        return result;
     }
 
     // Assume it's a domain with https
-    return `https://${baseUrl}${path}`;
+    const result = `https://${baseUrl}${path}`;
+    console.log(`[Usernamesniper] Using HTTPS for domain, returning: ${result}`);
+    return result;
 }
 
 // Check username availability using Discord API
@@ -142,9 +151,9 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
         // This approach is NOT reliable and Discord may ban accounts for this.
 
         const baseUrl = proxyUrl || "https://discord.com/api/v10";
+        console.log(`[Usernamesniper] baseUrl: '${baseUrl}', proxyUrl: '${proxyUrl}'`);
         const fullUrl = buildUrl(baseUrl, "/users/@me/username");
-
-        console.log(`[Usernamesniper] Checking username: ${username}, URL: ${fullUrl}`);
+        console.log(`[Usernamesniper] fullUrl: ${fullUrl}`);
 
         // Try to use the username - we use the current user's session
         const response = await fetch(fullUrl, {
