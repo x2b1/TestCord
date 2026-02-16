@@ -39,7 +39,8 @@ import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
 import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
-import { Alerts, Button, ChannelStore, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
+import { CloudUploadPlatform } from "@vencord/discord-types/enums";
+import { Alerts, Button, ChannelStore, CloudUploader, Constants, GuildMemberStore, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { PluginMeta } from "~plugins";
@@ -176,6 +177,36 @@ async function generateDebugInfoMessage() {
         .join("\n");
 
     return content.trim();
+}
+
+async function uploadPluginListFile(channelId: string, fileContent: string, filename: string) {
+    const file = new File([fileContent], filename, { type: "text/plain" });
+    const upload = new CloudUploader({ file, platform: CloudUploadPlatform.WEB }, channelId);
+
+    return new Promise<void>((resolve, reject) => {
+        upload.on("complete", () => {
+            RestAPI.post({
+                url: Constants.Endpoints.MESSAGES(channelId),
+                body: {
+                    flags: 0,
+                    channel_id: channelId,
+                    content: `⚠️ Plugin list attached as file due to high plugin count (${fileContent.split("\n").filter(l => l.startsWith("  -")).length} plugins enabled)`,
+                    nonce: SnowflakeUtils.fromTimestamp(Date.now()),
+                    sticker_ids: [],
+                    type: 0,
+                    attachments: [{
+                        id: "0",
+                        filename: upload.filename,
+                        uploaded_filename: upload.uploadedFilename,
+                    }],
+                }
+            }).then(() => resolve()).catch(reject);
+        });
+
+        upload.on("error", () => reject(new Error("Failed to upload file")));
+
+        upload.upload();
+    });
 }
 
 function generatePluginList() {
