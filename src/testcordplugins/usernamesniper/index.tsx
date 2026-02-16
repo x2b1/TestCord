@@ -37,7 +37,7 @@ interface UsernameSniperSettings {
     notifyInUserMessages: boolean;
 }
 
-// Global settings state
+// Global settings
 const settings: UsernameSniperSettings = {
     proxyUrl: "",
     maxParallelChecks: 5,
