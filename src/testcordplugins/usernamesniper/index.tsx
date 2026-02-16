@@ -231,6 +231,7 @@ function buildUrl(baseUrl: string, path: string): string {
 
 // Check username availability using Discord API
 async function checkUsernameAvailability(username: string, proxyUrl?: string): Promise<boolean> {
+    console.log(`[Usernamesniper] checkUsernameAvailability called with username='${username}', proxyUrl='${proxyUrl}'`);
     const timestamp = Date.now();
 
     // Check if already checked recently (within last 5 minutes)
@@ -367,10 +368,11 @@ async function executeSnipeUser(
     options: {
         length: number;
         notify: boolean;
+        proxyUrl?: string;
         webhookUrl: string;
     }
 ): Promise<void> {
-    const { length, notify, webhookUrl } = options;
+    const { length, notify, proxyUrl, webhookUrl } = options;
     const channelId = ctx.channel.id;
 
     // Update webhook config
@@ -484,6 +486,13 @@ const snipeUserCommand = {
         },
         {
             type: ApplicationCommandOptionType.STRING,
+            name: "proxy_url",
+            description: "Proxy URL for username checks (leave empty for direct Discord API)",
+            required: false,
+            placeholder: "https://your-proxy.com"
+        },
+        {
+            type: ApplicationCommandOptionType.STRING,
             name: "webhook_url",
             description: "Webhook URL to send available usernames to (optional)",
             required: false,
@@ -493,19 +502,23 @@ const snipeUserCommand = {
     execute: async (args, ctx) => {
         const lengthArg = args.find(arg => arg.name === "length");
         const notifyArg = args.find(arg => arg.name === "notify");
+        const proxyUrlArg = args.find(arg => arg.name === "proxy_url");
         const webhookArg = args.find(arg => arg.name === "webhook_url");
 
         const length = parseInt(lengthArg?.value as string) || 3;
         const notify = notifyArg?.value === "true";
+        const proxyUrl = proxyUrlArg?.value as string || "";
         const webhookUrl = webhookArg?.value as string || "";
 
-        await executeSnipeUser(args, ctx, { length, notify, webhookUrl });
+        console.log(`[Usernamesniper] Command executed: length=${length}, notify=${notify}, proxyUrl='${proxyUrl}', webhookUrl='${webhookUrl}'`);
+
+        await executeSnipeUser(args, ctx, { length, notify, proxyUrl, webhookUrl });
     }
 };
 
 export default definePlugin({
     name: "Usernamesniper",
-    description: "Find available Discord usernames by checking combinations. ⚠️ This plugin is bannable. Use at your own risk.",
+    description: "Find available Discord usernames by checking combinations. ⚠ This plugin is bannable. Use at your own risk. Also please note that you need to restart discord after you're done using it to ensure it fully stops.",
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
