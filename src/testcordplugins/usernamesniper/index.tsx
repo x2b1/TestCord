@@ -392,10 +392,11 @@ const snipeUserCommand = {
 
         const length = parseInt(lengthArg?.value as string) || 3;
         const notify = notifyArg?.value === "true";
-        const proxyUrl = proxyUrlArg?.value as string || "";
-        const webhookUrl = webhookArg?.value as string || "";
+        const proxyUrl = proxyUrlArg?.value as string || settings.proxyUrl;
+        const webhookUrl = webhookArg?.value as string || settings.webhookUrl;
 
         console.log(`[Usernamesniper] Command executed: length=${length}, notify=${notify}, proxyUrl='${proxyUrl}', webhookUrl='${webhookUrl}'`);
+        console.log(`[Usernamesniper] Settings proxyUrl: '${settings.proxyUrl}'`);
 
         await executeSnipeUser(args, ctx, { length, notify, proxyUrl, webhookUrl });
     }
