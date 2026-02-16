@@ -155,6 +155,11 @@ function applyAutocorrect(content: string): string {
 }
 
 const settings = definePluginSettings({
+    enabled: {
+        type: OptionType.BOOLEAN,
+        description: "Enable ChatGPT Writing plugin",
+        defaultValue: false
+    },
     useKaomoji: {
         type: OptionType.BOOLEAN,
         description: "Add a kaomoji at the end of your messages",
@@ -172,11 +177,9 @@ const settings = definePluginSettings({
     }
 });
 
-let isPluginEnabled = false;
-
 const getPresend = (): MessageSendListener => {
     return (_, msg) => {
-        if (!isPluginEnabled) return;
+        if (!settings.store.enabled) return;
 
         const backticks = String.fromCharCode(96, 96, 96);
         if (msg.content.indexOf(backticks) !== -1) return;
@@ -224,10 +227,9 @@ export default definePlugin({
 
         return (
             <ChatBarButton
-                tooltip={isPluginEnabled ? "ChatGPT Writing (ON)" : "ChatGPT Writing (OFF)"}
+                tooltip={settings.store.enabled ? "ChatGPT Writing (ON)" : "ChatGPT Writing (OFF)"}
                 onClick={() => {
-                    isPluginEnabled = !isPluginEnabled;
-                    window.dispatchEvent(new Event("chatgptwriting-toggle"));
+                    settings.store.enabled = !settings.store.enabled;
                 }}
             >
                 <svg
@@ -236,7 +238,7 @@ export default definePlugin({
                     height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke={isPluginEnabled ? "#5865F2" : "currentColor"}
+                    stroke={settings.store.enabled ? "#5865F2" : "currentColor"}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
