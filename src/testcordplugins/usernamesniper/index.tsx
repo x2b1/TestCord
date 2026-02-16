@@ -138,11 +138,95 @@ function usesIpAddress(url: string): boolean {
     try {
         const urlObj = new URL(url);
         const { hostname } = urlObj;
-        // Check if hostname is an IP address (no dots, or starts with numbers and has no dots)
-        return !hostname.includes(".") || /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
-    } catch {
-        return false;
+        // Check if hostname is an IP address (IPv4)
+        return /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+    } catch (e) {
+        // If URL parsing fails (no protocol), check if the first part looks like an IP
+        console.log(`[Usernamesniper] URL parsing failed for '${url}', checking manually...`);
+        const cleanStr = url.split("/")[0].split("?")[0];
+        const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
+        console.log(`[Usernamesniper] Manual check: cleanStr='${cleanStr}', isIPv4=${isIPv4}`);
+        return isIPv4;
     }
+}
+
+// Check if a URL uses an IP address for webhook (webhook URLs are complex)
+function usesIpAddressForWebhook(url: string): boolean {
+    console.log(`[Usernamesniper] usesIpAddressForWebhook called with: '${url}'`);
+    try {
+        const urlObj = new URL(url);
+        const { hostname } = urlObj;
+        console.log(`[Usernamesniper] URL parsed, hostname='${hostname}'`);
+        // Webhook URLs can be complex, check if the host is an IP
+        return /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+    } catch (e) {
+        console.log("[Usernamesniper] URL parsing failed for webhook, checking manually...");
+        const cleanStr = url.split("/")[0].split("?")[0];
+        const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
+        console.log(`[Usernamesniper] Manual check: cleanStr='${cleanStr}', isIPv4=${isIPv4}`);
+        return isIPv4;
+    }
+}
+
+// Get protocol for a URL (handles IPs and missing protocols)
+function getProtocol(url: string): string {
+    console.log(`[Usernamesniper] getProtocol('${url}')`);
+
+    // First, check if it looks like an IP address
+    if (looksLikeIpAddress(url)) {
+        console.log("[Usernamesniper] Detected IP, using http://");
+        return "http://";
+    }
+
+    try {
+        const urlObj = new URL(url);
+        console.log(`[Usernamesniper] Detected domain, using ${urlObj.protocol}`);
+        return `${urlObj.protocol}//`;
+    } catch {
+        // If URL parsing fails, assume it's a domain and use https
+        console.log("[Usernamesniper] URL parsing failed, using https://");
+        return "https://";
+    }
+}
+
+// Check if a string looks like an IP address (no dots or IPv4 format)
+function looksLikeIpAddress(str: string): boolean {
+    console.log(`[Usernamesniper] looksLikeIpAddress called with: '${str}'`);
+
+    // Remove path and query parameters first
+    const cleanStr = str.split("/")[0].split("?")[0];
+    console.log(`[Usernamesniper] After split, cleanStr = '${cleanStr}'`);
+
+    const isDigits = /^\d+$/.test(cleanStr);
+    const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
+    console.log(`[Usernamesniper] isDigits=${isDigits}, isIPv4=${isIPv4}`);
+
+    const result = isDigits || isIPv4;
+    console.log(`[Usernamesniper] looksLikeIpAddress returning: ${result}`);
+    return result;
+}
+
+// Build full URL from base URL and path
+function buildUrl(baseUrl: string, path: string): string {
+    console.log(`[Usernamesniper] buildUrl('${baseUrl}', '${path}')`);
+
+    // Check if baseUrl already has a protocol
+    if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
+        console.log(`[Usernamesniper] baseUrl has protocol, returning ${baseUrl}${path}`);
+        return `${baseUrl}${path}`;
+    }
+
+    // Check if it's an IP address (handle URLs with paths like "162.159.137.233/api/v10")
+    if (looksLikeIpAddress(baseUrl)) {
+        const result = `http://${baseUrl}${path}`;
+        console.log(`[Usernamesniper] Detected IP, returning ${result}`);
+        return result;
+    }
+
+    // Assume it's a domain with https
+    const result = `https://${baseUrl}${path}`;
+    console.log(`[Usernamesniper] Detected domain, returning ${result}`);
+    return result;
 }
 
 // Check username availability using Discord API
@@ -172,15 +256,19 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
     }
 
     try {
-        // Build request URL
-        const baseUrl = proxyUrl || "https://discord.com/api/v10";
+        // Discord doesn't have a direct username availability check endpoint.
+        // We use a workaround: try to register the username and see if it fails.
+        // This approach is NOT reliable and Discord may ban accounts for this.
 
-        // Use HTTP for IP addresses to avoid certificate errors
-        const protocol = usesIpAddress(baseUrl) ? "http" : new URL(baseUrl).protocol;
-        const url = `${protocol}://${baseUrl}/users/@me/username`;
+        const baseUrl = proxyUrl || "https://discord.com/api/v10";
+        console.log(`[Usernamesniper] Using baseUrl: '${baseUrl}'`);
+        console.log(`[Usernamesniper] proxyUrl is: '${proxyUrl}'`);
+        const fullUrl = buildUrl(baseUrl, "/users/@me/username");
+
+        console.log(`[Usernamesniper] Checking username: ${username}, URL: ${fullUrl}`);
 
         // Try to use the username - we use the current user's session
-        const response = await fetch(url, {
+        const response = await fetch(fullUrl, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -189,27 +277,45 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
             body: JSON.stringify({ username })
         });
 
+        console.log(`[Usernamesniper] Response status: ${response.status}, URL: ${fullUrl}`);
+
         // Mark as checked
         checkedUsernames.add(username);
         state.lastRequestTime = Date.now();
         state.requestCount++;
 
         // Handle response
+        // 200 = available (you can set it)
+        // 400 = taken (or invalid username)
+        // 403 = forbidden (could be taken, or you can't change username due to recent changes)
+        // 404 = not found (shouldn't happen for this endpoint)
+        // 429 = rate limited
         if (response.status === 200) {
+            console.log(`[Usernamesniper] Username '${username}' is AVAILABLE`);
             return true; // Username is available
+        } else if (response.status === 400) {
+            // 400 Bad Request usually means username is taken
+            console.log(`[Usernamesniper] Username '${username}' is TAKEN (400)`);
+            return false;
         } else if (response.status === 403 || response.status === 404) {
-            return false; // Username is taken
+            // 403 could mean taken, or could be auth/rate limit issue
+            // For now, treat as taken (conservative approach)
+            console.log(`[Usernamesniper] Username '${username}' is TAKEN (${response.status})`);
+            return false;
         } else if (response.status === 429) {
             state.consecutive429++;
+            console.log(`[Usernamesniper] Rate limited for '${username}'`);
             throw new Error("Rate limited");
         }
 
+        console.log(`[Usernamesniper] Username '${username}' status ${response.status} - treating as TAKEN`);
         return false;
     } catch (error) {
         // Mark as checked even on error to avoid retrying
         checkedUsernames.add(username);
         state.lastRequestTime = Date.now();
         state.requestCount++;
+        console.log(`[Usernamesniper] Error checking '${username}':`, error);
         throw error;
     }
 }
@@ -219,7 +325,11 @@ async function sendWebhookNotification(username: string): Promise<void> {
     if (!webhookConfig.url) return;
 
     try {
-        await fetch(webhookConfig.url, {
+        console.log(`[Usernamesniper] Sending webhook for '${username}', webhookUrl='${webhookConfig.url}'`);
+        const url = buildUrl(webhookConfig.url, "");
+        console.log(`[Usernamesniper] Final webhook URL: ${url}`);
+
+        await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -354,7 +464,7 @@ async function executeSnipeUser(
 // Main command definition
 const snipeUserCommand = {
     name: "snipe-user",
-    description: "Bannable plugin to find available Discord usernames. ⚠️ This plugin is bannable. Use with caution.",
+    description: "Bannable plugin to find available Discord usernames. ⚠️ This plugin is bannable. Use with caution. NOTE: Username checking may not work due to Discord API limitations.",
     inputType: ApplicationCommandInputType.BUILT_IN,
     options: [
         {
