@@ -37,57 +37,15 @@ interface UsernameSniperSettings {
     notifyInUserMessages: boolean;
 }
 
-const settings = {
-    proxyUrl: {
-        type: ApplicationCommandOptionType.STRING,
-        description: "Proxy URL for username checks (leave empty for direct Discord API)",
-        required: false,
-        placeholder: "https://your-proxy.com"
-    },
-    maxParallelChecks: {
-        type: ApplicationCommandOptionType.INTEGER,
-        description: "Maximum parallel checks (higher = faster but more detectable)",
-        required: false,
-        minValue: 1,
-        maxValue: 50,
-        defaultValue: 5
-    },
-    batchSize: {
-        type: ApplicationCommandOptionType.INTEGER,
-        description: "Number of names to check in each batch",
-        required: false,
-        minValue: 1,
-        maxValue: 100,
-        defaultValue: 10
-    },
-    batchDelay: {
-        type: ApplicationCommandOptionType.INTEGER,
-        description: "Delay between batches in milliseconds",
-        required: false,
-        minValue: 10,
-        maxValue: 1000,
-        defaultValue: 100
-    },
-    checkInterval: {
-        type: ApplicationCommandOptionType.INTEGER,
-        description: "Delay between individual checks in milliseconds",
-        required: false,
-        minValue: 1,
-        maxValue: 500,
-        defaultValue: 20
-    },
-    webhookUrl: {
-        type: ApplicationCommandOptionType.STRING,
-        description: "Webhook URL to send found usernames to",
-        required: false,
-        placeholder: "https://discord.com/api/webhooks/..."
-    },
-    notifyInUserMessages: {
-        type: ApplicationCommandOptionType.BOOLEAN,
-        description: "Show available names in ephemeral messages (only you can see)",
-        required: false,
-        defaultValue: true
-    }
+// Global settings state
+const settings: UsernameSniperSettings = {
+    proxyUrl: "",
+    maxParallelChecks: 5,
+    batchSize: 10,
+    batchDelay: 100,
+    checkInterval: 20,
+    webhookUrl: "",
+    notifyInUserMessages: true
 };
 
 // Global state for tracking checked usernames and rate limiting
@@ -133,105 +91,27 @@ function isValidUsername(username: string): boolean {
     return username.length > 0 && username[username.length - 1] !== "." && username[username.length - 1] !== "_";
 }
 
-// Check if a URL uses an IP address
-function usesIpAddress(url: string): boolean {
-    try {
-        const urlObj = new URL(url);
-        const { hostname } = urlObj;
-        // Check if hostname is an IP address (IPv4)
-        return /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
-    } catch (e) {
-        // If URL parsing fails (no protocol), check if the first part looks like an IP
-        console.log(`[Usernamesniper] URL parsing failed for '${url}', checking manually...`);
-        const cleanStr = url.split("/")[0].split("?")[0];
-        const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
-        console.log(`[Usernamesniper] Manual check: cleanStr='${cleanStr}', isIPv4=${isIPv4}`);
-        return isIPv4;
-    }
-}
-
-// Check if a URL uses an IP address for webhook (webhook URLs are complex)
-function usesIpAddressForWebhook(url: string): boolean {
-    console.log(`[Usernamesniper] usesIpAddressForWebhook called with: '${url}'`);
-    try {
-        const urlObj = new URL(url);
-        const { hostname } = urlObj;
-        console.log(`[Usernamesniper] URL parsed, hostname='${hostname}'`);
-        // Webhook URLs can be complex, check if the host is an IP
-        return /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
-    } catch (e) {
-        console.log("[Usernamesniper] URL parsing failed for webhook, checking manually...");
-        const cleanStr = url.split("/")[0].split("?")[0];
-        const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
-        console.log(`[Usernamesniper] Manual check: cleanStr='${cleanStr}', isIPv4=${isIPv4}`);
-        return isIPv4;
-    }
-}
-
-// Get protocol for a URL (handles IPs and missing protocols)
-function getProtocol(url: string): string {
-    console.log(`[Usernamesniper] getProtocol('${url}')`);
-
-    // First, check if it looks like an IP address
-    if (looksLikeIpAddress(url)) {
-        console.log("[Usernamesniper] Detected IP, using http://");
-        return "http://";
-    }
-
-    try {
-        const urlObj = new URL(url);
-        console.log(`[Usernamesniper] Detected domain, using ${urlObj.protocol}`);
-        return `${urlObj.protocol}//`;
-    } catch {
-        // If URL parsing fails, assume it's a domain and use https
-        console.log("[Usernamesniper] URL parsing failed, using https://");
-        return "https://";
-    }
-}
-
-// Check if a string looks like an IP address (no dots or IPv4 format)
-function looksLikeIpAddress(str: string): boolean {
-    console.log(`[Usernamesniper] looksLikeIpAddress called with: '${str}'`);
-
-    // Remove path and query parameters first
-    const cleanStr = str.split("/")[0].split("?")[0];
-    console.log(`[Usernamesniper] After split, cleanStr = '${cleanStr}'`);
-
-    const isDigits = /^\d+$/.test(cleanStr);
-    const isIPv4 = /^\d+\.\d+\.\d+\.\d+$/.test(cleanStr);
-    console.log(`[Usernamesniper] isDigits=${isDigits}, isIPv4=${isIPv4}`);
-
-    const result = isDigits || isIPv4;
-    console.log(`[Usernamesniper] looksLikeIpAddress returning: ${result}`);
-    return result;
-}
-
 // Build full URL from base URL and path
 function buildUrl(baseUrl: string, path: string): string {
-    console.log(`[Usernamesniper] buildUrl('${baseUrl}', '${path}')`);
-
     // Check if baseUrl already has a protocol
     if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
-        console.log(`[Usernamesniper] baseUrl has protocol, returning ${baseUrl}${path}`);
         return `${baseUrl}${path}`;
     }
 
-    // Check if it's an IP address (handle URLs with paths like "162.159.137.233/api/v10")
-    if (looksLikeIpAddress(baseUrl)) {
-        const result = `http://${baseUrl}${path}`;
-        console.log(`[Usernamesniper] Detected IP, returning ${result}`);
-        return result;
+    // Extract the hostname part (before first slash)
+    const hostname = baseUrl.split("/")[0];
+    const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+
+    if (isIP) {
+        return `http://${baseUrl}${path}`;
     }
 
     // Assume it's a domain with https
-    const result = `https://${baseUrl}${path}`;
-    console.log(`[Usernamesniper] Detected domain, returning ${result}`);
-    return result;
+    return `https://${baseUrl}${path}`;
 }
 
 // Check username availability using Discord API
 async function checkUsernameAvailability(username: string, proxyUrl?: string): Promise<boolean> {
-    console.log(`[Usernamesniper] checkUsernameAvailability called with username='${username}', proxyUrl='${proxyUrl}'`);
     const timestamp = Date.now();
 
     // Check if already checked recently (within last 5 minutes)
@@ -262,8 +142,6 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
         // This approach is NOT reliable and Discord may ban accounts for this.
 
         const baseUrl = proxyUrl || "https://discord.com/api/v10";
-        console.log(`[Usernamesniper] Using baseUrl: '${baseUrl}'`);
-        console.log(`[Usernamesniper] proxyUrl is: '${proxyUrl}'`);
         const fullUrl = buildUrl(baseUrl, "/users/@me/username");
 
         console.log(`[Usernamesniper] Checking username: ${username}, URL: ${fullUrl}`);
@@ -326,9 +204,7 @@ async function sendWebhookNotification(username: string): Promise<void> {
     if (!webhookConfig.url) return;
 
     try {
-        console.log(`[Usernamesniper] Sending webhook for '${username}', webhookUrl='${webhookConfig.url}'`);
         const url = buildUrl(webhookConfig.url, "");
-        console.log(`[Usernamesniper] Final webhook URL: ${url}`);
 
         await fetch(url, {
             method: "POST",
@@ -405,7 +281,7 @@ async function executeSnipeUser(
         // Process batch in parallel
         const promises = batch.slice(0, parallelChecks).map(async username => {
             try {
-                const isAvailable = await checkUsernameAvailability(username);
+                const isAvailable = await checkUsernameAvailability(username, proxyUrl);
 
                 if (isAvailable) {
                     foundUsernames.push(username);
@@ -518,11 +394,93 @@ const snipeUserCommand = {
 
 export default definePlugin({
     name: "Usernamesniper",
-    description: "Find available Discord usernames by checking combinations. ⚠ This plugin is bannable. Use at your own risk. Also please note that you need to restart discord after you're done using it to ensure it fully stops.",
+    description: "Find available Discord usernames by checking combinations. ⚠️ This plugin is bannable. Use at your own risk. Also please note that you need to restart discord after you're done using it to ensure it fully stops.",
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     commands: [snipeUserCommand],
+
+    settingsAboutComponent: () => (
+        <div style={{ padding: "10px" }}>
+            <h3>Usernamesniper Settings</h3>
+            <p>Configure your username checking preferences below:</p>
+            <div style={{ marginTop: "10px" }}>
+                <label style={{ display: "block", marginBottom: "5px" }}>
+                    <strong>Proxy URL:</strong>
+                    <input
+                        type="text"
+                        placeholder="https://your-proxy.com"
+                        value={settings.proxyUrl}
+                        onChange={e => { settings.proxyUrl = e.target.value; }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <strong>Max Parallel Checks:</strong>
+                    <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={settings.maxParallelChecks}
+                        onChange={e => { settings.maxParallelChecks = parseInt(e.target.value); }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <strong>Batch Size:</strong>
+                    <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={settings.batchSize}
+                        onChange={e => { settings.batchSize = parseInt(e.target.value); }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <strong>Batch Delay (ms):</strong>
+                    <input
+                        type="number"
+                        min="10"
+                        max="1000"
+                        value={settings.batchDelay}
+                        onChange={e => { settings.batchDelay = parseInt(e.target.value); }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <strong>Check Interval (ms):</strong>
+                    <input
+                        type="number"
+                        min="1"
+                        max="500"
+                        value={settings.checkInterval}
+                        onChange={e => { settings.checkInterval = parseInt(e.target.value); }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <strong>Webhook URL:</strong>
+                    <input
+                        type="text"
+                        placeholder="https://discord.com/api/webhooks/..."
+                        value={settings.webhookUrl}
+                        onChange={e => { settings.webhookUrl = e.target.value; }}
+                        style={{ width: "100%", marginTop: "5px", padding: "5px" }}
+                    />
+                </label>
+                <label style={{ display: "block", marginBottom: "5px", marginTop: "10px" }}>
+                    <input
+                        type="checkbox"
+                        checked={settings.notifyInUserMessages}
+                        onChange={e => { settings.notifyInUserMessages = e.target.checked; }}
+                        style={{ marginRight: "5px" }}
+                    />
+                    Show available names in ephemeral messages (only you can see)
+                </label>
+            </div>
+        </div>
+    ),
 
     start() {
         console.log("Usernamesniper plugin started");
