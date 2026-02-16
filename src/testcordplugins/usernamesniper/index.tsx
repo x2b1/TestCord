@@ -37,7 +37,7 @@ interface UsernameSniperSettings {
     notifyInUserMessages: boolean;
 }
 
-// Global settings
+// Global settings state
 const settings: UsernameSniperSettings = {
     proxyUrl: "",
     maxParallelChecks: 5,
@@ -92,30 +92,31 @@ function isValidUsername(username: string): boolean {
 }
 
 // Build full URL from base URL and path
+// This function detects IP addresses and uses HTTP protocol instead of HTTPS
 function buildUrl(baseUrl: string, path: string): string {
-    console.log(`[Usernamesniper] buildUrl called: baseUrl='${baseUrl}', path='${path}'`);
+    console.log(`[Usernamesniper] buildUrl: baseUrl='${baseUrl}', path='${path}'`);
 
     // Check if baseUrl already has a protocol
     if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
-        console.log(`[Usernamesniper] baseUrl has protocol, returning: ${baseUrl}${path}`);
+        console.log(`[Usernamesniper] Has protocol, returning: ${baseUrl}${path}`);
         return `${baseUrl}${path}`;
     }
 
     // Extract the hostname part (before first slash)
     const hostname = baseUrl.split("/")[0];
-    console.log(`[Usernamesniper] hostname: '${hostname}'`);
+    console.log(`[Usernamesniper] hostname='${hostname}'`);
     const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
-    console.log(`[Usernamesniper] isIP: ${isIP}`);
+    console.log(`[Usernamesniper] isIP=${isIP}`);
 
     if (isIP) {
         const result = `http://${baseUrl}${path}`;
-        console.log(`[Usernamesniper] Using HTTP for IP, returning: ${result}`);
+        console.log(`[Usernamesniper] Using HTTP for IP, result: ${result}`);
         return result;
     }
 
     // Assume it's a domain with https
     const result = `https://${baseUrl}${path}`;
-    console.log(`[Usernamesniper] Using HTTPS for domain, returning: ${result}`);
+    console.log(`[Usernamesniper] Using HTTPS for domain, result: ${result}`);
     return result;
 }
 
@@ -150,10 +151,11 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
         // We use a workaround: try to register the username and see if it fails.
         // This approach is NOT reliable and Discord may ban accounts for this.
 
-        const baseUrl = proxyUrl || "https://discord.com/api/v10";
-        console.log(`[Usernamesniper] baseUrl: '${baseUrl}', proxyUrl: '${proxyUrl}'`);
+        const baseUrl = proxyUrl || settings.proxyUrl || "https://discord.com/api/v10";
+        console.log(`[Usernamesniper] checkUsernameAvailability: username='${username}', proxyUrl='${proxyUrl}', settings.proxyUrl='${settings.proxyUrl}', baseUrl='${baseUrl}'`);
+
         const fullUrl = buildUrl(baseUrl, "/users/@me/username");
-        console.log(`[Usernamesniper] fullUrl: ${fullUrl}`);
+        console.log(`[Usernamesniper] Full URL: ${fullUrl}`);
 
         // Try to use the username - we use the current user's session
         const response = await fetch(fullUrl, {
@@ -214,6 +216,7 @@ async function sendWebhookNotification(username: string): Promise<void> {
 
     try {
         const url = buildUrl(webhookConfig.url, "");
+        console.log(`[Usernamesniper] Sending webhook for '${username}', URL: ${url}`);
 
         await fetch(url, {
             method: "POST",
@@ -392,8 +395,8 @@ const snipeUserCommand = {
 
         const length = parseInt(lengthArg?.value as string) || 3;
         const notify = notifyArg?.value === "true";
-        const proxyUrl = proxyUrlArg?.value as string || settings.proxyUrl;
-        const webhookUrl = webhookArg?.value as string || settings.webhookUrl;
+        const proxyUrl = proxyUrlArg?.value as string || "";
+        const webhookUrl = webhookArg?.value as string || "";
 
         console.log(`[Usernamesniper] Command executed: length=${length}, notify=${notify}, proxyUrl='${proxyUrl}', webhookUrl='${webhookUrl}'`);
         console.log(`[Usernamesniper] Settings proxyUrl: '${settings.proxyUrl}'`);
