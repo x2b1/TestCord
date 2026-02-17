@@ -94,33 +94,26 @@ function isValidUsername(username: string): boolean {
 // Build full URL from base URL and path
 // This function detects IP addresses and uses HTTP protocol instead of HTTPS
 function buildUrl(baseUrl: string, path: string): string {
-    console.log(`[Usernamesniper] buildUrl: baseUrl='${baseUrl}', path='${path}'`);
+    // Extract the hostname part (before first slash)
+    const hostname = baseUrl.split("/")[0];
+    const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
+
+    // Force HTTP for IP addresses to avoid certificate errors
+    if (isIP) {
+        return `http://${baseUrl}${path}`;
+    }
 
     // Check if baseUrl already has a protocol
     if (baseUrl.startsWith("http://") || baseUrl.startsWith("https://")) {
-        console.log(`[Usernamesniper] Has protocol, returning: ${baseUrl}${path}`);
         return `${baseUrl}${path}`;
     }
 
-    // Extract the hostname part (before first slash)
-    const hostname = baseUrl.split("/")[0];
-    console.log(`[Usernamesniper] hostname='${hostname}'`);
-    const isIP = /^\d+\.\d+\.\d+\.\d+$/.test(hostname);
-    console.log(`[Usernamesniper] isIP=${isIP}`);
-
-    if (isIP) {
-        const result = `http://${baseUrl}${path}`;
-        console.log(`[Usernamesniper] Using HTTP for IP, result: ${result}`);
-        return result;
-    }
-
     // Assume it's a domain with https
-    const result = `https://${baseUrl}${path}`;
-    console.log(`[Usernamesniper] Using HTTPS for domain, result: ${result}`);
-    return result;
+    return `https://${baseUrl}${path}`;
 }
 
 // Check username availability using Discord API
+// Uses Discord's official endpoint: POST /api/v9/users/@me/pomelo-attempt
 async function checkUsernameAvailability(username: string, proxyUrl?: string): Promise<boolean> {
     const timestamp = Date.now();
 
@@ -147,24 +140,22 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
     }
 
     try {
-        // Discord doesn't have a direct username availability check endpoint.
-        // We use a workaround: try to register the username and see if it fails.
-        // This approach is NOT reliable and Discord may ban accounts for this.
-
-        const baseUrl = proxyUrl || settings.proxyUrl || "https://discord.com/api/v10";
+        // Use Discord's official username availability check endpoint
+        const baseUrl = proxyUrl || settings.proxyUrl || "https://discord.com/api/v9";
         console.log(`[Usernamesniper] checkUsernameAvailability: username='${username}', proxyUrl='${proxyUrl}', settings.proxyUrl='${settings.proxyUrl}', baseUrl='${baseUrl}'`);
 
-        const fullUrl = buildUrl(baseUrl, "/users/@me/username");
+        const fullUrl = buildUrl(baseUrl, "/users/@me/pomelo-attempt");
         console.log(`[Usernamesniper] Full URL: ${fullUrl}`);
 
-        // Try to use the username - we use the current user's session
         const response = await fetch(fullUrl, {
-            method: "PUT",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 ...(proxyUrl ? {} : { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" })
             },
-            body: JSON.stringify({ username })
+            body: JSON.stringify({ username }),
+            credentials: "omit",
+            mode: "cors"
         });
 
         console.log(`[Usernamesniper] Response status: ${response.status}, URL: ${fullUrl}`);
@@ -174,32 +165,28 @@ async function checkUsernameAvailability(username: string, proxyUrl?: string): P
         state.lastRequestTime = Date.now();
         state.requestCount++;
 
-        // Handle response
-        // 200 = available (you can set it)
-        // 400 = taken (or invalid username)
-        // 403 = forbidden (could be taken, or you can't change username due to recent changes)
-        // 404 = not found (shouldn't happen for this endpoint)
-        // 429 = rate limited
+        // Discord returns {"taken": true} for taken usernames
+        // {"taken": false} for available usernames
         if (response.status === 200) {
-            console.log(`[Usernamesniper] Username '${username}' is AVAILABLE`);
-            return true; // Username is available
-        } else if (response.status === 400) {
-            // 400 Bad Request usually means username is taken
-            console.log(`[Usernamesniper] Username '${username}' is TAKEN (400)`);
-            return false;
-        } else if (response.status === 403 || response.status === 404) {
-            // 403 could mean taken, or could be auth/rate limit issue
-            // For now, treat as taken (conservative approach)
-            console.log(`[Usernamesniper] Username '${username}' is TAKEN (${response.status})`);
-            return false;
+            try {
+                const data = await response.json();
+                const isTaken = data.taken === true;
+                console.log(`[Usernamesniper] Username '${username}' is ${isTaken ? "TAKEN" : "AVAILABLE"} (response: ${JSON.stringify(data)})`);
+                return !isTaken;
+            } catch {
+                // If we can't parse JSON, assume taken
+                console.log(`[Usernamesniper] Username '${username}' - could not parse response, treating as TAKEN`);
+                return false;
+            }
         } else if (response.status === 429) {
             state.consecutive429++;
             console.log(`[Usernamesniper] Rate limited for '${username}'`);
             throw new Error("Rate limited");
+        } else {
+            // Other status codes - assume taken
+            console.log(`[Usernamesniper] Username '${username}' status ${response.status} - treating as TAKEN`);
+            return false;
         }
-
-        console.log(`[Usernamesniper] Username '${username}' status ${response.status} - treating as TAKEN`);
-        return false;
     } catch (error) {
         // Mark as checked even on error to avoid retrying
         checkedUsernames.add(username);
