@@ -51,9 +51,9 @@ export default definePlugin({
             },
         },
         {
-            find: "getCurrentUser()?.nsfwAllowed===!1",
+            find: "useAgeGateVerifyContentForGuild",
             replacement: {
-                match: /(\i)\.getCurrentUser\(\)\?\.nsfwAllowed===!1/g,
+                match: /((?:\i\.)*\i)\.getCurrentUser\(\)\?\.nsfwAllowed===!1/g,
                 replace: "($1.getCurrentUser()?.nsfwAllowed,false)",
             },
         },
