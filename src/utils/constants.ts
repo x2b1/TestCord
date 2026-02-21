@@ -1288,6 +1288,10 @@ export const TestcordDevs = Object.freeze({
         name: "dxrx99",
         id: 1463629522359423152n
     },
+    omaw: {
+        name: "oma",
+        id: 1155026301791514655n
+    },
 } satisfies Record<string, Dev>);
 
 // iife so #__PURE__ works correctly
