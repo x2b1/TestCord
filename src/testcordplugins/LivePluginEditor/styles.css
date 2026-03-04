@@ -1,0 +1,131 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+.vc-live-plugin-editor-container {
+    display: flex;
+    height: 500px;
+    gap: 10px;
+    padding: 10px;
+}
+
+.vc-live-plugin-editor-sidebar {
+    width: 250px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    background: var(--deprecated-store-bg);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.vc-live-plugin-editor-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--deprecated-text-input-border);
+}
+
+.vc-live-plugin-editor-new-plugin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--deprecated-light-bg);
+    border-radius: 4px;
+}
+
+.vc-live-plugin-editor-form-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.vc-live-plugin-editor-plugin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.vc-live-plugin-editor-plugin-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.vc-live-plugin-editor-plugin-item:hover {
+    background: var(--deprecated-light-bg);
+}
+
+.vc-live-plugin-editor-plugin-item.selected {
+    background: var(--brand-experiment);
+    color: white;
+}
+
+.vc-live-plugin-editor-plugin-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+}
+
+.vc-live-plugin-editor-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+}
+
+.vc-live-plugin-editor-editor-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.vc-live-plugin-editor-editor-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-live-plugin-editor-code-editor {
+    flex: 1;
+    font-family: "Consolas", "Monaco", "Courier New", monospace !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    min-height: 300px !important;
+    background: var(--deprecated-dark-bg) !important;
+    color: #e0e0e0 !important;
+    border: 1px solid var(--deprecated-text-input-border) !important;
+    border-radius: 4px !important;
+    padding: 10px !important;
+}
+
+.vc-live-plugin-editor-editor-help {
+    padding: 8px;
+    background: var(--deprecated-light-bg);
+    border-radius: 4px;
+}
+
+.vc-live-plugin-editor-no-selection {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: var(--deprecated-store-bg);
+    border-radius: 4px;
+}
