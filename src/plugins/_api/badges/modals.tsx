@@ -9,7 +9,7 @@ import { Flex } from "@components/Flex";
 import { HeadingPrimary } from "@components/Heading";
 import { Heart } from "@components/Heart";
 import { Paragraph } from "@components/Paragraph";
-import { DonateButton } from "@components/settings";
+import { DonateButton, TranslateButton } from "@components/settings";
 import { Margins } from "@utils/margins";
 import { closeModal, ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 
@@ -116,6 +116,50 @@ export function TestCordDonorModal() {
                 <ModalFooter>
                     <Flex justifyContent="center" style={{ width: "100%" }}>
                         <DonateButton equicord={true} />
+                    </Flex>
+                </ModalFooter>
+            </ModalRoot>
+        </ErrorBoundary>
+    ));
+}
+
+export function EquicordTranslatorModal() {
+    const modalKey = openModal(props => (
+        <ErrorBoundary noop onError={() => {
+            closeModal(modalKey);
+        }}>
+            <ModalRoot {...props}>
+                <ModalHeader>
+                    <HeadingPrimary
+                        style={{
+                            width: "100%",
+                            textAlign: "center",
+                            margin: 0
+                        }}
+                    >
+                        <Flex justifyContent="center" alignItems="center" gap="0.5em">
+                            Equicord Translator
+                        </Flex>
+                    </HeadingPrimary>
+                </ModalHeader>
+                <ModalContent>
+                    <Flex>
+                        <img
+                            className="vc-translate-modal-icon"
+                            role="presentation"
+                            src="https://badge.equicord.org/translator.png"
+                            alt=""
+                        />
+                    </Flex>
+                    <div className="vc-translate-modal-paragraph">
+                        <Paragraph>
+                            Awarded to contributors who expand Equicord’s language support by translating content for the community.
+                        </Paragraph>
+                    </div>
+                </ModalContent>
+                <ModalFooter>
+                    <Flex justifyContent="center" style={{ width: "100%" }}>
+                        <TranslateButton />
                     </Flex>
                 </ModalFooter>
             </ModalRoot>

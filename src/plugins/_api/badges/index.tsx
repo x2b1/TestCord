@@ -30,7 +30,7 @@ import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { TestCordDonorModal, VencordDonorModal } from "./modals";
+import { EquicordTranslatorModal, TestCordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
@@ -268,7 +268,7 @@ export default definePlugin({
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
-                return TestCordDonorModal();
+                return badge.tooltip === "Equicord Translator" ? EquicordTranslatorModal() : TestCordDonorModal();
             },
         } satisfies ProfileBadge));
     },
