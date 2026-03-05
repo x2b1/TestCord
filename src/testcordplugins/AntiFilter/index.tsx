@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { addChatBarButton, ChatBarButton, ChatBarButtonFactory, removeChatBarButton } from "@api/ChatButtons";
+import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
@@ -22,7 +22,6 @@ const lightCharMap: Record<string, string> = {
     S: "𝑆", T: "𝑇", U: "𝑈", V: "𝑉", W: "𝑊", X: "𝑋", Y: "𝑌", Z: "𝑍",
 };
 
-// Middle mode - using Cyrillic lookalikes (the original)
 const middleCharMap: Record<string, string> = {
     // Latin lowercase -> Cyrillic lookalikes
     a: "а", b: "ƅ", c: "с", d: "ԁ", e: "е", f: "ƒ", g: "ɡ", h: "һ", i: "і",
@@ -34,7 +33,6 @@ const middleCharMap: Record<string, string> = {
     S: "Ѕ", T: "Τ", U: "U", V: "V", W: "W", X: "Χ", Y: "Υ", Z: "Ζ",
 };
 
-// Extended mapping with zalgo characters
 const extendedCharMap: Record<string, string> = {
     a: "а", b: "ƅ", c: "с", d: "ԁ", e: "е", f: "ƒ", g: "ɡ", h: "һ", i: "і",
     j: "ј", k: "κ", l: "ӏ", m: "м", n: "ո", o: "ο", p: "р", q: "ԛ", r: "г",
@@ -69,6 +67,11 @@ const settings = definePluginSettings({
         description: "Enable AntiFilter bypass",
         default: false
     },
+    isEnabled: {
+        type: OptionType.BOOLEAN,
+        description: "Toggle the feature on/off (button controls this)",
+        default: false
+    },
     mode: {
         type: OptionType.SELECT,
         description: "Bypass mode",
@@ -95,33 +98,34 @@ function transformText(text: string, mode: string): string {
 
 // Message pre-send handler
 function handleMessageSend(channelId: string, messageObj: any, options: any): void | { cancel: boolean; } {
-    if (!settings.store.enabled) return;
+    if (!settings.store.enabled || !settings.store.isEnabled) return;
 
     if (messageObj.content) {
         messageObj.content = transformText(messageObj.content, settings.store.mode);
     }
 }
 
-// ChatBar button component
 const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
-    const { enabled } = settings.use(["enabled"]);
+    const { enabled, isEnabled } = settings.use(["enabled", "isEnabled"]);
 
     if (!isMainChat) return null;
 
+    if (!enabled) return null;
+
     return (
         <ChatBarButton
-            tooltip={enabled ? "AntiFilter: ON" : "AntiFilter: OFF"}
+            tooltip={isEnabled ? "AntiFilter: ON" : "AntiFilter: OFF"}
             onClick={() => {
-                settings.store.enabled = !settings.store.enabled;
+                settings.store.isEnabled = !settings.store.isEnabled;
             }}
         >
             <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
-                style={{ color: enabled ? "#da373c" : "currentColor" }}
+                style={{ color: isEnabled ? "#da373c" : "currentColor" }}
             >
-                {enabled ? (
+                {isEnabled ? (
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 ) : (
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
@@ -139,14 +143,12 @@ export default definePlugin({
     dependencies: ["ChatInputButtonAPI"],
 
     start() {
-        // Always add the button and listener - the enabled setting controls functionality
-        addChatBarButton("AntiFilter", AntiFilterButton);
         addMessagePreSendListener(handleMessageSend);
     },
 
     stop() {
-        // Always remove the button and listener when plugin is unloaded
-        removeChatBarButton("AntiFilter");
         removeMessagePreSendListener(handleMessageSend);
-    }
+    },
+
+    renderChatBarButton: AntiFilterButton
 });
