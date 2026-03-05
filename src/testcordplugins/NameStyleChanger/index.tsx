@@ -45,22 +45,34 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
+    start() {
+        console.log("NameStyleChanger: Plugin loaded!");
+    },
+
     patches: [
         {
             find: '="SYSTEM_TAG"',
+            group: true,
             replacement: {
-                match: /(onContextMenu:\i,children:)(.{0,250}?),"data-text":(\i\+\i)/,
-                replace: "$1$self.getMessageNameElement(arguments[0])??($2),\"data-text\":$3"
+                match: /(?<=colorString:(\i),colorStrings:(\i).{0,900}?)style:.{0,120}?,(onClick:\i,onContextMenu:\i,children:)(.{0,250}?),"data-text":(\i\+\i)/,
+                replace: "$3$self.getMessageNameElement({...arguments[0],colorString:$1,colorStrings:$2})??($4),\"data-text\":$5"
             }
         }
     ],
 
     getMessageNameElement(props: any) {
-        const { author } = props;
-        if (author.id !== UserStore.getCurrentUser()?.id) return null;
+        const { author, children, message } = props;
+        // Try to get author from props or message
+        const authorId = author?.id ?? message?.author?.id;
+        const currentUserId = UserStore.getCurrentUser()?.id;
+        // Debug logging
+        console.log("NameStyleChanger props:", { authorId, currentUserId, hasChildren: !!children, childrenType: typeof children });
+        if (!authorId || authorId !== currentUserId) return null;
+        if (!children) return null;
 
         const fontFamily = fontMap[settings.store.font] ?? fontMap["gg-sans"];
 
-        return <span style={{ fontFamily }}>{props.children}</span>;
+        // Handle different children types - may be string, array, or element
+        return <span style={{ fontFamily }}>{children}</span>;
     }
 });

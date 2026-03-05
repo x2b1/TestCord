@@ -11,8 +11,19 @@ import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
 
-// Lookalike character mappings for bypassing AI automod
-const charMap: Record<string, string> = {
+// Light mode - using Mathematical Alphanumeric Symbols (nearly identical)
+const lightCharMap: Record<string, string> = {
+    // These look nearly identical to regular Latin letters
+    a: "𝑎", b: "𝑏", c: "𝑐", d: "𝑑", e: "𝑒", f: "𝑓", g: "𝑔", h: "ℎ", i: "𝑖",
+    j: "𝑗", k: "𝑘", l: "𝑙", m: "𝑚", n: "𝑛", o: "𝑜", p: "𝑝", q: "𝑞", r: "𝑟",
+    s: "𝑠", t: "𝑡", u: "𝑢", v: "𝑣", w: "𝑤", x: "𝑥", y: "𝑦", z: "𝑧",
+    A: "𝐴", B: "𝐵", C: "𝐶", D: "𝐷", E: "𝐸", F: "𝐹", G: "𝐺", H: "𝐻", I: "𝐼",
+    J: "𝐽", K: "𝐾", L: "𝐿", M: "𝑀", N: "𝑁", O: "𝑂", P: "𝑃", Q: "𝑄", R: "𝑅",
+    S: "𝑆", T: "𝑇", U: "𝑈", V: "𝑉", W: "𝑊", X: "𝑋", Y: "𝑌", Z: "𝑍",
+};
+
+// Middle mode - using Cyrillic lookalikes (the original)
+const middleCharMap: Record<string, string> = {
     // Latin lowercase -> Cyrillic lookalikes
     a: "а", b: "ƅ", c: "с", d: "ԁ", e: "е", f: "ƒ", g: "ɡ", h: "һ", i: "і",
     j: "ј", k: "κ", l: "ӏ", m: "м", n: "ո", o: "ο", p: "р", q: "ԛ", r: "г",
@@ -62,25 +73,28 @@ const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "Bypass mode",
         options: [
-            { label: "Simple (lookalike chars)", value: "simple", default: true },
-            { label: "Extended (with zalgo)", value: "extended" }
+            { label: "Light (Math symbols)", value: "light", default: true },
+            { label: "Middle (Cyrillic)", value: "middle" },
+            { label: "Extended (Cyrillic + Zalgo)", value: "extended" }
         ]
     }
 });
 
 function transformText(text: string, mode: string): string {
     switch (mode) {
-        case "simple":
-            return mapCharacters(text, charMap);
+        case "light":
+            return mapCharacters(text, lightCharMap);
+        case "middle":
+            return mapCharacters(text, middleCharMap);
         case "extended":
             return mapCharactersExtended(text, extendedCharMap);
         default:
-            return mapCharacters(text, charMap);
+            return mapCharacters(text, lightCharMap);
     }
 }
 
 // Message pre-send handler
-function handleMessageSend(channelId: string, messageObj: any, options: any): any {
+function handleMessageSend(channelId: string, messageObj: any, options: any): void | { cancel: boolean; } {
     if (!settings.store.enabled) return;
 
     if (messageObj.content) {
@@ -90,7 +104,7 @@ function handleMessageSend(channelId: string, messageObj: any, options: any): an
 
 // ChatBar button component
 const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
-    const { enabled, mode } = settings.use(["enabled", "mode"]);
+    const { enabled } = settings.use(["enabled"]);
 
     if (!isMainChat) return null;
 
@@ -125,11 +139,13 @@ export default definePlugin({
     dependencies: ["ChatInputButtonAPI"],
 
     start() {
+        // Always add the button and listener - the enabled setting controls functionality
         addChatBarButton("AntiFilter", AntiFilterButton);
         addMessagePreSendListener(handleMessageSend);
     },
 
     stop() {
+        // Always remove the button and listener when plugin is unloaded
         removeChatBarButton("AntiFilter");
         removeMessagePreSendListener(handleMessageSend);
     }
