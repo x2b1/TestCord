@@ -1,0 +1,136 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { addChatBarButton, ChatBarButton, ChatBarButtonFactory, removeChatBarButton } from "@api/ChatButtons";
+import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { React } from "@webpack/common";
+
+// Lookalike character mappings for bypassing AI automod
+const charMap: Record<string, string> = {
+    // Latin lowercase -> Cyrillic lookalikes
+    a: "а", b: "ƅ", c: "с", d: "ԁ", e: "е", f: "ƒ", g: "ɡ", h: "һ", i: "і",
+    j: "ј", k: "κ", l: "ӏ", m: "м", n: "ո", o: "ο", p: "р", q: "ԛ", r: "г",
+    s: "ѕ", t: "т", u: "υ", v: "ν", w: "ш", x: "х", y: "у",
+    // Latin uppercase -> Cyrillic/Greek lookalikes
+    A: "А", B: "Β", C: "С", D: "D", E: "Ε", F: "F", G: "G", H: "Η", I: "Ι",
+    J: "Ј", K: "Κ", L: "L", M: "Μ", N: "Ν", O: "Ο", P: "Ρ", Q: "Q", R: "R",
+    S: "Ѕ", T: "Τ", U: "U", V: "V", W: "W", X: "Χ", Y: "Υ", Z: "Ζ",
+};
+
+// Extended mapping with zalgo characters
+const extendedCharMap: Record<string, string> = {
+    a: "а", b: "ƅ", c: "с", d: "ԁ", e: "е", f: "ƒ", g: "ɡ", h: "һ", i: "і",
+    j: "ј", k: "κ", l: "ӏ", m: "м", n: "ո", o: "ο", p: "р", q: "ԛ", r: "г",
+    s: "ѕ", t: "т", u: "υ", v: "ν", w: "ш", x: "х", y: "у",
+    A: "А", B: "Β", C: "С", E: "Ε", F: "F", G: "G", H: "Η",
+    I: "Ι", J: "Ј", K: "Κ", L: "L", M: "Μ", N: "Ν", O: "Ο",
+    P: "Ρ", R: "R", S: "Ѕ", T: "Τ", U: "U", V: "V", W: "W",
+    X: "Χ", Y: "Υ",
+};
+
+// Zalgo combining characters
+const zalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̇", "̈"];
+
+const mapCharacters = (text: string, map: Record<string, string>) =>
+    text.split("").map(char => map[char] || char).join("");
+
+const mapCharactersExtended = (text: string, map: Record<string, string>) => {
+    return text.split("").map(char => {
+        if (map[char]) return map[char];
+        // Add subtle zalgo for unmapped alphanumeric
+        if (char.match(/[a-zA-Z0-9]/)) {
+            const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
+            return char + zalgo;
+        }
+        return char;
+    }).join("");
+};
+
+const settings = definePluginSettings({
+    enabled: {
+        type: OptionType.BOOLEAN,
+        description: "Enable AntiFilter bypass",
+        default: false
+    },
+    mode: {
+        type: OptionType.SELECT,
+        description: "Bypass mode",
+        options: [
+            { label: "Simple (lookalike chars)", value: "simple", default: true },
+            { label: "Extended (with zalgo)", value: "extended" }
+        ]
+    }
+});
+
+function transformText(text: string, mode: string): string {
+    switch (mode) {
+        case "simple":
+            return mapCharacters(text, charMap);
+        case "extended":
+            return mapCharactersExtended(text, extendedCharMap);
+        default:
+            return mapCharacters(text, charMap);
+    }
+}
+
+// Message pre-send handler
+function handleMessageSend(channelId: string, messageObj: any, options: any): any {
+    if (!settings.store.enabled) return;
+
+    if (messageObj.content) {
+        messageObj.content = transformText(messageObj.content, settings.store.mode);
+    }
+}
+
+// ChatBar button component
+const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
+    const { enabled, mode } = settings.use(["enabled", "mode"]);
+
+    if (!isMainChat) return null;
+
+    return (
+        <ChatBarButton
+            tooltip={enabled ? "AntiFilter: ON" : "AntiFilter: OFF"}
+            onClick={() => {
+                settings.store.enabled = !settings.store.enabled;
+            }}
+        >
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                style={{ color: enabled ? "#da373c" : "currentColor" }}
+            >
+                {enabled ? (
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                ) : (
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
+                )}
+            </svg>
+        </ChatBarButton>
+    );
+};
+
+export default definePlugin({
+    name: "AntiFilter",
+    description: "Bypass automod filters using lookalike Unicode characters",
+    authors: [TestcordDevs.x2b],
+    settings: settings,
+    dependencies: ["ChatInputButtonAPI"],
+
+    start() {
+        addChatBarButton("AntiFilter", AntiFilterButton);
+        addMessagePreSendListener(handleMessageSend);
+    },
+
+    stop() {
+        removeChatBarButton("AntiFilter");
+        removeMessagePreSendListener(handleMessageSend);
+    }
+});
