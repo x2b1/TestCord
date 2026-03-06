@@ -1,6 +1,6 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2024 Vencord Contributors
+ * TestCord, a Discord client mod
+ * Copyright (c) 2024 Mixiruri
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -353,11 +353,15 @@ function tryInject(): void {
             label.includes("expresi") ||
             label.includes("expression") ||
             label.includes("categor") ||
-            label.includes("selector")
+            label.includes("selector") ||
+            label.includes("picker")
         ) {
-            // Check if the currently selected tab is GIF
+            // Check if the currently selected tab is GIF (by text or by id)
             const activeTab = tl.querySelector('[role="tab"][aria-selected="true"]');
-            const activeIsGif = activeTab?.textContent?.trim().toUpperCase() === "GIF";
+            const activeIsGif =
+                activeTab?.textContent?.trim().toUpperCase() === "GIF" ||
+                activeTab?.id === "gif-picker-tab" ||
+                activeTab?.closest("[id*=gif-picker]") != null;
             if (activeIsGif) {
                 injectButtons(tl);
             } else {
