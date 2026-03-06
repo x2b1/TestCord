@@ -1,11 +1,12 @@
 /*
- * TestCord, a Discord client mod
- * Copyright (c) 2024 Mixiruri
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { definePluginSettings } from "@api/Settings";
 import { Link } from "@components/Link";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { showToast, Toasts } from "@webpack/common";
 
@@ -164,7 +165,7 @@ async function verifyGifs(file: File): Promise<void> {
         }
 
         const report = [
-            `=== GIF Verification Report ===`,
+            "=== GIF Verification Report ===",
             `Total in file: ${data.gifs.length}`,
             `Found in favorites: ${found}`,
             `Missing from favorites: ${missing}`,
@@ -392,12 +393,7 @@ function stopObserver(): void {
 export default definePlugin({
     name: "GifTransfer",
     description: "Export and import all your favorite GIFs between accounts using a JSON file.",
-    authors: [
-        {
-            name: "Mixiruri",
-            id: 1467863852782850160n,
-        },
-    ],
+    authors: [TestcordDevs.mixiruri],
     settings,
 
     settingsAboutComponent() {
