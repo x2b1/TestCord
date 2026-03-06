@@ -1,6 +1,6 @@
 /*
- * Vencord, a Discord client mod
- * Copyright (c) 2024 Vencord Contributors
+ * TestCord, a Discord client mod
+ * Copyright (c) 2026 Mixiruri
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
