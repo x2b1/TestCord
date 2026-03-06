@@ -376,7 +376,14 @@ export default definePlugin({
                 <p style={{ marginBottom: "16px", color: "var(--header-secondary, #b9bbbe)" }}>
                     Due to Discord's search API being non-deterministic, some GIFs may be missed on the first scan. Simply run it again on the same user to pick up any remaining ones — already saved GIFs will be skipped automatically.
                 </p>
-                <Link href="https://github.com/Mixiruri">GitHub: Mixiruri</Link>
+                <Link href="https://github.com/Mixiruri" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <img
+                        src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                        alt="GitHub"
+                        style={{ width: 20, height: 20, borderRadius: "50%", verticalAlign: "middle" }}
+                    />
+                    <span>Mixiruri on GitHub</span>
+                </Link>
             </div>
         );
     },
