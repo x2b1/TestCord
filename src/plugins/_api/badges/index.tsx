@@ -34,12 +34,16 @@ import Plugins, { PluginMeta } from "~plugins";
 import { EquicordTranslatorModal, TestCordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
-const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
+const EQUICORD_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/favicon.png";
 const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/x2b1/TestCord/main/browser/icon.png";
-const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
+const USERPLUGIN_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/icons/misc/userplugin.png";
 const TESTCORD_ADMIN_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/main/adm.png";
 const TESTCORD_OWNER_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/owner.png";
 const TESTCORD_DEV_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/dev.png";
+
+// URL for custom testcord badges (managed by /badge command)
+const TBADGES_JSON_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main/badges.json";
+const TBADGES_REPO_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main";
 
 const ContributorBadge: ProfileBadge = {
     description: "Vencord Contributor",
@@ -139,20 +143,33 @@ const TestcordDevBadge: ProfileBadge = {
 
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let TestcordCustomBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;
     if (noCache) init.cache = "no-cache";
 
-    return await fetch(url, init).then(r => r.json());
+    return await fetch(url, init).then(r => r.ok ? r.json() : {}).catch(() => ({}));
 }
 
 async function loadAllBadges(noCache = false) {
-    const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
+    const init = {} as RequestInit;
+    if (noCache) init.cache = "no-cache";
 
-    DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    try {
+        const [vencordBadges, equicordBadges, testcordBadges, tbadgesBadges] = await Promise.all([
+            fetch("https://badges.vencord.dev/badges.json", init).then(r => r.ok ? r.json() : {}),
+            fetch("https://badges.equicord.org/badges.json", init).then(r => r.ok ? r.json() : {}),
+            fetch(TBADGES_JSON_URL, init).then(r => r.ok ? r.json() : {}),
+            fetch("https://raw.githubusercontent.com/x2b1/tbadges/main/badges.json", init).then(r => r.ok ? r.json() : {})
+        ]);
+
+        DonorBadges = vencordBadges;
+        EquicordDonorBadges = equicordBadges;
+        TestcordCustomBadges = { ...testcordBadges, ...tbadgesBadges };
+    } catch (e) {
+        new Logger("BadgeAPI#loadAllBadges").error(e);
+    }
 }
 
 let intervalId: any;
@@ -224,6 +241,10 @@ export default definePlugin({
         return EquicordDonorBadges;
     },
 
+    get TestcordCustomBadges() {
+        return TestcordCustomBadges;
+    },
+
     toolboxActions: {
         async "Refetch Badges"() {
             await loadAllBadges(true);
@@ -284,7 +305,7 @@ export default definePlugin({
             props: {
                 style: {
                     borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
+                    transform: "scale(0.9)"
                 }
             },
             onContextMenu(event, badge) {
@@ -304,7 +325,7 @@ export default definePlugin({
             props: {
                 style: {
                     borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
+                    transform: "scale(0.9)"
                 }
             },
             onContextMenu(event, badge) {
@@ -314,6 +335,31 @@ export default definePlugin({
                 return badge.tooltip === "Equicord Translator" ? EquicordTranslatorModal() : TestCordDonorModal();
             },
         } satisfies ProfileBadge));
+    },
+
+    // Get custom testcord badges (managed by /badge command)
+    getTestCordCustomBadges(userId: string) {
+        const userBadges = TestcordCustomBadges[userId];
+        if (!userBadges || !Array.isArray(userBadges)) return [];
+
+        return userBadges.map(badge => {
+            // Check if badge URL is full URL or just filename
+            const iconSrc = badge.badge.startsWith("http")
+                ? badge.badge
+                : `${TBADGES_REPO_URL}/${badge.badge}`;
+
+            return {
+                iconSrc,
+                description: badge.tooltip,
+                position: BadgePosition.START,
+                props: {
+                    style: {
+                        borderRadius: "50%",
+                        transform: "scale(0.9)"
+                    }
+                }
+            } satisfies ProfileBadge;
+        });
     },
 
     // Alias for backward compatibility

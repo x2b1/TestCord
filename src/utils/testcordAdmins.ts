@@ -46,7 +46,7 @@ export const TestcordDevelopers = Object.freeze({
     },
     dxrx99: {
         name: "dxrx99",
-        id: 697071067458797579n
+        id: 1463629522359423152n
     }
 } satisfies Record<string, TestcordAdmin>);
 
