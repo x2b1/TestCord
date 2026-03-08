@@ -24,7 +24,7 @@ import { openContributorModal } from "@components/settings/tabs";
 import { Devs } from "@utils/constants";
 import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldShowTestcordContributorBadge } from "@utils/misc";
+import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldShowTestcordAdminBadge, shouldShowTestcordContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
@@ -36,6 +36,7 @@ const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453
 const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
 const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/x2b1/TestCord/main/browser/icon.png";
 const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
+const TESTCORD_ADMIN_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/main/adm.png";
 
 const ContributorBadge: ProfileBadge = {
     description: "Vencord Contributor",
@@ -86,6 +87,19 @@ const UserPluginContributorBadge: ProfileBadge = {
         });
     },
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)"
+        }
+    },
+};
+
+const TestcordAdminBadge: ProfileBadge = {
+    description: "Testcord Admin",
+    iconSrc: TESTCORD_ADMIN_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => shouldShowTestcordAdminBadge(userId),
     props: {
         style: {
             borderRadius: "50%",
@@ -192,7 +206,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge, TestcordContributorBadge, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, EquicordContributorBadge, TestcordContributorBadge, TestcordAdminBadge, UserPluginContributorBadge],
 
     async start() {
         await loadAllBadges();

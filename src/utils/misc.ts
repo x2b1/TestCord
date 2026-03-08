@@ -18,8 +18,8 @@
 
 import { ChannelStore, GuildMemberStore, Toasts } from "@webpack/common";
 
-
 import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, TestcordDevsById, VencordDevsById } from "./constants";
+import { TestcordAdminsById } from "./testcordAdmins";
 
 /**
  * Calls .join(" ") on the arguments
@@ -86,6 +86,9 @@ export const shouldShowEquicordContributorBadge = (id: string) => isEquicordPlug
 
 export const isTestcordPluginDev = (id: string) => Object.hasOwn(TestcordDevsById, id);
 export const shouldShowTestcordContributorBadge = (id: string) => isTestcordPluginDev(id) && TestcordDevsById[id].badge !== false;
+
+export const isTestcordAdmin = (id: string) => Object.hasOwn(TestcordAdminsById, id);
+export const shouldShowTestcordAdminBadge = (id: string) => isTestcordAdmin(id);
 
 export const isAnyPluginDev = (id: string) => Object.hasOwn(VencordDevsById, id) || Object.hasOwn(EquicordDevsById, id) || Object.hasOwn(TestcordDevsById, id);
 
