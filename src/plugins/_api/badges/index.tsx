@@ -156,20 +156,33 @@ async function loadAllBadges(noCache = false) {
     const init = {} as RequestInit;
     if (noCache) init.cache = "no-cache";
 
-    try {
-        const [vencordBadges, equicordBadges, testcordBadges, tbadgesBadges] = await Promise.all([
-            fetch("https://badges.vencord.dev/badges.json", init).then(r => r.ok ? r.json() : {}),
-            fetch("https://badges.equicord.org/badges.json", init).then(r => r.ok ? r.json() : {}),
-            fetch(TBADGES_JSON_URL, init).then(r => r.ok ? r.json() : {}),
-            fetch("https://raw.githubusercontent.com/x2b1/tbadges/main/badges.json", init).then(r => r.ok ? r.json() : {})
-        ]);
+    const urls = [
+        { key: "vencord", url: "https://badges.vencord.dev/badges.json" },
+        { key: "equicord", url: "https://badge.equicord.org/badges.json" },
+        { key: "testcord", url: TBADGES_JSON_URL }
+    ];
 
-        DonorBadges = vencordBadges;
-        EquicordDonorBadges = equicordBadges;
-        TestcordCustomBadges = { ...testcordBadges, ...tbadgesBadges };
-    } catch (e) {
-        new Logger("BadgeAPI#loadAllBadges").error(e);
-    }
+    const results = await Promise.allSettled(
+        urls.map(({ url }) => fetch(url, init).then(r => r.ok ? r.json() : {}))
+    );
+
+    const logger = new Logger("BadgeAPI#loadAllBadges");
+
+    // Process results
+    results.forEach((result, index) => {
+        const { key } = urls[index];
+        if (result.status === "fulfilled") {
+            if (key === "vencord") {
+                DonorBadges = result.value;
+            } else if (key === "equicord") {
+                EquicordDonorBadges = result.value;
+            } else if (key === "testcord") {
+                TestcordCustomBadges = result.value;
+            }
+        } else {
+            logger.error(`Failed to fetch ${key} badges:`, result.reason);
+        }
+    });
 }
 
 let intervalId: any;
@@ -340,11 +353,22 @@ export default definePlugin({
     // Get custom testcord badges (managed by /badge command)
     getTestCordCustomBadges(userId: string) {
         const userBadges = TestcordCustomBadges[userId];
-        if (!userBadges || !Array.isArray(userBadges)) return [];
+        if (!userBadges) return [];
 
-        return userBadges.map(badge => {
+        // Handle both array format and object format (with numeric keys like "0", "1")
+        let badgesArray: Array<{ tooltip: string; badge: string; }>;
+        if (Array.isArray(userBadges)) {
+            badgesArray = userBadges;
+        } else if (typeof userBadges === "object") {
+            // Convert object with numeric keys to array
+            badgesArray = Object.values(userBadges);
+        } else {
+            return [];
+        }
+
+        return badgesArray.map(badge => {
             // Check if badge URL is full URL or just filename
-            const iconSrc = badge.badge.startsWith("http")
+            const iconSrc = typeof badge.badge === "string" && badge.badge.startsWith("http")
                 ? badge.badge
                 : `${TBADGES_REPO_URL}/${badge.badge}`;
 
