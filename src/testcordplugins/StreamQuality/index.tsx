@@ -137,6 +137,9 @@ function patchTransportOptions(options: Record<string, any>, connection: any) {
         options.callBitRate = bitrateValue;
         options.callMinBitRate = bitrateValue;
         options.callMaxBitRate = bitrateValue;
+        options.minBitrate = bitrateValue;
+        options.maxBitrate = bitrateValue;
+        options.targetBitrate = bitrateValue;
     }
 
     if (s.resolutionEnabled) {
@@ -144,11 +147,15 @@ function patchTransportOptions(options: Record<string, any>, connection: any) {
         options.encodingVideoHeight = res.height;
         options.encodingVideoWidth = res.width;
         options.remoteSinkWantsPixelCount = res.height * res.width;
+        options.width = res.width;
+        options.height = res.height;
     }
 
     if (s.fpsEnabled) {
         options.encodingVideoFrameRate = s.fps;
         options.remoteSinkWantsMaxFramerate = s.fps;
+        options.framerate = s.fps;
+        options.maxFrameRate = s.fps;
     }
 
     if (s.keyframeIntervalEnabled) {
@@ -205,6 +212,8 @@ function patchDesktopSourceOptions(options: Record<string, any>) {
     if (settings.store.resolutionEnabled) {
         const res = getResolutionData(settings.store.resolution);
         options.resolution = res.height;
+        options.width = res.width;
+        options.height = res.height;
     }
 }
 
@@ -253,43 +262,50 @@ function triggerLiveUpdate() {
     }
 }
 
-let badgeUpdateInterval: any = null;
+const badgeObserver = new MutationObserver(() => updateBadgeLabels());
+let labelUpdaterInterval: any = null; // Added for the new stop() method
 
-function startBadgeUpdater() {
-    if (badgeUpdateInterval) clearInterval(badgeUpdateInterval);
-    badgeUpdateInterval = setInterval(() => {
+function updateBadgeLabels() {
+    const s = settings.store;
+    if (!s.fpsEnabled && !s.resolutionEnabled) return;
+
+    const res = getResolutionData(s.resolution);
+    const resLabel = s.resolutionEnabled ? res.label.split(" ")[0] : "1080p";
+    const fpsLabel = s.fpsEnabled ? `${s.fps}fps` : "60fps";
+    const targetText = `${resLabel} ${fpsLabel}`;
+
+    // Find standard stream badges like "1080p 60fps", "Source 60fps", "4K 60fps"
+    // Broad selector and check child nodes to ensure we catch it even if nested
+    const elements = document.querySelectorAll("div, span, button, strong, [class*='text']");
+    elements.forEach(el => {
+        const text = (el.textContent || "").trim();
+        // Match things like "1080p 60fps", "Source 60fps", "4K 60fps", "1440p 120fps", "720p 30"
+        if (/^(\d{3,4}p|Source|[48]K)\s\d{1,3}fps$/i.test(text) && text !== targetText) {
+            el.textContent = targetText;
+        }
+    });
+}
+
+function startLabelUpdater() {
+    if (labelUpdaterInterval) clearInterval(labelUpdaterInterval);
+    labelUpdaterInterval = setInterval(() => {
         if (activeConnections.size === 0) return;
-
-        const s = settings.store;
-        const resLabel = s.resolutionEnabled ? (s.resolution === 0 ? "Source" : `${getResolutionData(s.resolution).label.split(" ")[0]}`) : "1080p";
-        const fpsLabel = s.fpsEnabled ? `${s.fps}fps` : "60fps";
-        const targetText = `${resLabel} ${fpsLabel}`;
-
-        // Find standard stream badges like "1080p 60fps" or "720p 30fps"
-        const elements = document.querySelectorAll("div, span, txt");
-        elements.forEach(el => {
-            if (el.childNodes.length === 1 && el.childNodes[0].nodeType === Node.TEXT_NODE) {
-                const text = el.textContent || "";
-                if (/^(\d{3,4}p|Source)\s\d{2,3}fps$/.test(text) && text !== targetText) {
-                    el.textContent = targetText;
-                }
-            }
-        });
+        updateBadgeLabels();
     }, 1000);
 }
 
 function stopBadgeUpdater() {
-    if (badgeUpdateInterval) {
-        clearInterval(badgeUpdateInterval);
-        badgeUpdateInterval = null;
+    if (labelUpdaterInterval) {
+        clearInterval(labelUpdaterInterval);
+        labelUpdaterInterval = null;
     }
 }
 
 function onConnection(connection: any) {
     if (connection.context !== "stream") return;
 
-    const userId = UserStore.getCurrentUser()?.id;
-    if (connection.streamUserId !== userId) return;
+    // We only patch outbound streams
+    if (connection.streamUserId && connection.streamUserId !== UserStore.getCurrentUser()?.id) return;
 
     activeConnections.add(connection);
 
@@ -299,25 +315,112 @@ function onConnection(connection: any) {
 
     logger.info("Patching stream connection", connId);
 
-    const origSetTransportOptions = connection.conn.setTransportOptions;
-    connection.conn.setTransportOptions = function (this: any, options: Record<string, any>) {
-        patchTransportOptions(options, connection);
-        logger.info("Overridden transport options", options);
-        return Reflect.apply(origSetTransportOptions, this, [options]);
-    };
+    const s = settings.store;
+    const res = getResolutionData(s.resolution);
+    const bitrateValue = s.bitrate * 1000;
 
+    const origSetTransportOptions = connection.conn.setTransportOptions;
     const origSetDesktopSourceWithOptions = connection.conn.setDesktopSourceWithOptions;
+    const origSetStreamParameters = connection.conn.setStreamParameters;
+    const origInitializeStreamParameters = connection.conn.initializeStreamParameters;
+
+    if (origSetTransportOptions) {
+        connection.conn.setTransportOptions = function (this: any, options: Record<string, any>) {
+            patchTransportOptions(options, connection);
+            logger.info("Overridden transport options", options);
+            return origSetTransportOptions.apply(this, [options]);
+        };
+    }
+
     if (origSetDesktopSourceWithOptions) {
         connection.conn.setDesktopSourceWithOptions = function (this: any, options: Record<string, any>) {
             patchDesktopSourceOptions(options);
             logger.info("Overridden desktop source options", options);
-            return Reflect.apply(origSetDesktopSourceWithOptions, this, [options]);
+            return origSetDesktopSourceWithOptions.apply(this, [options]);
         };
     }
+
+    if (origSetStreamParameters) {
+        connection.conn.setStreamParameters = function (this: any, options: Record<string, any>) {
+            patchTransportOptions(options, connection); // Uses same param logic
+            logger.info("Overridden stream parameters", options);
+            return origSetStreamParameters.apply(this, [options]);
+        };
+    }
+
+    if (connection.videoQualityManager) {
+        const vqm = connection.videoQualityManager;
+
+        const oldGetQuality = vqm.getQuality;
+        vqm.getQuality = function (this: any, ...args: any[]) {
+            const quality = oldGetQuality.apply(this, args);
+            if (s.resolutionEnabled) {
+                quality.width = res.width;
+                quality.height = res.height;
+            }
+            if (s.fpsEnabled) {
+                quality.framerate = s.fps;
+            }
+            return quality;
+        };
+
+        const oldGetDesktopQuality = vqm.getDesktopQuality;
+        vqm.getDesktopQuality = function (this: any, ...args: any[]) {
+            const quality = oldGetDesktopQuality.apply(this, args);
+            if (s.resolutionEnabled) {
+                quality.width = res.width;
+                quality.height = res.height;
+            }
+            if (s.fpsEnabled) {
+                quality.framerate = s.fps;
+            }
+            return quality;
+        };
+
+        const oldApplyQualityConstraints = vqm.applyQualityConstraints;
+        vqm.applyQualityConstraints = function (this: any, ...args: any[]) {
+            const resConstraints = oldApplyQualityConstraints.apply(this, args);
+            if (s.resolutionEnabled) {
+                resConstraints.constraints.encodingVideoHeight = res.height;
+                resConstraints.constraints.encodingVideoWidth = res.width;
+            }
+            if (s.fpsEnabled) {
+                resConstraints.constraints.encodingVideoFrameRate = s.fps;
+            }
+            return resConstraints;
+        };
+    }
+
+    const forceEngineSettings = () => {
+        if (connection.conn.overwriteQualityForTesting) {
+            const settingsObject = {
+                encode: {
+                    height: s.resolutionEnabled ? res.height : 1080,
+                    width: s.resolutionEnabled ? res.width : 1920,
+                    framerate: s.fpsEnabled ? s.fps : 60
+                },
+                capture: {
+                    height: s.resolutionEnabled ? res.height : 1080,
+                    width: s.resolutionEnabled ? res.width : 1920,
+                    framerate: s.fpsEnabled ? s.fps : 60
+                },
+                bitrateMin: bitrateValue,
+                bitrateMax: bitrateValue,
+                bitrateTarget: bitrateValue
+            };
+            connection.conn.overwriteQualityForTesting(settingsObject);
+            logger.info("Forced engine quality overwrite", settingsObject);
+        }
+    };
 
     const emitter = connection.emitter ?? connection;
 
     const onConnected = () => {
+        // Double check if it's our stream
+        if (connection.streamUserId && connection.streamUserId !== UserStore.getCurrentUser()?.id) return;
+
+        forceEngineSettings();
+
         const transportOptions: Record<string, any> = {};
 
         try {
@@ -331,7 +434,7 @@ function onConnection(connection: any) {
 
         patchTransportOptions(transportOptions, connection);
         logger.info("Force updating transport options on connected", transportOptions);
-        origSetTransportOptions(transportOptions);
+        origSetTransportOptions.apply(connection.conn, [transportOptions]);
 
         if (origSetDesktopSourceWithOptions) {
             const [type, sourceId] = connection.goLiveSourceIdentifier?.split(":") ?? ["screen", "0"];
@@ -346,7 +449,7 @@ function onConnection(connection: any) {
             };
             patchDesktopSourceOptions(desktopSourceOptions);
             logger.info("Force updating desktop source options on connected", desktopSourceOptions);
-            origSetDesktopSourceWithOptions(desktopSourceOptions);
+            origSetDesktopSourceWithOptions.apply(connection.conn, [desktopSourceOptions]);
         }
     };
 
@@ -414,7 +517,12 @@ export default definePlugin({
             };
 
             emitter.on("connection", connectionHandler);
-            startBadgeUpdater();
+            startLabelUpdater(); // Changed from startBadgeUpdater
+            badgeObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
             logger.info("CustomStreamQuality started");
         } catch (e) {
             logger.error("Failed to start CustomStreamQuality", e);
@@ -430,6 +538,7 @@ export default definePlugin({
             mediaEngine = null;
             patchedConnections.clear();
             activeConnections.clear();
+            badgeObserver.disconnect();
             stopBadgeUpdater();
             logger.info("CustomStreamQuality stopped");
         } catch (e) {

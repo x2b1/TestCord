@@ -8,15 +8,19 @@ import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { MediaEngineStore } from "@webpack/common";
+import { MediaEngineStore, Menu } from "@webpack/common";
 
 const logger = new Logger("CustomMicQuality");
 
 const QUALITY_OPTIONS = [
-    { label: "Absolute Trash (1kbps, 8kHz)", value: "absolute_trash", bitrate: 1000, rate: 8000 },
-    { label: "Garbage (4kbps, 8kHz)", value: "garbage", bitrate: 4000, rate: 8000 },
-    { label: "Popcorn (8kbps, 8kHz)", value: "popcorn", bitrate: 8000, rate: 8000 },
-    { label: "Low (32kbps, 24kHz)", value: "low", bitrate: 32000, rate: 24000 },
+    { label: "Popcorn (1bps, 10Hz)", value: "null", bitrate: 1, rate: 10 },
+    { label: "Radio (50bps, 500Hz)", value: "submarine", bitrate: 50, rate: 500 },
+    { label: "Trash (100bps, 1kHz)", value: "am_radio", bitrate: 100, rate: 1000 },
+    { label: "mid (200bps, 2kHz)", value: "fax", bitrate: 200, rate: 2000 },
+    { label: "better mid (500bps, 4kHz)", value: "absolute_trash", bitrate: 500, rate: 4000 },
+    { label: "Bad (1kbps, 8kHz)", value: "garbage", bitrate: 1000, rate: 8000 },
+    { label: "Almost bad (4kbps, 12kHz)", value: "popcorn", bitrate: 4000, rate: 12000 },
+    { label: "Low (16kbps, 16kHz)", value: "low", bitrate: 16000, rate: 16000 },
     { label: "Standard (64kbps, 48kHz)", value: "standard", bitrate: 64000, rate: 48000 },
     { label: "High (128kbps, 48kHz)", value: "high", bitrate: 128000, rate: 48000 },
     { label: "Studio (512kbps, 48kHz)", value: "studio", bitrate: 512000, rate: 48000 },
@@ -25,6 +29,10 @@ const QUALITY_OPTIONS = [
 const EFFECTS_OPTIONS = [
     { label: "None", value: "none" },
     { label: "Robot / 8-bit", value: "robot" },
+    { label: "Deep Voice", value: "deep" },
+    { label: "Echo Chamber", value: "echo" },
+    { label: "Radio Static", value: "static" },
+    { label: "Demon", value: "demon" },
 ];
 
 const settings = definePluginSettings({
@@ -91,7 +99,31 @@ function patchTransportOptions(options: Record<string, any>, connection: any) {
         }
     }
 
-    if (s.qualityEnabled) {
+    // If a fun effect is active, apply it and skip quality settings
+    if (s.funEffect !== "none") {
+        if (s.funEffect === "robot") {
+            options.audioEncoder.rate = 8000;
+            options.audioEncoder.pacsize = 20;
+            options.encodingVoiceBitRate = 8000;
+        } else if (s.funEffect === "deep") {
+            options.audioEncoder.rate = 6000;
+            options.audioEncoder.pacsize = 80;
+            options.encodingVoiceBitRate = 3000;
+        } else if (s.funEffect === "echo") {
+            options.audioEncoder.rate = 16000;
+            options.audioEncoder.pacsize = 160;
+            options.encodingVoiceBitRate = 8000;
+        } else if (s.funEffect === "static") {
+            options.audioEncoder.rate = 4000;
+            options.audioEncoder.pacsize = 5;
+            options.encodingVoiceBitRate = 2000;
+        } else if (s.funEffect === "demon") {
+            options.audioEncoder.rate = 3000;
+            options.audioEncoder.pacsize = 45;
+            options.encodingVoiceBitRate = 1500;
+        }
+    } else if (s.qualityEnabled) {
+        // Only apply quality settings when no effect is active
         const qualityData = getQualityData(s.quality);
         options.encodingVoiceBitRate = qualityData.bitrate;
         options.audioEncoder.rate = qualityData.rate;
@@ -101,12 +133,6 @@ function patchTransportOptions(options: Record<string, any>, connection: any) {
         options.audioEncoder.channels = 2;
     } else {
         options.audioEncoder.channels = 1;
-    }
-
-    if (s.funEffect === "robot") {
-        options.audioEncoder.rate = 8000;
-        options.audioEncoder.pacsize = 20; // very low packet size makes it sound robotic and stuttery
-        options.encodingVoiceBitRate = 8000;
     }
 
     options.echoCancellation = s.echoCancellation;
@@ -212,6 +238,210 @@ export default definePlugin({
     description: "Customize your microphone quality, bitrates, stereo mode, echo cancellation, and apply fun effects.",
     authors: [TestcordDevs.x2b],
     settings,
+    contextMenus: {
+        "audio-device-context"(children, props) {
+            if (props.renderInputDevices) {
+                children.push(
+                    <Menu.MenuSeparator />,
+                    <Menu.MenuItem
+                        id="mic-quality-submenu"
+                        label="Mic Quality"
+                        action={() => { }}
+                    >
+                        <>
+                            <Menu.MenuCheckboxItem
+                                id="quality-enabled"
+                                label="Quality Override"
+                                checked={settings.store.qualityEnabled}
+                                action={() => {
+                                    settings.store.qualityEnabled = !settings.store.qualityEnabled;
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-null"
+                                label="Popcorn"
+                                checked={settings.store.quality === "null"}
+                                action={() => {
+                                    settings.store.quality = "null";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-submarine"
+                                label="Radio"
+                                checked={settings.store.quality === "submarine"}
+                                action={() => {
+                                    settings.store.quality = "submarine";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-am-radio"
+                                label="Trash"
+                                checked={settings.store.quality === "am_radio"}
+                                action={() => {
+                                    settings.store.quality = "am_radio";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-fax"
+                                label="mid"
+                                checked={settings.store.quality === "fax"}
+                                action={() => {
+                                    settings.store.quality = "fax";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-absolute-trash"
+                                label="better mid"
+                                checked={settings.store.quality === "absolute_trash"}
+                                action={() => {
+                                    settings.store.quality = "absolute_trash";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-garbage"
+                                label="Bad"
+                                checked={settings.store.quality === "garbage"}
+                                action={() => {
+                                    settings.store.quality = "garbage";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-popcorn"
+                                label="Almost bad"
+                                checked={settings.store.quality === "popcorn"}
+                                action={() => {
+                                    settings.store.quality = "popcorn";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-low"
+                                label="Low"
+                                checked={settings.store.quality === "low"}
+                                action={() => {
+                                    settings.store.quality = "low";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-standard"
+                                label="Standard"
+                                checked={settings.store.quality === "standard"}
+                                action={() => {
+                                    settings.store.quality = "standard";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-high"
+                                label="High"
+                                checked={settings.store.quality === "high"}
+                                action={() => {
+                                    settings.store.quality = "high";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="quality-preset"
+                                id="quality-studio"
+                                label="Studio"
+                                checked={settings.store.quality === "studio"}
+                                action={() => {
+                                    settings.store.quality = "studio";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                        </>
+                    </Menu.MenuItem>,
+                    <Menu.MenuItem
+                        id="mic-effect-submenu"
+                        label="Voice Effect"
+                        action={() => { }}
+                    >
+                        <>
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-none"
+                                label="None"
+                                checked={settings.store.funEffect === "none"}
+                                action={() => {
+                                    settings.store.funEffect = "none";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-robot"
+                                label="Robot / 8-bit"
+                                checked={settings.store.funEffect === "robot"}
+                                action={() => {
+                                    settings.store.funEffect = "robot";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-deep"
+                                label="Deep Voice"
+                                checked={settings.store.funEffect === "deep"}
+                                action={() => {
+                                    settings.store.funEffect = "deep";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-echo"
+                                label="Echo Chamber"
+                                checked={settings.store.funEffect === "echo"}
+                                action={() => {
+                                    settings.store.funEffect = "echo";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-static"
+                                label="Radio Static"
+                                checked={settings.store.funEffect === "static"}
+                                action={() => {
+                                    settings.store.funEffect = "static";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                            <Menu.MenuRadioItem
+                                group="voice-effect"
+                                id="effect-demon"
+                                label="Demon"
+                                checked={settings.store.funEffect === "demon"}
+                                action={() => {
+                                    settings.store.funEffect = "demon";
+                                    triggerLiveUpdate();
+                                }}
+                            />
+                        </>
+                    </Menu.MenuItem>
+                );
+            }
+        }
+    },
     patches: [
         // Also inject physical stereo codec change like StereoMic does to ensure WebRTC accepts stereo channel mapping.
         {
