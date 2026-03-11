@@ -51,16 +51,18 @@ export const Wrap = {
 export interface FlexProps extends HTMLAttributes<HTMLDivElement> {
     flexDirection?: CSSProperties["flexDirection"];
     gap?: CSSProperties["gap"];
+    alignContent?: CSSProperties["alignContent"];
     justifyContent?: CSSProperties["justifyContent"];
     alignItems?: CSSProperties["alignItems"];
     flexWrap?: CSSProperties["flexWrap"];
 }
 
-export function Flex({ flexDirection, gap = "1em", justifyContent, alignItems, flexWrap, children, style, ...restProps }: FlexProps) {
+export function Flex({ flexDirection, gap = "1em", alignContent, justifyContent, alignItems, flexWrap, children, style, ...restProps }: FlexProps) {
     style = {
         display: "flex",
         flexDirection,
         gap,
+        alignContent,
         justifyContent,
         alignItems,
         flexWrap,
