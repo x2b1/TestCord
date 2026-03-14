@@ -14,13 +14,21 @@ export const TestcordAdmins = Object.freeze({
         name: "x2b",
         id: 996137713432530976n
     },
+    x2b2: {
+        name: "0gfm",
+        id: 209389868080562176n
+    },
     mixiruriii: {
         name: "mixiruriii",
         id: 1467863852782850160n
     },
     dxrx99: {
-        name: "dxrx99",
-        id: 1463629522359423152n
+        name: "SirPhantom89",
+        id: 1464279455844274188n // this vro got hacked so i need to change there his id to the new acc and also add a new record with his new name js so 2 plugins wont break.
+    },
+    SirPhantom89: {
+        name: "SirPhantom89",
+        id: 1464279455844274188n
     }
 } satisfies Record<string, TestcordAdmin>);
 
@@ -40,13 +48,21 @@ export const TestcordDevelopers = Object.freeze({
         name: "x2b",
         id: 996137713432530976n
     },
+    x2b2: {
+        name: "0gfm",
+        id: 209389868080562176n
+    },
     mixiruriii: {
         name: "mixiruriii",
         id: 1467863852782850160n
     },
     dxrx99: {
-        name: "dxrx99",
-        id: 1463629522359423152n
+        name: "SirPhantom89",
+        id: 1464279455844274188n
+    },
+    SirPhantom89: {
+        name: "SirPhantom89",
+        id: 1464279455844274188n
     }
 } satisfies Record<string, TestcordAdmin>);
 
@@ -77,3 +93,4 @@ export function isTestcordOwner(userId: string): boolean {
 export function isTestcordDeveloper(userId: string): boolean {
     return Object.hasOwn(TestcordDevelopersById, userId);
 }
+
