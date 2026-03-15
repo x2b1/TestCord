@@ -1,4 +1,4 @@
-<img src="./browser/icon.png" width="40" align="left" alt="Testcord"> Testcord
+<img src="./browser/icon.png" width="40" align="left" alt="Testcord">Testcord
 
 [![Release](https://img.shields.io/github/v/release/x2b1/TestCord?label=Latest+Release&color=blue)](https://github.com/x2b1/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
 [![Discord](https://img.shields.io/discord/1434211283317690502?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/EMDpkV57gW)
