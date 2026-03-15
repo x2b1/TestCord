@@ -8,7 +8,7 @@ import { CheckedTextInput } from "@components/CheckedTextInput";
 import { Margins } from "@utils/margins";
 import { ModalContent, ModalHeader, ModalRoot, openModalLazy } from "@utils/modal";
 import { Forms, GuildStore, PermissionsBits, PermissionStore, React, Tooltip, UserStore } from "@webpack/common";
-import { Role } from "discord-types/general";
+import { Role } from "@vencord/discord-types";
 
 import { createRole } from "./api";
 

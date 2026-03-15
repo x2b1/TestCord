@@ -9,7 +9,7 @@ import { classNameFactory } from "@api/Styles";
 import { Avatar } from "@webpack/common";
 import { DataStore } from "@api/index";
 import { useMemo } from "@webpack/common";
-import type { Channel, Message, User } from "discord-types/general";
+import type { Channel, Message, User } from "@vencord/discord-types";
 
 const DiscordAPI = RestAPI;
 

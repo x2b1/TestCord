@@ -5,7 +5,7 @@
  */
 
 import { Constants, RestAPI } from "@webpack/common";
-import { Guild, Role } from "discord-types/general";
+import { Guild, Role } from "@vencord/discord-types";
 
 
 async function fetchBlob(url: string) {

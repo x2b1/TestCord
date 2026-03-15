@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Channel } from "discord-types/general";
+import { Channel } from "@vencord/discord-types";
 
 export interface BooProps {
     channel: Channel;

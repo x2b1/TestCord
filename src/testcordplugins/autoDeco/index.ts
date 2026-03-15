@@ -8,7 +8,7 @@ import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Menu, React, FluxDispatcher } from "@webpack/common";
-import { Channel, User } from "discord-types/general";
+import { Channel, User } from "@vencord/discord-types";
 import { TestcordDevs } from "@utils/constants";
 
 const VoiceActions = findByPropsLazy("leaveChannel");
