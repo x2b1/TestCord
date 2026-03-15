@@ -1,12 +1,10 @@
 /*
-Made with ❤️ by neoarz
-I am not responsible for any damage caused by this plugin; use at your own risk
-Vencord does not endorse/support this plugin (Works with Equicord as well)
-dm @neoarz if u need help or have any questions
-https://github.com/neoarz/NitroSniper
-*/
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
-import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import { findByPropsLazy } from "@webpack";
@@ -41,8 +39,8 @@ function processQueue() {
 
 export default definePlugin({
     name: "NitroSniper",
-    description: "Automatically redeems Nitro gift links sent in chat",
-    authors: [Devs.neoarz],
+    description: "Automatically redeems Nitro gift links sent in chat, originally made by neoarz but i fixed it a bit",
+    authors: [TestcordDevs.x2b, TestcordDevs.neoarz],
 
     start() {
         startTime = Date.now();
@@ -64,4 +62,3 @@ export default definePlugin({
         }
     }
 });
-

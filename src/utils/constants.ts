@@ -1319,7 +1319,11 @@ export const TestcordDevs = Object.freeze({
     mixiruri: {
         name: "mixiruri",
         id: 1467863852782850160n
-    }
+    },
+    neoarz: {
+        name: "neoarz",
+        id: 1015372540937502851n
+    },
 } satisfies Record<string, Dev>);
 
 // iife so #__PURE__ works correctly
@@ -1346,4 +1350,3 @@ export const TestcordDevsById = /* #__PURE__*/ (() =>
             .map(([_, v]) => [v.id, v] as const)
     ))
 )() as Record<string, Dev>;
-
