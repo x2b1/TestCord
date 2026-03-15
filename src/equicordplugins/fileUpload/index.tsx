@@ -22,51 +22,56 @@ import { cancelCurrentUpload, getUploadState, subscribeUploadState, uploadFile, 
 const cl = classNameFactory("vc-file-upload-");
 
 const ProgressBarInner = () => {
-    const [state, setState] = useState(getUploadState);
+    try {
+        const [state, setState] = useState(getUploadState);
 
-    useEffect(() => subscribeUploadState(() => setState(getUploadState())), []);
+        useEffect(() => subscribeUploadState(() => setState(getUploadState())), []);
 
-    if (state.phase === "idle") {
+        if (state.phase === "idle") {
+            return null;
+        }
+
+        const percentage = Math.max(0, Math.min(100, state.percent));
+
+        return (
+            <div
+                className={cl("progress-wrap")}
+                data-phase={state.phase}
+            >
+                <div className={cl("progress-head")}>
+                    <div className={cl("progress-label")}>
+                        {state.status || "Uploading..."}
+                    </div>
+                    <div className={cl("progress-meta")}>
+                        <span className={cl("progress-attempt")}>
+                            {state.attempt > 0 && state.totalAttempts > 0 ? `${state.attempt}/${state.totalAttempts}` : ""}
+                        </span>
+                        {state.canCancel && (
+                            <button
+                                className={cl("progress-cancel")}
+                                type="button"
+                                onClick={cancelCurrentUpload}
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <div className={cl("progress-track")}>
+                    <div
+                        className={cl("progress-fill")}
+                        style={{ width: `${percentage}%` }}
+                    />
+                </div>
+                <div className={cl("progress-file")}>
+                    {state.fileName || ""}{state.currentServiceLabel ? ` • ${state.currentServiceLabel}` : ""}
+                </div>
+            </div>
+        );
+    } catch (e) {
+        console.error("[FileUpload] ProgressBar error:", e);
         return null;
     }
-
-    const percentage = Math.max(0, Math.min(100, state.percent));
-
-    return (
-        <div
-            className={cl("progress-wrap")}
-            data-phase={state.phase}
-        >
-            <div className={cl("progress-head")}>
-                <div className={cl("progress-label")}>
-                    {state.status || "Uploading..."}
-                </div>
-                <div className={cl("progress-meta")}>
-                    <span className={cl("progress-attempt")}>
-                        {state.attempt > 0 && state.totalAttempts > 0 ? `${state.attempt}/${state.totalAttempts}` : ""}
-                    </span>
-                    {state.canCancel && (
-                        <button
-                            className={cl("progress-cancel")}
-                            type="button"
-                            onClick={cancelCurrentUpload}
-                        >
-                            Cancel
-                        </button>
-                    )}
-                </div>
-            </div>
-            <div className={cl("progress-track")}>
-                <div
-                    className={cl("progress-fill")}
-                    style={{ width: `${percentage}%` }}
-                />
-            </div>
-            <div className={cl("progress-file")}>
-                {state.fileName || ""}{state.currentServiceLabel ? ` • ${state.currentServiceLabel}` : ""}
-            </div>
-        </div>
-    );
 };
 
 const ProgressBar = ErrorBoundary.wrap(ProgressBarInner, { noop: true });
@@ -152,12 +157,12 @@ export default definePlugin({
     settings,
     patches: [
         {
-            find: ".CREATE_FORUM_POST||",
+            find: '"channelId",',
             replacement: {
-                match: /(textValue:.{0,50}channelId:\i\.id\}\)),\i/,
-                replace: "$1,$self.renderUploadProgress()"
+                match: /\{[^}]*channelId:\i\.id[^}]*\}[^}]*\),\s*\i\(/,
+                replace: "$1,progress:$self.renderUploadProgress()$2"
             }
-        }
+        },
     ],
     contextMenus: {
         "message": messageContextMenuPatch,
@@ -165,6 +170,11 @@ export default definePlugin({
         "channel-attach": channelAttachMenuPatch
     },
     renderUploadProgress() {
-        return <ProgressBar />;
+        try {
+            return <ProgressBar />;
+        } catch (e) {
+            console.error("[FileUpload] renderUploadProgress error:", e);
+            return null;
+        }
     }
 });
