@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import AuditLogChannelRow from "./components/AuditLogChannelRow";
@@ -70,8 +70,3 @@ export default definePlugin({
     AuditLogPage,
     AuditLogPageWrapper,
 });
-
-
-
-
-
