@@ -22,9 +22,6 @@ export interface ProfileBadge {
 let badges: ProfileBadge[] = [];
 
 export const Badges = {
-    addBadge,
-    removeBadge,
-    clearBadges,
     /**
      * Add a badge that conditionally shows on profiles.
      */
@@ -59,36 +56,52 @@ const patchesApplied = {
     getUserProfile: false
 };
 
-applyBadgesPatches() {
+export function init() {
+    // Wait for store if not ready
+    const checkStore = () => {
+        if (UserProfileStore.getUserProfile) {
+            applyBadgesPatches();
+        } else {
+            setTimeout(checkStore, 100);
+        }
+    };
+    checkStore();
+}
+
+function applyBadgesPatches() {
     if (patchesApplied.getUserProfile || !UserProfileStore.getUserProfile) return;
 
     originalGetUserProfile = UserProfileStore.getUserProfile;
     UserProfileStore.getUserProfile = function (userId: string) {
         const profile = originalGetUserProfile.call(this, userId);
-        if (!profile || !profile.badges) return profile;
+        if (!profile) return profile;
+        if (!profile.badges) profile.badges = [];
 
         const filteredBadges = badges
             .filter(badge => badge.shouldShow({ userId }))
             .sort((a, b) => a.position - b.position);
 
-        // Prepend/append based on position
         const startBadges = filteredBadges.filter(b => b.position === BadgePosition.START);
         const endBadges = filteredBadges.filter(b => b.position === BadgePosition.END);
 
+        const newStartBadges = startBadges.map(b => ({
+            id: `custom-${b.description.replace(/[^a-z0-9]/gi, "")}-${userId.slice(-8)}`,
+            description: b.description,
+            icon: b.image.startsWith("http") ? b.image : `/assets/${b.image}.png`,
+            link: b.link
+        }));
+
+        const newEndBadges = endBadges.map(b => ({
+            id: `custom-${b.description.replace(/[^a-z0-9]/gi, "")}-${userId.slice(-8)}`,
+            description: b.description,
+            icon: b.image.startsWith("http") ? b.image : `/assets/${b.image}.png`,
+            link: b.link
+        }));
+
         profile.badges = [
-            ...startBadges.map(b => ({
-                id: Math.random().toString(36), // Fake ID for client-side
-                description: b.description,
-                icon: b.image.startsWith("http") ? b.image : `https://cdn.discordapp.com/badge-icons/${b.image}.png`,
-                link: b.link
-            })),
+            ...newStartBadges,
             ...profile.badges,
-            ...endBadges.map(b => ({
-                id: Math.random().toString(36),
-                description: b.description,
-                icon: b.image.startsWith("http") ? b.image : `https://cdn.discordapp.com/badge-icons/${b.image}.png`,
-                link: b.link
-            }))
+            ...newEndBadges
         ];
 
         return profile;
@@ -97,10 +110,13 @@ applyBadgesPatches() {
     patchesApplied.getUserProfile = true;
 }
 
-export function removeBadgesPatches() {
-    if (originalGetUserProfile && patchesApplied.getUserProfile) {
+export function unpatch() {
+    if (originalGetUserProfile && patchesApplied.getUserProfile && UserProfileStore.getUserProfile) {
         UserProfileStore.getUserProfile = originalGetUserProfile;
         patchesApplied.getUserProfile = false;
     }
     Badges.clearBadges();
 }
+
+// Auto init
+init();
