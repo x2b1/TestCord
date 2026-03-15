@@ -1,15 +1,19 @@
-import definePlugin, { OptionType } from "@utils/types";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import {
     NavContextMenuPatchCallback,
-    addContextMenuPatch,
-    removeContextMenuPatch,
 } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
-import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { Menu, React, FluxDispatcher } from "@webpack/common";
-import { Channel, User } from "discord-types/general";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { User } from "@vencord/discord-types";
+import { findByPropsLazy, findStoreLazy } from "@webpack";
+import { FluxDispatcher, Menu, React } from "@webpack/common";
 
 const VoiceActions = findByPropsLazy("leaveChannel");
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
@@ -25,7 +29,7 @@ const settings = definePluginSettings({
 });
 
 let targetUserId: string | null = null;
-let lastProcessedStates: Map<string, string | null> = new Map();
+const lastProcessedStates: Map<string, string | null> = new Map();
 
 const UserContextMenuPatch: NavContextMenuPatchCallback = (
     children,
@@ -62,7 +66,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
 };
 
 export default definePlugin({
-    name: "AutoDeco",
+    name: "AutoDisconnect",
     description:
         "Automatically disconnects from voice channel when a specific user joins",
     authors: [TestcordDevs.x2b],
@@ -119,8 +123,3 @@ export default definePlugin({
         lastProcessedStates.clear();
     },
 });
-
-
-
-
-
