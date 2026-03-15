@@ -1,4 +1,4 @@
-# [`<img src="./browser/icon.png" width="40" align="left" alt="Testcord">`](https://github.com/x2b1/Testcord) Testcord
+[# [`<img src="./browser/icon.png" width="40" align="left" alt="Testcord">`](https://github.com/x2b1/Testcord) Testcord
 
 [![Equibop](https://img.shields.io/badge/Equibop-grey?style=flat)](https://github.com/Equicord/Equibop)
 [![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
@@ -122,3 +122,4 @@ Additionally, make sure not to post screenshots with Testcord in a server where 
 Server owners often don't like people using client mods since it might give you some advantages or it might make trolling easier, so in most cases the owner won't risk it and just ban you.
 
 </details>
+](https://github.com/Mixiruri/TestCord/blob/main/README.md)
