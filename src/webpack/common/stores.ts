@@ -145,5 +145,6 @@ waitForStore("UserAffinitiesV2Store", m => UserAffinitiesStore = m);
 waitForStore("ThemeStore", m => {
     ThemeStore = m;
     // Importing this directly can easily cause circular imports. For this reason, use a non import access here.
-    Vencord.QuickCss?.initQuickCssThemeStore?.();
+    Vencord.QuickCss?.initQuickCssThemeStore();
+    // for some reason equicord removed quickcss from vencord.ts so i cant do shit abt it - x2b
 });

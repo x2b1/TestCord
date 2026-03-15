@@ -181,7 +181,7 @@ function initTrayIpc() {
             VencordNative.tray.setUpdateState(isOutdated);
 
             if (isOutdated) {
-                showNotice("An Equicord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
+                showNotice("A Testcord update is available!", "View Update", () => openSettingsTabModal(UpdaterTab!));
             } else {
                 showNotice("No updates available, you're on the latest version!", "OK", popNotice);
             }

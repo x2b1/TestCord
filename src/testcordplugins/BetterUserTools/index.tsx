@@ -6,13 +6,13 @@
 
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { UserAreaButton } from "@api/UserArea";
 import { getUserSettingLazy } from "@api/UserSettings";
 import { EquicordDevs, TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { MediaEngineStore, React, showToast, Toasts, UserStore, VoiceStateStore } from "@webpack/common";
-import { UserAreaButton } from "@api/UserArea";
 
 type LoopbackActions = {
     setLoopback(tag: string, enabled: boolean): unknown;

@@ -4,96 +4,96 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 
 const UserStore = findByPropsLazy("getCurrentUser", "getUser");
 
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Activer la commande /mytoken",
+        description: "activates the command /mytoken",
         default: true
     },
     showInDMs: {
         type: OptionType.BOOLEAN,
-        description: "Permettre l'utilisation de la commande dans les DMs",
+        description: "does the token show in dms or not",
         default: true
     }
 });
 
 export default definePlugin({
     name: "Token Display",
-    description: "Affiche le token du compte en cours d'utilisation avec la commande /mytoken",
+    description: "shows ur token with the command: /mytoken",
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 
     settings,
 
     start() {
-        console.log("[Token Display] Plugin démarré - Commande /mytoken disponible");
+        console.log("mytoken plugin started");
     },
 
     stop() {
-        console.log("[Token Display] Plugin arrêté");
+        console.log("mytoken plugin disabled");
     },
 
     commands: [
         {
             name: "mytoken",
-            description: "Affiche le token du compte en cours d'utilisation",
+            description: "shows ur token (do not share with anyone)",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [],
             execute: async (opts, ctx) => {
-                console.log("[Token Display] Commande /mytoken exécutée");
+                console.log("executed the /mytoken command");
 
                 if (!settings.store.enabled) {
-                    console.log("[Token Display] Commande désactivée dans les paramètres");
+                    console.log("token display deactivated");
                     sendBotMessage(ctx.channel.id, {
-                        content: "❌ Cette commande est désactivée dans les paramètres."
+                        content: "the command is deactivated lil vro"
                     });
                     return;
                 }
 
                 // Vérifier si on est dans un DM et si c'est autorisé
                 if (!ctx.guild && !settings.store.showInDMs) {
-                    console.log("[Token Display] Commande non autorisée dans les DMs");
+                    console.log("command is not turned on in dms");
                     sendBotMessage(ctx.channel.id, {
-                        content: "❌ Cette commande n'est pas autorisée dans les messages privés."
+                        content: "cant send ts in a dm lil vro."
                     });
                     return;
                 }
 
                 try {
-                    console.log("[Token Display] Tentative de récupération du token...");
+                    console.log("tryna get ur token");
 
                     // Récupérer le token
                     const token = getCurrentToken();
 
                     if (!token) {
-                        console.log("[Token Display] Aucun token trouvé");
+                        console.log("cant get no token");
                         sendBotMessage(ctx.channel.id, {
-                            content: "❌ Impossible de récupérer le token. Assurez-vous d'être connecté."
+                            content: "impossible to get da token vro"
                         });
                         return;
                     }
 
-                    console.log("[Token Display] Token récupéré avec succès");
+                    console.log("success, got ur token");
 
                     // Récupérer les informations de l'utilisateur actuel
                     const currentUser = UserStore.getCurrentUser();
-                    const username = currentUser ? `${currentUser.username}#${currentUser.discriminator}` : "Utilisateur inconnu";
+                    const username = currentUser ? `${currentUser.username}#${currentUser.discriminator}` : "utilities i think, idk french";
 
                     sendBotMessage(ctx.channel.id, {
-                        content: `🔑 **Token du compte ${username}:**\n\`\`\`\n${token}\n\`\`\`\n⚠️ **Attention:** Ne partagez jamais votre token avec d'autres personnes !`
+                        content: `🔑 **Token of: ${username}:**\n\`\`\`\n${token}\n\`\`\`\n⚠️ **Attention:** this token can be used to access ${username}'s account!`
                     });
                 } catch (error) {
-                    console.error("[Token Display] Erreur lors de la récupération du token:", error);
+                    console.error("error:", error);
                     sendBotMessage(ctx.channel.id, {
-                        content: "❌ Une erreur est survenue lors de la récupération du token."
+                        content: "error when gettin token i think."
                     });
                 }
             }
@@ -179,7 +179,7 @@ function getCurrentToken(): string | null {
             const originalFetch = window.fetch;
             let capturedToken: string | null = null;
 
-            window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+            window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
                 const headers = init?.headers as HeadersInit;
                 if (headers && typeof headers === "object") {
                     const authHeader = (headers as any).Authorization || (headers as any).authorization;
@@ -210,8 +210,3 @@ function getCurrentToken(): string | null {
         return null;
     }
 }
-
-
-
-
-
