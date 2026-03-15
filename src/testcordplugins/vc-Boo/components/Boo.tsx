@@ -8,7 +8,7 @@ import "./styles.css";
 
 import { findByPropsLazy } from "@webpack";
 import { MessageStore, React, useEffect, UserStore, useStateFromStores, useState } from "@webpack/common";
-import { Message } from "discord-types/general";
+import { Message } from "@vencord/discord-types";
 
 import { BooProps } from "../types";
 import IconGhost from "./IconGhost";

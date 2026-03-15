@@ -11,7 +11,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Menu, PresenceStore, React, SelectedChannelStore, Tooltip, UserStore } from "@webpack/common";
-import type { Channel, User } from "discord-types/general";
+import type { Channel, User } from "@vencord/discord-types";
 import { CSSProperties } from "react";
 
 import { NotificationsOffIcon } from "./components/NotificationsOffIcon";

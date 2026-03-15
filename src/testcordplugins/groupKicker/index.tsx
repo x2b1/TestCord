@@ -19,7 +19,7 @@ import {
     RestAPI,
     UserStore,
 } from "@webpack/common";
-import { Channel } from "discord-types/general";
+import { Channel } from "@vencord/discord-types";
 
 const settings = definePluginSettings({
     enabled: {

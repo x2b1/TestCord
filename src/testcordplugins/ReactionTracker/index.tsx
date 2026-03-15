@@ -4,7 +4,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { cache } from "@webpack";
 import { Button, Constants, Forms, MessageStore, Parser, RestAPI, Toasts, useEffect, UserStore, useState } from "@webpack/common";
-import { Message } from "discord-types/general";
+import { Message } from "@vencord/discord-types";
 
 const DATA_STORE_KEY = "huskchart";
 type Husk = {

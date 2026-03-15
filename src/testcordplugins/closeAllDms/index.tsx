@@ -18,7 +18,7 @@ import {
   Toasts,
   Menu,
 } from "@webpack/common";
-import { Channel } from "discord-types/general";
+import { Channel } from "@vencord/discord-types";
 
 // Find ChannelActionCreators to close DMs
 const ChannelActionCreators = findByPropsLazy(

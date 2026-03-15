@@ -13,7 +13,7 @@ import { showNotification } from "@api/Notifications";
 import definePlugin, { OptionType } from "@utils/types";
 import { findStoreLazy, findByPropsLazy } from "@webpack";
 import { GuildStore, Menu, UserStore } from "@webpack/common";
-import { Guild } from "discord-types/general";
+import { Guild } from "@vencord/discord-types";
 import { TestcordDevs } from "@utils/constants";
 
 const settings = definePluginSettings({

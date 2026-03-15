@@ -22,7 +22,7 @@ import {
     Toasts,
     UserStore
 } from "@webpack/common";
-import type { Channel, User } from "discord-types/general";
+import type { Channel, User } from "@vencord/discord-types";
 import type { PropsWithChildren, SVGProps } from "react";
 
 const HeaderBarIcon = LazyComponent(() => {

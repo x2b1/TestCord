@@ -11,7 +11,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { ChannelStore, FluxDispatcher, Menu, RestAPI, showToast, Toasts, UserStore } from "@webpack/common";
-import { Channel } from "discord-types/general";
+import { Channel } from "@vencord/discord-types";
 
 // Utiliser PrivateChannelSortStore comme dans les autres plugins
 const PrivateChannelSortStore = findStoreLazy("PrivateChannelSortStore") as { getPrivateChannelIds: () => string[]; };
