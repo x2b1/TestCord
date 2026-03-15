@@ -8,7 +8,7 @@ env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.ETOKEN }}
     GH_TOKEN: ${{ github.token }}
-    REPO: Equicord/Equibored
+    REPO: x2b1/TestCord
     USERNAME: GitHub-Actions
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
     Build:
-        name: Build Equicord
+        name: Build Testcord
         runs-on: ubuntu-latest
 
         steps:
@@ -74,7 +74,7 @@ jobs:
                       echo "Release 'latest' exists, uploading files..."
                   else
                       echo "Creating release 'latest'..."
-                      gh release create latest --title "Equicord Latest" --notes "Automated release" --generate-notes
+                      gh release create latest --title "Testcord Latest" --notes "Automated release" --generate-notes
                   fi
 
             - name: Upload Equicord Stable
