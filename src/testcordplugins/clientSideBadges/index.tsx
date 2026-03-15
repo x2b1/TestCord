@@ -4,19 +4,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-//
 import { ProfileBadge } from "@api/Badges";
 import { Badges } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Forms, Toasts, UserStore } from "@webpack/common";
-// eslint-disable-next-line unused-imports/no-unused-imports
-import { User } from "discord-types/general";
 
 function isCurrentUser(userId: string) {
     const u = UserStore.getCurrentUser().id;
-    return u == userId;
+    return u === userId;
 }
 
 export default definePlugin({
@@ -24,8 +21,9 @@ export default definePlugin({
     description: "Adds client-side badges to your profile. Other users can't see them!",
     authors: [
         Devs.nin0dev,
-        { name: "KrystalSkullOfficial", id: 929208515883569182n }
-    , TestcordDevs.x2b],
+        { name: "KrystalSkullOfficial", id: 929208515883569182n },
+        TestcordDevs.x2b
+    ],
     settingsAboutComponent: () => <>
         <Forms.FormTitle style={{ color: "red", fontSize: "2rem", fontWeight: "bold" }}>Only you can view the badges. No, this can't and won't be changed.</Forms.FormTitle>
         <Forms.FormText>You may need to reload Discord after editing your settings for them to apply.</Forms.FormText>
@@ -63,9 +61,6 @@ export default definePlugin({
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
-
-        // shout out krystalskullofficial
-        // Nino missed some badges
         hypesquadEvents: {
             type: OptionType.BOOLEAN,
             restartNeeded: true,
@@ -98,8 +93,6 @@ export default definePlugin({
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
-
-        // These are badges meant for bots so idk why you would want but might as well add them
         supportsCommands: {
             type: OptionType.BOOLEAN,
             restartNeeded: true,
@@ -112,14 +105,14 @@ export default definePlugin({
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
-
-        // These is a badge discord made for april fools 2024, again idk why you would want it but might as well add it
         aClownForATime: {
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
     }),
     async start() {
+        this.addedBadges = new Set();
+
         const NativeBadges: ProfileBadge[] = [
             {
                 description: "Discord Staff",
@@ -171,15 +164,12 @@ export default definePlugin({
                 link: "https://discord.com/settings/premium"
             },
             {
-                description: "Discord Bug Hunter",
+                description: "Golden Discord Bug Hunter",
                 image: "https://cdn.discordapp.com/badge-icons/848f79194d4be5ff5f81505cbd0ce1e6.png",
                 position: Badges.BadgePosition.END,
                 shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.goldenBugHunter,
                 link: "https://discord.com/settings/premium"
             },
-
-            // shout out krystalskullofficial
-            // Nino missed some badges
             {
                 description: "HypeSquad Events",
                 image: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png",
@@ -195,7 +185,7 @@ export default definePlugin({
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
-                description: "HypeSquad Briliance",
+                description: "HypeSquad Brilliance",
                 image: "https://cdn.discordapp.com/badge-icons/011940fd013da3f7fb926e4a1cd2e618.png",
                 position: Badges.BadgePosition.END,
                 shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.houseOfBrilliance,
@@ -236,8 +226,6 @@ export default definePlugin({
                 shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.supportsCommands,
                 link: "https://discord.com/blog/welcome-to-the-new-era-of-discord-apps?ref=badge"
             },
-
-            // these badges dont have a link because they literally dont link anywhere
             {
                 description: "Premium App",
                 image: "https://cdn.discordapp.com/badge-icons/d2010c413a8da2208b7e4f35bd8cd4ac.png",
@@ -259,30 +247,34 @@ export default definePlugin({
                 shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.legacyUsername,
                 link: ""
             },
-
-            // Im linking to a dicord video about lootboxs incase someone doesnt know the context behind this badge
             {
                 description: "A clown, for a limited time",
                 image: "https://discord.com/assets/971cfe4aa5c0582000ea.svg",
+                id: "aClownForATime",
                 position: Badges.BadgePosition.END,
                 shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.aClownForATime,
                 link: "https://youtu.be/cc2-4ci4G84"
-            },
+            }
         ];
-        NativeBadges.forEach(b => Badges.addBadge(b));
+        NativeBadges.forEach(b => {
+            const id = b.id || b.description.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (!Badges.getBadge(id)) {
+                Badges.addBadge({ ...b, id });
+                this.addedBadges.add(id);
+            }
+        });
     },
+
     async stop() {
+        if (this.addedBadges) {
+            this.addedBadges.forEach(id => Badges.removeBadge(id));
+            this.addedBadges.clear();
+        }
         Toasts.show({
             id: Toasts.genId(),
-            message: "To clear out your client-side badges, reload Discord.",
-            type: Toasts.Type.MESSAGE,
-            options: {
-                position: Toasts.Position.BOTTOM, // NOBODY LIKES TOASTS AT THE TOP
-            },
+            message: "Client-side badges removed. Reload if issues persist.",
+            type: Toasts.Type.SUCCESS,
+            options: { position: Toasts.Position.BOTTOM }
         });
     }
 });
-
-
-
-
