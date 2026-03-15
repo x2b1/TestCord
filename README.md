@@ -1,125 +1,112 @@
-[# [`<img src="./browser/icon.png" width="40" align="left" alt="Testcord">`](https://github.com/x2b1/Testcord) Testcord
+<img src="./browser/icon.png" width="40" align="left" alt="Testcord"> Testcord
 
-[![Equibop](https://img.shields.io/badge/Equibop-grey?style=flat)](https://github.com/Equicord/Equibop)
-[![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://equicord.org/discord)
+[![Release](https://img.shields.io/github/v/release/x2b1/TestCord?label=Latest+Release&color=blue)](https://github.com/x2b1/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
+[![Discord](https://img.shields.io/discord/1434211283317690502?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/EMDpkV57gW)
+[![Owner](https://img.shields.io/badge/Owner-Mixiruri-ff69b4?logo=github&logoColor=white)](https://github.com/Mixiruri)
+[![Owner](https://img.shields.io/badge/Owner-x2b1-orange?logo=github&logoColor=white)](https://github.com/x2b1)
 
-Testcord is a fork of [Equicord](https://github.com/Equicord/Equicord) which is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 480 plugins.
+Testcord is a fork of [Equicord](https://github.com/Equicord/Equicord) which is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 500 plugins.
 
-You can join our [Discord server](https://discord.gg/6gXfZjcFxH) for commits, changes, chatting, or even support.
+You can join our [Discord server](https://discord.gg/EMDpkV57gW) for commits, changes, chatting, or even support.
 
-### Included Plugins
+## What makes Testcord different?
 
-Equicord's included plugins can be found [here](https://equicord.org/plugins), We currently don't have a website.
+- **500+ plugins** — more than any other fork
+- **No rules** on which plugins can be added
+- You decide what goes in, not someone else
+- Less stable, more fun
+
+## Included Plugins
+
+Equicord's included plugins can be found [here](https://equicord.org). We currently don't have a website.
 
 ## Installing / Uninstalling
 
-Windows - currently unsupported (this downloads Equicord)
+> ⚠️ The GUI/CLI installers currently download Equicord, not Testcord. Use the devbuild method below instead.
 
-- [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.exe)
-- [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli.exe)
+**Windows**
+- [GUI](https://github.com/Equicord/Equibop)
+- [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
 
-MacOS - currently unsupported (this downloads Equicord)
+**MacOS**
+- [GUI](https://github.com/Equicord/Equibop)
 
-- [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.MacOS.zip)
+**Linux**
+- [GUI](https://github.com/Equicord/Equibop)
+- [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
+- [AUR](https://aur.archlinux.org/packages/equicord-desktop-git)
 
-Linux - currently unsupported (this downloads Equicord)
-
-- [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x11)
-- [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-Linux)
-- [AUR](https://aur.archlinux.org/packages?O=0&K=equicord)
-
-```shell - currently unsupported (this downloads Equicord)
-sh -c "$(curl -sS https://raw.githubusercontent.com/Equicord/Equicord/refs/heads/main/misc/install.sh)"
-```
-
-## Installing Testcord Devbuild - only working option for now
+## Installing Testcord Devbuild — recommended
 
 ### Dependencies
 
-[Git](https://git-scm.com/download) and [Node.JS LTS](https://nodejs.dev/en/) are required.
+[Git](https://git-scm.com/) and [Node.JS LTS](https://nodejs.org/) are required.
 
 Install `pnpm`:
 
-> ❗️ This next command may need to be run as admin/root depending on your system, and you may need to close and reopen your terminal for pnpm to be in your PATH.
+> ❗ This next command may need to be run as admin/root depending on your system, and you may need to close and reopen your terminal for pnpm to be in your PATH.
 
-```shell
+```sh
 npm i -g pnpm
 ```
 
-> ❗️ **IMPORTANT** Make sure you aren't using an admin/root terminal from here onwards. It **will** mess up your Discord/Equicord instance and you **will** most likely have to reinstall.
+> ❗ **IMPORTANT** — Make sure you aren't using an admin/root terminal from here onwards. It will mess up your Discord/Testcord instance and you will most likely have to reinstall.
 
-Clone Equicord:
+Clone Testcord:
 
-```shell
-git clone https://github.com/x2b1/Testcord
-cd Testcord
+```sh
+git clone https://github.com/x2b1/TestCord
+cd TestCord
 ```
 
 Install dependencies:
 
-```shell
+```sh
 pnpm install --frozen-lockfile
 ```
 
-Build Equicord:
+Build Testcord:
 
-```shell
+```sh
 pnpm build
 ```
 
 You can also build dev (additional plugins) (not required):
-```shell
+
+```sh
 pnpm dev
 ```
 
 Inject Testcord into your desktop client:
 
-```shell
+```sh
 pnpm inject
 ```
 
 Build Testcord for web:
 
-```shell
+```sh
 pnpm buildWeb
 ```
 
-After building Testcord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser’s guide for installing custom extensions, if supported.
+After building Testcord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser's guide for installing custom extensions, if supported.
 
-Note: Firefox extension zip requires Firefox for developers
+> Note: Firefox extension zip requires Firefox for Developers
 
 ## Credits
 
-Thank you to [Thororen](https://github.com/thororen1234) for creating [Equicord](https://github.com/Equicord/Equicord) & [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord) & [Suncord](https://github.com/verticalsync/Suncord) by [verticalsync](https://github.com/verticalsync).
+- [Thororen](https://github.com/thororen1234) for creating [Equicord](https://github.com/Equicord/Equicord)
+- [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord)
+- [verticalsync](https://github.com/verticalsync) for [Suncord](https://github.com/verticalsync/Suncord)
 
 ## Star History
 
-<a href="https://www.star-history.com/#x2b1/Testcord&type=date&legend=bottom-right">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=x2b1/Testcord&type=date&theme=dark&legend=bottom-right" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=x2b1/Testcord&type=date&legend=bottom-right" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=x2b1/Testcord&type=date&legend=bottom-right" />
- </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/svg?repos=x2b1/testcord&type=Date)](https://www.star-history.com/#x2b1/Testcord&type=date&legend=bottom-right)
 
 ## Disclaimer
 
-Discord is trademark of Discord Inc., and solely mentioned for the sake of descriptivity.
-Mentioning it does not imply any affiliation with or endorsement by Discord Inc.
-Testcord isnt affiliated with Equicord or Vencord!
+Discord is a trademark of Discord Inc., and solely mentioned for the sake of descriptivity. Mentioning it does not imply any affiliation with or endorsement by Discord Inc. Testcord is not affiliated with Equicord or Vencord.
 
 <details>
-<summary>Using Testcord, Equicord or Vencord violates Discord's terms of service</summary>
-
-Client modifications are against Discord’s Terms of Service.
-
-However, Discord is pretty indifferent about them and there are little to no known cases of users getting banned for using client mods! So you should generally be fine if you don’t use plugins that implement abusive behaviour (e.g. Selfbots, message deleter, dynamic status...). But no worries, most inbuilt plugins are safe to use, unless stated otherwise in the plugin description!
-
-Regardless, if your account is essential to you and getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Testcord), just to be safe.
-
-Additionally, make sure not to post screenshots with Testcord in a server where you might get banned for it.
-Server owners often don't like people using client mods since it might give you some advantages or it might make trolling easier, so in most cases the owner won't risk it and just ban you.
-
+<summary>⚠️ Using Testcord, Equicord or Vencord violates Discord's Terms of Service</summary>
 </details>
-](https://github.com/Mixiruri/TestCord/blob/main/README.md)
