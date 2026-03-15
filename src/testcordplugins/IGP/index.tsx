@@ -8,6 +8,7 @@ import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
 
@@ -656,7 +657,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "IGP",
     description: "PGP",
-    authors: [{ name: "irritably", id: 928787166916640838n }], 
+    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri], 
     settings,
 
     renderChatBarButton: ChatBarIcon,
