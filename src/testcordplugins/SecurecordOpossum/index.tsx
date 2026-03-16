@@ -10,6 +10,7 @@ import { sendBotMessage } from "@api/Commands";
 import { addMessagePreSendListener, removeMessagePreSendListener, MessageSendListener } from "@api/MessageEvents";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { IconComponent, OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 
@@ -404,7 +405,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "SecurecordOpossum",
     description: "High-Performance, Post-Quantum Resilient end-to-end encryption for Discord based on BlazingOpossum cipher. Share the same password with other users to communicate securely.",
-    authors: [{ name: "irritably", id: 928787166916640838n }],
+    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
     settings,
     chatBarButton: { render: EncryptionToggleButton, icon: () => null as any },
 

@@ -97,7 +97,7 @@ export default definePlugin({
                 }
             },
             info: function (msg) {
-                if (settings.store.enableLogging && ["verbose", "info"].includes(settings.store.logLevel)) {
+                if (settings.store.enableLogging && ["verbose", "info"].includes(settings.store.logLevel ?? "")) {
                     console.log(
                         `%c[${PLUGIN_NAME}] %cINFO: ${msg}`,
                         "color: #4CAF50; font-weight: bold",
@@ -106,7 +106,7 @@ export default definePlugin({
                 }
             },
             warn: function (msg) {
-                if (settings.store.enableLogging && ["verbose", "info", "warn"].includes(settings.store.logLevel)) {
+                if (settings.store.enableLogging && ["verbose", "info", "warn"].includes(settings.store.logLevel ?? "")) {
                     console.warn(
                         `%c[${PLUGIN_NAME}] %cWARN: ${msg}`,
                         "color: #FF9800; font-weight: bold",
@@ -395,4 +395,5 @@ export default definePlugin({
         }
     }
 });
+
 
