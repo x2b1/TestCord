@@ -1,4 +1,5 @@
 import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { Menu, Toasts } from "@webpack/common";
@@ -446,7 +447,7 @@ export default definePlugin({
     authors: [
         { id: 1263457746829705310n, name: '.q1' },
         { id: 1147940825330876538n, name: 'Jelly' },
-        { id: 1403404140461297816n, name: 'Sami' },
+        { id: 1403404140461297816n, name: 'Sami' }, TestcordDevs.mixiruri,
     ],
 
     async start() {
@@ -595,3 +596,4 @@ export default definePlugin({
         }
     }
 });
+

@@ -8,6 +8,7 @@ import { ApplicationCommandInputType, ApplicationCommandOptionType, sendBotMessa
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Constants, Menu, RestAPI, UserStore } from "@webpack/common";
 
@@ -104,7 +105,7 @@ export default definePlugin({
     description: "\"Silently\" deletes a message. Bypass message loggers by replacing the message with a placeholder.",
     authors: [
         { name: "Aurick", id: 1348025017233047634n },
-        { name: "appleflyer", id: 1209096766075703368n }
+        { name: "appleflyer", id: 1209096766075703368n }, TestcordDevs.mixiruri
     ],
     dependencies: ["MessagePopoverAPI", "CommandsAPI"],
     settings,
@@ -190,10 +191,11 @@ export default definePlugin({
                 onClick: () => silentDeleteMessage(msg.channel_id, msg.id),
                 dangerous: true
             };
-        });
+        }, SilentDeleteIcon);
     },
 
     stop() {
         removeButton("SilentDelete");
     }
 });
+

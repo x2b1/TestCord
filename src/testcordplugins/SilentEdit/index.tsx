@@ -6,6 +6,7 @@
 
 import { addMessagePopoverButton as addButton, removeMessagePopoverButton as removeButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
@@ -75,7 +76,7 @@ function deleteMessage(channelId: string, messageId: string) {
 export default definePlugin({
     name: "SilentEdit",
     description: "\"Silently\" edit a message without showing the edit tag and bypass Vencord's message logger.",
-    authors: [{ name: "Aurick", id: 1348025017233047634n }],
+    authors: [{ name: "Aurick", id: 1348025017233047634n }, TestcordDevs.mixiruri],
     dependencies: ["MessagePopoverAPI"],
     settings,
 
@@ -122,10 +123,11 @@ export default definePlugin({
                 channel: ChannelStore.getChannel(msg.channel_id),
                 onClick: handleClick
             };
-        });
+        }, SilentEditIcon);
     },
 
     stop() {
         removeButton("SilentEdit");
     }
 });
+
