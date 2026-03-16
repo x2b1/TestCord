@@ -146,6 +146,7 @@ async function loadOpenPGP(): Promise<void> {
     if (openpgpLoaded) return;
     if (openpgpLoadPromise) return openpgpLoadPromise;
 
+    // eslint-disable-next-line no-async-promise-executor
     openpgpLoadPromise = new Promise(async (resolve, reject) => {
         // First try to load from unpkg
         const script = document.createElement("script");

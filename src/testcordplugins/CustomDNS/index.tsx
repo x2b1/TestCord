@@ -8,9 +8,7 @@
 import { definePluginSettings } from "@api/Settings";
 // @ts-ignore
 import { TestcordDevs } from "@utils/constants";
-import definePlugin from "@utils/types";
-// @ts-ignore
-import { OptionType } from "@utils/types";
+import definePlugin, { OptionType } from "@utils/types";
 
 // Plugin settings
 const settings = definePluginSettings({
