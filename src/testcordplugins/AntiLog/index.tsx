@@ -64,23 +64,18 @@ function messageDeleteWrapper(channelId, messageId) {
 export default definePlugin({
     name: "AntiLog",
     description: "abuses a discord client side glitch to mask your deleted message, so a user with vencord's messagelogger plugin enabled will not be able to see the deleted message.",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     dependencies: ["MessagePopoverAPI"],
     settings,
     start() {
         addButton("AntiLog", msg => {
-            // sanity checks for people who randomly do shit
             const isMessageOwner = msg.author.id === UserStore.getCurrentUser().id;
             const { channel_id } = msg;
             if (!isMessageOwner) return null;
-
-            // async so promise can resolve
             const handleClick = async () => {
-                // send the bugged message
                 const toDeleteId = msg.id;
                 const buggedMsgResponse = await messageSendWrapper(settings.store.blockMessage, msg.id, msg.channel_id);
                 const buggedMsgId = buggedMsgResponse.body.id;
-                // delete initial and block message messages
                 if (settings.store.enableAwaitDeletion) {
                     await messageDeleteWrapper(channel_id, toDeleteId);
                     sleep(settings.store.deleteInterval);
@@ -98,10 +93,11 @@ export default definePlugin({
                 channel: ChannelStore.getChannel(msg.channel_id),
                 onClick: handleClick
             };
-        });
+        }, AntiLogIcon);
     },
 
     stop() {
         removeButton("AntiLog");
     }
 });
+
