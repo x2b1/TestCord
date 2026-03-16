@@ -300,7 +300,7 @@ type IconProps = {
     className?: string;
 };
 
-const EncryptionEnabledIcon: IconComponent = ({ height = 20, width = 20, className }: IconProps) => {
+const EncryptionEnabledIcon: IconComponent = ({ height = 20, width = 20, className }: { height?: number; width?: number; className?: string }) => {
     return (
         <svg
             width={width}
@@ -313,7 +313,7 @@ const EncryptionEnabledIcon: IconComponent = ({ height = 20, width = 20, classNa
     );
 };
 
-const EncryptionDisabledIcon: IconComponent = ({ height = 20, width = 20, className }: IconProps) => {
+const EncryptionDisabledIcon: IconComponent = ({ height = 20, width = 20, className }: { height?: number; width?: number; className?: string }) => {
     return (
         <svg
             width={width}
@@ -406,9 +406,7 @@ export default definePlugin({
     description: "High-Performance, Post-Quantum Resilient end-to-end encryption for Discord based on BlazingOpossum cipher. Share the same password with other users to communicate securely.",
     authors: [{ name: "irritably", id: 928787166916640838n }],
     settings,
-    chatBarButton: {
-        render: EncryptionToggleButton
-    },
+    chatBarButton: { render: EncryptionToggleButton, icon: () => null as any },
 
     start() {
         // Add listener to encrypt messages before sending
@@ -544,6 +542,8 @@ export default definePlugin({
     }
 
 });
+
+
 
 
 

@@ -393,7 +393,7 @@ export default definePlugin({
     description: "AES-256 end-to-end encryption for Discord. Share the same password with other users to communicate securely.",
     authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
     settings,
-    chatBarButton: { render: EncryptionToggleButton, icon: EncryptionToggleButton },
+    chatBarButton: { render: EncryptionToggleButton, icon: () => null as any },
 
     flux: {
         async MESSAGE_CREATE({ optimistic, type, message, channelId }: IMessageCreate) {
@@ -491,6 +491,7 @@ export default definePlugin({
                 // Validate password strength
                 const validation = validatePassword(settings.store.encryptionPassword);
                 if (!validation.isValid) {
+                    // @ts-ignore
                     sendBotMessage(message.channel_id ?? "", {
                         content: `❌ Weak password detected. Issues: ${validation.errors.join(", ")}`
                     });
@@ -517,7 +518,8 @@ export default definePlugin({
                     } catch (error) {
                         console.error("Message encryption error:", error);
                         // If encryption fails, show error message
-                        sendBotMessage(message.channel_id ?? "", {
+                        // @ts-ignore
+                    sendBotMessage(message.channel_id ?? "", {
                             content: "❌ Message encryption error. Please check your password strength and try again."
                         });
                     }
@@ -544,4 +546,6 @@ export default definePlugin({
         console.log("Securecord: Plugin stopped and security state reset");
     }
 });
+
+
 
