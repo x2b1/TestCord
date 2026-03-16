@@ -532,21 +532,7 @@ export default definePlugin({
                             <Menu.MenuCheckboxItem
                                 key={badge.id}
                                 id={`badge-${badge.id}`}
-                                label={
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <img
-                                            src={`https://cdn.discordapp.com/badge-icons/${badge.icon}.png`}
-                                            alt=""
-                                            width="18"
-                                            height="18"
-                                            style={{
-                                                borderRadius: "3px",
-                                                imageRendering: "crisp-edges"
-                                            }}
-                                        />
-                                        <span>{badge.title}</span>
-                                    </div>
-                                }
+                                label={badge.title}
                                 checked={isChecked}
                                 action={() => toggleBadge(user.id, badge, !!hasActualBadge)}
                             />

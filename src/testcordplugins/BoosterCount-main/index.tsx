@@ -10,6 +10,7 @@ import { Flex } from "@components/Flex";
 import { openUserProfile } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
 import { FluxDispatcher, GuildMemberStore, Menu, PresenceStore, ScrollerThin, Text, useEffect, UserStore, useStateFromStores } from "@webpack/common";
@@ -32,7 +33,7 @@ async function openViewBoosters(guild: string) {
                     <UserList guildId={guild} boosters={boosters} />
                 </ModalContent >
                 <ModalFooter>
-                    <Flex cellSpacing={10}>
+                    <Flex >
                     </Flex>
                 </ModalFooter>
             </ModalRoot >

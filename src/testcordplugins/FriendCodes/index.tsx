@@ -12,7 +12,7 @@ import FriendCodesPanel from "./components/FriendCodesPanel";
 export default definePlugin({
     name: "FriendCodes",
     description: "Generate FriendCodes to easily add friends",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     patches: [
         {
             find: ".Messages.ADD_FRIEND}),(",

@@ -59,8 +59,8 @@ function AppIconModal(props: ModalProps) {
         </ModalHeader>
         <ModalContent>
             <br />
-            <Forms.FormSection title="Name">
-                <Forms.FormText type="description">
+            <div><Forms.FormTitle tag="h5">Name</Forms.FormTitle>
+                <Forms.FormText>
                     This name will be shown in the App Icons list.
                 </Forms.FormText>
                 <TextInput
@@ -68,10 +68,10 @@ function AppIconModal(props: ModalProps) {
                     value={name}
                     onChange={setName}
                 />
-            </Forms.FormSection>
+            </div>
             <br />
-            <Forms.FormSection title="Image URL">
-                <Forms.FormText type="description">
+            <div><Forms.FormTitle tag="h5">Image URL</Forms.FormTitle>
+                <Forms.FormText>
                     Paste here your image URL to upload your icon (.webp, .jpg, .jpeg, .png, .gif, .ico and Discord Icons, Emojis, PFPs, etc.).
                 </Forms.FormText>
                 <TextInput
@@ -79,7 +79,7 @@ function AppIconModal(props: ModalProps) {
                     value={imageUrl}
                     onChange={setimageUrl}
                 />
-            </Forms.FormSection>
+            </div>
         </ModalContent>
         <ModalFooter>
             <Button
@@ -102,5 +102,6 @@ function AppIconModal(props: ModalProps) {
 }
 
 export default AppIconModal;
+
 
 
