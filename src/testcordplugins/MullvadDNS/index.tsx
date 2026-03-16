@@ -7,6 +7,7 @@
 // @ts-ignore
 import { definePluginSettings } from "@api/Settings";
 // @ts-ignore
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 // @ts-ignore
 import { OptionType } from "@utils/types";
@@ -45,7 +46,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MullvadDNS",
     description: "Force Discord to use Mullvad DNS servers for enhanced privacy",
-    authors: [{ name: "Irritably", id: 928787166916640838n }],
+    authors: [{ name: "Irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
     settings,
 
     // Statistics tracking
@@ -231,7 +232,7 @@ export default definePlugin({
 
                     return originalFetch(request, init);
 
-                } catch (error) {
+                } catch (error: any) {
                     statistics.failedResolutions++;
                     log.error(`Fetch patch error: ${error.message}`);
                     return originalFetch(input, init);
@@ -260,7 +261,7 @@ export default definePlugin({
                 } else {
                     log[type === "error" ? "error" : "info"](message);
                 }
-            } catch (e) {
+            } catch (e: any) {
                 log.verbose("Toast system not available, using console");
                 log[type === "error" ? "error" : "info"](message);
             }
@@ -292,7 +293,7 @@ export default definePlugin({
                         throw new Error("Failed to patch network functions");
                     }
 
-                } catch (error) {
+                } catch (error: any) {
                     log.error(`❌ Failed to start plugin: ${error.message}`);
                     showNotification(`${PLUGIN_NAME} failed to start`, "error");
                 }
@@ -319,7 +320,7 @@ export default definePlugin({
                     showNotification(`${PLUGIN_NAME} deactivated`, "info");
                     log.info("✅ Plugin stopped successfully");
 
-                } catch (error) {
+                } catch (error: any) {
                     log.error(`❌ Error stopping plugin: ${error.message}`);
                 }
             },
@@ -389,8 +390,9 @@ export default definePlugin({
                 (window as any).MullvadDNS.stop();
             }
             console.log("[MullvadDNS] Plugin stopped");
-        } catch (error) {
+        } catch (error: any) {
             console.error("[MullvadDNS] Error during shutdown:", error);
         }
     }
 });
+

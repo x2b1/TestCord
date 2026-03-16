@@ -9,6 +9,7 @@ import { sendBotMessage } from "@api/Commands";
 import { addMessagePreSendListener, removeMessagePreSendListener, MessageSendListener } from "@api/MessageEvents";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { IconComponent, OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 
@@ -390,11 +391,9 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Securecord",
     description: "AES-256 end-to-end encryption for Discord. Share the same password with other users to communicate securely.",
-    authors: [{ name: "irritably", id: 928787166916640838n }],
+    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
     settings,
-    chatBarButton: {
-        render: EncryptionToggleButton
-    },
+    chatBarButton: { render: EncryptionToggleButton, icon: EncryptionToggleButton },
 
     flux: {
         async MESSAGE_CREATE({ optimistic, type, message, channelId }: IMessageCreate) {
@@ -492,7 +491,7 @@ export default definePlugin({
                 // Validate password strength
                 const validation = validatePassword(settings.store.encryptionPassword);
                 if (!validation.isValid) {
-                    sendBotMessage(message.channelId ?? "", {
+                    sendBotMessage(message.channel_id ?? "", {
                         content: `❌ Weak password detected. Issues: ${validation.errors.join(", ")}`
                     });
                     return;
@@ -518,7 +517,7 @@ export default definePlugin({
                     } catch (error) {
                         console.error("Message encryption error:", error);
                         // If encryption fails, show error message
-                        sendBotMessage(message.channelId ?? "", {
+                        sendBotMessage(message.channel_id ?? "", {
                             content: "❌ Message encryption error. Please check your password strength and try again."
                         });
                     }
@@ -545,3 +544,4 @@ export default definePlugin({
         console.log("Securecord: Plugin stopped and security state reset");
     }
 });
+

@@ -7,6 +7,7 @@
 // @ts-ignore
 import { definePluginSettings } from "@api/Settings";
 // @ts-ignore
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 
 // Plugin settings
@@ -32,7 +33,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MullvadDNS (lighter ver)",
     description: "Force Discord to use Mullvad DNS servers for enhanced privacy (excludes CDN for compatibility)",
-    authors: [{ name: "Irritably", id: 928787166916640838n }],
+    authors: [{ name: "Irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
     settings,
 
     // Statistics tracking
@@ -223,7 +224,7 @@ export default definePlugin({
                 } else {
                     log[type === "error" ? "error" : "info"](message);
                 }
-            } catch (e) {
+            } catch (e: any) {
                 log.info(message);
             }
         }
@@ -254,7 +255,7 @@ export default definePlugin({
                         throw new Error("Failed to patch network functions");
                     }
 
-                } catch (error) {
+                } catch (error: any) {
                     log.error(`❌ Failed to start plugin: ${error.message}`);
                     showNotification(`${PLUGIN_NAME} failed to start`, "error");
                 }
@@ -329,8 +330,9 @@ export default definePlugin({
                 (window as any).MullvadDNSLight.stop();
             }
             console.log("[MullvadDNS (lighter ver)] Plugin stopped");
-        } catch (error) {
+        } catch (error: any) {
             console.error("[MullvadDNS (lighter ver)] Error during shutdown:", error);
         }
     }
 });
+

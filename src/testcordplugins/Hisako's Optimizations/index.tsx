@@ -486,7 +486,7 @@ export default definePlugin({
         
         this.messageElementsPool = [];
         // @ts-ignore
-        this.renderedMessages.clear();
+        // @ts-ignore
         this.virtualScrollState = null;
     },
     
