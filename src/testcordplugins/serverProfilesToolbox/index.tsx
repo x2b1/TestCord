@@ -98,7 +98,7 @@ const IdentityActions = {
 
 export default definePlugin({
     name: "ServerProfilesToolbox",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     description: "Adds a copy/paste/reset button to the server profiles editor",
 
     patchServerProfiles(guild: Guild) {
@@ -114,7 +114,7 @@ export default definePlugin({
             savedProfile.pronouns = profile?.pronouns ?? null;
             savedProfile.bio = profile?.bio ?? null;
             savedProfile.themeColors = profile?.themeColors;
-            savedProfile.banner = profile?.banner ?? undefined;
+            savedProfile.banner = profile?.banner === null ? undefined : profile?.banner;
             savedProfile.avatar = selfMember.avatar;
             savedProfile.profileEffectId = profile?.profileEffectId;
             savedProfile.avatarDecoration = selfMember.avatarDecoration;

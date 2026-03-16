@@ -4,18 +4,17 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import {TestcordDevs, sleep} from "@utils/index";
+import { sleep } from "@utils/index";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
-import { TestcordDevs } from "@utils/constants";
 
 import { settings } from "./settings";
 
-import { TestcordDevs } from "@utils/constants";
 export default definePlugin({
     name: "Maxwell :3",
     description: "Silly Silly Silly",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     dependencies: ["CommandsAPI"],
     settings,
     async start() {
@@ -90,6 +89,7 @@ export async function addGifToScreen() {
 
     timeToGetReallySilly();
 }
+
 
 
 

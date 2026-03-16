@@ -62,7 +62,7 @@ async function deleteRevertData() {
 export default definePlugin({
     name: "StatusCommand",
     description: "Set a temporary status that reverts after a set duration (e.g. /status dnd 1h)",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     dependencies: ["UserSettingsAPI"],
 
     async start() {
@@ -98,10 +98,10 @@ export default definePlugin({
                 type: ApplicationCommandOptionType.STRING,
                 required: true,
                 choices: [
-                    { name: "Online", value: "online" },
-                    { name: "Idle", value: "idle" },
-                    { name: "Do Not Disturb", value: "dnd" },
-                    { name: "Invisible (Offline)", value: "invisible" }
+                    { name: "Online", value: "online", label: "Online" },
+                    { name: "Idle", value: "idle", label: "Idle" },
+                    { name: "Do Not Disturb", value: "dnd", label: "Do Not Disturb" },
+                    { name: "Invisible (Offline)", value: "invisible", label: "Invisible (Offline)" }
                 ]
             },
             {
@@ -159,3 +159,4 @@ export default definePlugin({
         }
     }]
 });
+

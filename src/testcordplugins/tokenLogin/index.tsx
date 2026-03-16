@@ -91,7 +91,7 @@ const AddAccountModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="token-login-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex style={{ justifyContent: "flex-end", gap: "10px" }}>
                     <Button
                         color={Button.Colors.BRAND}
                         disabled={!username || !token}
@@ -171,7 +171,7 @@ class TokenLoginManagerUI {
 
         return (
             <div className="token-login-container">
-                <Flex justify={Flex.Justify.BETWEEN} align={Flex.Align.CENTER}>
+                <Flex style={{ justifyContent: "space-between", alignItems: "center" }}>
                     <Text variant="heading-lg/semibold">Token Login Manager</Text>
                     <Button
                         onClick={() => {
@@ -206,7 +206,7 @@ class TokenLoginManagerUI {
 export default definePlugin({
     name: "TokenLoginManager",
     description: "Manage and login with user tokens",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
 
     tokenLoginManager: null as TokenLoginManager | null,
     ui: null as TokenLoginManagerUI | null,
@@ -242,3 +242,4 @@ export default definePlugin({
         this.ui = null;
     }
 });
+

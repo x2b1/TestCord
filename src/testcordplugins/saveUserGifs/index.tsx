@@ -54,6 +54,7 @@ const settings = definePluginSettings({
 
 let isScanning = false;
 let currentGifsFound = 0;
+    const savePromises: Promise<void>[] = [];
 let stopRequested = false;
 
 
@@ -250,6 +251,7 @@ async function scanUserGifs(userId: string, username: string, guildId: string | 
     isScanning = true;
     stopRequested = false;
     currentGifsFound = 0;
+    const savePromises: Promise<void>[] = [];
 
     const channelFilter = mode === "channel" ? (getCurrentChannelId() ?? null) : null;
 
