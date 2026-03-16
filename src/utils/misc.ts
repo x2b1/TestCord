@@ -145,10 +145,5 @@ export function removeFromArray<T>(arr: T[], predicate: (e: T) => boolean) {
     if (idx !== -1) arr.splice(idx, 1);
 }
 
-export function copyWithToast(text: string, message = "Copied to clipboard!") {
-    navigator.clipboard.writeText(text).then(() => {
-        Toasts.show({ id: Toasts.genId(), message, type: Toasts.Type.SUCCESS });
-    }).catch(() => {
-        Toasts.show({ id: Toasts.genId(), message: "Failed to copy to clipboard", type: Toasts.Type.FAILURE });
-    });
-}
+
+

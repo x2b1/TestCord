@@ -6,7 +6,7 @@
 
 import { CodeBlock } from "@components/CodeBlock";
 import { openImageModal } from "@utils/discord";
-import { copyWithToast } from "@utils/misc";
+import { copyWithToast } from "@utils/discord";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import { React, useEffect, useMemo } from "@webpack/common";
 
