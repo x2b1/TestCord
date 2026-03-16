@@ -82,8 +82,7 @@ export default function FriendCodesPanel() {
             </Forms.FormTitle>
 
             <Flex
-                style={{ marginBottom: "16px" }}
-                style={{ justifyContent: "space-between" }}
+                style={{ marginBottom: "16px", justifyContent: "space-between" }}
             >
                 <h2 className="vc-friend-codes-info-header">{`Friend Codes - ${invites.length}`}</h2>
                 <Flex style={{ justifyContent: "flex-end" }}>
@@ -97,7 +96,7 @@ export default function FriendCodesPanel() {
                     <Button
                         style={{ marginLeft: "8px" }}
                         color={Button.Colors.RED}
-                        look={Button.Looks.OUTLINED}
+                        look={Button.Looks.FILLED}
                         disabled={!invites.length}
                         onClick={() => revokeFriendInvites().then(setInvites([]))}
                     >
@@ -130,4 +129,5 @@ export default function FriendCodesPanel() {
         </header>
     );
 }
+
 

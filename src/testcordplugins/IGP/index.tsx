@@ -704,8 +704,8 @@ export default definePlugin({
                     { name: "email", description: "Your email", type: 3, required: true },
                     { name: "passphrase", description: "Passphrase for private key", type: 3, required: true },
                     { name: "type", description: "Key type", type: 3, choices: [
-                        { name: "ECC (recommended)", value: "ecc" },
-                        { name: "RSA 4096", value: "rsa" }
+                        { name: "ECC (recommended)", value: "ecc", label: "ECC (recommended)" },
+                        { name: "RSA 4096", value: "rsa", label: "RSA 4096" }
                     ]}
                 ]},
                 { name: "import", description: "Import a contact's public key", type: 1, options: [
@@ -857,4 +857,5 @@ export default definePlugin({
         }
     ],
 });
+
 

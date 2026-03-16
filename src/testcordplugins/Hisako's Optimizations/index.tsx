@@ -184,6 +184,7 @@ export default definePlugin({
                 // Still call the callback but with modified timing
                 return setTimeout(() => callback(performance.now()), 16 * (1 + reductionFactor));
             }
+            // @ts-ignore
             
             return originalRAF.call(this, callback);
         };
@@ -246,6 +247,7 @@ export default definePlugin({
             const originalRAF = window.requestAnimationFrame;
             const reductionFactor = settings.store.animationReduction / 100;
             let frameCount = 0;
+            // @ts-ignore
             
             window.requestAnimationFrame = function(callback) {
                 frameCount++;
@@ -483,6 +485,7 @@ export default definePlugin({
         }
         
         this.messageElementsPool = [];
+        // @ts-ignore
         this.renderedMessages.clear();
         this.virtualScrollState = null;
     },

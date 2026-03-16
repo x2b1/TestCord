@@ -10,7 +10,7 @@ import { TestcordDevs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, React, RelationshipStore, UserStore } from "@webpack/common";
+import { ChannelStore, FluxDispatcher, React, RelationshipStore, UserStore } from "@webpack/common";
 
 const logger = new Logger("MassDM");
 
@@ -119,7 +119,7 @@ function getUsersToMessage() {
 export default definePlugin({
     name: "MassDM",
     description: "Mass direct message users with customizable options and auto-responses",
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
     settings,
 
     commands: [
