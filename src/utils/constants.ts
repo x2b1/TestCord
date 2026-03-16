@@ -1280,6 +1280,10 @@ export const EquicordDevs = Object.freeze({
 } satisfies Record<string, Dev>);
 
 export const TestcordDevs = Object.freeze({
+    sirphantom89: {
+        name: "SirPhantom89",
+        id: 1464279455844274188n,
+    },
     x2b: {
         name: "x2b",
         id: 996137713432530976n
