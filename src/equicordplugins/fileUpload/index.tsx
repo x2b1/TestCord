@@ -159,8 +159,8 @@ export default definePlugin({
         {
             find: '"channelId",',
             replacement: {
-                match: /\{[^}]*channelId:\i\.id[^}]*\}[^}]*\),\s*\i\(/,
-                replace: "$1,progress:$self.renderUploadProgress()$2"
+                match: /(textValue:.{0,50}channelId:\i\.id\}\))(?:,\i(,))?/,
+                replace: "$1,$self.renderUploadProgress()$2"
             }
         },
     ],
