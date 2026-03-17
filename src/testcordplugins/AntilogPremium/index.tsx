@@ -68,7 +68,7 @@ async function antiLogDelete(channelId: string, messageId: string): Promise<bool
 }
 export default definePlugin({
     name: "AntilogPremium",
-    description: "Delete messages while hiding them from message loggers. Combines best anti-logging methods.",
+    description: "Delete messages while hiding them from message loggers. Combines best anti-logging methods. (its made to replace AntiLog, SilentDelete, and MLE's silent delete at once)",
     authors: [TestcordDevs.x2b],
     dependencies: ["MessagePopoverAPI", "CommandsAPI"],
     settings,
