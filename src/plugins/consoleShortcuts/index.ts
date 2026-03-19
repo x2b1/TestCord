@@ -180,7 +180,7 @@ function makeShortcuts() {
         openModal: { getter: () => ModalAPI.openModal },
         openModalLazy: { getter: () => ModalAPI.openModalLazy },
 
-        Stores: { getter: () => Object.fromEntries(Object.entries(Webpack.fluxStores)) },
+        Stores: { getter: () => Object.fromEntries(Webpack.fluxStores) },
 
         // e.g. "2024-05_desktop_visual_refresh", 0
         setExperiment: (id: string, bucket: number) => {

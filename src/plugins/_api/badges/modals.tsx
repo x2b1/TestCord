@@ -68,11 +68,11 @@ export function VencordDonorModal() {
     ));
 }
 
-export function TestCordDonorModal() {
+export function EquicordDonorModal() {
     const modalKey = openModal(props => (
         <ErrorBoundary noop onError={() => {
             closeModal(modalKey);
-            VencordNative.native.openExternal("https://ko-fi.com/x2bkaneki");
+            VencordNative.native.openExternal("https://github.com/sponsors/thororen1234");
         }}>
             <ModalRoot {...props}>
                 <ModalHeader>
@@ -85,7 +85,7 @@ export function TestCordDonorModal() {
                     >
                         <Flex justifyContent="center" alignItems="center" gap="0.5em">
                             <Heart />
-                            TestCord Donor
+                            Equicord Donor
                         </Flex>
                     </HeadingPrimary>
                 </ModalHeader>
@@ -106,10 +106,10 @@ export function TestCordDonorModal() {
                     </Flex>
                     <div style={{ padding: "1em" }}>
                         <Paragraph>
-                            This Badge is a special perk for TestCord Donors
+                            This Badge is a special perk for Equicord (Not Vencord) Donors
                         </Paragraph>
                         <Paragraph className={Margins.top20}>
-                            Please consider supporting the development of TestCord by becoming a donor. It would mean a lot! :3
+                            Please consider supporting the development of Equicord by becoming a donor. It would mean a lot! :3
                         </Paragraph>
                     </div>
                 </ModalContent>

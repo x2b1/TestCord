@@ -20,6 +20,7 @@ import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
+import { BaseText } from "@components/BaseText";
 import { Card } from "@components/Card";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
@@ -33,7 +34,7 @@ import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
-import { isAnyPluginDev, isSupportChannel, isTestCordGuild, tryOrElse } from "@utils/misc";
+import { isAnyPluginDev, isEquicordGuild, isEquicordSupport, isSupportChannel, tryOrElse } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
@@ -143,15 +144,20 @@ async function generateDebugInfoMessage() {
         : platformName();
 
     const info = {
-        Testcord:
-            `v${VERSION} • [${gitHashShort}](<https://github.com/x2b1/Testcord/commit/${gitHash}>)` +
+        Equicord:
+            `v${VERSION} • [${gitHashShort}](<https://github.com/Equicord/Equicord/commit/${gitHash}>)` +
             `${IS_EQUIBOP ? "" : SettingsPlugin.getVersionInfo()} - ${Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(BUILD_TIMESTAMP)}`,
         Client: `${RELEASE_CHANNEL} ~ ${clientString}`,
         Platform: platformDisplay
     };
 
+    if (IS_DISCORD_DESKTOP) {
+        info["Last Crash Reason"] = (await tryOrElse(() => DiscordNative.processUtils.getLastCrash(), undefined))?.rendererCrashReason ?? "N/A";
+    }
+
     const potentiallyProblematicPlugins = ([
-        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "Ingtoninator", "NeverPausePreviews",
+        "NoRPC", "NoProfileThemes", "NoMosaic", "NoRoleHeaders", "NoSystemBadge",
+        "AlwaysAnimate", "ClientTheme", "SoundTroll", "Ingtoninator", "NeverPausePreviews",
         "IdleAutoRestart",
     ].filter(isPluginEnabled) ?? []).sort();
 
@@ -159,14 +165,15 @@ async function generateDebugInfoMessage() {
         potentiallyProblematicPlugins.push(customIdle.name);
     }
 
-    const potentiallyProblematicPluginsNote = "-# note, those plugins are just common issues and might not be the problem";
+    const potentiallyProblematicPluginsNote = "-# Note: These plugins might not be the cause of your problem. They are simply plugins that cause common issues.";
 
     const commonIssues = {
         "Activity Sharing Disabled": tryOrElse(() => !ShowCurrentGame.getSetting(), false),
         "Link Embeds Disabled": tryOrElse(() => !ShowEmbeds.getSetting(), false),
-        "TestCord DevBuild": !IS_STANDALONE,
+        "Equicord DevBuild": !IS_STANDALONE,
         "Equibop DevBuild": IS_EQUIBOP && tryOrElse(() => VesktopNative.app.isDevBuild?.(), false),
         "Platform Spoofed": spoofInfo?.spoofed ?? false,
+        "Has UserPlugins": Object.values(PluginMeta).some(m => m.userPlugin),
         ">2 Weeks Outdated": BUILD_TIMESTAMP < Date.now() - 12096e5,
         [`Potentially Problematic Plugins: ${potentiallyProblematicPlugins.join(", ")}\n${potentiallyProblematicPluginsNote}`]: potentiallyProblematicPlugins.length
     };
@@ -210,18 +217,62 @@ async function uploadPluginListFile(channelId: string, fileContent: string, file
 }
 
 function generatePluginList() {
-    const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin]?.required;
+    const isApiPlugin = (plugin: string) => plugin.endsWith("API") || plugins[plugin].required;
 
-    // Get all enabled plugins from PluginMeta (includes both stock and user plugins)
-    const allEnabledPlugins = Object.keys(PluginMeta).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
+    const enabledPlugins = Object.keys(plugins)
+        .filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
-    const enabledStockPlugins = allEnabledPlugins.filter(p => !PluginMeta[p].userPlugin).sort();
-    const enabledUserPlugins = allEnabledPlugins.filter(p => PluginMeta[p].userPlugin).sort();
+    const enabledStockPlugins = enabledPlugins.filter(p => !PluginMeta[p].userPlugin).sort();
+    const enabledUserPlugins = enabledPlugins.filter(p => PluginMeta[p].userPlugin).sort();
 
-    let content = `**Enabled Plugins (${enabledStockPlugins.length}):\n${makeCodeblock(enabledStockPlugins.join(", "))}`;
+    const user = UserStore.getCurrentUser();
+
+    if (enabledPlugins.length > 100 && !isAnyPluginDev(user.id)) {
+        Alerts.show({
+            title: "Warning: High Plugin Count",
+            body: <div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+                    <img src="https://media.tenor.com/QtGqjwBpRzwAAAAi/wumpus-dancing.gif" />
+                </div>
+                <Paragraph>You have more than 100 plugins enabled.</Paragraph>
+                <Paragraph>Due to the sheer amount of plugins, you may not receive support.</Paragraph>
+                <Paragraph>Your issue is likely caused by plugin conflicts.</Paragraph>
+                <Paragraph>Please consider disabling some plugins to troubleshoot.</Paragraph>
+                <Paragraph className={Margins.top8}>Your plugin list will be sent as a text file.</Paragraph>
+            </div>
+        });
+
+        const fileContent = [
+            `Enabled Stock Plugins (${enabledStockPlugins.length}):`,
+            ...enabledStockPlugins.map(p => `  - ${p}`),
+            "",
+        ];
+
+        if (enabledUserPlugins.length) {
+            fileContent.push(
+                `Enabled User Plugins (${enabledUserPlugins.length}):`,
+                ...enabledUserPlugins.map(p => `  - ${p}`),
+                ""
+            );
+        }
+
+        fileContent.push(
+            "---",
+            `Total Enabled Plugins: ${enabledPlugins.length}`,
+            "Warning: Due to the high number of enabled plugins, support may be limited."
+        );
+
+        return {
+            uploadFile: true,
+            fileContent: fileContent.join("\n"),
+            filename: `${user.username}-plugins.txt`
+        };
+    }
+
+    let content = `**Enabled Plugins (${enabledStockPlugins.length}):**\n${makeCodeblock(enabledStockPlugins.join(", "))}`;
 
     if (enabledUserPlugins.length) {
-        content += `\n\n**Enabled UserPlugins (${enabledUserPlugins.length}):\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
+        content += `**Enabled UserPlugins (${enabledUserPlugins.length}):**\n${makeCodeblock(enabledUserPlugins.join(", "))}`;
     }
 
     return content;
@@ -252,59 +303,33 @@ export default definePlugin({
 
     commands: [
         {
-            name: "testcord-debug",
-            description: "Send Testcord debug info",
+            name: "equicord-debug",
+            description: "Send Equicord debug info",
+            // @ts-ignore
+            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => ({ content: await generateDebugInfoMessage() })
         },
         {
-            name: "testcord-plugins",
-            description: "Send Testcord plugin list",
+            name: "equicord-plugins",
+            description: "Send Equicord plugin list",
+            // @ts-ignore
+            predicate: ctx => isAnyPluginDev(UserStore.getCurrentUser()?.id) || isEquicordGuild(ctx?.guild?.id, true),
             execute: async () => {
+                const channelId = SelectedChannelStore.getChannelId();
                 const pluginList = generatePluginList();
-                if (!pluginList) {
-                    return { content: "Unable to generate plugin list." };
-                }
 
-                // Split if too long
-                if (pluginList.length <= 2000) {
-                    await sendMessage(SelectedChannelStore.getChannelId(), { content: pluginList });
-                } else {
-                    // Split the plugins list into chunks where each message is under 2000 chars
-                    const lines = pluginList.split("\n");
-                    const baseHeader = lines[0]; // **Plugins enabled (count):**
-                    const codeblock = lines.slice(1).join("\n"); // ```plugins```
-                    const pluginsStr = codeblock.slice(3, -3); // remove ```
-                    const plugins = pluginsStr.split(", ");
-
-                    const parts: string[][] = [];
-                    let currentPart: string[] = [];
-                    let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + "\n```".length; // estimate header length
-
-                    for (const plugin of plugins) {
-                        const pluginWithComma = plugin + ", ";
-                        if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
-                            parts.push(currentPart);
-                            currentPart = [plugin];
-                            currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + "\n```".length + plugin.length;
-                        } else {
-                            currentPart.push(plugin);
-                            currentLength += pluginWithComma.length;
-                        }
-                    }
-                    if (currentPart.length > 0) {
-                        parts.push(currentPart);
-                    }
-
-                    const totalParts = parts.length;
-                    for (let i = 0; i < totalParts; i++) {
-                        const partPlugins = parts[i];
-                        const partContent = `${baseHeader} [Part ${i + 1}/${totalParts}]:**\n${makeCodeblock(partPlugins.join(", "))}`;
-                        await sendMessage(SelectedChannelStore.getChannelId(), { content: partContent });
-                        if (i < totalParts - 1) await new Promise(resolve => setTimeout(resolve, 100));
+                if (typeof pluginList === "string") {
+                    return { content: pluginList };
+                } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
+                    try {
+                        await uploadPluginListFile(channelId, pluginList.fileContent, pluginList.filename);
+                        return { content: "" }; // Empty return since file was already sent
+                    } catch (e) {
+                        new Logger("SupportHelper").error("Failed to upload plugin list:", e);
+                        return { content: "Failed to upload plugin list file. Please try again." };
                     }
                 }
-
-                return { content: "\u200B" }; // Send zero-width space to avoid sending command text
+                return { content: "Unable to generate plugin list." };
             }
         }
     ],
@@ -324,7 +349,7 @@ export default definePlugin({
                     return Alerts.show({
                         title: "Hold on!",
                         body: <div>
-                            <Paragraph>You are using an outdated version of TestCord! Chances are, your issue is already fixed.</Paragraph>
+                            <Paragraph>You are using an outdated version of Equicord! Chances are, your issue is already fixed.</Paragraph>
                             <Paragraph className={Margins.top8}>
                                 Please first update before asking for support!
                             </Paragraph>
@@ -345,12 +370,31 @@ export default definePlugin({
                 return Alerts.show({
                     title: "Hold on!",
                     body: <div>
-                        <Paragraph>You are using an externally updated TestCord version, the ability to help you here may be limited.</Paragraph>
+                        <Paragraph>You are using an externally updated Equicord version, the ability to help you here may be limited.</Paragraph>
                         <Paragraph className={Margins.top8}>
-                            Please join the <Link href="https://discord.gg/KTNXyDTXGb">TestCord Server</Link> for support,
+                            Please join the <Link href="https://equicord.org/discord">Equicord Server</Link> for support,
                             or if this issue persists on Vencord, continue on.
                         </Paragraph>
                     </div>
+                });
+            }
+
+            if (!IS_STANDALONE && !settings.store.dismissedDevBuildWarning) {
+                return Alerts.show({
+                    title: "Hold on!",
+                    body: <div>
+                        <Paragraph>You are using a custom build of Equicord, which we do not provide support for!</Paragraph>
+
+                        <Paragraph className={Margins.top8}>
+                            We only provide support for <Link href="https://github.com/Equicord/Equicord">official builds</Link>.
+                            Either <Link href="https://github.com/Equicord/Equilotl">switch to an official build</Link> or figure your issue out yourself.
+                        </Paragraph>
+
+                        <BaseText size="md" weight="bold" className={Margins.top8}>You will be banned from receiving support if you ignore this rule.</BaseText>
+                    </div>,
+                    confirmText: "Understood",
+                    secondaryConfirmText: "Don't show again",
+                    onConfirmSecondary: () => settings.store.dismissedDevBuildWarning = true
                 });
             }
         }
@@ -359,11 +403,11 @@ export default definePlugin({
     renderMessageAccessory(props) {
         const buttons = [] as JSX.Element[];
 
-        const testCordSupport = isTestCordGuild(props.channel.id);
+        const equicordSupport = isEquicordSupport(props.message.author.id);
 
         const shouldAddUpdateButton =
             !IS_UPDATER_DISABLED
-            && ((isSupportChannel(props.channel.id) && testCordSupport))
+            && ((isSupportChannel(props.channel.id) && equicordSupport))
             && props.message.content?.toLowerCase().includes("update");
 
         if (shouldAddUpdateButton) {
@@ -388,78 +432,40 @@ export default definePlugin({
             );
         }
 
-        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && testCordSupport) {
-            if (props.message.content.includes("/testcord-debug") || props.message.content.includes("/testcord-plugins")) {
+        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && equicordSupport) {
+            if (props.message.content.includes("/equicord-debug") || props.message.content.includes("/equicord-plugins")) {
                 buttons.push(
                     <Button
                         key="vc-dbg"
                         color={Button.Colors.PRIMARY}
                         onClick={async () => sendMessage(props.channel.id, { content: await generateDebugInfoMessage() })}
                     >
-                        Run /testcord-debug
+                        Run /equicord-debug
                     </Button>,
                     <Button
                         key="vc-plg-list"
                         color={Button.Colors.PRIMARY}
                         onClick={async () => {
-                            // If the message is exactly "/testcord-plugins", delete it to avoid showing the command text
-                            if (props.message.content.trim() === "/testcord-plugins") {
-                                try {
-                                    await DiscordNative.http.delete(`${DiscordNative.http.getAPIBaseURL()}/channels/${props.channel.id}/messages/${props.message.id}`);
-                                } catch (e) {
-                                    // Ignore if delete fails
-                                }
-                            }
-
                             const pluginList = generatePluginList();
-                            if (!pluginList) return;
-
-                            // Split if too long
-                            if (pluginList.length <= 2000) {
+                            if (typeof pluginList === "string") {
                                 sendMessage(props.channel.id, { content: pluginList });
-                            } else {
-                                // Split the plugins list into chunks where each message is under 2000 chars
-                                const lines = pluginList.split("\n");
-                                const baseHeader = lines[0]; // **Plugins enabled (count):**
-                                const codeblock = lines.slice(1).join("\n"); // ```plugins```
-                                const pluginsStr = codeblock.slice(3, -3); // remove ```
-                                const plugins = pluginsStr.split(", ");
-
-                                const parts: string[][] = [];
-                                let currentPart: string[] = [];
-                                let currentLength = `${baseHeader} [Part 1/X]:**\n\`\`\`\n`.length + "\n```".length; // estimate header length
-
-                                for (const plugin of plugins) {
-                                    const pluginWithComma = plugin + ", ";
-                                    if (currentLength + pluginWithComma.length > 1950) { // leave buffer for safety
-                                        parts.push(currentPart);
-                                        currentPart = [plugin];
-                                        currentLength = `${baseHeader} [Part ${parts.length + 2}/X]:**\n\`\`\`\n`.length + "\n```".length + plugin.length;
-                                    } else {
-                                        currentPart.push(plugin);
-                                        currentLength += pluginWithComma.length;
-                                    }
-                                }
-                                if (currentPart.length > 0) {
-                                    parts.push(currentPart);
-                                }
-
-                                const totalParts = parts.length;
-                                for (let i = 0; i < totalParts; i++) {
-                                    const partPlugins = parts[i];
-                                    const partContent = `${baseHeader} [Part ${i + 1}/${totalParts}]:**\n${makeCodeblock(partPlugins.join(", "))}`;
-                                    sendMessage(props.channel.id, { content: partContent });
-                                    if (i < totalParts - 1) await new Promise(resolve => setTimeout(resolve, 100));
+                            } else if (pluginList && typeof pluginList === "object" && pluginList.uploadFile) {
+                                try {
+                                    await uploadPluginListFile(props.channel.id, pluginList.fileContent, pluginList.filename);
+                                    showToast("Plugin list uploaded successfully!", Toasts.Type.SUCCESS);
+                                } catch (e) {
+                                    new Logger("SupportHelper").error("Failed to upload plugin list:", e);
+                                    showToast("Failed to upload plugin list", Toasts.Type.FAILURE);
                                 }
                             }
                         }}
                     >
-                        Run /testcord-plugins
+                        Run /equicord-plugins
                     </Button>
                 );
             }
 
-            if (testCordSupport) {
+            if (equicordSupport) {
                 const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
                 if (match) {
                     buttons.push(
@@ -501,9 +507,9 @@ export default definePlugin({
 
         return (
             <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Testcord / Equicord / Vencord Developers / Plugin Devs for support!
+                Please do not private message Equicord & Vencord plugin developers for support!
                 <br />
-                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1434211283317690502/1434228141123047434")}
+                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1173279886065029291/1297590739911573585")}
                 {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}
             </Card>
         );

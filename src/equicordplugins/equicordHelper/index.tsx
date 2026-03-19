@@ -10,12 +10,12 @@ import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/Me
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginToSettings } from "@api/Settings";
 import customRPC from "@plugins/customRPC";
-import { Devs, EquicordDevs, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
 import { isAnyPluginDev } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { StandingState } from "@vencord/discord-types/enums";
 import { findByCodeLazy, findExportedComponentLazy, findStoreLazy } from "@webpack";
-import { Alerts, ApplicationCommandIndexStore, React, SettingsRouter, UserStore, useStateFromStores } from "@webpack/common";
+import { Alerts, ApplicationCommandIndexStore, NavigationRouter, React, SettingsRouter, UserStore, useStateFromStores } from "@webpack/common";
 import { ComponentType } from "react";
 
 import { PluginButtons } from "./pluginButtons";
@@ -277,10 +277,10 @@ export default definePlugin({
             if (VC_SUPPORT_CHANNEL_IDS.includes(channelId) && !clicked) {
                 return Alerts.show({
                     title: "Vencord Support Channel Warning",
-                    body: "Before asking for help. Check updates and if this issue is actually caused by Vencord, if not then please go to Testcord's support channel instead!",
-                    confirmText: "Testcord Support",
+                    body: "Before asking for help. Check updates and if this issue is actually caused by Equicord!",
+                    confirmText: "Equicord Support",
                     onConfirm() {
-                        window.open("https://discord.gg/KTNXyDTXGb");
+                        NavigationRouter.transitionTo(`/channels/${GUILD_ID}/${SUPPORT_CHANNEL_ID}`);
                     },
                     cancelText: "Okay continue",
                     onCancel() {
