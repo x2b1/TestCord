@@ -43,7 +43,11 @@ jobs:
               run: |
                   pnpm install --frozen-lockfile --prefer-offline
 
+<<<<<<< HEAD
             - name: Build Equicord Reporter Version
+=======
+            - name: Build Vencord Reporter Version
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
               run: pnpm buildReporter
 
             - name: Run Reporter

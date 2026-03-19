@@ -25,8 +25,13 @@ import { CogWheel } from "@components/Icons";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Guild } from "@vencord/discord-types";
+<<<<<<< HEAD
 import { findByCodeLazy, findByPropsLazy, findStoreLazy, mapMangledModuleLazy } from "@webpack";
 import { ChannelStore, Menu } from "@webpack/common";
+=======
+import { findByCodeLazy, findByPropsLazy, mapMangledModuleLazy } from "@webpack";
+import { Menu, UserStore } from "@webpack/common";
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
 
 const { updateGuildNotificationSettings } = findByPropsLazy("updateGuildNotificationSettings");
 const { toggleShowAllChannels } = mapMangledModuleLazy(".onboardExistingMember(", {
@@ -175,5 +180,11 @@ export default definePlugin({
         }
     ],
     settings,
-    applyDefaultSettings
+    applyDefaultSettings,
+    flux: {
+        GUILD_JOIN_REQUEST_UPDATE({ guildId, request, status }) {
+            if (status === "APPROVED" && request.user_id === UserStore.getCurrentUser().id)
+                applyDefaultSettings(guildId);
+        }
+    }
 });

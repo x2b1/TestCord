@@ -104,10 +104,24 @@ export default definePlugin({
     dependencies: ["UserSettingsAPI"],
     settings,
 
+<<<<<<< HEAD
     userAreaButton: {
         icon: Icon,
         render: GameActivityToggleButton
     },
+=======
+    managedStyle,
+
+    patches: [
+        {
+            find: ".DISPLAY_NAME_STYLES_COACHMARK)",
+            replacement: {
+                match: /children:\[(?=.{0,25}?accountContainerRef)/,
+                replace: "children:[$self.GameActivityToggleButton(arguments[0]),"
+            }
+        }
+    ],
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
 
     toolboxActions() {
         const { location } = settings.use(["location"]);

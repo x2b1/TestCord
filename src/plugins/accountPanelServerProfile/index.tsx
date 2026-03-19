@@ -75,11 +75,15 @@ export default definePlugin({
 
     patches: [
         {
-            find: ".WIDGETS_RTC_UPSELL_COACHMARK)",
+            find: "handleOpenSettingsContextMenu=",
             group: true,
             replacement: [
                 {
+<<<<<<< HEAD
                     match: /(\.AVATAR,children:.+?renderPopout:\(?(\i).{0,5}=>){(.+?)}(?=,position)(?<=currentUser:(\i).+?)/,
+=======
+                    match: /(\.AVATAR,children:.+?renderPopout:(\i)=>){(.+?)}(?=,position)(?<=currentUser:(\i).+?)/,
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
                     replace: (_, rest, popoutProps, originalPopout, currentUser) => `${rest}$self.UserProfile({popoutProps:${popoutProps},currentUser:${currentUser},originalRenderPopout:()=>{${originalPopout}}})`
                 },
                 {

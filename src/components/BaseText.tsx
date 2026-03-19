@@ -79,9 +79,13 @@ export type BaseTextProps<Tag extends TextTag = "div"> = ComponentPropsWithoutRe
     weight?: TextWeight;
     color?: TextColor;
     tag?: Tag;
+<<<<<<< HEAD
     selectable?: boolean;
     lineClamp?: number;
     tabularNumbers?: boolean;
+=======
+    defaultColor?: boolean;
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
 };
 
 export function BaseText<T extends TextTag = "div">(props: BaseTextProps<T>): ReactNode {
@@ -90,9 +94,13 @@ export function BaseText<T extends TextTag = "div">(props: BaseTextProps<T>): Re
         weight = "normal",
         color,
         tag: Tag = "div",
+<<<<<<< HEAD
         selectable = false,
         lineClamp,
         tabularNumbers = false,
+=======
+        defaultColor = true,
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
         children,
         className,
         style,
@@ -100,6 +108,7 @@ export function BaseText<T extends TextTag = "div">(props: BaseTextProps<T>): Re
     } = props;
 
     return (
+<<<<<<< HEAD
         <Tag
             className={classes(
                 textCls("base", size, weight),
@@ -116,6 +125,9 @@ export function BaseText<T extends TextTag = "div">(props: BaseTextProps<T>): Re
             }}
             {...restProps}
         >
+=======
+        <Tag className={classes(textCls("base", size, weight, defaultColor && "defaultColor"), className)} {...restProps}>
+>>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
             {children}
         </Tag>
     );
