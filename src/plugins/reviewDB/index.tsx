@@ -36,7 +36,7 @@ import { openReviewsModal } from "./components/ReviewModal";
 import { NotificationType, ReviewType } from "./entities";
 import { getCurrentUserInfo, getReviews, readNotification } from "./reviewDbApi";
 import { settings } from "./settings";
-import { showToast } from "./utils";
+import { cl, showToast } from "./utils";
 
 const DMSideBarClasses = findCssClassesLazy("widgetPreviews");
 const ProfileCardClasses = findCssClassesLazy("cardsList", "firstCardContainer", "card", "container");
@@ -157,7 +157,7 @@ export default definePlugin({
     },
 
     renderProfileComponent: ErrorBoundary.wrap(({ user, isSideBar = false }: { user: User; isSideBar?: boolean; }) => {
-        const [reviewData] = useAwaiter(() => getReviews(user.id), { deps: [user.id], fallbackValue: null });
+        const [reviewData] = useAwaiter(() => getReviews(user.id, 0, true), { deps: [user.id], fallbackValue: null });
 
         // Discord are masters at using a crap ton of html elements and css classes to create a simple ui that could have
         // been made with less than half of the number of elements, so we have to do this insanity to replicate their ui
@@ -165,25 +165,36 @@ export default definePlugin({
             <section className={ProfileCardClasses.container}>
                 <ul className={ProfileCardClasses.cardsList} tabIndex={-1}>
                     <li className={ProfileCardClasses.firstCardContainer}>
-                        <Clickable className={ProfileCardContainerClasses.breadcrumb} onClick={() => openReviewsModal(user.id, user.username, ReviewType.User)}>
+                        <Clickable
+                            className={classes(ProfileCardContainerClasses.breadcrumb, reviewData?.hasOptedOut ? cl("profile-popout-disabled") : null)}
+                            onClick={() => !reviewData?.hasOptedOut && openReviewsModal(user.id, user.username, ReviewType.User)}
+                        >
                             <div className={classes(ProfileCardOverlayClasses.overlay, ProfileCardContainerClasses.innerContainer, ProfileCardClasses.card)}>
                                 <Paragraph size={isSideBar ? "sm" : "xs"} weight="medium">User Reviews</Paragraph>
-                                {!!reviewData?.reviewCount && (
+                                {reviewData?.hasOptedOut ? (
+                                    <Paragraph size={isSideBar ? "sm" : "xs"}>User disabled reviews</Paragraph>
+                                ) : !reviewData?.reviewCount ? (
+                                    <Paragraph size={isSideBar ? "sm" : "xs"}>No reviews yet</Paragraph>
+                                ) : !!reviewData?.reviewCount && (
                                     <div className={ProfileCardContainerClasses.icons}>
-                                        {reviewData.reviews.slice(0, 4).map((review, idx) => {
-                                            const showCount = idx === 3 && reviewData.reviewCount > 4;
+                                        {reviewData.reviews
+                                            .filter(review => review.id !== 0)
+                                            .slice(0, 4)
+                                            .reverse()
+                                            .map((review, idx) => {
+                                                const showCount = idx === 3 && reviewData.reviewCount > 4;
 
-                                            return (
-                                                <div className={ProfileCardContainerClasses.icon} key={review.id}>
-                                                    <img src={review.sender.profilePhoto} alt={review.sender.username} className={showCount ? ProfileCardContainerClasses.displayCount : undefined} />
-                                                    {showCount && (
-                                                        <div className={ProfileCardContainerClasses.displayCountText}>
-                                                            <Span className={ProfileCardContainerClasses.displayCountTextColor} size="xs" weight="medium">+{reviewData.reviewCount - 3}</Span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
+                                                return (
+                                                    <div className={ProfileCardContainerClasses.icon} key={review.id}>
+                                                        <img src={review.sender.profilePhoto} alt={review.sender.username} className={showCount ? ProfileCardContainerClasses.displayCount : undefined} />
+                                                        {showCount && (
+                                                            <div className={ProfileCardContainerClasses.displayCountText}>
+                                                                <Span className={ProfileCardContainerClasses.displayCountTextColor} size="xs" weight="medium">+{reviewData.reviewCount - 3}</Span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 )}
                             </div>
