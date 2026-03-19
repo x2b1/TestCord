@@ -24,17 +24,26 @@ import { openContributorModal } from "@components/settings/tabs";
 import { Devs } from "@utils/constants";
 import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
-import { shouldShowContributorBadge, shouldShowEquicordContributorBadge } from "@utils/misc";
+import { shouldShowContributorBadge, shouldShowEquicordContributorBadge, shouldShowTestcordAdminBadge, shouldShowTestcordContributorBadge } from "@utils/misc";
+import { isTestcordDeveloper, isTestcordOwner } from "@utils/testcordAdmins";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
-import { EquicordDonorModal, EquicordTranslatorModal, VencordDonorModal } from "./modals";
+import { EquicordTranslatorModal, TestCordDonorModal, VencordDonorModal } from "./modals";
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
-const EQUICORD_CONTRIBUTOR_BADGE = "https://equicord.org/assets/favicon.png";
-const USERPLUGIN_CONTRIBUTOR_BADGE = "https://equicord.org/assets/icons/misc/userplugin.png";
+const EQUICORD_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/favicon.png";
+const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/x2b1/TestCord/main/browser/icon.png";
+const USERPLUGIN_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/icons/misc/userplugin.png";
+const TESTCORD_ADMIN_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/main/adm.png";
+const TESTCORD_OWNER_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/owner.png";
+const TESTCORD_DEV_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/dev.png";
+
+// URL for custom testcord badges (managed by /badge command)
+const TBADGES_JSON_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main/badges.json";
+const TBADGES_REPO_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main";
 
 const ContributorBadge: ProfileBadge = {
     description: "Vencord Contributor",
@@ -58,6 +67,20 @@ const EquicordContributorBadge: ProfileBadge = {
     },
 };
 
+const TestcordContributorBadge: ProfileBadge = {
+    description: "Testcord Contributor",
+    iconSrc: TESTCORD_CONTRIBUTOR_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => shouldShowTestcordContributorBadge(userId),
+    onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)"
+        }
+    },
+};
+
 const UserPluginContributorBadge: ProfileBadge = {
     description: "User Plugin Contributor",
     iconSrc: USERPLUGIN_CONTRIBUTOR_BADGE,
@@ -67,7 +90,7 @@ const UserPluginContributorBadge: ProfileBadge = {
         const allPlugins = Object.values(Plugins);
         return allPlugins.some(p => {
             const pluginMeta = PluginMeta[p.name];
-            return pluginMeta?.userPlugin && p.authors.some(a => a.id.toString() === userId);
+            return pluginMeta?.userPlugin && p.authors.some(a => a && a.id.toString() === userId);
         });
     },
     onClick: (_, { userId }) => openContributorModal(UserStore.getUser(userId)),
@@ -79,22 +102,87 @@ const UserPluginContributorBadge: ProfileBadge = {
     },
 };
 
+const TestcordAdminBadge: ProfileBadge = {
+    description: "Testcord Admin",
+    iconSrc: TESTCORD_ADMIN_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => shouldShowTestcordAdminBadge(userId),
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)"
+        }
+    },
+};
+
+const TestcordOwnerBadge: ProfileBadge = {
+    description: "Testcord Owner",
+    iconSrc: TESTCORD_OWNER_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => isTestcordOwner(userId),
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)"
+        }
+    },
+};
+
+const TestcordDevBadge: ProfileBadge = {
+    description: "Testcord Dev",
+    iconSrc: TESTCORD_DEV_BADGE,
+    position: BadgePosition.START,
+    shouldShow: ({ userId }) => isTestcordDeveloper(userId),
+    props: {
+        style: {
+            borderRadius: "50%",
+            transform: "scale(0.9)"
+        }
+    },
+};
+
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
+let TestcordCustomBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
 async function loadBadges(url: string, noCache = false) {
     const init = {} as RequestInit;
     if (noCache) init.cache = "no-cache";
 
-    return await fetch(url, init).then(r => r.json());
+    return await fetch(url, init).then(r => r.ok ? r.json() : {}).catch(() => ({}));
 }
 
 async function loadAllBadges(noCache = false) {
-    const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
+    const init = {} as RequestInit;
+    if (noCache) init.cache = "no-cache";
 
-    DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    const urls = [
+        { key: "vencord", url: "https://badges.vencord.dev/badges.json" },
+        { key: "equicord", url: "https://badge.equicord.org/badges.json" },
+        { key: "testcord", url: TBADGES_JSON_URL }
+    ];
+
+    const results = await Promise.allSettled(
+        urls.map(({ url }) => fetch(url, init).then(r => r.ok ? r.json() : {}))
+    );
+
+    const logger = new Logger("BadgeAPI#loadAllBadges");
+
+    // Process results
+    results.forEach((result, index) => {
+        const { key } = urls[index];
+        if (result.status === "fulfilled") {
+            if (key === "vencord") {
+                DonorBadges = result.value;
+            } else if (key === "equicord") {
+                EquicordDonorBadges = result.value;
+            } else if (key === "testcord") {
+                TestcordCustomBadges = result.value;
+            }
+        } else {
+            logger.error(`Failed to fetch ${key} badges:`, result.reason);
+        }
+    });
 }
 
 let intervalId: any;
@@ -166,6 +254,10 @@ export default definePlugin({
         return EquicordDonorBadges;
     },
 
+    get TestcordCustomBadges() {
+        return TestcordCustomBadges;
+    },
+
     toolboxActions: {
         async "Refetch Badges"() {
             await loadAllBadges(true);
@@ -177,7 +269,7 @@ export default definePlugin({
         }
     },
 
-    userProfileBadges: [ContributorBadge, EquicordContributorBadge, UserPluginContributorBadge],
+    userProfileBadges: [ContributorBadge, EquicordContributorBadge, TestcordContributorBadge, TestcordAdminBadge, TestcordOwnerBadge, TestcordDevBadge, UserPluginContributorBadge],
 
     async start() {
         await loadAllBadges();
@@ -226,7 +318,7 @@ export default definePlugin({
             props: {
                 style: {
                     borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
+                    transform: "scale(0.9)"
                 }
             },
             onContextMenu(event, badge) {
@@ -246,15 +338,56 @@ export default definePlugin({
             props: {
                 style: {
                     borderRadius: "50%",
-                    transform: "scale(0.9)" // The image is a bit too big compared to default badges
+                    transform: "scale(0.9)"
                 }
             },
             onContextMenu(event, badge) {
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);
             },
             onClick() {
-                return badge.tooltip === "Equicord Translator" ? EquicordTranslatorModal() : EquicordDonorModal();
+                return badge.tooltip === "Equicord Translator" ? EquicordTranslatorModal() : TestCordDonorModal();
             },
         } satisfies ProfileBadge));
+    },
+
+    // Get custom testcord badges (managed by /badge command)
+    getTestCordCustomBadges(userId: string) {
+        const userBadges = TestcordCustomBadges[userId];
+        if (!userBadges) return [];
+
+        // Handle both array format and object format (with numeric keys like "0", "1")
+        let badgesArray: Array<{ tooltip: string; badge: string; }>;
+        if (Array.isArray(userBadges)) {
+            badgesArray = userBadges;
+        } else if (typeof userBadges === "object") {
+            // Convert object with numeric keys to array
+            badgesArray = Object.values(userBadges);
+        } else {
+            return [];
+        }
+
+        return badgesArray.map(badge => {
+            // Check if badge URL is full URL or just filename
+            const iconSrc = typeof badge.badge === "string" && badge.badge.startsWith("http")
+                ? badge.badge
+                : `${TBADGES_REPO_URL}/${badge.badge}`;
+
+            return {
+                iconSrc,
+                description: badge.tooltip,
+                position: BadgePosition.START,
+                props: {
+                    style: {
+                        borderRadius: "50%",
+                        transform: "scale(0.9)"
+                    }
+                }
+            } satisfies ProfileBadge;
+        });
+    },
+
+    // Alias for backward compatibility
+    getTestCordDonorBadges: function (userId: string) {
+        return this.getEquicordDonorBadges(userId);
     }
 });

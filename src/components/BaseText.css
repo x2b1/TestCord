@@ -1,12 +1,8 @@
 .vc-text-base {
     font-family: var(--font-primary);
-<<<<<<< HEAD
-    color: var(--text-default);
-=======
     line-height: normal;
 
     /* Discord puts an insane default margin on p tags, so reset that here */
->>>>>>> bf7303208c744752c19b44dbb07e355206e5ba52
     margin: 0;
 }
 
@@ -30,10 +26,7 @@
 .vc-text-tabular-numbers {
     font-variant-numeric: tabular-nums;
 }
-<<<<<<< HEAD
-=======
 
 .vc-text-defaultColor {
     color: var(--text-default);
 }
->>>>>>> bf7303208c744752c19b44dbb07e355206e5ba52
