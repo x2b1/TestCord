@@ -31,11 +31,8 @@ export interface UserReviewsData {
     message: string;
     hasNextPage: boolean;
     reviewCount: number;
-<<<<<<< HEAD
     reviews: Review[];
     updated: boolean;
-=======
->>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
     hasOptedOut: boolean;
 }
 
@@ -51,7 +48,6 @@ async function rdbRequest(path: string, options: RequestInit = {}) {
     });
 }
 
-<<<<<<< HEAD
 export async function getReviews(id: string, offset = 0, isProfileComponent = false): Promise<UserReviewsData> {
     let flags = 0;
     if (!settings.store.showWarning) flags |= WarningFlag;
@@ -61,17 +57,6 @@ export async function getReviews(id: string, offset = 0, isProfileComponent = fa
         offset: String(offset),
         ...(isProfileComponent ? { limit: "4" } : {})
     });
-=======
-export async function getReviews(id: string, { limit, offset = 0 }: { limit?: number; offset?: number; } = {}): Promise<UserReviewsData> {
-    let flags = 0;
-    if (!settings.store.showWarning) flags |= WarningFlag;
-
-    const params = new URLSearchParams();
-    if (flags) params.append("flags", String(flags));
-    if (offset) params.append("offset", String(offset));
-    if (limit) params.append("limit", String(limit));
-
->>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
     const req = await fetch(`${API_URL}/users/${id}/reviews?${params}`);
 
     const res = (req.ok)

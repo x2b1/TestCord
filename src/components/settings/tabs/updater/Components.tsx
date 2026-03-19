@@ -106,11 +106,8 @@ export function Updatable(props: CommonProps) {
                 </Button>
                 {isOutdated && (
                     <Button
-<<<<<<< HEAD
                         size="small"
                         variant="primary"
-=======
->>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
                         disabled={isUpdating || isChecking}
                         onClick={runWithDispatch(setIsUpdating, async () => {
                             if (await update()) {
@@ -135,32 +132,6 @@ export function Updatable(props: CommonProps) {
                         Update Now
                     </Button>
                 )}
-<<<<<<< HEAD
-=======
-                <Button
-                    disabled={isUpdating || isChecking}
-                    onClick={runWithDispatch(setIsChecking, async () => {
-                        const outdated = await checkForUpdates();
-
-                        if (outdated) {
-                            setUpdates(changes);
-                        } else {
-                            setUpdates([]);
-
-                            Toasts.show({
-                                message: "No updates found!",
-                                id: Toasts.genId(),
-                                type: Toasts.Type.MESSAGE,
-                                options: {
-                                    position: Toasts.Position.BOTTOM
-                                }
-                            });
-                        }
-                    })}
-                >
-                    Check for Updates
-                </Button>
->>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
             </Flex>
             {!updates && updateError ? (
                 <>

@@ -13,12 +13,8 @@ import { ComponentPropsWithRef } from "react";
 const cl = classNameFactory("vc-card-");
 
 export interface CardProps extends ComponentPropsWithRef<"div"> {
-<<<<<<< HEAD
     variant?: "primary" | "warning" | "danger" | "success" | "brand";
     outline?: boolean;
-=======
-    variant?: "normal" | "warning" | "danger" | "info" | "success";
->>>>>>> cba0eb9897419432e68277b0b60c301a6f8323cf
     /** Add a default padding of 1em to the card. This is implied if no className prop is passed */
     defaultPadding?: boolean;
 }
