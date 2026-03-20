@@ -15,8 +15,6 @@ const VoiceStateStore = findByPropsLazy("getVoiceStateForUser");
 const UserStore = findByPropsLazy("getCurrentUser", "getUser");
 const MediaEngineStore = findByPropsLazy("getInputDeviceId");
 
-const Native = (window as any).VencordNative?.pluginHelpers?.CallRecorder;
-
 const settings = definePluginSettings({
     recordingEnabled: {
         type: OptionType.BOOLEAN,
@@ -114,7 +112,13 @@ function resolveOutputFolder() {
     const configured = (settings.store.outputFolder || "").trim();
     if (configured) return configured;
 
-    // Fallback to Downloads without Node APIs
+    // Fallback to Downloads using Node APIs
+    const { path, os } = getFsHelpers();
+    if (path && os) {
+        return path.join(os.homedir(), "Downloads");
+    }
+
+    // Last resort fallback
     const username = (DiscordNative as any)?.process?.env?.USERNAME;
     if (username) {
         return `C:/Users/${username}/Downloads`;
@@ -145,16 +149,99 @@ async function saveRecordingFile(sourcePath) {
         return;
     }
 
-    const outputFileName = getFileName();
+    let outputFileName = getFileName();
     console.log("CallRecorder: filename", outputFileName);
 
     try {
-        console.log("CallRecorder: calling native saveRecording");
-        const destPath = await Native.saveRecording(sourcePath, folder, outputFileName);
-        console.log("CallRecorder: saved successfully to", destPath);
-        settings.store.lastSavedFile = destPath;
-        showNotification({ title: "CallRecorder", body: `Saved recording to ${destPath}` });
-        showItemInFolder(destPath);
+        // Try native helper first
+        const vencordNative = (window as any).VencordNative;
+        if (vencordNative?.pluginHelpers?.CallRecorder?.saveRecording) {
+            console.log("CallRecorder: using native saveRecording");
+            const result = await vencordNative.pluginHelpers.CallRecorder.saveRecording(sourcePath, folder, outputFileName);
+            console.log("CallRecorder: saved successfully to", result);
+            settings.store.lastSavedFile = result;
+            showNotification({ title: "CallRecorder", body: `Saved recording to ${result}` });
+            showItemInFolder(result);
+            return;
+        }
+
+        // Fallback to fs if available
+        const { fs, path } = getFsHelpers();
+        if (fs && path) {
+            const dir = path.dirname(sourcePath);
+            const baseName = path.basename(sourcePath);
+
+            // Try to rename to a better name
+            try {
+                const files = await new Promise<string[]>((resolve, reject) => {
+                    fs.readdir(dir, (err, files) => {
+                        if (err) reject(err);
+                        else resolve(files);
+                    });
+                });
+
+                const recordingFiles = files.filter(f => f.startsWith("recording ") && f.endsWith(".ogg"));
+                const numbers = recordingFiles.map(f => {
+                    const match = f.match(/^recording (\d+)\.ogg$/);
+                    return match ? parseInt(match[1]) : 0;
+                });
+                const nextNum = Math.max(0, ...numbers) + 1;
+                const newName = `recording ${nextNum}.ogg`;
+                const newPath = path.join(dir, newName);
+
+                await new Promise((resolve, reject) => {
+                    fs.rename(sourcePath, newPath, err => {
+                        if (err) reject(err);
+                        else resolve(undefined);
+                    });
+                });
+
+                console.log("CallRecorder: renamed to", newPath);
+                showNotification({ title: "CallRecorder", body: `Recording saved as ${newName}` });
+                showItemInFolder(newPath);
+                return;
+            } catch (renameErr) {
+                console.log("CallRecorder: rename failed, using original path", renameErr);
+                // Fall through to showing original path
+            }
+
+            // Copy to output folder with unique name if exists
+            let fullDestPath = path.join(folder, outputFileName);
+            let attempts = 0;
+            while (true) {
+                const existsPromise = new Promise(resolve => {
+                    fs.access(fullDestPath, err => resolve(err == null));
+                });
+                const exists = await existsPromise;
+                if (!exists) break;
+                const name = path.basename(outputFileName, path.extname(outputFileName));
+                const ext = path.extname(outputFileName);
+                const randomDigits = Array.from({ length: 10 }, () => Math.floor(Math.random() * 10)).join("");
+                outputFileName = `${name}-${randomDigits}${ext}`;
+                fullDestPath = path.join(folder, outputFileName);
+                attempts++;
+                if (attempts > 100) {
+                    throw new Error("Too many filename collisions");
+                }
+            }
+            console.log("CallRecorder: copying file from", sourcePath, "to", fullDestPath);
+            await new Promise((resolve, reject) => {
+                fs.copyFile(sourcePath, fullDestPath, err => {
+                    if (err) reject(err);
+                    else resolve(undefined);
+                });
+            });
+            console.log("CallRecorder: saved successfully to", fullDestPath);
+            settings.store.lastSavedFile = fullDestPath;
+            showNotification({ title: "CallRecorder", body: `Saved recording to ${fullDestPath}` });
+            showItemInFolder(fullDestPath);
+            return;
+        }
+
+        // Last resort: show the source path
+        console.log("CallRecorder: cannot save file, showing source path");
+        showNotification({ title: "CallRecorder", body: `Recording saved to temporary location: ${sourcePath}. Please copy it manually.` });
+        showItemInFolder(sourcePath);
     } catch (err) {
         console.error("CallRecorder saveRecordingFile error", err);
         showNotification({ title: "CallRecorder", body: "Failed to save recording file." });
@@ -267,8 +354,9 @@ function stopRecording() {
 
 export default definePlugin({
     name: "CallRecorder",
-    description: "Records Discord call audio on join and stops on leave; saves locally; adds open-folder button.",
+    description: "Records Discord call audio on join and stops on leave, saves in a temp folder and the recording MIGHT be overwritten because of various electron limitations. (i tried all i could to fix it, but for now u gotta just drag the recording outta the folder if u wanna keep it for longer)",
     authors: [TestcordDevs.x2b],
+    native: true,
     settings,
     flux: {
         VOICE_STATE_UPDATES() {
