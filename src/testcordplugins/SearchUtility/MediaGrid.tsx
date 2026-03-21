@@ -1,19 +1,17 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ChannelStore, MessageStore, UserStore, RestAPI } from "@webpack/common";
-import { classNameFactory } from "@api/Styles";
-import { Avatar } from "@webpack/common";
 import { DataStore } from "@api/index";
-import { useMemo } from "@webpack/common";
+import { classNameFactory } from "@utils/css";
 import type { Channel, Message, User } from "@vencord/discord-types";
+import { Avatar, ChannelStore, RestAPI, useMemo,UserStore } from "@webpack/common";
 
 const DiscordAPI = RestAPI;
 
-const cl = classNameFactory("vc-ultra-search-");
+const cl = classNameFactory("vc-search-utility-");
 
 // Interfaces pour le cache
 export interface MediaCache {
@@ -168,7 +166,7 @@ export async function loadAllMediaFromAPI(channelId: string, apiRequestDelay: nu
         if (cached && cached.messages && cached.messages.length > 0) {
             // Utiliser le dernier message ID comme point de départ
             const lastMessage = cached.messages[cached.messages.length - 1];
-            before = lastMessage.id || lastMessage.message_id || null;
+            before = lastMessage.id || null;
             console.log(`[Ultra Advanced Search] Reprise depuis le message ${before}`);
         }
     } catch (error) {
@@ -365,7 +363,7 @@ export async function searchMediaMessages(
                 console.log(`[Ultra Advanced Search] Cache items multimédias sauvegardé pour ${channelId} (${existingItems.length + newItems.length} items)`);
             }
         } catch (error) {
-            console.error("[Ultra Advanced Search] Erreur lors de la sauvegarde du cache items multimédias:", error);
+            console.error("[Ultra Advanced Search] Error while saving the media item cache:", error);
         }
     }
 
@@ -392,7 +390,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
 
         // Collecter tous les médias depuis les résultats affichés
         for (const result of displayedResults) {
-            const message = result.message;
+            const { message } = result;
             const user = result.user || UserStore.getUser(message.author?.id || (message as any).author_id);
 
             // Si le résultat a déjà les infos de média (depuis le cache items), les utiliser directement
@@ -426,7 +424,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
     if (mediaItems.length === 0) {
         return (
             <div className={cl("no-results")}>
-                <span>Aucun média trouvé</span>
+                <span>No media found</span>
             </div>
         );
     }
@@ -464,7 +462,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
                                             objectPosition: "center"
                                         }}
                                         loading="lazy"
-                                        onError={(e) => {
+                                        onError={e => {
                                             (e.target as HTMLImageElement).style.display = "none";
                                         }}
                                     />
@@ -482,7 +480,7 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
                                         objectPosition: "center"
                                     }}
                                     loading="lazy"
-                                    onError={(e) => {
+                                    onError={e => {
                                         (e.target as HTMLImageElement).style.display = "none";
                                     }}
                                 />
@@ -503,6 +501,3 @@ export function MediaGrid({ displayedResults, navigateToMessage, setSelectedInde
         </div>
     );
 }
-
-
-

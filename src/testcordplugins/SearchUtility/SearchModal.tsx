@@ -1,23 +1,22 @@
 /*
  * Vencord, a Discord client mod
- * Copyright (c) 2025 Vendicated and contributors
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { classNameFactory } from "@api/Styles";
 import { DataStore } from "@api/index";
-import { ModalProps, ModalRoot, ModalHeader, ModalContent, ModalSize, ModalCloseButton } from "@utils/modal";
+import { classNameFactory } from "@utils/css";
+import { ModalCloseButton, ModalContent, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
+import type { Channel, Message, User } from "@vencord/discord-types";
 import { findStoreLazy } from "@webpack";
-import { Avatar, ChannelStore, MessageStore, NavigationRouter, RestAPI, TabBar, TextInput, UserStore } from "@webpack/common";
-import { Message, Channel, User } from "@vencord/discord-types";
-import { React, useEffect, useMemo, useRef, useState, useCallback } from "@webpack/common";
+import { Avatar, ChannelStore, MessageStore, NavigationRouter, React, RestAPI, TabBar, TextInput, useCallback, useEffect, useRef, UserStore, useState } from "@webpack/common";
 
 import { settings } from "./index";
-import { MediaGrid, searchMediaMessages, MediaItemsCache } from "./MediaGrid";
+import { MediaGrid, MediaItemsCache, searchMediaMessages } from "./MediaGrid";
 
 const PrivateChannelSortStore = findStoreLazy("PrivateChannelSortStore") as { getPrivateChannelIds: () => string[]; };
 
-const cl = classNameFactory("vc-ultra-search-");
+const cl = classNameFactory("vc-search-utility-");
 
 enum SearchFilter {
     RECENT = "recent",
@@ -411,7 +410,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
                     }
 
-                    const batchPromises = batch.map(async (channelId) => {
+                    const batchPromises = batch.map(async channelId => {
                         try {
                             const channel = ChannelStore.getChannel(channelId);
                             if (!channel) return [];
@@ -730,7 +729,6 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         return results;
     }
 
-
     function searchPinnedMessages(channelId: string, query: string): SearchResult[] {
         const results: SearchResult[] = [];
         const channel = ChannelStore.getChannel(channelId);
@@ -767,7 +765,6 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         return results;
     }
 
-
     // Optimiser highlightText avec useMemo
     const highlightText = useCallback((text: string, highlight: string): React.ReactNode => {
         if (!highlight || !text) return text;
@@ -776,7 +773,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         const parts = text.split(new RegExp(`(${escapedHighlight})`, "gi"));
         return parts.map((part, i) =>
             part.toLowerCase() === highlight.toLowerCase() ? (
-                <mark key={i} style={{ backgroundColor: "var(--brand-experiment-500)", color: "white", padding: "0 2px", borderRadius: "2px" }}>
+                <mark key={i}>
                     {part}
                 </mark>
             ) : part
@@ -790,12 +787,12 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                 : message.content;
         }
         if (message.attachments?.length > 0) {
-            return `📎 ${message.attachments.length} pièce(s) jointe(s)`;
+            return `📎 ${message.attachments.length} attachment${message.attachments.length === 1 ? "" : "s"}`;
         }
         if (message.embeds?.length > 0) {
-            return `📄 ${message.embeds.length} intégration(s)`;
+            return `📄 ${message.embeds.length} embed${message.embeds.length === 1 ? "" : "s"}`;
         }
-        return "Message sans contenu";
+        return "Message has no text content";
     }, []);
 
     const formatTimestamp = useCallback((timestamp: any): string => {
@@ -832,15 +829,15 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) {
-                return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+                return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
             } else if (diffDays === 1) {
-                return "Hier";
+                return "Yesterday";
             } else if (diffDays < 7) {
-                return date.toLocaleDateString("fr-FR", { weekday: "short" });
+                return date.toLocaleDateString(undefined, { weekday: "short" });
             } else if (diffDays < 365) {
-                return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+                return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
             } else {
-                return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+                return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
             }
         } catch {
             return "";
@@ -868,17 +865,17 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         if (results.length === 0) {
             return (
                 <div className={cl("no-results")}>
-                    <span>Aucun message trouvé</span>
+                    <span>No messages found</span>
                 </div>
             );
         }
 
         return (
-            <div ref={resultsRef} className={cl("results")}>
+            <div ref={resultsRef} className={cl("results", "message-results")}>
                 {results.map((result, index) => {
                     const isSelected = index === selectedIndex;
                     const user = result.user || UserStore.getUser(result.message.author.id);
-                    const channel = result.channel;
+                    const { channel } = result;
 
                     return (
                         <div
@@ -899,13 +896,13 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                                     <div className={cl("result-header")}>
                                         <div className={cl("result-author")}>
                                             <span className={cl("result-author-name")}>
-                                                {user?.globalName || user?.username || "Utilisateur inconnu"}
+                                                {user?.globalName || user?.username || "Unknown user"}
                                             </span>
                                             <span className={cl("result-channel")}>
                                                 {channel.name || "DM"}
                                             </span>
                                             {result.message.pinned && (
-                                                <span className={cl("result-pinned")} title="Message épinglé">
+                                                <span className={cl("result-pinned")} title="Pinned message">
                                                     📌
                                                 </span>
                                             )}
@@ -922,13 +919,13 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                                             {result.message.attachments?.length > 0 && (
                                                 <div className={cl("result-attachments")}>
                                                     <span className={cl("result-icon")}>📎</span>
-                                                    <span>{result.message.attachments.length} pièce(s) jointe(s)</span>
+                                                    <span>{result.message.attachments.length} attachment{result.message.attachments.length === 1 ? "" : "s"}</span>
                                                 </div>
                                             )}
                                             {result.message.embeds?.length > 0 && (
                                                 <div className={cl("result-embeds")}>
                                                     <span className={cl("result-icon")}>📄</span>
-                                                    <span>{result.message.embeds.length} intégration(s)</span>
+                                                    <span>{result.message.embeds.length} embed{result.message.embeds.length === 1 ? "" : "s"}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -956,7 +953,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
             <div ref={mediaGridContainerRef} className={cl("results", "media-grid-container")}>
                 {results.length === 0 && !loading ? (
                     <div className={cl("empty")}>
-                        <span>Chargement des médias...</span>
+                        <span>Loading media...</span>
                     </div>
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", width: "100%", minWidth: 0, maxWidth: "100%" }}>
@@ -969,12 +966,12 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         />
                         {loadingMore && (
                             <div className={cl("loading-more")}>
-                                <span>Chargement...</span>
+                                <span>Loading...</span>
                             </div>
                         )}
                         {results.length < allResults.length && !loadingMore && (
                             <div className={cl("loading-more")}>
-                                <span>Faites défiler pour charger plus ({remainingCount} restants)</span>
+                                <span>Scroll to load more ({remainingCount} remaining)</span>
                             </div>
                         )}
                     </div>
@@ -983,18 +980,17 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         );
     }
 
-
     return (
         <ModalRoot {...modalProps} size={ModalSize.LARGE} className={cl("root")}>
             <ModalHeader className={cl("header")}>
-                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div className={cl("toolbar")}>
+                    <div className={cl("search-row")}>
                         <TextInput
                             ref={searchInputRef}
                             value={query}
                             onChange={setQuery}
-                            placeholder="Rechercher..."
-                            style={{ flex: 1 }}
+                            placeholder="Search messages, media, and DMs"
+                            className={cl("search-input")}
                             autoFocus
                         />
                         <ModalCloseButton onClick={modalProps.onClose} />
@@ -1005,23 +1001,24 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         look="brand"
                         selectedItem={activeFilter}
                         onItemSelect={setActiveFilter as any}
+                        className={cl("filter-bar")}
                     >
                         <TabBar.Item id={SearchFilter.RECENT}>
-                            Récent
+                            Recent
                         </TabBar.Item>
                         <TabBar.Item id={SearchFilter.MESSAGES}>
                             Messages
                         </TabBar.Item>
                         <TabBar.Item id={SearchFilter.MEDIA}>
-                            Contenu multimédia
+                            Media
                         </TabBar.Item>
                         <TabBar.Item id={SearchFilter.PINNED}>
-                            Messages épinglés
+                            Pinned
                         </TabBar.Item>
                     </TabBar>
                     {stats.total > 0 && (
-                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
-                            {stats.displayed} / {stats.total} résultats
+                        <div className={cl("results-stats")}>
+                            {stats.displayed} / {stats.total} results
                         </div>
                     )}
                 </div>
@@ -1031,7 +1028,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                 {loading ? (
                     <div className={cl("loading")}>
                         <div className={cl("spinner")} />
-                        <span>Recherche en cours...</span>
+                        <span>Searching...</span>
                     </div>
                 ) : activeFilter === SearchFilter.MEDIA ? (
                     <MediaGridWrapper
@@ -1045,11 +1042,11 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                     />
                 ) : displayedResults.length === 0 && query ? (
                     <div className={cl("no-results")}>
-                        <span>Aucun résultat trouvé pour "{query}"</span>
+                        <span>No results found for "{query}"</span>
                     </div>
                 ) : displayedResults.length === 0 ? (
                     <div className={cl("empty")}>
-                        <span>Tapez pour rechercher dans tous vos messages</span>
+                        <span>Start typing to search your message history</span>
                     </div>
                 ) : (
                     <>
@@ -1062,12 +1059,12 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         />
                         {loadingMore && (
                             <div className={cl("loading-more")} style={{ padding: "12px", textAlign: "center" }}>
-                                <span>Chargement...</span>
+                                <span>Loading...</span>
                             </div>
                         )}
                         {displayedResults.length < allResults.length && !loadingMore && (
                             <div className={cl("loading-more")} style={{ padding: "12px", textAlign: "center" }}>
-                                <span>Faites défiler pour charger plus ({allResults.length - displayedResults.length} restants)</span>
+                                <span>Scroll to load more ({allResults.length - displayedResults.length} remaining)</span>
                             </div>
                         )}
                     </>
@@ -1076,8 +1073,3 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
         </ModalRoot>
     );
 }
-
-
-
-
-

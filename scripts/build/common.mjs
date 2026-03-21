@@ -191,6 +191,11 @@ export const globPlugins = (kind) => ({
                         continue;
                     if (fileName === "index.ts") continue;
                     if (/\.(zip|rar|7z|tar|gz|bz2)/.test(fileName)) continue;
+                    if (
+                        file.isDirectory() &&
+                        !(await exists(join(fullDir, fileName, "index.ts"))) &&
+                        !(await exists(join(fullDir, fileName, "index.tsx")))
+                    ) continue;
 
                     const target = getPluginTarget(fileName);
 
