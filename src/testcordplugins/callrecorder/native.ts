@@ -1,28 +1,40 @@
 /*
- * Vencord, a Discord client mod
+ * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import { app } from "electron";
-import { copyFile, mkdir } from "fs/promises";
-import { join, normalize } from "path";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import { basename, join, normalize } from "path";
 
-export async function saveRecording(_: any, sourcePath: string, folder: string, filename: string) {
-    sourcePath = normalize(sourcePath);
-    const destPath = join(folder, filename);
-    const sourceFilename = sourcePath.split(/[/\\]/).pop() || "";
-    const discordBaseDirWithTrailingSlash = normalize(app.getPath("userData") + "/");
-    if (!/^\d*recording\.ogg$/.test(sourceFilename) || !sourcePath.startsWith(discordBaseDirWithTrailingSlash)) {
-        throw new Error("Invalid source path");
+export async function readRecording(_: any, filePath: string) {
+    filePath = normalize(filePath);
+    const filename = basename(filePath);
+    const discordBaseDir = normalize(app.getPath("userData") + "/");
+    
+    if (!/^\d*recording\.ogg$/.test(filename) || !filePath.startsWith(discordBaseDir)) {
+        return null;
     }
 
     try {
-        await mkdir(folder, { recursive: true });
-        await copyFile(sourcePath, destPath);
-        return destPath;
-    } catch (err) {
-        console.error("saveRecording error", err);
-        throw err;
+        const content = await readFile(filePath);
+        return new Uint8Array(content.buffer);
+    } catch {
+        return null;
     }
+}
+
+export async function saveRecording(_: any, fileBuffer: ArrayBuffer, folder: string, filename: string) {
+    folder = normalize(folder);
+    filename = basename(normalize(filename));
+
+    if (!fileBuffer || !folder || !filename) {
+        throw new Error("Invalid path");
+    }
+
+    const destPath = join(folder, filename);
+    await mkdir(folder, { recursive: true });
+    await writeFile(destPath, Buffer.from(fileBuffer));
+    return destPath;
 }
