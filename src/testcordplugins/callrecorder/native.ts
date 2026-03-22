@@ -1,5 +1,5 @@
 /*
- * Vencord, a modification for Discord's desktop app
+ * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -12,7 +12,7 @@ export async function readRecording(_: any, filePath: string) {
     filePath = normalize(filePath);
     const filename = basename(filePath);
     const discordBaseDir = normalize(app.getPath("userData") + "/");
-    
+
     if (!/^\d*recording\.ogg$/.test(filename) || !filePath.startsWith(discordBaseDir)) {
         return null;
     }

@@ -13,6 +13,7 @@ import { Avatar, ChannelStore, MessageStore, NavigationRouter, React, RestAPI, T
 
 import { settings } from "./index";
 import { MediaGrid, MediaItemsCache, searchMediaMessages } from "./MediaGrid";
+import styles from "./styles.css?managed";
 
 const PrivateChannelSortStore = findStoreLazy("PrivateChannelSortStore") as { getPrivateChannelIds: () => string[]; };
 
@@ -883,48 +884,57 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                             className={cl("result-item", { selected: isSelected })}
                             onClick={() => onNavigate(result)}
                             onMouseEnter={() => onSelect(index)}
+                            style={{
+                                padding: "14px 16px",
+                                cursor: "pointer",
+                                border: "1px solid var(--background-modifier-accent)",
+                                borderRadius: "16px",
+                                background: "var(--background-secondary)",
+                                marginBottom: "10px"
+                            }}
                         >
-                            <div className={cl("result-content-wrapper")}>
-                                <div className={cl("result-avatar")}>
+                            <div className={cl("result-content-wrapper")} style={{ display: "flex", flexDirection: "row", gap: 14, alignItems: "flex-start" }}>
+                                <div className={cl("result-avatar")} style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 40 }}>
                                     <Avatar
                                         src={getAvatarURL(user, channel) || undefined}
                                         size="SIZE_40"
                                         className={cl("avatar")}
+                                        style={{ borderRadius: "50%", width: 40, height: 40 }}
                                     />
                                 </div>
-                                <div className={cl("result-main")}>
-                                    <div className={cl("result-header")}>
-                                        <div className={cl("result-author")}>
-                                            <span className={cl("result-author-name")}>
+                                <div className={cl("result-main")} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                                    <div className={cl("result-header")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                                        <div className={cl("result-author")} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, flexWrap: "wrap" }}>
+                                            <span className={cl("result-author-name")} style={{ color: "var(--white-500) !important", fontSize: 15, fontWeight: 600, lineHeight: 1.4 }}>
                                                 {user?.globalName || user?.username || "Unknown user"}
                                             </span>
-                                            <span className={cl("result-channel")}>
+                                            <span className={cl("result-channel")} style={{ color: "lightgray !important", fontSize: 13, fontWeight: 500, background: "var(--background-modifier-selected)", padding: "4px 9px", borderRadius: 999, whiteSpace: "nowrap" }}>
                                                 {channel.name || "DM"}
                                             </span>
                                             {result.message.pinned && (
-                                                <span className={cl("result-pinned")} title="Pinned message">
+                                                <span className={cl("result-pinned")} title="Pinned message" style={{ fontSize: 14, opacity: 0.8 }}>
                                                     📌
                                                 </span>
                                             )}
                                         </div>
-                                        <span className={cl("result-time")}>
+                                        <span className={cl("result-time")} style={{ color: "var(--text-muted) !important", fontSize: 12, fontWeight: 500, flexShrink: 0, whiteSpace: "nowrap", alignSelf: "flex-start", marginLeft: "auto" }}>
                                             {formatTimestamp(result.message.timestamp)}
                                         </span>
                                     </div>
-                                    <div className={cl("result-content")}>
+                                    <div className={cl("result-content")} style={{ color: "var(--white-500) !important", fontSize: 14, lineHeight: 1.6, wordWrap: "break-word", overflowWrap: "anywhere" }}>
                                         {highlightText(formatMessagePreview(result.message), searchQuery)}
                                     </div>
                                     {(result.message.attachments?.length > 0 || result.message.embeds?.length > 0) && (
-                                        <div className={cl("result-metadata")}>
+                                        <div className={cl("result-metadata")} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 2 }}>
                                             {result.message.attachments?.length > 0 && (
-                                                <div className={cl("result-attachments")}>
-                                                    <span className={cl("result-icon")}>📎</span>
+                                                <div className={cl("result-attachments")} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--interactive-normal) !important", fontSize: 12, fontWeight: 500, background: "var(--background-modifier-selected)", padding: "4px 9px", borderRadius: 999 }}>
+                                                    <span className={cl("result-icon")} style={{ fontSize: 16, opacity: 0.9 }}>📎</span>
                                                     <span>{result.message.attachments.length} attachment{result.message.attachments.length === 1 ? "" : "s"}</span>
                                                 </div>
                                             )}
                                             {result.message.embeds?.length > 0 && (
-                                                <div className={cl("result-embeds")}>
-                                                    <span className={cl("result-icon")}>📄</span>
+                                                <div className={cl("result-embeds")} style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--interactive-normal) !important", fontSize: 12, fontWeight: 500, background: "var(--background-modifier-selected)", padding: "4px 9px", borderRadius: 999 }}>
+                                                    <span className={cl("result-icon")} style={{ fontSize: 16, opacity: 0.9 }}>📄</span>
                                                     <span>{result.message.embeds.length} embed{result.message.embeds.length === 1 ? "" : "s"}</span>
                                                 </div>
                                             )}

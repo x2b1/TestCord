@@ -35,7 +35,7 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseFile, P
     } else if (vencordFlag) {
         dirs = ["src/plugins", "src/plugins/_core"];
     } else {
-        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins"];
+        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins", "src/testcordplugins"];
     }
 
     const outputPath = args.find(a => !a.startsWith("--")) ?? null;

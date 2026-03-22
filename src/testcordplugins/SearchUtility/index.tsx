@@ -727,7 +727,7 @@ const QuickSearchResultsModal = ErrorBoundary.wrap(({
                 <div className={cl("toolbar")}>
                     <div className={cl("search-row")}>
                         <div style={{ minWidth: 0 }}>
-                            <div style={{ color: "var(--header-primary)", fontSize: 18, fontWeight: 700 }}>
+                            <div style={{ color: "var(--white-500)", fontSize: 18, fontWeight: 700 }}>
                                 {title ?? "Quick Search Results"}
                             </div>
                             <div
@@ -815,6 +815,7 @@ const QuickSearchResultsModal = ErrorBoundary.wrap(({
                                                 className={cl("result-header")}
                                                 style={{
                                                     display: "flex",
+                                                    justifyContent: "space-between",
                                                     alignItems: "center",
                                                     gap: 8,
                                                     minWidth: 0,
@@ -862,6 +863,17 @@ const QuickSearchResultsModal = ErrorBoundary.wrap(({
                                                         {channel?.name || "Direct Message"}
                                                     </span>
                                                 </div>
+                                                <span
+                                                    className={cl("result-time")}
+                                                    style={{
+                                                        color: "var(--text-muted)",
+                                                        fontSize: 12,
+                                                        lineHeight: 1.3,
+                                                        flexShrink: 0
+                                                    }}
+                                                >
+                                                    {formatTimestamp(message.timestamp)}
+                                                </span>
                                             </div>
                                             <div
                                                 className={classes(cl("result-content"), cl("quick-search-preview"))}
@@ -876,16 +888,6 @@ const QuickSearchResultsModal = ErrorBoundary.wrap(({
                                                 }}
                                             >
                                                 {highlightPreview(formatPreview(message))}
-                                            </div>
-                                            <div
-                                                className={cl("result-time")}
-                                                style={{
-                                                    color: "var(--text-muted)",
-                                                    fontSize: 12,
-                                                    lineHeight: 1.3
-                                                }}
-                                            >
-                                                {formatTimestamp(message.timestamp)}
                                             </div>
                                         </div>
                                     </div>
