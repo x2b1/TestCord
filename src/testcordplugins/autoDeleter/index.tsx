@@ -311,7 +311,8 @@ export default definePlugin({
             name: "Bash",
             id: 1327483363518582784n,
         },
-        , TestcordDevs.x2b],
+        TestcordDevs.x2b,
+    ],
     settings,
 
     // Map to track messages pending deletion
@@ -1523,7 +1524,3 @@ export default definePlugin({
         );
     },
 });
-
-
-
-

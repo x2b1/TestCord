@@ -17,7 +17,7 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Constants, FluxDispatcher, GuildStore, RelationshipStore, UserStore, } from "@webpack/common";
 
@@ -329,7 +329,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "TypingFriends",
     description: "Shows which friends are typing across servers.",
-    authors: [Devs.Xylen],
+    authors: [TestcordDevs.x2b],
     settings: settings,
 
     patches: [

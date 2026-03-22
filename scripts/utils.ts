@@ -20,7 +20,7 @@ import { Dirent, readdirSync, readFileSync, writeFileSync } from "fs";
 import { access, readFile } from "fs/promises";
 import { join, sep } from "path";
 import { normalize as posixNormalize, sep as posixSep } from "path/posix";
-import { BigIntLiteral, createSourceFile, Identifier, isArrayLiteralExpression, isCallExpression, isExportAssignment, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isSatisfiesExpression, isStringLiteral, isVariableStatement, NamedDeclaration, NodeArray, ObjectLiteralExpression, PropertyAssignment, ScriptTarget, StringLiteral, SyntaxKind } from "typescript";
+import { BigIntLiteral, createSourceFile, Identifier, isArrayLiteralExpression, isCallExpression, isExportAssignment, isIdentifier, isObjectLiteralExpression, isPropertyAccessExpression, isPropertyAssignment, isSatisfiesExpression, isStringLiteral, isVariableStatement, NamedDeclaration, NodeArray, ObjectLiteralExpression, PropertyAssignment, ScriptTarget, StringLiteral, SyntaxKind, isNoSubstitutionTemplateLiteral } from "typescript";
 
 import { getPluginTarget } from "./utils.mjs";
 
@@ -53,6 +53,7 @@ export interface PluginData {
 
 export const devs = {} as Record<string, Dev>;
 export const equicordDevs = {} as Record<string, Dev>;
+export const testcordDevs = {} as Record<string, Dev>;
 
 export function getName(node: NamedDeclaration) {
     return node.name && isIdentifier(node.name) ? node.name.text : undefined;
@@ -130,6 +131,37 @@ export function parseEquicordDevs() {
     throw new Error("Could not find EquicordDevs constant");
 }
 
+export function parseTestcordDevs() {
+    const file = createSourceFile("constants.ts", readFileSync("src/utils/constants.ts", "utf8"), ScriptTarget.Latest);
+
+    for (const child of file.getChildAt(0).getChildren()) {
+        if (!isVariableStatement(child)) continue;
+
+        const devsDeclaration = child.declarationList.declarations.find(d => hasName(d, "TestcordDevs"));
+        if (!devsDeclaration?.initializer || !isCallExpression(devsDeclaration.initializer)) continue;
+
+        const value = devsDeclaration.initializer.arguments[0];
+
+        if (!isSatisfiesExpression(value) || !isObjectLiteralExpression(value.expression)) throw new Error("Failed to parse TestcordDevs: not an object literal");
+
+        for (const prop of value.expression.properties) {
+            const name = (prop.name as Identifier).text;
+            const value = isPropertyAssignment(prop) ? prop.initializer : prop;
+
+            if (!isObjectLiteralExpression(value)) throw new Error(`Failed to parse TestcordDevs: ${name} is not an object literal`);
+
+            testcordDevs[name] = {
+                name: (getObjectProp(value, "name") as StringLiteral).text,
+                id: (getObjectProp(value, "id") as BigIntLiteral).text.slice(0, -1)
+            };
+        }
+
+        return;
+    }
+
+    throw new Error("Could not find TestcordDevs constant");
+}
+
 export async function parseFile(fileName: string) {
     const file = createSourceFile(fileName, await readFile(fileName, "utf8"), ScriptTarget.Latest);
 
@@ -162,7 +194,7 @@ export async function parseFile(fileName: string) {
             switch (key) {
                 case "name":
                 case "description":
-                    if (!isStringLiteral(value)) throw fail(`${key} is not a string literal`);
+                    if (!isStringLiteral(value) && !isNoSubstitutionTemplateLiteral(value)) throw fail(`${key} is not a string literal`);
                     data[key] = value.text;
                     break;
                 case "patches":
@@ -201,10 +233,25 @@ export async function parseFile(fileName: string) {
                 case "authors":
                     if (!isArrayLiteralExpression(value)) throw fail("authors is not an array literal");
                     data.authors = value.elements.map(e => {
-                        if (!isPropertyAccessExpression(e)) throw fail("authors array contains non-property access expressions");
-                        const d = devs[getName(e)!] || equicordDevs[getName(e)!];
-                        if (!d) throw fail(`couldn't look up author ${getName(e)}`);
-                        return d;
+                        if (isPropertyAccessExpression(e)) {
+                            const d = devs[getName(e)!] || equicordDevs[getName(e)!] || testcordDevs[getName(e)!];
+                            if (!d) throw fail(`couldn't look up author ${getName(e)}`);
+                            return d;
+                        } else if (isObjectLiteralExpression(e)) {
+                            const nameProp = e.properties.find(p => hasName(p, "name"));
+                            const idProp = e.properties.find(p => hasName(p, "id"));
+                            if (!nameProp || !idProp) throw fail("inline author object missing name or id");
+                            const name = isPropertyAssignment(nameProp) ? nameProp.initializer : nameProp;
+                            const id = isPropertyAssignment(idProp) ? idProp.initializer : idProp;
+                            if (!isStringLiteral(name)) throw fail("inline author name is not a string literal");
+                            if (!isStringLiteral(id) && id.kind !== SyntaxKind.BigIntLiteral) throw fail("inline author id is not a literal");
+                            return {
+                                name: name.text,
+                                id: id.kind === SyntaxKind.BigIntLiteral ? (id as BigIntLiteral).text.slice(0, -1) : (id as StringLiteral).text
+                            };
+                        } else {
+                            throw fail("authors array contains invalid element");
+                        }
                     });
                     break;
                 case "tags":

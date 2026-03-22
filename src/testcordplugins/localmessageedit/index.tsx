@@ -1,8 +1,8 @@
 /*
- * Made by: Juice
- * Discord: juiceroyals
- * Github: https://github.com/Juiceroyals
-*/
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { Devs } from "@utils/constants";
@@ -58,7 +58,7 @@ function EditModal({ message, modalProps }: { message: Message; modalProps: any;
                     onClick={() => {
                         console.log(`[LocalMessageEditor] Editing message ${message.id} to: "${content}"`);
                         localEdits.set(key, content);
-                        
+
                         // Direct DOM manipulation - find and update the message element
                         const selectors = [
                             `#chat-messages-${message.id}`,
@@ -66,34 +66,34 @@ function EditModal({ message, modalProps }: { message: Message; modalProps: any;
                             `li[id*="${message.id}"]`,
                             `div[id*="${message.id}"]`
                         ];
-                        
+
                         let found = false;
                         for (const selector of selectors) {
                             const messageElements = document.querySelectorAll(selector);
-                            
+
                             if (messageElements.length > 0) {
                                 messageElements.forEach(element => {
-                                    const textContent = 
+                                    const textContent =
                                         element.querySelector('[class*="messageContent"]') ||
                                         element.querySelector('[class*="message-content"]') ||
                                         element.querySelector('[class*="markup"]') ||
                                         element.querySelector('div[class*="content"] > div');
-                                    
+
                                     if (textContent) {
                                         textContent.textContent = content;
                                         found = true;
                                         console.log(`[LocalMessageEditor] ✅ Message ${message.id} edited in DOM`);
                                     }
                                 });
-                                
+
                                 if (found) break;
                             }
                         }
-                        
+
                         if (!found) {
                             console.warn(`[LocalMessageEditor] Could not find message ${message.id} in DOM, stored for later`);
                         }
-                        
+
                         console.log("[LocalMessageEditor] Message edited locally");
                         modalProps.onClose();
                     }}
@@ -142,7 +142,7 @@ const messageCtxPatch: NavContextMenuPatchCallback = (children, { message }: { m
                     console.log(`[LocalMessageEditor] Restoring message ${message.id}`);
                     localEdits.delete(key);
                     localDeletes.delete(key);
-                    
+
                     FluxDispatcher.dispatch({
                         type: "MESSAGE_UPDATE",
                         message: {
@@ -150,7 +150,7 @@ const messageCtxPatch: NavContextMenuPatchCallback = (children, { message }: { m
                             channel_id: message.channel_id
                         }
                     });
-                    
+
                     console.log("[LocalMessageEditor] Message restored");
                 }}
             />
@@ -161,7 +161,7 @@ const messageCtxPatch: NavContextMenuPatchCallback = (children, { message }: { m
 export default definePlugin({
     name: "LocalMessageEditor",
     description: "Edit and delete any message locally to demonstrate Discord security vulnerabilities",
-    authors: [Devs.Nobody],
+    authors: [Devs.nobody],
 
     patches: [
         {
@@ -197,10 +197,10 @@ export default definePlugin({
 
     start() {
         console.log("[LocalMessageEditor] Starting plugin...");
-        
+
         if (PermissionStore?.can) {
             originalCan = PermissionStore.can;
-            PermissionStore.can = function() {
+            PermissionStore.can = function () {
                 return true;
             };
             console.log("[LocalMessageEditor] Permissions overridden");
@@ -208,20 +208,20 @@ export default definePlugin({
 
         if (MessageActions?.deleteMessage) {
             originalDeleteMessage = MessageActions.deleteMessage;
-            MessageActions.deleteMessage = function(channelId: string, messageId: string) {
+            MessageActions.deleteMessage = function (channelId: string, messageId: string) {
                 const key = `${channelId}-${messageId}`;
-                
+
                 console.log(`[LocalMessageEditor] Deleting message ${messageId}`);
-                
+
                 localDeletes.add(key);
-                
+
                 FluxDispatcher.dispatch({
                     type: "MESSAGE_DELETE",
                     id: messageId,
                     channelId: channelId
                 });
-                
-                console.log(`[LocalMessageEditor] Delete saved locally`);
+
+                console.log("[LocalMessageEditor] Delete saved locally");
                 return Promise.resolve();
             };
             console.log("[LocalMessageEditor] Delete intercepted");
@@ -232,17 +232,17 @@ export default definePlugin({
 
     stop() {
         console.log("[LocalMessageEditor] Stopping...");
-        
+
         if (originalCan && PermissionStore) {
             PermissionStore.can = originalCan;
         }
         if (originalDeleteMessage && MessageActions) {
             MessageActions.deleteMessage = originalDeleteMessage;
         }
-        
+
         localEdits.clear();
         localDeletes.clear();
-        
+
         console.log("[LocalMessageEditor] Stopped");
     }
 

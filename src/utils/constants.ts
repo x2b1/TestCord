@@ -1287,7 +1287,7 @@ export const EquicordDevs = Object.freeze({
     },
 } satisfies Record<string, Dev>);
 
-export const TestcordDevs = Object.freeze({
+export const TestcordDevs = /* #__PURE__*/ Object.freeze({
     sirphantom89: {
         name: "SirPhantom89",
         id: 1464279455844274188n,

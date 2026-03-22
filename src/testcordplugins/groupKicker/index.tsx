@@ -8,18 +8,17 @@ import {
     findGroupChildrenByChildId,
     NavContextMenuPatchCallback,
 } from "@api/ContextMenu";
-import { definePluginSettings } from "@api/Settings";
 import { showNotification } from "@api/Notifications";
-import definePlugin, { OptionType } from "@utils/types";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { Channel } from "@vencord/discord-types";
 import {
     ChannelStore,
-    Constants,
     Menu,
     RestAPI,
     UserStore,
 } from "@webpack/common";
-import { Channel } from "@vencord/discord-types";
 
 const settings = definePluginSettings({
     enabled: {
@@ -205,7 +204,7 @@ async function kickAllMembers(channelId: string) {
             }
 
             // Petit délai pour éviter le rate limiting
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         const totalProcessed = successCount + failureCount;
@@ -287,7 +286,8 @@ export default definePlugin({
             name: "Bash",
             id: 1327483363518582784n,
         },
-        , TestcordDevs.x2b],
+        TestcordDevs.x2b,
+    ],
     dependencies: ["ContextMenuAPI"],
     settings,
 
@@ -330,7 +330,3 @@ export default definePlugin({
         }
     },
 });
-
-
-
-

@@ -1,6 +1,12 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { definePluginSettings } from "@api/Settings";
-import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 const settings = definePluginSettings({
     amtOfAcounts: {
         default: 10,
@@ -17,7 +23,8 @@ export default definePlugin({
             id: 253302259696271360n,
             name: "zastix",
         },
-    , TestcordDevs.x2b],
+        TestcordDevs.x2b,
+    ],
     settings,
     patches: [
         {
@@ -25,12 +32,8 @@ export default definePlugin({
             replacement: [{
                 // the first export seems to always be the amount of alts, we should find a better way to do this in the future
                 match: /(.{0,2}):function\(\){return .{1,2}\}/,
-                replace: `$1:function(){return $self.settings.amtOfAcounts}`
+                replace: "$1:function(){return $self.settings.amtOfAcounts}"
             }]
         }
     ]
 });
-
-
-
-

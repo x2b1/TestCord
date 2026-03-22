@@ -1,11 +1,10 @@
-
 /*
  * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Devs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 let orig = {};
@@ -41,13 +40,13 @@ const patchSDPDesc = desc => {
 export default definePlugin({
     name: "StereoScreenshareAudio",
     description: "Patches Discord's WebRTC SDP to enable stereo audio while watching streams (should only be necessary with vesktop & co.)",
-    authors: [Devs.Nerdwave],
+    authors: [TestcordDevs.x2b],
 
     async start() {
         // grab the original setRemoteDescription and setLocalDescription functions
         orig = {
-            SRD : RTCPeerConnection.prototype.setRemoteDescription,
-            SLD : RTCPeerConnection.prototype.setLocalDescription,
+            SRD: RTCPeerConnection.prototype.setRemoteDescription,
+            SLD: RTCPeerConnection.prototype.setLocalDescription,
         };
 
         // overwrite the setRemoteDescription and setLocalDescription functions
@@ -73,5 +72,3 @@ export default definePlugin({
     },
 
 });
-
-

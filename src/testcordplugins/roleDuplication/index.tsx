@@ -8,14 +8,13 @@ import "./style.css";
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { getUserSettingLazy } from "@api/UserSettings";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { GuildStore, Menu, SelectedGuildStore } from "@webpack/common";
 import { Guild, Role } from "@vencord/discord-types";
+import { GuildStore, Menu, SelectedGuildStore } from "@webpack/common";
 
 import { createRole } from "./api";
 import { openModal } from "./modal";
-import { TestcordDevs } from "@utils/constants";
-
 
 const DeveloperMode = getUserSettingLazy("appearance", "developerMode")!;
 
@@ -50,7 +49,8 @@ export default definePlugin({
             name: "i am me",
             id: 984392761929256980n,
         },
-    , TestcordDevs.x2b],
+        TestcordDevs.x2b,
+    ],
     contextMenus: {
         "guild-settings-role-context": MakeContextCallback("settings"),
         "dev-context": MakeContextCallback("other")
@@ -60,7 +60,3 @@ export default definePlugin({
         DeveloperMode.updateSetting(true);
     }
 });
-
-
-
-
