@@ -154,7 +154,7 @@ const Section = findComponentByCodeLazy("headingVariant:", ".section", ".header"
 
 export default definePlugin({
     name: "Stalker v2",
-    description: "Advanced user tracking plugin that logs presence changes, profile updates, and activities. Track when users go online/offline, monitor profile changes, view activity history, and receive customizable notifications for each tracked user.",
+    description: "THIS STALKERS STALK BUTTON IS AT THE BOTTOM OF THE LIST WHEN U RCLICK A USER!!! | Advanced user tracking plugin that logs presence changes, profile updates, and activities. Track when users go online/offline, monitor profile changes, view activity history, and receive customizable notifications for each tracked user.",
     authors: [{ id: 534759293065625620n, name: "Ondra_D" }],
     dependencies: [],
     settings,
