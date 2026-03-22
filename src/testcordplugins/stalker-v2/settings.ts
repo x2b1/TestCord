@@ -24,11 +24,6 @@ export const DEFAULT_HISTORY_RETENTION_DAYS = 14;
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export const settings = definePluginSettings({
-    whitelistedIds: {
-        default: "",
-        type: OptionType.STRING,
-        description: "Whitelisted user IDs to stalk"
-    },
     historyRetentionDays: {
         default: DEFAULT_HISTORY_RETENTION_DAYS,
         type: OptionType.NUMBER,
@@ -41,8 +36,18 @@ export const settings = definePluginSettings({
     }
 });
 
+/**
+ * Get whitelisted IDs from the shared Stalker plugin targets
+ * Both plugins now use the same targets list
+ */
 export function getWhitelistedIds(): string[] {
-    return settings.store.whitelistedIds ? settings.store.whitelistedIds.split(",").map(s => s.trim()).filter(Boolean) : [];
+    // Import from shared module - will be populated by Stalker plugin
+    try {
+        const { getTargets } = require("../stalker/shared");
+        return getTargets();
+    } catch {
+        return [];
+    }
 }
 
 export function getRetentionDays() {

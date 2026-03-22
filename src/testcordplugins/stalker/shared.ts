@@ -4,36 +4,54 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { settings as stalkerSettings } from "./index";
-
 /**
  * Shared whitelist management for Stalker and StalkerV2
  * Both plugins use the same targets list from the original Stalker plugin
  */
 
+let targets: string[] = [];
+let settingsStore: any = null;
+
+export function initSharedTargets(settings: any): void {
+    settingsStore = settings;
+    parseTargets();
+}
+
+export function parseTargets(): void {
+    if (!settingsStore) {
+        targets = [];
+        return;
+    }
+    targets = settingsStore.targets ? settingsStore.targets.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+}
+
 export function getTargets(): string[] {
-    if (!stalkerSettings.store.targets) return [];
-    return stalkerSettings.store.targets.split(",").map(s => s.trim()).filter(Boolean);
+    return targets;
 }
 
 export function addTarget(userId: string): void {
-    const current = getTargets();
-    if (!current.includes(userId)) {
-        current.push(userId);
-        stalkerSettings.store.targets = current.join(", ");
+    if (!targets.includes(userId)) {
+        targets.push(userId);
+        if (settingsStore) {
+            settingsStore.targets = targets.join(", ");
+        }
     }
 }
 
 export function removeTarget(userId: string): void {
-    const current = getTargets();
-    stalkerSettings.store.targets = current.filter(id => id !== userId).join(", ");
+    targets = targets.filter(id => id !== userId);
+    if (settingsStore) {
+        settingsStore.targets = targets.join(", ");
+    }
 }
 
 export function isTarget(userId: string): boolean {
-    return getTargets().includes(userId);
+    return targets.includes(userId);
 }
 
 export function setTargets(userIds: string[]): void {
-    stalkerSettings.store.targets = userIds.join(", ");
+    targets = userIds;
+    if (settingsStore) {
+        settingsStore.targets = targets.join(", ");
+    }
 }
-// doesnt work so dont touch it lil bro

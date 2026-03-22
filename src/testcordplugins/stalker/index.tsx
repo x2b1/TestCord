@@ -14,6 +14,7 @@ import { ChannelStore, GuildStore, Menu, NavigationRouter, UserStore } from "@we
 import { TestcordDevs } from "../../utils/constants";
 import * as status from "./status";
 import * as voice from "./voice";
+import { initSharedTargets, addTarget as addSharedTarget, removeTarget as removeSharedTarget, isTarget, getTargets } from "./shared";
 
 // Define the interface for your native module manually
 export interface StalkerNative {
@@ -161,7 +162,7 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
     if (!settings.store.stalkContext) return;
     if (!user) return;
 
-    const stalked = settings.store.targets.includes(user.id);
+    const stalked = isTarget(user.id);
     const group = findGroupChildrenByChildId("apps", children) ?? children;
 
     let id = group.findIndex(child => child?.props?.id === "ignore");
@@ -173,17 +174,9 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
             label={stalked ? "Unstalk" : "Stalk"}
             action={() => {
                 if (stalked) {
-                    settings.store.targets = settings.store.targets
-                        .split(",")
-                        .map(s => s.trim())
-                        .filter(id => id !== user.id)
-                        .join(",");
+                    removeSharedTarget(user.id);
                 } else {
-                    const current = settings.store.targets ? settings.store.targets.split(",").map(s => s.trim()) : [];
-                    if (!current.includes(user.id)) {
-                        current.push(user.id);
-                    }
-                    settings.store.targets = current.join(", ");
+                    addSharedTarget(user.id);
                 }
                 parseTargets(settings.store.targets);
             }}
@@ -201,6 +194,7 @@ export default definePlugin({
     },
 
     async start() {
+        initSharedTargets(settings.store);
         parseTargets(settings.store.targets);
         if (settings.store.enableLogging) {
             await loadLogsFromFile();
@@ -220,7 +214,7 @@ export default definePlugin({
         MESSAGE_CREATE({ message, optimistic, type, channelId }: { message: any; optimistic: boolean; type: string; channelId: string; }) {
             if (optimistic || type !== "MESSAGE_CREATE") return;
             if (message.state === "SENDING") return;
-            if (!targets.includes(message.author.id)) return;
+            if (!getTargets().includes(message.author.id)) return;
 
             const user = UserStore.getUser(message.author.id) || message.author;
             if (!user) return;
@@ -266,7 +260,7 @@ export default definePlugin({
 
         TYPING_START({ userId, channelId }: { userId: string, channelId: string; }) {
             if (!settings.store.logTyping) return;
-            if (!targets.includes(userId)) return;
+            if (!getTargets().includes(userId)) return;
 
             const user = UserStore.getUser(userId);
             if (!user) return;
@@ -292,7 +286,7 @@ export default definePlugin({
         GUILD_MEMBER_UPDATE({ member, guildId }: { member: any; guildId: string; }) {
             if (!settings.store.logProfileUpdates) return;
             if (!member || !member.user) return;
-            if (!targets.includes(member.user.id)) return;
+            if (!getTargets().includes(member.user.id)) return;
 
             const guild = GuildStore.getGuild(guildId);
             const { user } = member;
@@ -312,7 +306,7 @@ export default definePlugin({
         // Covers global profile updates (mostly for self/friends)
         USER_UPDATE({ user }: { user: any; }) {
             if (!settings.store.logProfileUpdates) return;
-            if (!targets.includes(user.id)) return;
+            if (!getTargets().includes(user.id)) return;
 
             const existingUser = UserStore.getUser(user.id);
             // Only log if we actually have data to compare, or just log it anyway

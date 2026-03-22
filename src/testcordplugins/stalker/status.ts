@@ -7,7 +7,8 @@
 import { showNotification } from "@api/Notifications";
 import { ChannelStore, NavigationRouter, PresenceStore, UserStore } from "@webpack/common";
 
-import { logStalkerEvent, settings, targets } from ".";
+import { logStalkerEvent, settings } from ".";
+import { getTargets } from "./shared";
 
 let lastStatuses: Statuses = {};
 
@@ -32,7 +33,7 @@ export const statusChange = () => {
     const newStatuses: Statuses = Object.assign({}, rawNewStatuses);
 
     // Ensure targets have an entry even if offline
-    for (const id of targets) {
+    for (const id of getTargets()) {
         if (!newStatuses[id]) newStatuses[id] = "offline";
     }
 
@@ -43,7 +44,7 @@ export const statusChange = () => {
     }
 
     for (const [id, status] of Object.entries(newStatuses)) {
-        const isStalking = targets.includes(id);
+        const isStalking = getTargets().includes(id);
         const lastStatus = lastStatuses[id] ?? "offline";
 
         if (isStalking && lastStatus !== status) {

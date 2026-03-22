@@ -8,7 +8,8 @@ import { showNotification } from "@api/Notifications";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { ChannelStore, GenericStore, GuildStore, UserStore } from "@webpack/common";
 
-import { logStalkerEvent, targets } from ".";
+import { logStalkerEvent } from ".";
+import { getTargets } from "./shared";
 
 const { selectVoiceChannel } = findByPropsLazy("selectVoiceChannel", "selectChannel");
 
@@ -45,7 +46,7 @@ const getChannelName = (channelId: string): string => {
 
 export const voiceStateChange = () => {
     const newVoiceState = {};
-    for (const id of targets) {
+    for (const id of getTargets()) {
         newVoiceState[id] = VoiceStateStore.getVoiceStateForUser(id);
         const voiceState: MainVoiceStateData = newVoiceState[id];
         const lastVoiceStateForUser = lastVoiceState[id];
@@ -63,7 +64,7 @@ export const voiceStateChange = () => {
                     selectVoiceChannel(voiceState.channelId);
                 },
             });
-            
+
             // Registra l'evento di stalking
             logStalkerEvent({
                 timestamp: new Date().toISOString(),
@@ -73,11 +74,11 @@ export const voiceStateChange = () => {
                 details: `Joined voice channel: ${getChannelName(voiceState.channelId)}`
             });
         }
-        
+
         // Controlla se l'utente è uscito da un canale vocale
         if (!voiceState && lastVoiceStateForUser) {
             const user = UserStore.getUser(id);
-            
+
             logStalkerEvent({
                 timestamp: new Date().toISOString(),
                 userId: user.id,
