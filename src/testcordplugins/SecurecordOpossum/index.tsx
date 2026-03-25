@@ -405,7 +405,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "SecurecordOpossum",
     description: "High-Performance, Post-Quantum Resilient end-to-end encryption for Discord based on BlazingOpossum cipher. Share the same password with other users to communicate securely.",
-    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri],
+    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.nnenaza],
     settings,
     chatBarButton: { render: EncryptionToggleButton, icon: () => null as any },
 

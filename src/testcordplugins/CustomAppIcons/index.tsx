@@ -51,7 +51,7 @@ function removeAppIcon() {
 export default definePlugin({
     name: "CustomAppIcons",
     description: "Add/upload your own custom (In-)App Icon(s).",
-    authors: [TestcordDevs.x2b, TestcordDevs.mixiruri],
+    authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     patches: [
         {
             find: /\i\.\i\.APP_ICON_UPSELL/,

@@ -447,7 +447,7 @@ export default definePlugin({
     authors: [
         { id: 1263457746829705310n, name: '.q1' },
         { id: 1147940825330876538n, name: 'Jelly' },
-        { id: 1403404140461297816n, name: 'Sami' }, TestcordDevs.mixiruri,
+        { id: 1403404140461297816n, name: 'Sami' }, TestcordDevs.nnenaza,
     ],
 
     async start() {

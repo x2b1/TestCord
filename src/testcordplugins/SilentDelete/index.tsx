@@ -105,7 +105,7 @@ export default definePlugin({
     description: "\"Silently\" deletes a message. Bypass message loggers by replacing the message with a placeholder.",
     authors: [
         { name: "Aurick", id: 1348025017233047634n },
-        { name: "appleflyer", id: 1209096766075703368n }, TestcordDevs.mixiruri
+        { name: "appleflyer", id: 1209096766075703368n }, TestcordDevs.nnenaza
     ],
     dependencies: ["MessagePopoverAPI", "CommandsAPI"],
     settings,

@@ -658,7 +658,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "IGP",
     description: "PGP",
-    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.mixiruri], 
+    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.nnenaza], 
     settings,
 
     renderChatBarButton: ChatBarIcon,

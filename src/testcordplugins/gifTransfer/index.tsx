@@ -393,7 +393,7 @@ function stopObserver(): void {
 export default definePlugin({
     name: "GifTransfer",
     description: "Export and import all your favorite GIFs between accounts using a JSON file.",
-    authors: [TestcordDevs.mixiruri],
+    authors: [TestcordDevs.nnenaza],
     settings,
 
     settingsAboutComponent() {
