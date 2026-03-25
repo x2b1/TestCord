@@ -1328,13 +1328,13 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
         name: "oma",
         id: 1155026301791514655n
     },
-    mixiruri: {
-        name: "mixiruri",
+    nnenaza: {
+        name: "nnenaza",
         id: 1467863852782850160n
     },
     neoarz: {
         name: "neoarz",
-        id: 1015372540937502851n
+        id: 1485706082080002140n
     },
 } satisfies Record<string, Dev>);
 
