@@ -1,0 +1,470 @@
+.vc-pinterest-profiles-container {
+    background: var(--background-base-lower);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.vc-pinterest-profiles-inline-wrap {
+    height: auto;
+    overflow: visible;
+    background: transparent;
+}
+
+.vc-pinterest-profiles-inline-wrap .vc-pinterest-profiles-container-header {
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+}
+
+.vc-pinterest-profiles-inline-wrap .vc-pinterest-profiles-container-body {
+    padding: 12px 0 0;
+    overflow: visible;
+}
+
+.vc-pinterest-profiles-container-header {
+    padding: var(--custom-gif-picker-gutter-size);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--background-surface-high);
+}
+
+.vc-pinterest-profiles-container-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vc-pinterest-profiles-search-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vc-pinterest-profiles-search-row,
+.vc-pinterest-profiles-guides-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.vc-pinterest-profiles-search-field {
+    flex: 1;
+    min-width: 220px;
+}
+
+.vc-pinterest-profiles-search-field > * {
+    width: 100%;
+}
+
+.vc-pinterest-profiles-search-field [class*="searchBar"],
+.vc-pinterest-profiles-search-field [class*="inner"],
+.vc-pinterest-profiles-search-field input {
+    border-radius: 999px !important;
+}
+
+.vc-pinterest-profiles-search-field [class*="searchBar"] {
+    background: color-mix(in srgb, var(--background-primary) 88%, white 12%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.vc-pinterest-profiles-search-field input:focus:placeholder-shown {
+    caret-color: transparent;
+}
+
+.vc-pinterest-profiles-button,
+.vc-pinterest-profiles-guide,
+.vc-pinterest-profiles-menu-item,
+.vc-pinterest-profiles-selection-button,
+.vc-pinterest-profiles-selection-item,
+.vc-pinterest-profiles-toggle,
+.vc-pinterest-profiles-page-button {
+    border: 0;
+    cursor: pointer;
+}
+
+.vc-pinterest-profiles-button,
+.vc-pinterest-profiles-selection-button,
+.vc-pinterest-profiles-toggle {
+    height: 40px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--background-primary) 88%, white 12%);
+    color: var(--text-default) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    -webkit-text-fill-color: var(--text-default);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.vc-pinterest-profiles-button {
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.vc-pinterest-profiles-button-compact {
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+.vc-pinterest-profiles-button:hover:not(:disabled),
+.vc-pinterest-profiles-selection-button:hover,
+.vc-pinterest-profiles-toggle:hover {
+    transform: translateY(-1px);
+}
+
+.vc-pinterest-profiles-button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.vc-pinterest-profiles-toggle {
+    min-width: 52px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vc-pinterest-profiles-toggle-active {
+    background: linear-gradient(135deg, #db1734 0%, #c0142d 100%);
+    color: #fff !important;
+    -webkit-text-fill-color: #fff;
+}
+
+.vc-pinterest-profiles-toggle-icon {
+    min-width: 28px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vc-pinterest-profiles-toggle-active .vc-pinterest-profiles-toggle-icon {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.vc-pinterest-profiles-selection-wrap {
+    position: relative;
+}
+
+.vc-pinterest-profiles-selection-button {
+    min-width: 132px;
+    padding: 0 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.vc-pinterest-profiles-selection-caret {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.vc-pinterest-profiles-selection-menu,
+.vc-pinterest-profiles-menu {
+    position: absolute;
+    border-radius: 14px;
+    padding: 6px;
+    background: rgba(24, 26, 33, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.24);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 5;
+}
+
+.vc-pinterest-profiles-selection-menu {
+    top: 44px;
+    left: 0;
+    min-width: 136px;
+}
+
+.vc-pinterest-profiles-selection-item,
+.vc-pinterest-profiles-menu-item {
+    text-align: left;
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: transparent;
+    color: var(--text-default) !important;
+    font-size: 13px;
+    font-weight: 600;
+    -webkit-text-fill-color: var(--text-default);
+}
+
+.vc-pinterest-profiles-selection-item:hover,
+.vc-pinterest-profiles-selection-item-active,
+.vc-pinterest-profiles-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.vc-pinterest-profiles-guide {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-default) !important;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.vc-pinterest-profiles-guide-active {
+    background: rgba(253, 89, 73, 0.18);
+    color: #ffd7c9 !important;
+}
+
+.vc-pinterest-profiles-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vc-pinterest-profiles-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vc-pinterest-profiles-section-title {
+    color: var(--header-primary) !important;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
+.vc-pinterest-profiles-page-indicator {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.vc-pinterest-profiles-state {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-default) !important;
+}
+
+.vc-pinterest-profiles-section-body {
+    position: relative;
+    padding: 0 28px;
+}
+
+.vc-pinterest-profiles-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.vc-pinterest-profiles-grid-banner {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.vc-pinterest-profiles-page-button {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    border-radius: 16px;
+    background: var(--background-surface-high);
+    color: var(--text-default) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.vc-pinterest-profiles-page-button-left {
+    left: 0;
+}
+
+.vc-pinterest-profiles-page-button-right {
+    right: 0;
+}
+
+.vc-pinterest-profiles-page-button-side {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.vc-pinterest-profiles-page-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.vc-pinterest-profiles-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    padding: 8px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent), var(--background-secondary);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.vc-pinterest-profiles-card:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 18px 32px rgba(0, 0, 0, 0.16);
+}
+
+.vc-pinterest-profiles-card-top {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+}
+
+.vc-pinterest-profiles-art {
+    aspect-ratio: 1 / 1;
+    min-height: 220px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--background-tertiary);
+}
+
+.vc-pinterest-profiles-art img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vc-pinterest-profiles-art-banner {
+    aspect-ratio: auto;
+    min-height: 0;
+    background: transparent;
+}
+
+.vc-pinterest-profiles-art-banner img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 14px;
+    background: var(--background-tertiary);
+}
+
+.vc-pinterest-profiles-card-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 0 6px 2px;
+}
+
+.vc-pinterest-profiles-card-title {
+    color: var(--text-default) !important;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.vc-pinterest-profiles-card-meta {
+    display: flex;
+    gap: 8px;
+    color: var(--text-muted) !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vc-pinterest-profiles-menu-wrap {
+    position: relative;
+}
+
+.vc-pinterest-profiles-menu-button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(23, 27, 34, 0.72);
+    backdrop-filter: blur(14px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 8px 18px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-2px);
+    transition: opacity 0.16s ease, transform 0.16s ease, background 0.16s ease;
+}
+
+.vc-pinterest-profiles-card:hover .vc-pinterest-profiles-menu-button,
+.vc-pinterest-profiles-card:focus-within .vc-pinterest-profiles-menu-button,
+.vc-pinterest-profiles-menu-button:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.vc-pinterest-profiles-menu-button:hover {
+    background: rgba(23, 27, 34, 0.84);
+}
+
+.vc-pinterest-profiles-menu-button-dots {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+.vc-pinterest-profiles-menu {
+    top: 40px;
+    right: 0;
+    min-width: 170px;
+}
+
+.vc-pinterest-profiles-menu-info {
+    padding: 8px 10px;
+    color: var(--text-default) !important;
+    font-size: 12px;
+}
+
+@media (max-width: 720px) {
+    .vc-pinterest-profiles-search-row {
+        align-items: stretch;
+    }
+
+    .vc-pinterest-profiles-search-field,
+    .vc-pinterest-profiles-selection-wrap {
+        min-width: 100%;
+    }
+
+    .vc-pinterest-profiles-button,
+    .vc-pinterest-profiles-selection-button,
+    .vc-pinterest-profiles-toggle {
+        width: 100%;
+    }
+
+    .vc-pinterest-profiles-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
