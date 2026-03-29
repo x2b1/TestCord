@@ -35,13 +35,14 @@ import { getPluginTarget } from "../utils.mjs";
 const PackageJSON = JSON.parse(
     readFileSync(
         join(dirname(fileURLToPath(import.meta.url)), "../../package.json"),
-        "utf-8"
-    )
+        "utf-8",
+    ),
 );
 
 export const VERSION = PackageJSON.version;
 // https://reproducible-builds.org/docs/source-date-epoch/
-export const BUILD_TIMESTAMP = Number(process.env.SOURCE_DATE_EPOCH) * 1000 || Date.now();
+export const BUILD_TIMESTAMP =
+    Number(process.env.SOURCE_DATE_EPOCH) * 1000 || Date.now();
 
 export const watch = process.argv.includes("--watch");
 export const IS_DEV = watch || process.argv.includes("--dev");
@@ -52,7 +53,7 @@ export const IS_COMPANION_TEST =
     IS_REPORTER && process.argv.includes("--companion-test");
 if (!IS_COMPANION_TEST && process.argv.includes("--companion-test"))
     console.error(
-        "--companion-test must be run with --reporter for any effect"
+        "--companion-test must be run with --reporter for any effect",
     );
 
 export const IS_UPDATER_DISABLED = process.argv.includes("--disable-updater");
@@ -86,14 +87,14 @@ export function stringifyValues(obj) {
 export async function buildOrWatchAll(buildConfigs) {
     if (watch) {
         await Promise.all(
-            buildConfigs.map((cfg) => context(cfg).then((ctx) => ctx.watch()))
+            buildConfigs.map((cfg) => context(cfg).then((ctx) => ctx.watch())),
         );
     } else {
         await Promise.all(buildConfigs.map((cfg) => build(cfg))).catch(
             (error) => {
                 console.error(error.message);
                 process.exit(1); // exit immediately to skip the rest of the builds
-            }
+            },
         );
     }
 }
@@ -195,7 +196,8 @@ export const globPlugins = (kind) => ({
                         file.isDirectory() &&
                         !(await exists(join(fullDir, fileName, "index.ts"))) &&
                         !(await exists(join(fullDir, fileName, "index.tsx")))
-                    ) continue;
+                    )
+                        continue;
 
                     const target = getPluginTarget(fileName);
 
@@ -216,7 +218,7 @@ export const globPlugins = (kind) => ({
                         if (excluded) {
                             const name = await resolvePluginName(fullDir, file);
                             excludedCode += `${JSON.stringify(
-                                name
+                                name,
                             )}:${JSON.stringify(target)},\n`;
                             continue;
                         }
@@ -227,7 +229,7 @@ export const globPlugins = (kind) => ({
                     const mod = `p${i}`;
                     code += `import ${mod} from "./${dir}/${fileName.replace(
                         /\.tsx?$/,
-                        ""
+                        "",
                     )}";\n`;
                     pluginsCode += `[${mod}.name]:${mod},\n`;
                     metaCode += `[${mod}.name]:${JSON.stringify({
@@ -241,7 +243,7 @@ export const globPlugins = (kind) => ({
             return {
                 contents: code,
                 resolveDir: "./src",
-                watchDirs: pluginDirs.map(d => resolve("src", d)),
+                watchDirs: pluginDirs.map((d) => resolve("src", d)),
             };
         });
     },
@@ -307,16 +309,20 @@ export const fileUrlPlugin = {
                 uri: args.path,
                 path: join(
                     args.resolveDir,
-                    args.path.slice("file://".length).split("?")[0]
+                    args.path.slice("file://".length).split("?")[0],
                 ),
             },
         }));
-        build.onLoad({ filter, namespace: "file-uri" }, async ({ pluginData: { path, uri } }) => {
-            const [pathPart, query] = uri.split("?");
-            const searchParams = query ? new URLSearchParams(query) : new URLSearchParams();
-            const base64 = searchParams.has("base64");
-            const minify = searchParams.has("minify");
-            const noTrim = searchParams.get("trim") === "false";
+        build.onLoad(
+            { filter, namespace: "file-uri" },
+            async ({ pluginData: { path, uri } }) => {
+                const [pathPart, query] = uri.split("?");
+                const searchParams = query
+                    ? new URLSearchParams(query)
+                    : new URLSearchParams();
+                const base64 = searchParams.has("base64");
+                const minify = searchParams.has("minify");
+                const noTrim = searchParams.get("trim") === "false";
 
                 const encoding = base64 ? "base64" : "utf-8";
 
@@ -338,7 +344,7 @@ export const fileUrlPlugin = {
                                 removeScriptTypeAttributes: true,
                                 removeStyleLinkTypeAttributes: true,
                                 useShortDoctype: true,
-                            }
+                            },
                         );
                     } else if (/[mc]?[jt]sx?$/.test(path)) {
                         const res = await esbuild.build({
@@ -349,7 +355,7 @@ export const fileUrlPlugin = {
                         content = res.outputFiles[0].text;
                     } else {
                         throw new Error(
-                            `Don't know how to minify file type: ${path}`
+                            `Don't know how to minify file type: ${path}`,
                         );
                     }
 
@@ -360,8 +366,8 @@ export const fileUrlPlugin = {
                 if (base64 && !content.startsWith("data:"))
                     content = Buffer.from(content).toString("base64");
 
-                return { contents: content, loader: 'text' };
-            }
+                return { contents: content, loader: "text" };
+            },
         );
     },
 };
@@ -380,7 +386,7 @@ export const banImportPlugin = (filter, message) => ({
 
 const styleModule = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "module/style.js"),
-    "utf-8"
+    "utf-8",
 );
 
 /**
@@ -394,10 +400,10 @@ export const stylePlugin = {
             ({ path, resolveDir }) => ({
                 path: relative(
                     process.cwd(),
-                    join(resolveDir, path.replace("?managed", ""))
+                    join(resolveDir, path.replace("?managed", "")),
                 ),
                 namespace: "managed-style",
-            })
+            }),
         );
         onLoad(
             { filter: /\.css$/, namespace: "managed-style" },
@@ -405,7 +411,7 @@ export const stylePlugin = {
                 const css = await readFile(path, "utf-8");
                 const name = relative(process.cwd(), path).replaceAll(
                     "\\",
-                    "/"
+                    "/",
                 );
 
                 return {
@@ -414,7 +420,7 @@ export const stylePlugin = {
                         .replaceAll("STYLE_SOURCE", JSON.stringify(css))
                         .replaceAll("STYLE_NAME", JSON.stringify(name)),
                 };
-            }
+            },
         );
     },
 };
@@ -440,15 +446,15 @@ export const commonOpts = {
 export const commonRendererPlugins = [
     banImportPlugin(
         /^react$/,
-        "Cannot import from react. React and hooks should be imported from @webpack/common"
+        "Cannot import from react. React and hooks should be imported from @webpack/common",
     ),
     banImportPlugin(
         /^electron(\/.*)?$/,
-        "Cannot import electron in browser code. You need to use a native.ts file"
+        "Cannot import electron in browser code. You need to use a native.ts file",
     ),
     banImportPlugin(
         /^ts-pattern$/,
-        "Cannot import from ts-pattern. match and P should be imported from @webpack/common"
+        "Cannot import from ts-pattern. match and P should be imported from @webpack/common",
     ),
     // @ts-expect-error this is never undefined
     ...commonOpts.plugins,
