@@ -105,7 +105,8 @@ const enum SearchStatus {
     VENCORD,
     NEW,
     USER_PLUGINS,
-    API_PLUGINS
+    API_PLUGINS,
+    BETTERDISCORD
 }
 
 export const ExcludedReasons: Record<"web" | "discordDesktop" | "vesktop" | "equibop" | "desktop" | "dev", string> = {
@@ -241,6 +242,12 @@ export default function PluginSettings() {
             case SearchStatus.API_PLUGINS:
                 if (!plugin.name.endsWith("API")) return false;
                 break;
+            case SearchStatus.BETTERDISCORD:
+                // Check if plugin is a BD plugin by looking at folderName or tags
+                const pluginMetaInfo = PluginMeta[plugin.name];
+                if (!pluginMetaInfo) return false;
+                return pluginMetaInfo.folderName?.startsWith("src/Betterdiscordplugins/") ||
+                    plugin.tags?.includes("betterdiscord");
         }
 
         if (!search.length) return true;
@@ -427,6 +434,7 @@ export default function PluginSettings() {
                                 { label: "Show New", value: SearchStatus.NEW },
                                 hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },
                                 { label: "Show API Plugins", value: SearchStatus.API_PLUGINS },
+                                { label: "Show BetterDiscord", value: SearchStatus.BETTERDISCORD },
                             ].filter(isTruthy)}
                             serialize={String}
                             select={onStatusChange}

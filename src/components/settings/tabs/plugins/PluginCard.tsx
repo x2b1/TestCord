@@ -31,17 +31,30 @@ interface PluginCardProps extends React.HTMLProps<HTMLDivElement> {
 
 export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLeave, isNew }: PluginCardProps) {
     const settings = Settings.plugins[plugin.name];
-    const pluginMeta = PluginMeta[plugin.name];
-    const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
-    const isVencordPlugin = pluginMeta.folderName.startsWith("src/plugins/") ?? false;
-    const isTestcordPlugin = pluginMeta.folderName.startsWith("src/testcordplugins/") ?? false;
+    const pluginMeta = PluginMeta[plugin.name] || { folderName: "", userPlugin: false };
+    const isEquicordPlugin = pluginMeta.folderName?.startsWith("src/equicordplugins/") ?? false;
+    const isVencordPlugin = pluginMeta.folderName?.startsWith("src/plugins/") ?? false;
+    const isTestcordPlugin = pluginMeta.folderName?.startsWith("src/testcordplugins/") ?? false;
     const isUserPlugin = pluginMeta?.userPlugin ?? false;
     const isModifiedPlugin = plugin.isModified ?? false;
+    const isBDPlugin = pluginMeta.folderName?.startsWith("src/Betterdiscordplugins/") || plugin.tags?.includes("betterdiscord");
 
     const isEnabled = () => isPluginEnabled(plugin.name);
 
     function toggleEnabled() {
         const wasEnabled = isEnabled();
+
+        // Initialize settings if they don't exist (for BD plugins)
+        if (!settings) {
+            Settings.plugins[plugin.name] = { enabled: !wasEnabled };
+            // For BD plugins, also trigger the start/stop
+            if (!wasEnabled) {
+                startPlugin(plugin);
+            } else {
+                stopPlugin(plugin);
+            }
+            return;
+        }
 
         // If we're enabling a plugin, make sure all deps are enabled recursively.
         if (!wasEnabled) {
@@ -116,7 +129,13 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             title: "TestCord Plugin"
         },
         {
-            condition: isUserPlugin,
+            condition: isBDPlugin,
+            src: "https://camo.githubusercontent.com/fba98dccf4323b86a2e7599a71e6826f62db4e0bb7d5b637fac9d959111ebfcd/68747470733a2f2f626574746572646973636f72642e6170702f7265736f75726365732f6272616e64696e672f6c6f676f5f736f6c69642e706e67",
+            alt: "BetterDiscord",
+            title: "BetterDiscord Plugin"
+        },
+        {
+            condition: isUserPlugin && !isBDPlugin,
             src: "https://equicord.org/assets/icons/misc/userplugin.png",
             alt: "User",
             title: "User Plugin"

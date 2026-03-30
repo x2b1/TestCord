@@ -174,6 +174,7 @@ export const globPlugins = (kind) => ({
                 "equicordplugins",
                 "equicordplugins/_api",
                 "testcordplugins",
+                "Betterdiscordplugins/generated",
             ];
             let code = "";
             let pluginsCode = "\n";
@@ -191,6 +192,7 @@ export const globPlugins = (kind) => ({
                     if (fileName.startsWith("_") || fileName.startsWith("."))
                         continue;
                     if (fileName === "index.ts") continue;
+                    if (fileName === "index.tsx") continue;
                     if (/\.(zip|rar|7z|tar|gz|bz2)/.test(fileName)) continue;
                     if (
                         file.isDirectory() &&
@@ -240,6 +242,7 @@ export const globPlugins = (kind) => ({
                 }
             }
             code += `export default {${pluginsCode}};export const PluginMeta={${metaCode}};export const ExcludedPlugins={${excludedCode}};`;
+
             return {
                 contents: code,
                 resolveDir: "./src",

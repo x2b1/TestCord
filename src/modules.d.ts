@@ -26,6 +26,14 @@ declare module "~plugins" {
     export const ExcludedPlugins: Record<string, "web" | "discordDesktop" | "vesktop" | "equibop" | "desktop" | "dev">;
 }
 
+declare module "~bdplugins" {
+    export const bundledPlugins: Array<{ name: string; code: string; file: string; }>;
+    export const BDPluginMeta: Record<string, {
+        folderName: string;
+        userPlugin: boolean;
+    }>;
+}
+
 declare module "~git-hash" {
     const hash: string;
     export default hash;
