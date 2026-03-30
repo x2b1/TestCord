@@ -351,6 +351,21 @@ export const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         description: "Boost quick switcher results from the current server.",
         default: true
+    },
+    disableGifPickerSearch: {
+        type: OptionType.BOOLEAN,
+        description: "Disable the GIF picker search bar and suggestions popup.",
+        default: false
+    },
+    disableDmSearchBar: {
+        type: OptionType.BOOLEAN,
+        description: "Disable the 'Find or start a conversation' search bar in DMs.",
+        default: false
+    },
+    disableCustomSearchPopup: {
+        type: OptionType.BOOLEAN,
+        description: "Disable the custom search popup and use Discord's native search instead.",
+        default: false
     }
 });
 
@@ -463,6 +478,8 @@ function isAdvancedSearchButton(button: HTMLButtonElement) {
 }
 
 function onDocumentClick(event: Event) {
+    if (settings.store.disableCustomSearchPopup) return;
+
     const { target } = event;
     if (!(target instanceof Element)) return;
 
@@ -1404,16 +1421,19 @@ export default definePlugin({
         },
         {
             find: "renderHeaderContent()",
-            replacement: [
-                {
-                    match: /(renderHeaderContent\(\).{1,150}FAVORITES:return)(.{1,150});(case.{1,200}default:.{0,50}?return\(0,\i\.jsx\)\((?<searchComp>\i\..{1,10}),)/,
-                    replace: "$1 this.state.resultType === 'Favorites' ? $self.renderFavoriteGifSearchBar(this, $<searchComp>) : $2;$3"
-                },
-                {
-                    match: /(,suggestions:\i,favorites:)(\i),/,
-                    replace: "$1$self.getFavoriteGifs($2),favCopy:$2,"
-                }
-            ]
+            predicate: () => settings.store.disableGifPickerSearch,
+            replacement: {
+                match: /(,suggestions:)\i,/,
+                replace: "$1null,"
+            }
+        },
+        {
+            find: 'tutorialId:"direct-messages",',
+            predicate: () => settings.store.disableDmSearchBar,
+            replacement: {
+                match: /\(0,\i\.jsx\)\(\i\.\i,{.{0,50}?tutorialId:"direct-messages",.{0,600}?\}\)\}\)\}\),/,
+                replace: ""
+            }
         },
         {
             find: "\"SearchQueryStore\";",
