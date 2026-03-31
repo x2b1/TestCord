@@ -106,11 +106,9 @@ function handleMessageSend(channelId: string, messageObj: any, options: any): vo
 }
 
 const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
-    const { enabled, isEnabled } = settings.use(["enabled", "isEnabled"]);
+    const { isEnabled } = settings.use(["isEnabled"]);
 
     if (!isMainChat) return null;
-
-    if (!enabled) return null;
 
     return (
         <ChatBarButton

@@ -196,6 +196,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
         name, commands, contextMenus, managedStyle, userProfileBadges,
         onBeforeMessageEdit, onBeforeMessageSend, onMessageClick,
         chatBarButton, renderMemberListDecorator, renderMessageAccessory, renderMessageDecoration, messagePopoverButton,
+        renderChatBarButton,
         // Custom
         renderNicknameIcon, headerBarButton, audioProcessor, userAreaButton, renderProfileCollection
     } = p;
@@ -248,6 +249,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
     if (onMessageClick) addMessageClickListener(onMessageClick);
 
     if (chatBarButton) addChatBarButton(name, chatBarButton.render, chatBarButton.icon);
+    if (renderChatBarButton) addChatBarButton(name, renderChatBarButton, () => null);
     if (renderMemberListDecorator) addMemberListDecorator(name, renderMemberListDecorator);
     if (renderMessageDecoration) addMessageDecoration(name, renderMessageDecoration);
     if (renderMessageAccessory) addMessageAccessory(name, renderMessageAccessory);
@@ -274,6 +276,7 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
         name, commands, contextMenus, managedStyle, userProfileBadges,
         onBeforeMessageEdit, onBeforeMessageSend, onMessageClick,
         chatBarButton, renderMemberListDecorator, renderMessageAccessory, renderMessageDecoration, messagePopoverButton,
+        renderChatBarButton,
         // Custom
         renderNicknameIcon, headerBarButton, audioProcessor, userAreaButton, renderProfileCollection
     } = p;
@@ -324,6 +327,7 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
     if (onMessageClick) removeMessageClickListener(onMessageClick);
 
     if (chatBarButton) removeChatBarButton(name);
+    if (renderChatBarButton) removeChatBarButton(name);
     if (renderMemberListDecorator) removeMemberListDecorator(name);
     if (renderMessageDecoration) removeMessageDecoration(name);
     if (renderMessageAccessory) removeMessageAccessory(name);
@@ -352,6 +356,7 @@ export const initPluginManager = onlyOnce(function init() {
     const pluginKeysToBind: Array<keyof PluginDef & `${"on" | "render"}${string}`> = [
         "onBeforeMessageEdit", "onBeforeMessageSend", "onMessageClick",
         "renderMemberListDecorator", "renderMessageAccessory", "renderMessageDecoration",
+        "renderChatBarButton",
         // Custom
         "renderNicknameIcon", "renderProfileCollection"
     ];
@@ -383,7 +388,7 @@ export const initPluginManager = onlyOnce(function init() {
 
         if (p.commands?.length) neededApiPlugins.add("CommandsAPI");
         if (p.onBeforeMessageEdit || p.onBeforeMessageSend || p.onMessageClick) neededApiPlugins.add("MessageEventsAPI");
-        if (p.chatBarButton) neededApiPlugins.add("ChatInputButtonAPI");
+        if (p.chatBarButton || p.renderChatBarButton) neededApiPlugins.add("ChatInputButtonAPI");
         if (p.renderMemberListDecorator) neededApiPlugins.add("MemberListDecoratorsAPI");
         if (p.renderMessageAccessory) neededApiPlugins.add("MessageAccessoriesAPI");
         if (p.renderMessageDecoration) neededApiPlugins.add("MessageDecorationsAPI");

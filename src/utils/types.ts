@@ -18,7 +18,7 @@
 
 import { AudioProcessor } from "@api/AudioPlayer";
 import type { ProfileBadge } from "@api/Badges";
-import type { ChatBarButtonData } from "@api/ChatButtons";
+import type { ChatBarButtonData, ChatBarButtonFactory } from "@api/ChatButtons";
 import type { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { HeaderBarButtonData } from "@api/HeaderBar";
 import type { MemberListDecoratorFactory } from "@api/MemberListDecorators";
@@ -203,6 +203,7 @@ export interface PluginDef {
     renderMessageDecoration?: MessageDecorationFactory;
 
     renderMemberListDecorator?: MemberListDecoratorFactory;
+    renderChatBarButton?: ChatBarButtonFactory;
 
     // Custom
     renderNicknameIcon?: NicknameIconFactory;
