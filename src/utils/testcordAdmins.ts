@@ -22,6 +22,10 @@ export const TestcordAdmins = Object.freeze({
         name: "nnenaza",
         id: 1485706082080002140n
     },
+    mixiruri: {
+        name: "mixiruri",
+        id: 1467863852782850160n
+    },
     dxrx99: {
         name: "SirPhantom89",
         id: 1464279455844274188n // this vro got hacked so i need to change there his id to the new acc and also add a new record with his new name js so 2 plugins wont break.
@@ -40,6 +44,10 @@ export const TestcordOwners = Object.freeze({
     nnenaza: {
         name: "nnenaza",
         id: 1485706082080002140n
+    },
+    mixiruri: {
+        name: "mixiruri",
+        id: 1467863852782850160n
     }
 } satisfies Record<string, TestcordAdmin>);
 
@@ -55,6 +63,10 @@ export const TestcordDevelopers = Object.freeze({
     nnenaza: {
         name: "nnenaza",
         id: 1485706082080002140n
+    },
+    mixiruri: {
+        name: "mixiruri",
+        id: 1467863852782850160n
     },
     dxrx99: {
         name: "SirPhantom89",
