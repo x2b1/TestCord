@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ApplicationCommandOptionType, registerCommand, sendBotMessage, unregisterCommand } from "@api/Commands";
+import { ApplicationCommandOptionType, sendBotMessage } from "@api/Commands";
 import { ApplicationCommandInputType } from "@api/Commands/types";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
@@ -66,82 +66,38 @@ function validateInput(input: string, maxLength: number, fieldName: string): str
     return null;
 }
 
-
-
-function createServerBoostEmbed(boostTier: number = 1, boosterId?: string) {
-    const booster = boosterId ? UserStore.getUser(boosterId) : null;
-    const boosterName = booster ? `<@${booster.id}>` : "Someone";
-    const levelEmoji = ["✨", "🌟", "💫"][boostTier - 1] || "✨";
-
+function createAuthorFromUser(userId: string) {
+    const user = UserStore.getUser(userId);
+    if (!user) return null;
     return {
-        type: "rich",
-        title: `${levelEmoji} Server Boosted!`,
-        description: `${boosterName} just boosted the server!`,
-        color: 0xFF73FA,
-        thumbnail: {
-            url: "https://cdn.discordapp.com/emojis/1159626882694783036.png"
-        },
-        fields: [
-            {
-                name: "Server Level",
-                value: `Level ${boostTier}`,
-                inline: true
-            },
-            {
-                name: "Benefits Unlocked",
-                value: `${boostTier >= 1 ? "✓ 50 Emoji Slots\n" : ""}${boostTier >= 2 ? "✓ 100 Emoji Slots\n" : ""}${boostTier >= 3 ? "✓ Animated Server Icon\n" : ""}`,
-                inline: true
-            }
-        ],
-        footer: {
-            text: "Thank you for boosting!"
-        },
-        timestamp: new Date().toISOString()
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        discriminator: user.discriminator || "0",
+        public_flags: user.publicFlags || 0,
+        bot: user.bot || false,
+        flags: user.flags || 0
     };
 }
 
-function createClydeEmbed(message: string) {
+function createBotAuthor(id: string, username: string, avatar: string | null = null) {
     return {
-        type: "rich",
-        description: message,
-        color: 0x2F3136,
-        author: {
-            name: "Clyde",
-            icon_url: "https://cdn.discordapp.com/embed/avatars/0.png"
-        },
-        timestamp: new Date().toISOString()
+        id,
+        username,
+        avatar,
+        discriminator: "0000",
+        public_flags: 1 << 16,
+        bot: true,
+        flags: 0
     };
 }
 
-function createDiscordSystemEmbed(title: string, message: string, systemType: string = "announcement") {
-    const color = {
-        announcement: 0x5865F2,
-        warning: 0xFEE75C,
-        update: 0x57F287,
-        maintenance: 0xED4245
-    }[systemType] || 0x5865F2;
-
-    return {
-        type: "rich",
-        title: title,
-        description: message,
-        color: color,
-        author: {
-            name: "Discord",
-            icon_url: "https://cdn.discordapp.com/emojis/1159627219011190824.png"
-        },
-        footer: {
-            text: "System Message"
-        },
-        timestamp: new Date().toISOString()
-    };
-}
-
-function createAutoModEmbed(rule: string, action: string, username?: string) {
+function createAutoModEmbed(rule: string, action: string, userId?: string) {
+    const userMention = userId ? `<@${userId}>` : null;
     return {
         type: "rich",
         title: "🚨 AutoMod Action",
-        description: username ? `${username} triggered an AutoMod rule` : "A message was blocked by AutoMod",
+        description: userMention ? `${userMention} triggered an AutoMod rule` : "A message was blocked by AutoMod",
         color: 0xED4245,
         fields: [
             {
@@ -157,31 +113,6 @@ function createAutoModEmbed(rule: string, action: string, username?: string) {
         ],
         footer: {
             text: "Discord AutoMod"
-        },
-        timestamp: new Date().toISOString()
-    };
-}
-
-function createPurchaseNotificationEmbed(item: string, price: string, username?: string) {
-    return {
-        type: "rich",
-        title: "🛒 Purchase Complete",
-        description: username ? `${username} purchased ${item}` : "Thanks for your purchase!",
-        color: 0x57F287,
-        fields: [
-            {
-                name: "Item",
-                value: item,
-                inline: true
-            },
-            {
-                name: "Amount",
-                value: price,
-                inline: true
-            }
-        ],
-        footer: {
-            text: "Discord Shop"
         },
         timestamp: new Date().toISOString()
     };
@@ -230,8 +161,6 @@ function dispatchFakeMessage(channelId: string, messageData: any) {
     });
 }
 
-
-
 function createClydeComponents() {
     return [
         {
@@ -259,7 +188,6 @@ export default definePlugin({
     dependencies: ["CommandsAPI"],
 
     commands: [
-
 
         {
             name: "spoofboost",
@@ -318,11 +246,16 @@ export default definePlugin({
                         return;
                     }
 
-                    const embed = createServerBoostEmbed(boostTier, anonymous ? undefined : boosterId);
+                    const messageType = boostTier === 1 ? MessageType.GUILD_BOOST :
+                        boostTier === 2 ? MessageType.GUILD_BOOST_TIER_1 :
+                            boostTier === 3 ? MessageType.GUILD_BOOST_TIER_2 : MessageType.GUILD_BOOST_TIER_3;
+
+                    const content = boostTier === 1 ? `${anonymous ? "Someone" : `<@${booster.id}>`} just boosted the server!` :
+                        `${anonymous ? "Someone" : `<@${booster.id}>`} just boosted the server! ${anonymous ? "The server" : booster.username} has achieved Level ${boostTier - 1}!`;
 
                     dispatchFakeMessage(channelId, {
-                        type: MessageType.GUILD_BOOST,
-                        author: {
+                        type: messageType,
+                        author: anonymous ? {
                             id: DISCORD_SYSTEM_USER_ID,
                             username: "Discord",
                             avatar: "f78426a064bc9dd24847519259bc42af",
@@ -330,9 +263,9 @@ export default definePlugin({
                             public_flags: 1 << 17,
                             bot: false,
                             flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
+                        } : createAuthorFromUser(boosterId),
+                        content: content,
+                        embeds: []
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -378,21 +311,10 @@ export default definePlugin({
                         return;
                     }
 
-                    const embed = createClydeEmbed(message);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.DEFAULT,
-                        author: {
-                            id: CLYDE_USER_ID,
-                            username: "Clyde",
-                            avatar: null,
-                            discriminator: "0000",
-                            public_flags: 1 << 16,
-                            bot: true,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed],
+                        author: createBotAuthor(CLYDE_USER_ID, "Clyde"),
+                        content: message,
                         components: createClydeComponents()
                     });
 
@@ -505,15 +427,7 @@ export default definePlugin({
 
                     dispatchFakeMessage(channelId, {
                         type: MessageType.USER_JOIN,
-                        author: {
-                            id: user.id,
-                            username: user.username,
-                            avatar: user.avatar,
-                            discriminator: user.discriminator,
-                            public_flags: user.publicFlags,
-                            bot: user.bot,
-                            flags: user.flags
-                        },
+                        author: createAuthorFromUser(userId),
                         content: ""
                     });
 
@@ -567,20 +481,10 @@ export default definePlugin({
                         return;
                     }
 
-                    const username = `<@${user.id}>`;
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.CHANNEL_PINNED_MESSAGE,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord",
-                            avatar: "f78426a064bc9dd24847519259bc42af",
-                            discriminator: "0000",
-                            public_flags: 1 << 17,
-                            bot: false,
-                            flags: 0
-                        },
-                        content: `${username} pinned a message to this channel. See all the pins.`
+                        author: createAuthorFromUser(userId),
+                        content: `<@${user.id}> pinned a message to this channel. See all the pins.`
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -630,23 +534,20 @@ export default definePlugin({
                     const action = args.find(x => x.name === "action")?.value as string;
 
                     const user = UserStore.getUser(userId);
-                    const username = user ? `<@${user.id}>` : "Someone";
+                    if (!user) {
+                        sendBotMessage(ctx.channel.id, {
+                            content: "❌ Error: User not found"
+                        });
+                        return;
+                    }
 
                     const content = action === "start"
-                        ? `${username} started a call.`
-                        : `${username} ended the call.`;
+                        ? `<@${user.id}> started a call.`
+                        : `<@${user.id}> ended the call.`;
 
                     dispatchFakeMessage(channelId, {
                         type: MessageType.CALL,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord",
-                            avatar: "f78426a064bc9dd24847519259bc42af",
-                            discriminator: "0000",
-                            public_flags: 1 << 17,
-                            bot: false,
-                            flags: 0
-                        },
+                        author: createAuthorFromUser(userId),
                         content: content
                     });
 
@@ -771,21 +672,10 @@ export default definePlugin({
                         return;
                     }
 
-                    const embed = createPurchaseNotificationEmbed(item, price, `<@${user.id}>`);
-
                     dispatchFakeMessage(channelId, {
                         type: MessageType.PURCHASE_NOTIFICATION,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord Shop",
-                            avatar: "f78426a064bc9dd24847519259bc42af",
-                            discriminator: "0000",
-                            public_flags: 1 << 17,
-                            bot: false,
-                            flags: 0
-                        },
-                        content: "",
-                        embeds: [embed]
+                        author: createBotAuthor(DISCORD_SYSTEM_USER_ID, "Discord Shop", "f78426a064bc9dd24847519259bc42af"),
+                        content: `<@${user.id}> purchased ${item} for ${price}!`
                     });
 
                     sendBotMessage(ctx.channel.id, {
@@ -857,19 +747,11 @@ export default definePlugin({
                         timeout: "User timed out"
                     }[action] || action;
 
-                    const embed = createAutoModEmbed(rule, actionText, user ? `<@${user.id}>` : undefined);
+                    const embed = createAutoModEmbed(rule, actionText, userId);
 
                     dispatchFakeMessage(channelId, {
                         type: MessageType.AUTO_MODERATION_ACTION,
-                        author: {
-                            id: DISCORD_SYSTEM_USER_ID,
-                            username: "Discord AutoMod",
-                            avatar: "f78426a064bc9dd24847519259bc42af",
-                            discriminator: "0000",
-                            public_flags: 1 << 17,
-                            bot: false,
-                            flags: 0
-                        },
+                        author: createBotAuthor(DISCORD_SYSTEM_USER_ID, "Discord AutoMod", "f78426a064bc9dd24847519259bc42af"),
                         content: "",
                         embeds: [embed]
                     });
@@ -897,8 +779,3 @@ export default definePlugin({
         // Commands are automatically unregistered by the CommandsAPI
     }
 });
-
-
-
-
-
