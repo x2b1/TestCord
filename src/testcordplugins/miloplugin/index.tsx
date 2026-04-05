@@ -109,8 +109,6 @@ const wordMapFiltered: Record<string, string> = {
     hey: "hewwo~",
     hello: "hewwo~",
     bye: "bai~",
-    love: "luv~",
-    friend: "buddy~",
     party: "party~",
     lol: "lol~",
     omg: "omg~",
@@ -120,17 +118,39 @@ const wordMapFiltered: Record<string, string> = {
 const cuteFaces = ["OwO", "UwU", "-w-", ":3", ";3c", ";3", "qwq", "0w0", "'w'", "-3-"];
 
 const mapWords = (text: string, wordMap: Record<string, string>) => {
-    return text.replace(/\b\w+\b/g, word => wordMap[word] || word);
+    return text.split(/(\s+)/).map(part => {
+        if (/^\s+$/.test(part)) return part;
+        const lower = part.toLowerCase();
+        if (wordMap[lower]) return wordMap[lower];
+        return part;
+    }).join("");
 };
 
-const addRandomFaces = (text: string, chance = 0.15) => {
-    return text.split("").map(char => {
+const addRandomFaces = (text: string, chance = 0.3) => {
+    const words = text.split(/(\s+)/);
+    const result: string[] = [];
+    let hasFace = false;
+
+    for (const part of words) {
+        if (/^\s+$/.test(part)) {
+            result.push(part);
+            continue;
+        }
         if (Math.random() < chance) {
             const face = cuteFaces[Math.floor(Math.random() * cuteFaces.length)];
-            return char + face;
+            result.push(part + " " + face);
+            hasFace = true;
+        } else {
+            result.push(part);
         }
-        return char;
-    }).join("");
+    }
+
+    if (!hasFace && words.some(w => !/^\s+$/.test(w))) {
+        const face = cuteFaces[Math.floor(Math.random() * cuteFaces.length)];
+        result.push(" " + face);
+    }
+
+    return result.join("");
 };
 
 // tekst - DO NAPRAWY
@@ -140,7 +160,7 @@ const sillyKittenTransform = (text: string) => {
 };
 
 const settings = definePluginSettings({
-    enabled: {
+    sillyMode: {
         type: OptionType.BOOLEAN,
         description: "Enable Silly Kitten mode!~~",
         default: false
@@ -148,7 +168,7 @@ const settings = definePluginSettings({
 });
 
 function handleMessageSend(channelId: string, messageObj: any): void | { cancel: boolean; } {
-    if (!settings.store.enabled) return;
+    if (!settings.store.sillyMode) return;
     if (messageObj.content) {
         messageObj.content = sillyKittenTransform(messageObj.content);
     }
@@ -157,14 +177,14 @@ function handleMessageSend(channelId: string, messageObj: any): void | { cancel:
 // Chat bar button
 const SillyKittenButton: ChatBarButtonFactory = ({ isMainChat }) => {
     if (!isMainChat) return null;
-    const { enabled } = settings.use(["enabled"]);
+    const { sillyMode } = settings.use(["sillyMode"]);
     return (
         <ChatBarButton
-            tooltip={enabled ? "Silly Kitten: ON" : "Silly Kitten: OFF"}
-            onClick={() => { settings.store.enabled = !settings.store.enabled; }}
+            tooltip={sillyMode ? "Silly Kitten: ON" : "Silly Kitten: OFF"}
+            onClick={() => { settings.store.sillyMode = !settings.store.sillyMode; }}
         >
-            <svg width="20" height="20" viewBox="0 0 24 24" style={{ color: enabled ? "#da373c" : "currentColor" }}>
-                {enabled ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" style={{ color: sillyMode ? "#da373c" : "currentColor" }}>
+                {sillyMode ? (
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 ) : (
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
@@ -178,7 +198,7 @@ const SillyKittenButton: ChatBarButtonFactory = ({ isMainChat }) => {
 export default definePlugin({
     name: "Silly Kitten",
     description: "Transform your messages into cute silly kitten text! >w<",
-    authors: [TestcordDevs.x2b, TestcordDevs.sirphantom89, TestcordDevs.milo],
+    authors: [TestcordDevs.x2b, TestcordDevs.milo],
     settings: settings,
     dependencies: ["ChatInputButtonAPI"],
     start() {
