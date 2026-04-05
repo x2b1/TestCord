@@ -297,7 +297,7 @@ function generateCrashId(): string {
 
 function getMemoryUsage(): any {
     if (typeof performance !== "undefined" && (performance as any).memory) {
-        const memory = (performance as any).memory;
+        const { memory } = (performance as any);
         return {
             usedJSHeapSize: memory.usedJSHeapSize,
             totalJSHeapSize: memory.totalJSHeapSize,
@@ -356,28 +356,28 @@ function updateCrashStatistics(crashReport: CrashReport): void {
 
     try {
         const stats = getCrashStatistics();
-        
+
         stats.totalCrashes = (stats.totalCrashes || 0) + 1;
-        
+
         if (crashReport.recoverySuccessful) {
             stats.recoveredCrashes = (stats.recoveredCrashes || 0) + 1;
         } else if (crashReport.recoveryAttempted) {
             stats.failedRecoveries = (stats.failedRecoveries || 0) + 1;
         }
-        
+
         stats.lastCrashTime = crashReport.timestamp;
-        
+
         // Track crash types
         const errorType = crashReport.error.split(":")[0] || "Unknown";
         stats.crashesByType[errorType] = (stats.crashesByType[errorType] || 0) + 1;
-        
+
         // Track crash frequency (last 10 crashes)
         stats.crashFrequency = stats.crashFrequency || [];
         stats.crashFrequency.push(crashReport.timestamp);
         if (stats.crashFrequency.length > 10) {
             stats.crashFrequency.shift();
         }
-        
+
         saveCrashStatistics(stats);
     } catch (err) {
         CrashHandlerLogger.error("Failed to update crash statistics:", err);
@@ -435,10 +435,10 @@ function checkMemoryUsage(): void {
     if (!memory) return;
 
     const threshold = settings.store.memoryThreshold;
-    
+
     if (memory.usedMB > threshold) {
         CrashHandlerLogger.warn(`High memory usage detected: ${memory.usedMB}MB (threshold: ${threshold}MB)`);
-        
+
         if (settings.store.showCrashNotifications) {
             try {
                 showNotification({
@@ -464,17 +464,17 @@ function startPerformanceMonitoring(): void {
     if (!settings.store.monitorPerformance || performanceMonitorInterval) return;
 
     const interval = settings.store.performanceCheckInterval * 1000;
-    
+
     performanceMonitorInterval = setInterval(() => {
         checkMemoryUsage();
-        
+
         // Additional performance checks could go here
         const memory = getMemoryUsage();
         if (memory && settings.store.logToConsole) {
             CrashHandlerLogger.debug(`Memory: ${memory.usedMB}/${memory.limitMB}MB`);
         }
     }, interval);
-    
+
     CrashHandlerLogger.info("Performance monitoring started");
 }
 
@@ -489,7 +489,7 @@ function stopPerformanceMonitoring(): void {
 export default definePlugin({
     name: "CrashHandlerEnhanced",
     description: "Advanced crash handling with detailed logging, statistics, preventive measures, and intelligent recovery",
-    authors: [Devs.Nuckyz, Devs.Mifu],
+    authors: [Devs.Nuckyz],
     enabledByDefault: true,
 
     settings,
@@ -507,11 +507,11 @@ export default definePlugin({
     start() {
         sessionStartTime = Date.now();
         settings.store.sessionStartTime = sessionStartTime.toString();
-        
+
         if (settings.store.enablePreventiveMeasures) {
             startPerformanceMonitoring();
         }
-        
+
         CrashHandlerLogger.info("CrashHandlerEnhanced started");
     },
 
@@ -536,7 +536,7 @@ export default definePlugin({
             CrashHandlerLogger.warn("Already recovering from previous crash");
             return;
         }
-        
+
         isRecovering = true;
 
         // Delay before recovery
@@ -562,7 +562,7 @@ export default definePlugin({
 
                 shouldAttemptRecover = false;
                 recoveryAttempts++;
-                
+
                 // Reset after 1 second
                 setTimeout(() => {
                     shouldAttemptRecover = true;
@@ -593,13 +593,13 @@ export default definePlugin({
 
     handlePreventCrash(_this: any, errorState: any) {
         const recoveryStartTime = Date.now();
-        
+
         try {
             if (settings.store.showCrashNotifications) {
-                const errorMsg = settings.store.showDetailedError 
+                const errorMsg = settings.store.showDetailedError
                     ? `Error: ${errorState.error?.message || "Unknown"}`
                     : "Attempting to recover...";
-                    
+
                 showNotification({
                     color: "#eed202",
                     title: `Discord has crashed! (Attempt ${recoveryAttempts}/${settings.store.maxRecoveryAttempts})`,
@@ -708,13 +708,13 @@ export default definePlugin({
 
         try {
             _this.setState({ error: null, info: null });
-            
+
             const recoveryTime = Date.now() - recoveryStartTime;
             CrashHandlerLogger.info(`Recovery successful in ${recoveryTime}ms`);
-            
+
             // Log successful recovery
             logCrash(errorState, true, true);
-            
+
             if (settings.store.showRecoveryNotifications) {
                 setTimeout(() => {
                     try {

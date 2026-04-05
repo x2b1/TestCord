@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
 import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
+import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 
 interface DomainInfo {
@@ -431,7 +431,7 @@ export default definePlugin({
                         "```txt",
                         `[USER SEARCH] ${username}`,
                         `Link UserSearch : ${searchUrl}`,
-                        `Link Whatsmyname : ${whatsMyNameUrl}`,                        
+                        `Link Whatsmyname : ${whatsMyNameUrl}`,
                         "```"
                     ].join("\n")
                 });

@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { addMessagePreEditListener, addMessagePreSendListener, MessageEditListener, MessageSendListener, removeMessagePreEditListener, removeMessagePreSendListener } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
-import { addMessagePreSendListener, addMessagePreEditListener, removeMessagePreSendListener, removeMessagePreEditListener, MessageSendListener, MessageEditListener } from "@api/MessageEvents";
-import { Toasts, showToast } from "@webpack/common";
+import { showToast, Toasts } from "@webpack/common";
 
 const settings = definePluginSettings({
     sanitizeOutgoing: {

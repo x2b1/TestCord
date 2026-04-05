@@ -1,27 +1,29 @@
 /*
- * Testcord BetterDiscord Plugin Manager
- * Loads and manages BetterDiscord .plugin.js files
+ * Testcord BetterDiscord Plugin Manager - Enhanced
+ * Loads and manages BetterDiscord .plugin.js files with improved compatibility
  */
 
 import { Logger } from "@utils/Logger";
 import { createBdApi, BdApi } from "./BdApi";
 import { Settings } from "@api/Settings";
+import { React } from "@webpack/common";
 
 const logger = new Logger("BDPluginManager", "#ff7373");
 
 export interface BDPluginMeta {
     name: string;
-    author: string;
+    author: string | string[];
     version: string;
     description: string;
     source?: string;
     website?: string;
     invite?: string;
-    authorId?: string;
+    authorId?: string | string[];
     authorLink?: string;
     updateUrl?: string;
     donationUrl?: string;
     patreon?: string;
+    [key: string]: any;
 }
 
 export interface BDPlugin {
@@ -36,16 +38,39 @@ export interface BDPlugin {
     unload?: () => void;
     onStart?: () => void;
     onStop?: () => void;
-    getSettingsPanel?: () => HTMLElement;
+    getSettingsPanel?: () => HTMLElement | string | React.ComponentType<any>;
     observer?: (mutations: MutationRecord[]) => void;
-    onMessage?: () => void;
-    onSwitch?: () => void;
+    onMessage?: (msg: any) => void;
+    onSwitch?: (channel: any) => void;
     getSettingsConfig?: () => any;
     saveSettings?: () => void;
     [key: string]: any;
 }
 
-// Parse BetterDiscord plugin metadata from comment block
+// Strip BOM from file content
+function stripBOM(content: string): string {
+    if (content.charCodeAt(0) === 0xFEFF) {
+        return content.slice(1);
+    }
+    return content;
+}
+
+// Normalize exports for BD plugins
+function normalizeExports(pluginName: string): string {
+    return `
+if (module.exports.default) {
+    module.exports = module.exports.default;
+}
+if (typeof module.exports !== "function" && typeof module.exports !== "object") {
+    try {
+        module.exports = eval(${JSON.stringify(pluginName)});
+    } catch(e) {
+        // Plugin might not export anything substantial
+    }
+}`;
+}
+
+// Parse BetterDiscord plugin metadata from comment block (Enhanced)
 export function parsePluginMeta(content: string, fileName: string): BDPluginMeta {
     const meta: Partial<BDPluginMeta> = {
         name: fileName.replace(/\.plugin\.js$/i, ""),
@@ -54,62 +79,59 @@ export function parsePluginMeta(content: string, fileName: string): BDPluginMeta
         description: "No description provided"
     };
 
-    // Try to find the comment block
-    const commentMatch = content.match(/\/\*\*([\s\S]*?)\*\//);
-    if (commentMatch) {
-        const block = commentMatch[1];
+    // Try to find the JSDoc comment block first
+    const jsdocMatch = content.match(/\/\*\*([\s\S]*?)\*\//);
+    if (jsdocMatch) {
+        const block = jsdocMatch[1];
+        const splitRegex = /[^\S\r\n]*?\r?(?:\r\n|\n)[^\S\r\n]*?\*[^\S\r\n]?/;
+        const escapedAtRegex = /^\\@/;
 
-        // Parse @key value pairs
-        const lines = block.split("\n");
-        for (const line of lines) {
-            const match = line.match(/@(\w+)\s*(.*)/);
-            if (match) {
-                const [, key, value] = match;
-                const trimmedValue = value.trim();
+        const out: Record<string, string | string[]> = {};
+        let field = "";
+        let accum = "";
 
-                switch (key.toLowerCase()) {
-                    case "name":
-                        meta.name = trimmedValue;
-                        break;
-                    case "author":
-                        meta.author = trimmedValue;
-                        break;
-                    case "version":
-                        meta.version = trimmedValue;
-                        break;
-                    case "description":
-                        meta.description = trimmedValue;
-                        break;
-                    case "source":
-                        meta.source = trimmedValue;
-                        break;
-                    case "website":
-                        meta.website = trimmedValue;
-                        break;
-                    case "invite":
-                        meta.invite = trimmedValue;
-                        break;
-                    case "authorid":
-                        meta.authorId = trimmedValue;
-                        break;
-                    case "authorlink":
-                        meta.authorLink = trimmedValue;
-                        break;
-                    case "updateurl":
-                        meta.updateUrl = trimmedValue;
-                        break;
-                    case "donationurl":
-                        meta.donationUrl = trimmedValue;
-                        break;
-                    case "patreon":
-                        meta.patreon = trimmedValue;
-                        break;
+        for (const line of block.split(splitRegex)) {
+            if (line.length === 0) continue;
+
+            if (line.startsWith("@") && !line.startsWith("@ ")) {
+                if (out[field]) {
+                    if (!Array.isArray(out[field])) out[field] = [out[field] as string];
+                    (out[field] as string[]).push(accum.trim());
+                } else {
+                    out[field] = accum.trim();
                 }
+                const l = line.indexOf(" ");
+                field = line.substring(1, l);
+                accum = line.substring(l + 1);
+            } else {
+                accum += " " + line.replace(/\\n/g, "\n").replace(escapedAtRegex, "@");
             }
         }
+        // Save the last accumulated field
+        if (out[field]) {
+            if (!Array.isArray(out[field])) out[field] = [out[field] as string];
+            (out[field] as string[]).push(accum.trim());
+        } else {
+            out[field] = accum.trim();
+        }
+        delete out[""];
+
+        // Map to meta
+        if (out.name) meta.name = Array.isArray(out.name) ? out.name[0] : out.name;
+        if (out.version) meta.version = Array.isArray(out.version) ? out.version[0] : out.version;
+        if (out.description) meta.description = Array.isArray(out.description) ? out.description[0] : out.description;
+        if (out.author) meta.author = Array.isArray(out.author) ? out.author : (out.author as string);
+        if (out.authorId) meta.authorId = Array.isArray(out.authorId) ? out.authorId : (out.authorId as string);
+        if (out.source) meta.source = Array.isArray(out.source) ? out.source[0] : out.source;
+        if (out.website) meta.website = Array.isArray(out.website) ? out.website[0] : out.website;
+        if (out.invite) meta.invite = Array.isArray(out.invite) ? out.invite[0] : out.invite;
+        if (out.authorLink) meta.authorLink = Array.isArray(out.authorLink) ? out.authorLink[0] : out.authorLink;
+        if (out.updateUrl) meta.updateUrl = Array.isArray(out.updateUrl) ? out.updateUrl[0] : out.updateUrl;
+        if (out.donationUrl) meta.donationUrl = Array.isArray(out.donationUrl) ? out.donationUrl[0] : out.donationUrl;
+        if (out.patreon) meta.patreon = Array.isArray(out.patreon) ? out.patreon[0] : out.patreon;
     }
 
-    // Also try // style comments
+    // Also try // style comments for legacy plugins
     if (!meta.name || meta.name === fileName.replace(/\.plugin\.js$/i, "")) {
         const nameMatch = content.match(/\/\/\s*@name\s+(.+)/i);
         if (nameMatch) meta.name = nameMatch[1].trim();
@@ -124,108 +146,157 @@ export function parsePluginMeta(content: string, fileName: string): BDPluginMeta
         if (descMatch) meta.description = descMatch[1].trim();
     }
 
+    // Try legacy META format: //META{"name":"PluginName","version":"1.0.0"}*//
+    if (!meta.name || meta.name === fileName.replace(/\.plugin\.js$/i, "")) {
+        const metaMatch = content.match(/\/\/META\{(.+?)\}\*\//);
+        if (metaMatch) {
+            try {
+                const parsed = JSON.parse(`{${metaMatch[1]}}`);
+                if (parsed.name) meta.name = parsed.name;
+                if (parsed.version) meta.version = parsed.version;
+                if (parsed.description) meta.description = parsed.description;
+                if (parsed.author) meta.author = parsed.author;
+            } catch (e) {
+                logger.warn("Failed to parse legacy META format");
+            }
+        }
+    }
+
     return meta as BDPluginMeta;
+}
+
+// Wrap plugin code with proper scope and globals
+function wrapPluginCode(sourceCode: string, fileName: string, pluginName: string): string {
+    sourceCode = stripBOM(sourceCode);
+
+    const scopeVars = [
+        "const exports = module.exports;",
+        "const global = window;",
+        "const process = { env: {}, platform: 'browser' };",
+        "const __filename = '" + fileName.replace(/'/g, "\\'") + "';",
+        "const __dirname = '';",
+        "const DiscordNative = window.DiscordNative || {};",
+        // Clipboard shim
+        "if (!DiscordNative.clipboard) {",
+        "  Object.defineProperty(DiscordNative, 'clipboard', {",
+        "    configurable: true,",
+        "    get: () => ({ copy: () => {}, supported: false })",
+        "  });",
+        "}"
+    ].join("\n");
+
+    return scopeVars + "\n" + sourceCode + "\n" + normalizeExports(pluginName) +
+        `\n//# sourceURL=betterdiscord://plugins/${fileName}`;
 }
 
 // Plugin Manager Class
 export class BDPluginManager {
     private static plugins: Map<string, BDPlugin> = new Map();
     private static bdApis: Map<string, ReturnType<typeof createBdApi>> = new Map();
+    private static pluginStates: Map<string, { enabled: boolean; started: boolean; }> = new Map();
 
     /**
-     * Load a BetterDiscord plugin from source code
+     * Load a BetterDiscord plugin from source code (Enhanced)
      */
     static loadPlugin(fileName: string, sourceCode: string): BDPlugin | null {
         try {
             const meta = parsePluginMeta(sourceCode, fileName);
-            const pluginId = meta.name.replace(/\s+/g, "_");
+            const pluginId = meta.name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
 
             // Create BdApi instance for this plugin
             const bdApi = createBdApi(meta.name);
             this.bdApis.set(pluginId, bdApi);
 
-            // Create a sandbox for the plugin
-            const pluginExports: any = {};
-
             // Create the plugin module context
-            const module = { exports: pluginExports };
-
-            // BD plugin template function
+            const moduleObj = { exports: {} as any, filename: fileName };
             let pluginInstance: any = null;
 
-            // Try to execute the plugin code
+            // Create wrapped plugin code
+            const wrappedCode = wrapPluginCode(sourceCode, fileName, meta.name);
+
+            // Try to execute the plugin code with proper context
             try {
-                // Create a function that wraps the plugin code
                 const pluginFn = new Function(
+                    "require",
                     "module",
                     "exports",
-                    "require",
+                    "__filename",
+                    "__dirname",
                     "BdApi",
-                    "window",
-                    "document",
-                    "console",
-                    "setTimeout",
-                    "setInterval",
-                    "clearTimeout",
-                    "clearInterval",
-                    "fetch",
-                    "XMLHttpRequest",
-                    "MutationObserver",
-                    sourceCode + "\nreturn module.exports || exports.default || this;"
+                    "global",
+                    "process",
+                    "DiscordNative",
+                    wrappedCode
                 );
 
-                // Execute the plugin with proper context
-                pluginInstance = pluginFn.call(
-                    pluginExports,  // 'this' context
-                    module,
-                    pluginExports,
-                    // Mock require for BD plugins - return stubs for Node modules
+                pluginFn.call(
+                    {},
+                    // Mock require
                     (name: string) => {
-                        // Return stub objects for Node.js modules that don't exist in browser
                         if (name === "fs" || name === "path" || name === "electron") {
-                            logger.warn(`Plugin ${meta.name} tried to require("${name}") - returning stub (not available in browser)`);
+                            logger.warn(`Plugin ${meta.name} tried to require("${name}") - returning stub`);
                             return {
-                                // Stub functions that don't crash
                                 readFile: () => { },
                                 writeFile: () => { },
+                                readFileSync: () => null,
+                                writeFileSync: () => { },
+                                existsSync: () => false,
                                 join: (...args: string[]) => args.join("/"),
-                                basename: (p: string) => p.split("/").pop() || p,
-                                dirname: (p: string) => p.split("/").slice(0, -1).join("/"),
+                                basename: (p: string) => p.split(/[\/\\]/).pop() || p,
+                                dirname: (p: string) => p.split(/[\/\\]/).slice(0, -1).join("/"),
                                 ipcRenderer: { invoke: () => Promise.resolve(null), send: () => { } },
                                 remote: {}
                             };
                         }
                         if (name === "events") {
-                            return { EventEmitter: class EventEmitter { on() { } off() { } emit() { } } };
+                            return {
+                                EventEmitter: class {
+                                    on() { }
+                                    off() { }
+                                    emit() { }
+                                }
+                            };
                         }
-                        logger.warn(`Plugin ${meta.name} tried to require("${name}") - not supported`);
                         return {};
                     },
+                    moduleObj,
+                    moduleObj.exports,
+                    fileName,
+                    "",
                     bdApi,
                     typeof window !== "undefined" ? window : {},
-                    typeof document !== "undefined" ? document : {},
-                    console,
-                    setTimeout,
-                    setInterval,
-                    clearTimeout,
-                    clearInterval,
-                    typeof fetch !== "undefined" ? fetch : () => Promise.resolve(null),
-                    typeof XMLHttpRequest !== "undefined" ? XMLHttpRequest : class { },
-                    typeof MutationObserver !== "undefined" ? MutationObserver : class { }
+                    { env: {}, platform: 'browser' },
+                    typeof (window as any).DiscordNative !== "undefined" ? (window as any).DiscordNative : {}
                 );
+
+                pluginInstance = moduleObj.exports;
             } catch (execError) {
                 logger.error(`Failed to execute plugin ${meta.name}:`, execError);
-                // Try alternative loading method for self-executing plugins
+
+                // Try alternative eval-based loading for self-executing plugins
                 try {
-                    const wrappedCode = `(function(module, exports, BdApi) {
+                    const evalCode = `(function(module, exports, BdApi) {
                         try {
                             ${sourceCode}
-                        } catch(e) { console.error('BD Plugin error:', e); }
+                        } catch(e) {
+                            console.error('BD Plugin error:', e);
+                        }
                         return module.exports || exports.default;
-                    })(module, pluginExports, bdApi)`;
-                    pluginInstance = eval(wrappedCode);
+                    })(moduleObj, moduleObj.exports, bdApi)`;
+
+                    pluginInstance = eval(evalCode);
                 } catch (e) {
                     logger.error(`Alternative loading also failed for ${meta.name}:`, e);
+                }
+            }
+
+            // Handle different export patterns
+            if (pluginInstance && typeof pluginInstance === "object") {
+                // If it's an object with the plugin name as a key, use that
+                if (pluginInstance[meta.name]) {
+                    pluginInstance = pluginInstance[meta.name];
+                } else if (pluginInstance.default) {
+                    pluginInstance = pluginInstance.default;
                 }
             }
 
@@ -237,17 +308,28 @@ export class BDPluginManager {
                 enabled: false,
                 started: false,
                 ...(pluginInstance || {}),
-                ...pluginExports
+                ...moduleObj.exports
             };
+
+            // Add deprecated getter helpers for compatibility
+            if (!plugin.getName && plugin.name) {
+                plugin.getName = () => plugin.meta.name || plugin.name;
+            }
+            if (!plugin.getVersion && plugin.version) {
+                plugin.getVersion = () => plugin.meta.version || plugin.version;
+            }
+            if (!plugin.getDescription && plugin.description) {
+                plugin.getDescription = () => plugin.meta.description || plugin.description;
+            }
 
             // Store the plugin
             this.plugins.set(pluginId, plugin);
+            this.pluginStates.set(pluginId, { enabled: false, started: false });
             (window as any).TestcordBDPlugins = Object.fromEntries(this.plugins);
 
             logger.info(`Loaded BD plugin: ${meta.name} v${meta.version} by ${meta.author}`);
 
-            // Don't auto-start - let Testcord's plugin system handle it
-            // But mark as enabled if it was previously enabled
+            // Restore enabled state
             if (this.isPluginEnabled(pluginId)) {
                 plugin.enabled = true;
             }
@@ -260,17 +342,19 @@ export class BDPluginManager {
     }
 
     /**
-     * Start a loaded plugin
+     * Start a loaded plugin (Enhanced with proper lifecycle)
      */
     static startPlugin(pluginId: string): boolean {
         const plugin = this.plugins.get(pluginId);
+        const state = this.pluginStates.get(pluginId);
+
         if (!plugin) {
             logger.error(`Cannot start plugin ${pluginId}: not found`);
             return false;
         }
 
         // Don't start if already started
-        if (plugin.started) {
+        if (state?.started) {
             logger.debug(`Plugin ${pluginId} is already started`);
             return true;
         }
@@ -285,8 +369,8 @@ export class BDPluginManager {
                 plugin.load();
             }
 
+            if (state) state.started = true;
             plugin.enabled = true;
-            plugin.started = true;
             this.saveEnabledState(pluginId, true);
 
             logger.info(`Started BD plugin: ${plugin.meta.name}`);
@@ -298,20 +382,20 @@ export class BDPluginManager {
     }
 
     /**
-     * Stop a running plugin
+     * Stop a running plugin (Enhanced with cleanup)
      */
     static stopPlugin(pluginId: string): boolean {
         const plugin = this.plugins.get(pluginId);
+        const state = this.pluginStates.get(pluginId);
+
         if (!plugin) {
             logger.error(`Cannot stop plugin ${pluginId}: not found`);
             return false;
         }
 
         // Don't stop if not started
-        if (!plugin.started) {
+        if (!state?.started && !plugin.enabled) {
             logger.debug(`Plugin ${pluginId} is not started`);
-            plugin.enabled = false;
-            this.saveEnabledState(pluginId, false);
             return true;
         }
 
@@ -325,6 +409,14 @@ export class BDPluginManager {
                 plugin.unload();
             }
 
+            // Clean up patches and styles
+            const bdApi = this.bdApis.get(pluginId);
+            if (bdApi) {
+                bdApi.Patcher.unpatchAll(pluginId);
+                bdApi.DOM.removeStyle(pluginId);
+            }
+
+            if (state) state.started = false;
             plugin.enabled = false;
             this.saveEnabledState(pluginId, false);
 
