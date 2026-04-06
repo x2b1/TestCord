@@ -7,11 +7,13 @@
 import { definePluginSettings } from "@api/Settings";
 import { Button } from "@components/Button";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { PluginNative } from "@utils/types";
 import { OptionType } from "@utils/types";
 import { Alerts } from "@webpack/common";
 
-import { Native } from ".";
 import { SniperDir } from "./components/FolderSelectInput";
+
+const Native = VencordNative.pluginHelpers.ApiSniper as PluginNative<typeof import("./native")>;
 
 export const settings = definePluginSettings({
     sniperDir: {
@@ -60,7 +62,6 @@ export const settings = definePluginSettings({
                     onClick={() => Alerts.show({
                         title: "Clear Sniper Logs",
                         body: "Are you sure you want to clear all sniper logs? This cannot be undone.",
-                        confirmVariant: "critical-primary",
                         confirmText: "Clear",
                         cancelText: "Cancel",
                         onConfirm: async () => {
