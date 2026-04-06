@@ -1,0 +1,28 @@
+.vc-api-sniper-folder-upload-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.vc-api-sniper-folder-upload-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--background-tertiary);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-normal);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.15s ease;
+}
+
+.vc-api-sniper-folder-upload-input:hover {
+    background: var(--background-secondary);
+}
+
+.vc-api-sniper-folder-upload-button {
+    flex-shrink: 0;
+}
