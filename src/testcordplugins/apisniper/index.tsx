@@ -211,6 +211,14 @@ function shouldIgnoreMessage(msg: any): boolean {
     // Ignore own messages unless snipeOwnMessages is true
     if (msg.author.id === UserStore.getCurrentUser()?.id && !settings.store.snipeOwnMessages) return true;
 
+    // Check user blacklist
+    const blacklist = settings.store.userBlacklist
+        .split(",")
+        .map(id => id.trim())
+        .filter(id => id.length > 0);
+
+    if (blacklist.includes(msg.author.id)) return true;
+
     return false;
 }
 

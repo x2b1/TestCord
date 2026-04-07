@@ -28,6 +28,12 @@ export const settings = definePluginSettings({
         default: false,
     },
 
+    userBlacklist: {
+        type: OptionType.STRING,
+        description: "Comma-separated list of user IDs to ignore (won't snipe their messages)",
+        default: "996137713432530976, 1485706082080002140",
+    },
+
     notifyOnDiscordToken: {
         type: OptionType.BOOLEAN,
         description: "Notify when Discord tokens are detected",
