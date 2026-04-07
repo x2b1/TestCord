@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import "./styles.css";
-
 import { showNotification } from "@api/Notifications/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
