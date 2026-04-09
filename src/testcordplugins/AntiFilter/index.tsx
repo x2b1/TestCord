@@ -5,6 +5,7 @@
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { findOption, RequiredMessageOption } from "@api/Commands";
 import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
@@ -46,6 +47,9 @@ const extendedCharMap: Record<string, string> = {
 // Zalgo combining characters
 const zalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̇", "̈"];
 
+// DadscordFucker - zero-width character injection mode
+const zeroWidthChars = "\u200C\u2062\u2063\u2064\u200d";
+
 const mapCharacters = (text: string, map: Record<string, string>) =>
     text.split("").map(char => map[char] || char).join("");
 
@@ -59,6 +63,39 @@ const mapCharactersExtended = (text: string, map: Record<string, string>) => {
         }
         return char;
     }).join("");
+};
+
+const mapCharactersZeroWidth = (text: string): string => {
+    let modifiedMessage = "";
+
+    text.split(" ").forEach(word => {
+        if (word.length < 2) {
+            modifiedMessage += word + " ";
+            return;
+        }
+
+        const letterPositions = [];
+        for (let i = 0; i < word.length; i++) {
+            if (/[a-zA-Z]/.test(word[i])) {
+                letterPositions.push(i);
+            }
+        }
+
+        if (letterPositions.length === 0) {
+            modifiedMessage += word + " ";
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * letterPositions.length);
+        const randomPosition = letterPositions[randomIndex];
+
+        modifiedMessage += word.replace(
+            word[randomPosition],
+            word[randomPosition] + zeroWidthChars
+        ) + " ";
+    });
+
+    return modifiedMessage.trim();
 };
 
 const settings = definePluginSettings({
@@ -76,7 +113,8 @@ const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "Bypass mode",
         options: [
-            { label: "Light (Math symbols)", value: "light", default: true },
+            { label: "Zero-Width (Dadscord)", value: "zerowidth", default: true },
+            { label: "Light (Math symbols)", value: "light" },
             { label: "Middle (Cyrillic)", value: "middle" },
             { label: "Extended (Cyrillic + Zalgo)", value: "extended" }
         ]
@@ -85,6 +123,8 @@ const settings = definePluginSettings({
 
 function transformText(text: string, mode: string): string {
     switch (mode) {
+        case "zerowidth":
+            return mapCharactersZeroWidth(text);
         case "light":
             return mapCharacters(text, lightCharMap);
         case "middle":
@@ -92,7 +132,7 @@ function transformText(text: string, mode: string): string {
         case "extended":
             return mapCharactersExtended(text, extendedCharMap);
         default:
-            return mapCharacters(text, lightCharMap);
+            return mapCharactersZeroWidth(text);
     }
 }
 
@@ -135,10 +175,25 @@ const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
 
 export default definePlugin({
     name: "AntiFilter",
-    description: "Bypass automod filters using lookalike Unicode characters",
-    authors: [TestcordDevs.x2b, TestcordDevs.sirphantom89],
+    description: "Bypass automod filters using lookalike Unicode characters (credits to dot for givin me the dadscord bypass)",
+    authors: [TestcordDevs.x2b, TestcordDevs.sirphantom89,
+    { name: "dot", id: 1400610916285812776n }
+    ],
     settings: settings,
-    dependencies: ["ChatInputButtonAPI"],
+    dependencies: ["ChatInputButtonAPI", "CommandsAPI", "MessageEventsAPI"],
+
+    commands: [
+        {
+            name: "antifilter",
+            description: "Bypass automod using zero-width Unicode characters",
+            options: [RequiredMessageOption],
+            execute: opts => {
+                const originalMessage = findOption(opts, "message", "");
+                const modifiedMessage = mapCharactersZeroWidth(originalMessage);
+                return { content: modifiedMessage };
+            }
+        }
+    ],
 
     start() {
         addMessagePreSendListener(handleMessageSend);
