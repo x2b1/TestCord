@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, UserStore, GuildStore, GuildMemberStore } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy, findByPropsLazy } from "@webpack";
@@ -186,7 +187,7 @@ const good = async (e) => {
 export default definePlugin({
     name: "recentBan",
     description: "Tools to ban recently joined VC users (only if owner)",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
     start() {
         document.addEventListener('keydown', keybind);

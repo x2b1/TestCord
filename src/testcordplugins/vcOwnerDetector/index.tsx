@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, UserStore, ChannelStore } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy, findByPropsLazy } from "@webpack";
@@ -186,7 +187,7 @@ let clientOldChannelId: string | undefined;
 export default definePlugin({
     name: "vcOwnerDetector",
     description: "Tools to detect the owner of VC",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
 
     contextMenus: {

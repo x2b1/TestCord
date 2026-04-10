@@ -1,10 +1,17 @@
-import definePlugin, { OptionType } from "@utils/types";
-import { Toasts, FluxDispatcher, UserStore, GuildStore, GuildMemberStore } from "@webpack/common";
-import { definePluginSettings } from "@api/Settings";
-import { findStoreLazy, findByPropsLazy } from "@webpack";
-import { Menu, RestAPI, React, Button, TextInput, ChannelStore, ContextMenuApi, PermissionStore, Forms, GuildChannelStore } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal, ModalSize } from "@utils/modal";
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
+import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy, findStoreLazy } from "@webpack";
+import { FluxDispatcher, GuildStore, Toasts, UserStore } from "@webpack/common";
+import { Button, ChannelStore, Forms, GuildChannelStore, Menu, React, RestAPI, TextInput } from "@webpack/common";
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 const sessionStore = findByPropsLazy("getSessionId");
@@ -62,27 +69,27 @@ const debugChannelStructure = (guildId: string) => {
 
     try {
         const guildChannels = GuildChannelStore.getChannels(guildId);
-        console.log(`GuildChannelStore.getChannels():`, guildChannels);
-        console.log(`Type:`, typeof guildChannels);
-        console.log(`Keys:`, guildChannels ? Object.keys(guildChannels) : 'null');
+        console.log("GuildChannelStore.getChannels():", guildChannels);
+        console.log("Type:", typeof guildChannels);
+        console.log("Keys:", guildChannels ? Object.keys(guildChannels) : "null");
     } catch (e) {
-        console.log(`GuildChannelStore.getChannels() error:`, e);
+        console.log("GuildChannelStore.getChannels() error:", e);
     }
 
     try {
         const guild = GuildStore.getGuild(guildId);
-        console.log(`Guild object:`, guild);
+        console.log("Guild object:", guild);
     } catch (e) {
-        console.log(`Guild object error:`, e);
+        console.log("Guild object error:", e);
     }
 
     try {
         const allChannels = ChannelStore.getAllChannels?.();
         const guildChannels = Object.values(allChannels || {}).filter((c: any) => c.guild_id === guildId);
-        console.log(`Channels from getAllChannels():`, guildChannels.length);
-        console.log(`Sample channel:`, guildChannels[0]);
+        console.log("Channels from getAllChannels():", guildChannels.length);
+        console.log("Sample channel:", guildChannels[0]);
     } catch (e) {
-        console.log(`getAllChannels() error:`, e);
+        console.log("getAllChannels() error:", e);
     }
 };
 
@@ -153,18 +160,18 @@ function ServerConfigManager() {
         try {
             console.log(`[Multi-Ban] Aggressively scanning channels for guild: ${guildId}`);
 
-            let channelList = [];
-            let foundChannels = new Set(); // Track found channel IDs to avoid duplicates
+            const channelList = [];
+            const foundChannels = new Set(); // Track found channel IDs to avoid duplicates
 
             // Method 1: GuildChannelStore with all possible structure variations
             try {
                 const guildChannels = GuildChannelStore.getChannels(guildId);
-                console.log(`[Multi-Ban] GuildChannelStore raw data:`, guildChannels);
+                console.log("[Multi-Ban] GuildChannelStore raw data:", guildChannels);
 
                 if (guildChannels) {
                     // Recursively scan all properties for channel-like objects
                     const scanObject = (obj: any, path: string = "") => {
-                        if (!obj || typeof obj !== 'object') return;
+                        if (!obj || typeof obj !== "object") return;
 
                         Object.keys(obj).forEach(key => {
                             const value = obj[key];
@@ -172,7 +179,7 @@ function ServerConfigManager() {
 
                             if (Array.isArray(value)) {
                                 value.forEach((item, index) => {
-                                    if (item && typeof item === 'object' && item.id && item.name && (item.type === 0 || item.type === undefined)) {
+                                    if (item && typeof item === "object" && item.id && item.name && (item.type === 0 || item.type === undefined)) {
                                         if (!foundChannels.has(item.id)) {
                                             foundChannels.add(item.id);
                                             channelList.push({
@@ -183,11 +190,11 @@ function ServerConfigManager() {
                                             });
                                             console.log(`[Multi-Ban] Found channel via ${currentPath}[${index}]:`, item.name, item.id);
                                         }
-                                    } else if (typeof item === 'object') {
+                                    } else if (typeof item === "object") {
                                         scanObject(item, `${currentPath}[${index}]`);
                                     }
                                 });
-                            } else if (value && typeof value === 'object' && value.id && value.name && (value.type === 0 || value.type === undefined)) {
+                            } else if (value && typeof value === "object" && value.id && value.name && (value.type === 0 || value.type === undefined)) {
                                 if (!foundChannels.has(value.id)) {
                                     foundChannels.add(value.id);
                                     channelList.push({
@@ -198,7 +205,7 @@ function ServerConfigManager() {
                                     });
                                     console.log(`[Multi-Ban] Found channel via ${currentPath}:`, value.name, value.id);
                                 }
-                            } else if (typeof value === 'object') {
+                            } else if (typeof value === "object") {
                                 scanObject(value, currentPath);
                             }
                         });
@@ -207,12 +214,12 @@ function ServerConfigManager() {
                     scanObject(guildChannels);
                 }
             } catch (e) {
-                console.warn(`[Multi-Ban] GuildChannelStore scanning failed:`, e);
+                console.warn("[Multi-Ban] GuildChannelStore scanning failed:", e);
             }
 
             // Method 2: Brute force through ALL Discord channels
             try {
-                console.log(`[Multi-Ban] Brute force scanning all Discord channels...`);
+                console.log("[Multi-Ban] Brute force scanning all Discord channels...");
                 const allChannels = ChannelStore.getAllChannels?.() || {};
                 let totalScanned = 0;
                 let guildMatches = 0;
@@ -231,7 +238,7 @@ function ServerConfigManager() {
                                     type: `Type ${channel.type}`,
                                     category: channel.parent_id ? "Categorized" : "Uncategorized"
                                 });
-                                console.log(`[Multi-Ban] Found channel via brute force:`, channel.name, channel.id, `type: ${channel.type}`);
+                                console.log("[Multi-Ban] Found channel via brute force:", channel.name, channel.id, `type: ${channel.type}`);
                             }
                         }
                     }
@@ -239,24 +246,24 @@ function ServerConfigManager() {
 
                 console.log(`[Multi-Ban] Brute force results: ${totalScanned} total channels scanned, ${guildMatches} belonging to guild ${guildId}`);
             } catch (e) {
-                console.warn(`[Multi-Ban] Brute force channel scan failed:`, e);
+                console.warn("[Multi-Ban] Brute force channel scan failed:", e);
             }
 
             // Method 3: Try to enumerate channel IDs by pattern (experimental)
             try {
-                console.log(`[Multi-Ban] Attempting pattern-based channel discovery...`);
+                console.log("[Multi-Ban] Attempting pattern-based channel discovery...");
                 const guild = GuildStore.getGuild(guildId);
                 if (guild) {
                     // Try to find channels in any guild properties
                     const scanGuildObject = (obj: any, path: string = "") => {
-                        if (!obj || typeof obj !== 'object') return;
+                        if (!obj || typeof obj !== "object") return;
 
                         Object.keys(obj).forEach(key => {
                             const value = obj[key];
                             const currentPath = path ? `${path}.${key}` : key;
 
                             // Look for anything that looks like a channel ID (Discord snowflakes are ~18-20 digits)
-                            if (typeof value === 'string' && /^\d{17,20}$/.test(value)) {
+                            if (typeof value === "string" && /^\d{17,20}$/.test(value)) {
                                 try {
                                     const possibleChannel = ChannelStore.getChannel(value);
                                     if (possibleChannel && possibleChannel.guild_id === guildId && possibleChannel.name) {
@@ -268,7 +275,7 @@ function ServerConfigManager() {
                                                 type: "Discovered",
                                                 category: "Pattern Found"
                                             });
-                                            console.log(`[Multi-Ban] Pattern discovered channel:`, possibleChannel.name, possibleChannel.id);
+                                            console.log("[Multi-Ban] Pattern discovered channel:", possibleChannel.name, possibleChannel.id);
                                         }
                                     }
                                 } catch (e) {
@@ -278,7 +285,7 @@ function ServerConfigManager() {
                                 value.forEach((item, index) => {
                                     scanGuildObject(item, `${currentPath}[${index}]`);
                                 });
-                            } else if (typeof value === 'object') {
+                            } else if (typeof value === "object") {
                                 scanGuildObject(value, currentPath);
                             }
                         });
@@ -287,15 +294,15 @@ function ServerConfigManager() {
                     scanGuildObject(guild);
                 }
             } catch (e) {
-                console.warn(`[Multi-Ban] Pattern-based discovery failed:`, e);
+                console.warn("[Multi-Ban] Pattern-based discovery failed:", e);
             }
 
             // Method 4: If still no channels, create some common channel IDs to test
             if (channelList.length === 0) {
-                console.log(`[Multi-Ban] No channels found, attempting to guess common channel names...`);
+                console.log("[Multi-Ban] No channels found, attempting to guess common channel names...");
 
                 // Try to find channels by common names (this is a last resort)
-                const commonNames = ['general', 'chat', 'main', 'lobby', 'welcome', 'announcements', 'rules'];
+                const commonNames = ["general", "chat", "main", "lobby", "welcome", "announcements", "rules"];
                 // This method is limited since we can't actually guess channel IDs
 
                 // Instead, let's try one more approach - check if we can access the guild's system channel
@@ -311,11 +318,11 @@ function ServerConfigManager() {
                                 type: "System Channel",
                                 category: "Guild Default"
                             });
-                            console.log(`[Multi-Ban] Found system channel:`, systemChannel.name, systemChannel.id);
+                            console.log("[Multi-Ban] Found system channel:", systemChannel.name, systemChannel.id);
                         }
                     }
                 } catch (e) {
-                    console.warn(`[Multi-Ban] System channel lookup failed:`, e);
+                    console.warn("[Multi-Ban] System channel lookup failed:", e);
                 }
             }
 
@@ -337,14 +344,14 @@ function ServerConfigManager() {
             if (uniqueChannels.length === 0) {
                 // Create a fallback option for manual entry
                 setAvailableChannels([{
-                    id: 'manual-entry',
-                    name: 'Manual Entry Required',
-                    type: 'Fallback',
-                    category: 'No channels found'
+                    id: "manual-entry",
+                    name: "Manual Entry Required",
+                    type: "Fallback",
+                    category: "No channels found"
                 }]);
 
                 Toasts.show({
-                    message: `No channels discovered automatically. You may need to manually enter a channel ID.`,
+                    message: "No channels discovered automatically. You may need to manually enter a channel ID.",
                     type: Toasts.Type.FAILURE,
                     options: { position: Toasts.Position.BOTTOM }
                 });
@@ -474,7 +481,7 @@ function ServerConfigManager() {
                         </Forms.FormText>
                         <select
                             value={selectedGuildId}
-                            onChange={(e) => {
+                            onChange={e => {
                                 const selectedId = e.target.value;
                                 setSelectedGuildId(selectedId);
 
@@ -515,7 +522,7 @@ function ServerConfigManager() {
                         </Forms.FormText>
                         <select
                             value={selectedChannelId}
-                            onChange={(e) => setSelectedChannelId(e.target.value)}
+                            onChange={e => setSelectedChannelId(e.target.value)}
                             disabled={!selectedGuildId || loadingChannels}
                             style={{
                                 width: "100%",
@@ -717,7 +724,7 @@ function makeContextMenuPatch(): NavContextMenuPatchCallback {
 
 function MenuItem(id: string) {
     if (UserStore.getCurrentUser().id === id) return;
-    const bannedUsers = settings.store.users.split('/').filter(item => item !== '');
+    const bannedUsers = settings.store.users.split("/").filter(item => item !== "");
     const isCurrentlyBanned = bannedUsers.includes(id);
 
     return (
@@ -772,7 +779,7 @@ function MenuItem(id: string) {
                     settings.store.users = updatedList.join("/");
 
                     // Also remove their reason if it exists
-                    const currentReasons = settings.store.reasons.split('.').filter(Boolean);
+                    const currentReasons = settings.store.reasons.split(".").filter(Boolean);
                     const updatedReasons = currentReasons.filter(entry => !entry.startsWith(`${id}/`));
                     settings.store.reasons = updatedReasons.join(".");
 
@@ -817,19 +824,19 @@ function sendBanCommand(userId: string, channelId: string, command: string, cont
         return;
     }
 
-    console.log(`[Multi-Ban] Channel found: ${channel.name || 'Unknown'} in guild ${channel.guild_id || 'DM'}`);
+    console.log(`[Multi-Ban] Channel found: ${channel.name || "Unknown"} in guild ${channel.guild_id || "DM"}`);
 
     const messageBody = {
         content: `${command} ${userId}`,
         nonce: (Math.floor(Math.random() * 10000000000000)).toString()
     };
 
-    console.log(`[Multi-Ban] Sending message:`, messageBody);
+    console.log("[Multi-Ban] Sending message:", messageBody);
 
     RestAPI.post({
         url: `/channels/${channelId}/messages`,
         body: messageBody
-    }).then((response) => {
+    }).then(response => {
         console.log(`[Multi-Ban] Successfully sent command${context}:`, response);
         Toasts.show({
             message: `Ban command sent successfully${context}`,
@@ -856,7 +863,7 @@ function sendBanCommand(userId: string, channelId: string, command: string, cont
         });
 
         // Log the full error for debugging
-        console.log(`[Multi-Ban] Full error object:`, error);
+        console.log("[Multi-Ban] Full error object:", error);
     });
 }
 
@@ -877,7 +884,7 @@ function banUserInCurrentServer(userId: string) {
 
     if (!hasPermissionInServer(serverConfig.serverId, serverConfig.requireBanPermission)) {
         Toasts.show({
-            message: `No permission to ban in this server (missing Ban Members permission)`,
+            message: "No permission to ban in this server (missing Ban Members permission)",
             id: "multi-ban-permission-error",
             type: Toasts.Type.FAILURE,
             options: {
@@ -896,7 +903,7 @@ function banUserInCurrentServer(userId: string) {
 // Function to check existing users in voice channel
 function checkExistingUsersInVC(channelId: string) {
     const voiceStates = VoiceStateStore.getVoiceStatesForChannel(channelId) ?? {};
-    const bannedUsers = settings.store.users.split('/').filter(item => item !== '');
+    const bannedUsers = settings.store.users.split("/").filter(item => item !== "");
     const currentUserId = UserStore.getCurrentUser().id;
 
     // Check if current user is in the voice channel
@@ -932,7 +939,7 @@ function checkExistingUsersInVC(channelId: string) {
 // Keyboard shortcut handler
 function handleKeyDown(event: KeyboardEvent) {
     // Alt + B to open settings
-    if (event.altKey && event.code === 'KeyB') {
+    if (event.altKey && event.code === "KeyB") {
         event.preventDefault();
         openModal(props => <SettingsModal {...props} />);
     }
@@ -941,7 +948,7 @@ function handleKeyDown(event: KeyboardEvent) {
 export default definePlugin({
     name: "MultiServerAutoban",
     description: "dot's Multi-server automatic ban system. Press Alt+B to open settings.",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
     contextMenus: {
         "user-context": makeContextMenuPatch()
@@ -985,7 +992,7 @@ const voiceStateCallback = async (e: any) => {
     if (state?.channelId == state?.oldChannelId) return;
     if (!Object.keys(voiceStates).includes(currentUserId)) return;
 
-    const bannedUsers = settings.store.users.split('/').filter(item => item !== '');
+    const bannedUsers = settings.store.users.split("/").filter(item => item !== "");
     if (bannedUsers.includes(state.userId)) {
         const serverConfig = getCurrentServerConfig();
         if (!serverConfig) {

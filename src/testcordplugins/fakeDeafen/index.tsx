@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { definePluginSettings } from "@api/Settings";
 import { Toasts, SelectedChannelStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
@@ -163,7 +164,7 @@ function handleKeydown(e: KeyboardEvent) {
 export default definePlugin({
     name: "fakeDeafen (dot's one)",
     description: "Control which voice states are updated with customizable keybinds.",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
 
     state(type: string, real: boolean) {
         if (type === "mute" && !states.mute) return true;

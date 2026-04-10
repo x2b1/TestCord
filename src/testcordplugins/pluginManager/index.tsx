@@ -1,11 +1,13 @@
 import { useSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import definePlugin from "@utils/types";
 import { Button, Forms, React, Text, TextInput, useMemo, Switch } from "@webpack/common";
 import Plugins from "~plugins";
 import { ChangeList } from "@utils/ChangeList";
 import { Alerts, Parser, Tooltip } from "@webpack/common";
 import { JSX } from "react";
+import { TestcordDevs } from "@utils/constants";
 
 const cl = classNameFactory("atticus-plugins-");
 
@@ -292,14 +294,14 @@ function keybind(e: KeyboardEvent) {
     }
 }
 
-export default {
+export default definePlugin({
     name: "pluginManager",
     description: "Manage custom plugins",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     start() {
         document.addEventListener('keydown', keybind);
     },
     stop() {
         document.removeEventListener('keydown', keybind);
     }
-};
+});

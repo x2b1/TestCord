@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, PermissionsBits, UserStore, GuildStore, GuildMemberStore, RestAPI } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
 import { Guild, GuildMember, Role } from "discord-types/general";
@@ -12,7 +13,7 @@ const alarm = "https://www.myinstants.com/media/sounds/tmp_7901-951678082.mp3";
 export default definePlugin({
     name: "antiMod",
     description: "Tools to avoid mods",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     start() { FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb); }
 
 });

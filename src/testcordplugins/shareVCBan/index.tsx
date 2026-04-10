@@ -1,5 +1,6 @@
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { FluxDispatcher, UserStore, RestAPI, ChannelStore, Menu, React, Toasts } from "@webpack/common";
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 
@@ -120,7 +121,7 @@ class SpamProtection {
 class ShareBanManager {
     private authorizedUsers = new Map<string, AuthorizedUser>();
     private spamProtection = new SpamProtection();
-    private commandQueue: Array<{channelId: string, command: string, delay: number}> = [];
+    private commandQueue: Array<{ channelId: string, command: string, delay: number; }> = [];
     private isProcessing = false;
     private queueProcessor: NodeJS.Timeout | null = null;
 
@@ -386,7 +387,7 @@ function handleMessageCreate(data: any) {
 export default definePlugin({
     name: "ShareBanPerm",
     description: "Allow VC owners to trigger voice ban commands with spam protection",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
 
     settings,
 

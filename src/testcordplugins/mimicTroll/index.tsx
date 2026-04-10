@@ -1,5 +1,6 @@
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { FluxDispatcher, UserStore, RestAPI, ChannelStore, Menu, React, Toasts } from "@webpack/common";
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 
@@ -63,7 +64,7 @@ class ContentFilter {
     ];
 
     // Unicode character mappings for bypass detection
-    private static readonly UNICODE_REPLACEMENTS: { [key: string]: string } = {
+    private static readonly UNICODE_REPLACEMENTS: { [key: string]: string; } = {
         // Cyrillic look-alikes
         'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x',
         'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O',
@@ -112,7 +113,7 @@ class ContentFilter {
         normalized = normalized.trim();
 
         // Handle l33t speak and common substitutions
-        const leetMap: { [key: string]: string } = {
+        const leetMap: { [key: string]: string; } = {
             '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b',
             '@': 'a', '$': 's', '!': 'i', '|': 'l', 'ph': 'f', 'ck': 'k'
         };
@@ -206,7 +207,7 @@ class ContentFilter {
 
 class MimicManager {
     private activeTargets = new Map<string, MimicTarget>();
-    private messageQueue: Array<{channelId: string, content: string, delay: number}> = [];
+    private messageQueue: Array<{ channelId: string, content: string, delay: number; }> = [];
     private isProcessing = false;
 
     constructor() {
@@ -432,7 +433,7 @@ const contextMenus = {
 export default definePlugin({
     name: "MimicTroll",
     description: "Right-click users and toggle 'Mimic' to copy their messages with content filtering for safety",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
 
     settings,
     contextMenus,

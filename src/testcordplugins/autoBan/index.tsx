@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, UserStore, GuildStore, GuildMemberStore } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy } from "@webpack";
@@ -482,7 +483,7 @@ function EncModals(props) {
 export default definePlugin({
     name: "autoBan",
     description: "Tools to automatically ban users. Enhanced VC owner detection",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
     contextMenus: {
         "user-context": makeUserContextMenuPatch(),

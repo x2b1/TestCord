@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Menu, React, Toasts, TextInput, Forms, Button, Text } from "@webpack/common";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal, ModalSize } from "@utils/modal";
@@ -116,7 +117,7 @@ const settings = definePluginSettings(
 export default definePlugin({
     name: "vcGrape",
     description: "R any loser in a vc with this trolling bot, originally created by atticus. Updated and fixed by dot",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     contextMenus: {
         "channel-context": createContextMenuPatch(),
     },
@@ -284,7 +285,7 @@ function stopExecution() {
             position: Toasts.Position.BOTTOM
         }
     });
-    console.log('stopped vc raper')
+    console.log('stopped vc raper');
 }
 
 function VCRaperModal(props) {

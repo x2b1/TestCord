@@ -1,5 +1,6 @@
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { RestAPI, Toasts, UserStore } from "@webpack/common";
 import { VoiceState as WebpackVoiceState } from "@webpack/types";
@@ -175,11 +176,11 @@ function handleUserVoiceActivity(userId: string, oldChannelId: string): void {
 export default definePlugin({
     name: "retardExterminator",
     description: "Automatically bans users who spam rejoin voice channels",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
 
     flux: {
-        VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: WebpackVoiceState[] }) {
+        VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: WebpackVoiceState[]; }) {
             if (!settings.store.isEnabled) return;
 
             const currentUserId = UserStore.getCurrentUser()?.id;
@@ -200,7 +201,7 @@ export default definePlugin({
 
 
                 const targetChannelId = settings.store.targetChannelId ||
-                                      VoiceChannelUtils.getVoiceChannelId();
+                    VoiceChannelUtils.getVoiceChannelId();
 
                 if (!targetChannelId || oldChannelId !== targetChannelId) return;
                 if (oldChannelId === channelId) return;

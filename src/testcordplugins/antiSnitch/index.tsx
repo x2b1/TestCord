@@ -1,4 +1,5 @@
 import definePlugin, { OptionType } from "@utils/types";
+import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, UserStore } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy } from "@webpack";
@@ -24,7 +25,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "antiSnitch",
     description: "Tools to avoid snitches",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
     start() {
         FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb);

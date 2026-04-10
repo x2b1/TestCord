@@ -1,7 +1,7 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, EquicordDevs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByCodeLazy, findStoreLazy, findByPropsLazy } from "@webpack";
 import { FluxDispatcher, Menu, MessageActions, MessageStore, ChannelStore, Button, Tooltip, RestAPI, useStateFromStores, SelectedGuildStore, RelationshipStore, SelectedChannelStore, Toasts, GuildStore, PermissionStore, React, UserStore } from "@webpack/common";
@@ -316,7 +316,7 @@ let clientOldChannelId: string | undefined;
 export default definePlugin({
     name: "autoClaim",
     description: "Automatically claims a vc after the owner of it leaves or when joining unowned VCs (custom VCs only)",
-    authors: [{ name: "dot", id: 1400610916285812776n }],
+    authors: [TestcordDevs.dot],
     settings,
 
     start() {
