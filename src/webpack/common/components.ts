@@ -40,6 +40,15 @@ export const Forms = {
     FormDivider: Divider as never, // Backwards compat since Vesktop uses this
 };
 
+// Stub for plugins that use Forms.FormText.Types
+(Forms.FormText as any).Types = {
+    DESCRIPTION: "description",
+    ERROR: "error",
+    SUCCESS: "success",
+    WARNING: "warning",
+    DEFAULT: "default",
+};
+
 // TODO: Stop using this and use Paragraph/Span directly
 export const Text = TextCompat;
 export const Button = ButtonCompat;
