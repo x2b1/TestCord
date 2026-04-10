@@ -52,25 +52,17 @@ const heavyZalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̆", "̇", "̈
 
 // All known invisible/zero-width Unicode characters for maximum bypass
 // Removed potentially visible interlinear annotation characters (FFF9-FFFB)
+// Removed ALL bidirectional control characters that can scramble text display
 const zeroWidthChars = [
     "\u200B", // Zero Width Space
     "\u200C", // Zero Width Non-Joiner
     "\u200D", // Zero Width Joiner
-    "\u200E", // Left-to-Right Mark
-    "\u200F", // Right-to-Left Mark
-    "\u202A", // Left-to-Right Embedding
-    "\u202B", // Right-to-Left Embedding
     "\u202C", // Pop Directional Formatting
-    "\u202D", // Left-to-Right Override
-    "\u202E", // Right-to-Left Override
     "\u2060", // Word Joiner
     "\u2061", // Function Application
     "\u2062", // Invisible Times
     "\u2063", // Invisible Separator
     "\u2064", // Invisible Plus
-    "\u2066", // Left-to-Right Isolate
-    "\u2067", // Right-to-Left Isolate
-    "\u2068", // First Strong Isolate
     "\u2069", // Pop Directional Isolate
     "\u206A", // Inhibit Symmetric Swapping
     "\u206B", // Activate Symmetric Swapping
@@ -252,73 +244,48 @@ const processZeroWidth = (text: string): string => {
 };
 
 // Final Boss mode - purely invisible characters (maximum stealth)
+// Inserts zero-width characters between EVERY character in EVERY word
 const mapCharactersFinalBoss = (text: string): string => {
-    // First, find all emojis and their positions to skip them
-    const emojiMatches: { start: number; end: number; text: string; }[] = [];
-    let match;
+    // Protect emojis first
     const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
+    const segments: { text: string; isEmoji: boolean; }[] = [];
+    let lastIndex = 0;
+    let match;
+
     while ((match = emojiRegexLocal.exec(text)) !== null) {
-        emojiMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0] });
+        // Add text before emoji
+        if (match.index > lastIndex) {
+            segments.push({ text: text.slice(lastIndex, match.index), isEmoji: false });
+        }
+        // Add emoji
+        segments.push({ text: match[0], isEmoji: true });
+        lastIndex = match.index + match[0].length;
     }
 
-    // Split message into words but preserve spacing
-    const parts: string[] = [];
-    let currentWord = "";
-    let currentIndex = 0;
-
-    for (let i = 0; i < text.length; i++) {
-        // Check if we're at an emoji position
-        const emojiAtPos = emojiMatches.find(e => e.start === i);
-        if (emojiAtPos) {
-            // Push current word if exists
-            if (currentWord.length > 0) {
-                parts.push(currentWord);
-                currentWord = "";
-            }
-            // Add emoji as-is
-            parts.push(emojiAtPos.text);
-            i = emojiAtPos.end - 1; // Skip to end of emoji
-            currentIndex = emojiAtPos.end;
-            continue;
-        }
-
-        if (text[i] === " ") {
-            // Push current word if exists
-            if (currentWord.length > 0) {
-                parts.push(currentWord);
-                currentWord = "";
-            }
-            parts.push(" ");
-        } else {
-            currentWord += text[i];
-        }
+    // Add remaining text
+    if (lastIndex < text.length) {
+        segments.push({ text: text.slice(lastIndex), isEmoji: false });
     }
 
-    // Push last word if exists
-    if (currentWord.length > 0) {
-        parts.push(currentWord);
+    // If no emojis found, process entire text
+    if (segments.length === 0) {
+        segments.push({ text, isEmoji: false });
     }
 
-    // Now process each word (non-space, non-emoji parts)
-    return parts.map(part => {
-        // Skip spaces and emojis
-        if (part === " " || part.startsWith("<")) {
-            return part;
-        }
+    // Process each segment
+    return segments.map(segment => {
+        if (segment.isEmoji) return segment.text;
 
-        // Process word - add zero-width after every alphanumeric character
-        let modifiedWord = "";
-        for (let i = 0; i < part.length; i++) {
-            const char = part[i];
-            modifiedWord += char;
+        // Process words within this segment
+        return segment.text.split(/(\s+)/).map(word => {
+            // Skip whitespace
+            if (/^\s*$/.test(word)) return word;
+            // Skip empty
+            if (word.length === 0) return word;
 
-            // Add zero-width character after every alphanumeric
-            if (/[a-zA-Z0-9]/.test(char)) {
-                modifiedWord += getRandomZeroWidth();
-            }
-        }
-
-        return modifiedWord;
+            // Add zero-width between every character
+            return word.split("").map(char => char + getRandomZeroWidth()).join("");
+        }).join("");
     }).join("");
 };
 
