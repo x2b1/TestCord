@@ -54,7 +54,7 @@ export const TestcordOwners = Object.freeze({
         id: 1467863852782850160n
     },
     xxx: {
-        name: "xxx",
+        name: "xxx", // vro gota banned fr
         id: 1491847142367822026n
     }
 } satisfies Record<string, TestcordAdmin>);
