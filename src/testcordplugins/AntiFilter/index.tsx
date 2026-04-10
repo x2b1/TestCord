@@ -50,6 +50,9 @@ const zalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̇", "̈"];
 // DadscordFucker - zero-width character injection mode
 const zeroWidthChars = "\u200C\u2062\u2063\u2064\u200d";
 
+// URL regex to detect links
+const urlRegex = /https?:\/\//i;
+
 const mapCharacters = (text: string, map: Record<string, string>) =>
     text.split("").map(char => map[char] || char).join("");
 
@@ -141,6 +144,9 @@ function handleMessageSend(channelId: string, messageObj: any, options: any): vo
     if (!settings.store.enabled || !settings.store.isEnabled) return;
 
     if (messageObj.content) {
+        // Skip filtering if message contains a URL
+        if (urlRegex.test(messageObj.content)) return;
+
         messageObj.content = transformText(messageObj.content, settings.store.mode);
     }
 }
