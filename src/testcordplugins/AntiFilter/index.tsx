@@ -139,7 +139,6 @@ function transformText(text: string, mode: string): string {
     }
 }
 
-// Message pre-send handler
 function handleMessageSend(channelId: string, messageObj: any, options: any): void | { cancel: boolean; } {
     if (!settings.store.enabled || !settings.store.isEnabled) return;
 
