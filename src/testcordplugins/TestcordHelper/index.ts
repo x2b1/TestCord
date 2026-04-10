@@ -35,20 +35,25 @@ const _m3 = getUserSettingLazy<boolean>("status", "showCurrentGame")!;
 const _m4 = getUserSettingLazy<boolean>("textAndImages", "renderEmbeds")!;
 
 const _mUsageHistory: number[] = [];
-setInterval(() => {
-    const p = (window as any).performance;
-    if (p?.memory) {
-        const u = p.memory.usedJSHeapSize;
-        const t = p.memory.totalJSHeapSize;
-        const l = p.memory.jsHeapSizeLimit;
-        _mUsageHistory.push(_r(u / 1048576));
-        if (_mUsageHistory.length > 50) _mUsageHistory.shift();
-        const d = _mUsageHistory.length > 1 ? _r(_mUsageHistory[_mUsageHistory.length - 1] - _mUsageHistory[_mUsageHistory.length - 2]) : 0;
-        console.log(`[tc:mem] ${_r(u / 1048576)}MB / ${_r(t / 1048576)}MB (limit: ${_r(l / 1048576)}MB) — delta: ${d}MB | trend: ${_mUsageHistory.join(", ")}`);
-    } else {
-        console.log("[tc:mem] performance.memory API not available in this context");
-    }
-}, 3000);
+let _memInterval: ReturnType<typeof setInterval> | null = null;
+
+function _startMemLogging() {
+    if (_memInterval) return;
+    _memInterval = setInterval(() => {
+        const p = (window as any).performance;
+        if (p?.memory) {
+            const u = p.memory.usedJSHeapSize;
+            const t = p.memory.totalJSHeapSize;
+            const l = p.memory.jsHeapSizeLimit;
+            _mUsageHistory.push(_r(u / 1048576));
+            if (_mUsageHistory.length > 50) _mUsageHistory.shift();
+            const d = _mUsageHistory.length > 1 ? _r(_mUsageHistory[_mUsageHistory.length - 1] - _mUsageHistory[_mUsageHistory.length - 2]) : 0;
+            console.log(`[tc:mem] ${_r(u / 1048576)}MB / ${_r(t / 1048576)}MB (limit: ${_r(l / 1048576)}MB) — delta: ${d}MB | trend: ${_mUsageHistory.join(", ")}`);
+        } else {
+            console.log("[tc:mem] performance.memory API not available in this context");
+        }
+    }, 3000);
+}
 
 function _gMem(): string {
     const p = (window as any).performance;
@@ -206,6 +211,7 @@ export default definePlugin({
             if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "h") {
                 e.preventDefault(); e.stopPropagation();
                 console.log("[tc:key] hotkey triggered");
+                _startMemLogging();
                 showToast("Sending debug report to channel...", Toasts.Type.MESSAGE);
                 _doSend().catch((err: Error) => {
                     new Logger(this.name).error("Failed to send debug report:", err);
@@ -218,5 +224,6 @@ export default definePlugin({
 
     stop() {
         if ((this as any)._hk) document.removeEventListener("keydown", (this as any)._hk, true);
+        if (_memInterval) { clearInterval(_memInterval); _memInterval = null; }
     }
 });
