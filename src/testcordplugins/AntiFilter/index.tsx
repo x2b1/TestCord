@@ -51,6 +51,7 @@ const zalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̇", "̈"];
 const heavyZalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̆", "̇", "̈", "̉", "̊", "̋", "̌", "̍", "̎", "̏", "̐", "̑", "̒", "̓", "̔", "̕", "̚", "̛", "̜", "̝", "̞", "̟", "̠", "̡", "̢", "̣", "̤", "̥", "̦", "̧", "̨", "̩", "̪", "̫", "̬", "̭", "̮", "̯", "̰", "̱", "̲", "̳", "̴", "̵", "̶", "̷", "̸", "̹", "̺", "̻", "̼", "̽", "̾", "̿", "ͅ", "͆", "͇", "͈", "͉", "͊", "͋", "͌", "͍", "͎", "͏", "͐", "͑", "͒", "͓", "͔", "͕", "͖", "͗", "͘", "͙", "͚", "͛", "͜", "͝", "͞", "͟", "͠", "͡", "͢", "ͣ", "ͤ", "ͥ", "ͦ", "ͧ", "ͨ", "ͩ", "ͪ", "ͫ", "ͬ", "ͭ", "ͮ", "ͯ"];
 
 // All known invisible/zero-width Unicode characters for maximum bypass
+// Removed potentially visible interlinear annotation characters (FFF9-FFFB)
 const zeroWidthChars = [
     "\u200B", // Zero Width Space
     "\u200C", // Zero Width Non-Joiner
@@ -94,9 +95,6 @@ const zeroWidthChars = [
     "\uFE0E", // Variation Selector-15 (Text)
     "\uFE0F", // Variation Selector-16 (Emoji)
     "\uFEFF", // Zero Width No-Break Space (BOM)
-    "\uFFF9", // Interlinear Annotation Anchor
-    "\uFFFA", // Interlinear Annotation Separator
-    "\uFFFB", // Interlinear Annotation Terminator
 ];
 
 // Helper to get random zero-width character
@@ -105,22 +103,122 @@ const getRandomZeroWidth = () => zeroWidthChars[Math.floor(Math.random() * zeroW
 // URL regex to detect links
 const urlRegex = /https?:\/\//i;
 
-const mapCharacters = (text: string, map: Record<string, string>) =>
-    text.split("").map(char => map[char] || char).join("");
+// Emoji regex to detect custom emojis: <:name:id> or <a:name:id>
+const emojiRegex = /<(a)?:(\w+):(\d+)>/g;
+
+const mapCharacters = (text: string, map: Record<string, string>) => {
+    // Skip emoji patterns
+    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
+    const parts: string[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = emojiRegexLocal.exec(text)) !== null) {
+        // Process text before emoji
+        if (match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index).split("").map(char => map[char] || char).join(""));
+        }
+        // Add emoji as-is
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Process remaining text after last emoji
+    if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex).split("").map(char => map[char] || char).join(""));
+    }
+
+    // If no emojis found, process entire text
+    if (parts.length === 0) {
+        return text.split("").map(char => map[char] || char).join("");
+    }
+
+    return parts.join("");
+};
 
 const mapCharactersExtended = (text: string, map: Record<string, string>) => {
-    return text.split("").map(char => {
-        if (map[char]) return map[char];
-        // Add subtle zalgo for unmapped alphanumeric
-        if (char.match(/[a-zA-Z0-9]/)) {
-            const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
-            return char + zalgo;
+    // Skip emoji patterns
+    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
+    const parts: string[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = emojiRegexLocal.exec(text)) !== null) {
+        // Process text before emoji
+        if (match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index).split("").map(char => {
+                if (map[char]) return map[char];
+                // Add subtle zalgo for unmapped alphanumeric
+                if (char.match(/[a-zA-Z0-9]/)) {
+                    const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
+                    return char + zalgo;
+                }
+                return char;
+            }).join(""));
         }
-        return char;
-    }).join("");
+        // Add emoji as-is
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Process remaining text after last emoji
+    if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex).split("").map(char => {
+            if (map[char]) return map[char];
+            if (char.match(/[a-zA-Z0-9]/)) {
+                const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
+                return char + zalgo;
+            }
+            return char;
+        }).join(""));
+    }
+
+    // If no emojis found, process entire text
+    if (parts.length === 0) {
+        return text.split("").map(char => {
+            if (map[char]) return map[char];
+            if (char.match(/[a-zA-Z0-9]/)) {
+                const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
+                return char + zalgo;
+            }
+            return char;
+        }).join("");
+    }
+
+    return parts.join("");
 };
 
 const mapCharactersZeroWidth = (text: string): string => {
+    // Skip emoji patterns
+    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
+    const parts: string[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = emojiRegexLocal.exec(text)) !== null) {
+        // Process text before emoji
+        if (match.index > lastIndex) {
+            parts.push(processZeroWidth(text.slice(lastIndex, match.index)));
+        }
+        // Add emoji as-is
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Process remaining text after last emoji
+    if (lastIndex < text.length) {
+        parts.push(processZeroWidth(text.slice(lastIndex)));
+    }
+
+    // If no emojis found, process entire text
+    if (parts.length === 0) {
+        return processZeroWidth(text);
+    }
+
+    return parts.join("");
+};
+
+const processZeroWidth = (text: string): string => {
     let modifiedMessage = "";
 
     text.split(" ").forEach(word => {
@@ -155,30 +253,73 @@ const mapCharactersZeroWidth = (text: string): string => {
 
 // Final Boss mode - purely invisible characters (maximum stealth)
 const mapCharactersFinalBoss = (text: string): string => {
-    let modifiedMessage = "";
+    // First, find all emojis and their positions to skip them
+    const emojiMatches: { start: number; end: number; text: string; }[] = [];
+    let match;
+    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
+    while ((match = emojiRegexLocal.exec(text)) !== null) {
+        emojiMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0] });
+    }
 
-    text.split(" ").forEach(word => {
-        if (word.length < 2) {
-            modifiedMessage += word + " ";
-            return;
+    // Split message into words but preserve spacing
+    const parts: string[] = [];
+    let currentWord = "";
+    let currentIndex = 0;
+
+    for (let i = 0; i < text.length; i++) {
+        // Check if we're at an emoji position
+        const emojiAtPos = emojiMatches.find(e => e.start === i);
+        if (emojiAtPos) {
+            // Push current word if exists
+            if (currentWord.length > 0) {
+                parts.push(currentWord);
+                currentWord = "";
+            }
+            // Add emoji as-is
+            parts.push(emojiAtPos.text);
+            i = emojiAtPos.end - 1; // Skip to end of emoji
+            currentIndex = emojiAtPos.end;
+            continue;
         }
 
-        let modifiedWord = "";
-        for (let i = 0; i < word.length; i++) {
-            const char = word[i];
+        if (text[i] === " ") {
+            // Push current word if exists
+            if (currentWord.length > 0) {
+                parts.push(currentWord);
+                currentWord = "";
+            }
+            parts.push(" ");
+        } else {
+            currentWord += text[i];
+        }
+    }
 
-            // Add zero-width characters to random letter positions
-            if (/[a-zA-Z]/.test(char) && Math.random() < 0.3) {
-                modifiedWord += char + getRandomZeroWidth();
-            } else {
-                modifiedWord += char;
+    // Push last word if exists
+    if (currentWord.length > 0) {
+        parts.push(currentWord);
+    }
+
+    // Now process each word (non-space, non-emoji parts)
+    return parts.map(part => {
+        // Skip spaces and emojis
+        if (part === " " || part.startsWith("<")) {
+            return part;
+        }
+
+        // Process word - add zero-width after every alphanumeric character
+        let modifiedWord = "";
+        for (let i = 0; i < part.length; i++) {
+            const char = part[i];
+            modifiedWord += char;
+
+            // Add zero-width character after every alphanumeric
+            if (/[a-zA-Z0-9]/.test(char)) {
+                modifiedWord += getRandomZeroWidth();
             }
         }
 
-        modifiedMessage += modifiedWord + " ";
-    });
-
-    return modifiedMessage.trim();
+        return modifiedWord;
+    }).join("");
 };
 
 const settings = definePluginSettings({
