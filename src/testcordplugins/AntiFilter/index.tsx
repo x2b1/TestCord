@@ -47,8 +47,60 @@ const extendedCharMap: Record<string, string> = {
 // Zalgo combining characters
 const zalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̇", "̈"];
 
-// DadscordFucker - zero-width character injection mode
-const zeroWidthChars = "\u200C\u2062\u2063\u2064\u200d";
+// Heavy zalgo characters for Final Boss mode
+const heavyZalgoChars = ["", "̀", "́", "̂", "̃", "̄", "̅", "̆", "̇", "̈", "̉", "̊", "̋", "̌", "̍", "̎", "̏", "̐", "̑", "̒", "̓", "̔", "̕", "̚", "̛", "̜", "̝", "̞", "̟", "̠", "̡", "̢", "̣", "̤", "̥", "̦", "̧", "̨", "̩", "̪", "̫", "̬", "̭", "̮", "̯", "̰", "̱", "̲", "̳", "̴", "̵", "̶", "̷", "̸", "̹", "̺", "̻", "̼", "̽", "̾", "̿", "ͅ", "͆", "͇", "͈", "͉", "͊", "͋", "͌", "͍", "͎", "͏", "͐", "͑", "͒", "͓", "͔", "͕", "͖", "͗", "͘", "͙", "͚", "͛", "͜", "͝", "͞", "͟", "͠", "͡", "͢", "ͣ", "ͤ", "ͥ", "ͦ", "ͧ", "ͨ", "ͩ", "ͪ", "ͫ", "ͬ", "ͭ", "ͮ", "ͯ"];
+
+// All known invisible/zero-width Unicode characters for maximum bypass
+const zeroWidthChars = [
+    "\u200B", // Zero Width Space
+    "\u200C", // Zero Width Non-Joiner
+    "\u200D", // Zero Width Joiner
+    "\u200E", // Left-to-Right Mark
+    "\u200F", // Right-to-Left Mark
+    "\u202A", // Left-to-Right Embedding
+    "\u202B", // Right-to-Left Embedding
+    "\u202C", // Pop Directional Formatting
+    "\u202D", // Left-to-Right Override
+    "\u202E", // Right-to-Left Override
+    "\u2060", // Word Joiner
+    "\u2061", // Function Application
+    "\u2062", // Invisible Times
+    "\u2063", // Invisible Separator
+    "\u2064", // Invisible Plus
+    "\u2066", // Left-to-Right Isolate
+    "\u2067", // Right-to-Left Isolate
+    "\u2068", // First Strong Isolate
+    "\u2069", // Pop Directional Isolate
+    "\u206A", // Inhibit Symmetric Swapping
+    "\u206B", // Activate Symmetric Swapping
+    "\u206C", // Inhibit Arabic Form Shaping
+    "\u206D", // Activate Arabic Form Shaping
+    "\u206E", // National Digit Shapes
+    "\u206F", // Nominal Digit Shapes
+    "\uFE00", // Variation Selector-1
+    "\uFE01", // Variation Selector-2
+    "\uFE02", // Variation Selector-3
+    "\uFE03", // Variation Selector-4
+    "\uFE04", // Variation Selector-5
+    "\uFE05", // Variation Selector-6
+    "\uFE06", // Variation Selector-7
+    "\uFE07", // Variation Selector-8
+    "\uFE08", // Variation Selector-9
+    "\uFE09", // Variation Selector-10
+    "\uFE0A", // Variation Selector-11
+    "\uFE0B", // Variation Selector-12
+    "\uFE0C", // Variation Selector-13
+    "\uFE0D", // Variation Selector-14
+    "\uFE0E", // Variation Selector-15 (Text)
+    "\uFE0F", // Variation Selector-16 (Emoji)
+    "\uFEFF", // Zero Width No-Break Space (BOM)
+    "\uFFF9", // Interlinear Annotation Anchor
+    "\uFFFA", // Interlinear Annotation Separator
+    "\uFFFB", // Interlinear Annotation Terminator
+];
+
+// Helper to get random zero-width character
+const getRandomZeroWidth = () => zeroWidthChars[Math.floor(Math.random() * zeroWidthChars.length)];
 
 // URL regex to detect links
 const urlRegex = /https?:\/\//i;
@@ -77,7 +129,7 @@ const mapCharactersZeroWidth = (text: string): string => {
             return;
         }
 
-        const letterPositions = [];
+        const letterPositions: number[] = [];
         for (let i = 0; i < word.length; i++) {
             if (/[a-zA-Z]/.test(word[i])) {
                 letterPositions.push(i);
@@ -94,8 +146,36 @@ const mapCharactersZeroWidth = (text: string): string => {
 
         modifiedMessage += word.replace(
             word[randomPosition],
-            word[randomPosition] + zeroWidthChars
+            word[randomPosition] + getRandomZeroWidth()
         ) + " ";
+    });
+
+    return modifiedMessage.trim();
+};
+
+// Final Boss mode - purely invisible characters (maximum stealth)
+const mapCharactersFinalBoss = (text: string): string => {
+    let modifiedMessage = "";
+
+    text.split(" ").forEach(word => {
+        if (word.length < 2) {
+            modifiedMessage += word + " ";
+            return;
+        }
+
+        let modifiedWord = "";
+        for (let i = 0; i < word.length; i++) {
+            const char = word[i];
+
+            // Add zero-width characters to random letter positions
+            if (/[a-zA-Z]/.test(char) && Math.random() < 0.3) {
+                modifiedWord += char + getRandomZeroWidth();
+            } else {
+                modifiedWord += char;
+            }
+        }
+
+        modifiedMessage += modifiedWord + " ";
     });
 
     return modifiedMessage.trim();
@@ -119,7 +199,8 @@ const settings = definePluginSettings({
             { label: "Zero-Width (Dadscord)", value: "zerowidth", default: true },
             { label: "Light (Math symbols)", value: "light" },
             { label: "Middle (Cyrillic)", value: "middle" },
-            { label: "Extended (Cyrillic + Zalgo)", value: "extended" }
+            { label: "Extended (Cyrillic + Zalgo)", value: "extended" },
+            { label: "Final Boss (Invisible + Zalgo)", value: "finalboss" }
         ]
     }
 });
@@ -134,6 +215,8 @@ function transformText(text: string, mode: string): string {
             return mapCharacters(text, middleCharMap);
         case "extended":
             return mapCharactersExtended(text, extendedCharMap);
+        case "finalboss":
+            return mapCharactersFinalBoss(text);
         default:
             return mapCharactersZeroWidth(text);
     }
