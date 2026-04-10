@@ -1,8 +1,15 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
+import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
-import { showToast, Toasts, UserStore, React } from "@webpack/common";
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalSize, ModalRoot, openModal } from "@utils/modal";
-import { Button, TextInput, Forms } from "@webpack/common";
+import { React, showToast, Toasts, UserStore } from "@webpack/common";
+import { Button, Forms, TextInput } from "@webpack/common";
 
 const Flex = ({ children, style, ...props }: React.PropsWithChildren<{ style?: React.CSSProperties; }>) => (
     <div style={{ display: "flex", ...style }} {...props}>{children}</div>
@@ -34,38 +41,35 @@ const DEFAULT_PASSWORD_CONFIG: PasswordGeneratorConfig = {
 
 class PasswordGenerator {
     private static buildCharset(config: PasswordGeneratorConfig): string {
-        let charset = '';
-        if (config.upperCase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (config.lowerCase) charset += 'abcdefghijklmnopqrstuvwxyz';
-        if (config.digits) charset += '0123456789';
-        if (config.specialChars) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
+        let charset = "";
+        if (config.upperCase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        if (config.lowerCase) charset += "abcdefghijklmnopqrstuvwxyz";
+        if (config.digits) charset += "0123456789";
+        if (config.specialChars) charset += "!@#$%^&*()_+-=[]{}|;:,.<>?";
 
         if (config.unicodeChars) {
-            charset += 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞß';
-            charset += 'àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ';
-            charset += '€£¥©®™§¶†‡•…‰';
+            charset += "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞß";
+            charset += "àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
+            charset += "€£¥©®™§¶†‡•…‰";
         }
 
         if (config.excludeSimilar) {
-            charset = charset.replace(/[il1Lo0O]/g, '');
+            charset = charset.replace(/[il1Lo0O]/g, "");
         }
 
         if (config.excludeAmbiguous) {
-            charset = charset.replace(/[{}[\]()\/\\'"~,;<>.]/g, '');
+            charset = charset.replace(/[{}[\]()\/\\'"~,;<>.]/g, "");
         }
 
         return charset;
     }
 
-
-
     static generatePassword(config: PasswordGeneratorConfig): string {
         const charset = this.buildCharset(config);
-        if (!charset) return ''; // Return empty string when no charset selected
+        if (!charset) return ""; // Return empty string when no charset selected
 
-        let password = '';
-        const specialChars = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        let password = "";
+        const specialChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
         let specialCount = 0;
 
         for (let i = 0; i < config.length; i++) {
@@ -91,7 +95,7 @@ class PasswordGenerator {
 
 function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: string) => void; }) {
     const [config, setConfig] = React.useState<PasswordGeneratorConfig>({ ...DEFAULT_PASSWORD_CONFIG });
-    const [generatedPassword, setGeneratedPassword] = React.useState('');
+    const [generatedPassword, setGeneratedPassword] = React.useState("");
     const [isGenerating, setIsGenerating] = React.useState(false);
 
     React.useEffect(() => {
@@ -107,7 +111,7 @@ function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: s
             const password = PasswordGenerator.generatePassword(newConfig);
             setGeneratedPassword(password);
         } catch (error) {
-            setGeneratedPassword('');
+            setGeneratedPassword("");
         }
     };
 
@@ -154,12 +158,12 @@ function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: s
                     <Flex style={{ gap: "15px" }}>
                         <div style={{ flex: 1 }}>
                             <Forms.FormTitle tag="h6">Length: {config.length}</Forms.FormTitle>
-                            <input type="range" min="8" max="64" value={config.length} onChange={(e) => updateConfig('length', parseInt(e.target.value))} style={{ width: "100%" }} />
+                            <input type="range" min="8" max="64" value={config.length} onChange={e => updateConfig("length", parseInt(e.target.value))} style={{ width: "100%" }} />
                         </div>
                         {config.specialChars && (
                             <div style={{ flex: 1 }}>
                                 <Forms.FormTitle tag="h6">Min Special: {config.minSpecialChars}</Forms.FormTitle>
-                                <input type="range" min="0" max="10" value={config.minSpecialChars} onChange={(e) => updateConfig('minSpecialChars', parseInt(e.target.value))} style={{ width: "100%" }} />
+                                <input type="range" min="0" max="10" value={config.minSpecialChars} onChange={e => updateConfig("minSpecialChars", parseInt(e.target.value))} style={{ width: "100%" }} />
                             </div>
                         )}
                     </Flex>
@@ -167,25 +171,25 @@ function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: s
                     <Flex style={{ gap: "20px" }}>
                         <Flex style={{ gap: "10px", flexDirection: "column", flex: 1 }}>
                             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input type="checkbox" checked={config.upperCase} onChange={(e) => updateConfig('upperCase', e.target.checked)} />
+                                <input type="checkbox" checked={config.upperCase} onChange={e => updateConfig("upperCase", e.target.checked)} />
                                 <Forms.FormText>Uppercase (A-Z)</Forms.FormText>
                             </label>
                             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input type="checkbox" checked={config.lowerCase} onChange={(e) => updateConfig('lowerCase', e.target.checked)} />
+                                <input type="checkbox" checked={config.lowerCase} onChange={e => updateConfig("lowerCase", e.target.checked)} />
                                 <Forms.FormText>Lowercase (a-z)</Forms.FormText>
                             </label>
                             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input type="checkbox" checked={config.unicodeChars} onChange={(e) => updateConfig('unicodeChars', e.target.checked)} />
+                                <input type="checkbox" checked={config.unicodeChars} onChange={e => updateConfig("unicodeChars", e.target.checked)} />
                                 <Forms.FormText>Unicode (À,ñ,€,™...)</Forms.FormText>
                             </label>
                         </Flex>
                         <Flex style={{ gap: "10px", flexDirection: "column", flex: 1 }}>
                             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input type="checkbox" checked={config.digits} onChange={(e) => updateConfig('digits', e.target.checked)} />
+                                <input type="checkbox" checked={config.digits} onChange={e => updateConfig("digits", e.target.checked)} />
                                 <Forms.FormText>Digits (0-9)</Forms.FormText>
                             </label>
                             <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <input type="checkbox" checked={config.specialChars} onChange={(e) => updateConfig('specialChars', e.target.checked)} />
+                                <input type="checkbox" checked={config.specialChars} onChange={e => updateConfig("specialChars", e.target.checked)} />
                                 <Forms.FormText>Special (!@#$...)</Forms.FormText>
                             </label>
                             <div style={{ height: "24px" }}></div> {/* Spacer for alignment */}
@@ -194,11 +198,11 @@ function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: s
 
                     <Flex style={{ gap: "20px" }}>
                         <label style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
-                            <input type="checkbox" checked={config.excludeSimilar} onChange={(e) => updateConfig('excludeSimilar', e.target.checked)} />
+                            <input type="checkbox" checked={config.excludeSimilar} onChange={e => updateConfig("excludeSimilar", e.target.checked)} />
                             <Forms.FormText>Exclude similar (i,l,1,L,o,0,O)</Forms.FormText>
                         </label>
                         <label style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
-                            <input type="checkbox" checked={config.excludeAmbiguous} onChange={(e) => updateConfig('excludeAmbiguous', e.target.checked)} />
+                            <input type="checkbox" checked={config.excludeAmbiguous} onChange={e => updateConfig("excludeAmbiguous", e.target.checked)} />
                             <Forms.FormText>Exclude ambiguous</Forms.FormText>
                         </label>
                     </Flex>
@@ -214,7 +218,7 @@ function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: s
 }
 
 class FileTokenEncryption {
-    private static readonly ALGORITHM = 'AES-GCM';
+    private static readonly ALGORITHM = "AES-GCM";
     private static readonly KEY_LENGTH = 256;
     private static readonly IV_LENGTH = 12;
     private static readonly SALT_LENGTH = 16;
@@ -222,24 +226,24 @@ class FileTokenEncryption {
     private static async deriveKeyFromPassphrase(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
         const encoder = new TextEncoder();
         const keyMaterial = await crypto.subtle.importKey(
-            'raw',
+            "raw",
             encoder.encode(passphrase),
-            { name: 'PBKDF2' },
+            { name: "PBKDF2" },
             false,
-            ['deriveKey']
+            ["deriveKey"]
         );
 
         return crypto.subtle.deriveKey(
             {
-                name: 'PBKDF2',
+                name: "PBKDF2",
                 salt: salt,
                 iterations: 100000,
-                hash: 'SHA-256'
+                hash: "SHA-256"
             },
             keyMaterial,
             { name: this.ALGORITHM, length: this.KEY_LENGTH },
             false,
-            ['encrypt', 'decrypt']
+            ["encrypt", "decrypt"]
         );
     }
 
@@ -268,7 +272,7 @@ class FileTokenEncryption {
         const decoder = new TextDecoder();
 
         const combined = new Uint8Array(
-            atob(encryptedData).split('').map(char => char.charCodeAt(0))
+            atob(encryptedData).split("").map(char => char.charCodeAt(0))
         );
 
         const salt = combined.slice(0, this.SALT_LENGTH);
@@ -299,7 +303,7 @@ class FileAccountManager {
             const decryptedData = await FileTokenEncryption.decryptAccountData(fileContent, passphrase);
 
             if (!decryptedData.accounts || !Array.isArray(decryptedData.accounts)) {
-                throw new Error('Invalid file format');
+                throw new Error("Invalid file format");
             }
 
             this.accounts.clear();
@@ -315,14 +319,14 @@ class FileAccountManager {
             this.currentFilePath = file.name;
             this.currentPassphrase = passphrase;
         } catch (error) {
-            console.error('Failed to load accounts:', error);
-            throw new Error('Failed to decrypt file. Check your passphrase.');
+            console.error("Failed to load accounts:", error);
+            throw new Error("Failed to decrypt file. Check your passphrase.");
         }
     }
 
     static async saveAccountsToFile(): Promise<void> {
         if (!this.currentPassphrase) {
-            throw new Error('No passphrase set');
+            throw new Error("No passphrase set");
         }
 
         const accountData = {
@@ -337,10 +341,10 @@ class FileAccountManager {
 
         const encryptedData = await FileTokenEncryption.encryptAccountData(accountData, this.currentPassphrase);
 
-        const blob = new Blob([encryptedData], { type: 'text/plain' });
+        const blob = new Blob([encryptedData], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
 
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = this.currentFilePath || `discord_accounts_${Date.now()}.dct`;
         document.body.appendChild(a);
@@ -380,13 +384,13 @@ class FileAccountManager {
 
 function loginWithToken(token: string) {
     const loginInterval = setInterval(() => {
-        const iframe = document.createElement('iframe');
+        const iframe = document.createElement("iframe");
         document.body.appendChild(iframe);
         if (iframe.contentWindow) {
             try {
                 iframe.contentWindow.localStorage.token = `"${token}"`;
             } catch (error) {
-                console.warn('iframe localStorage access failed:', error);
+                console.warn("iframe localStorage access failed:", error);
             }
         }
         document.body.removeChild(iframe);
@@ -399,7 +403,7 @@ function loginWithToken(token: string) {
 }
 
 function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => void; }) {
-    const [passphrase, setPassphrase] = React.useState('');
+    const [passphrase, setPassphrase] = React.useState("");
     const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -407,7 +411,7 @@ function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => vo
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            if (!file.name.endsWith('.dct')) {
+            if (!file.name.endsWith(".dct")) {
                 showToast("Please select a .dct file", Toasts.Type.FAILURE);
                 return;
             }
@@ -448,12 +452,12 @@ function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => vo
                 <Flex style={{ gap: "15px", flexDirection: "column" }}>
                     <div>
                         <Forms.FormTitle tag="h6">Select File</Forms.FormTitle>
-                        <input ref={fileInputRef} type="file" accept=".dct" onChange={handleFileSelect} style={{ display: 'none' }} />
+                        <input ref={fileInputRef} type="file" accept=".dct" onChange={handleFileSelect} style={{ display: "none" }} />
                         <Flex style={{ gap: "10px", alignItems: "center" }}>
                             <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} onClick={() => fileInputRef.current?.click()}>
                                 Choose File
                             </Button>
-                            <Forms.FormText>{selectedFile ? selectedFile.name : 'No file selected'}</Forms.FormText>
+                            <Forms.FormText>{selectedFile ? selectedFile.name : "No file selected"}</Forms.FormText>
                         </Flex>
                     </div>
 
@@ -477,8 +481,8 @@ function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => vo
 }
 
 function AddAccountModal(modalProps: ModalProps & { onAccountAdded: () => void; }) {
-    const [username, setUsername] = React.useState('');
-    const [token, setToken] = React.useState('');
+    const [username, setUsername] = React.useState("");
+    const [token, setToken] = React.useState("");
 
     const handleAddAccount = async () => {
         if (!username.trim() || !token.trim()) {
@@ -521,14 +525,14 @@ function AddAccountModal(modalProps: ModalProps & { onAccountAdded: () => void; 
 }
 
 function CreateAccountsFileModal(modalProps: ModalProps & { onFileCreated: () => void; }) {
-    const [passphrase, setPassphrase] = React.useState('');
-    const [confirmPassphrase, setConfirmPassphrase] = React.useState('');
+    const [passphrase, setPassphrase] = React.useState("");
+    const [confirmPassphrase, setConfirmPassphrase] = React.useState("");
     const [fileName, setFileName] = React.useState(`discord_accounts_${Date.now()}.dct`);
     const [isCreating, setIsCreating] = React.useState(false);
 
     const openPasswordGenerator = () => {
         openModal(props => (
-            <PasswordConfigModal {...props} onGenerate={(password) => {
+            <PasswordConfigModal {...props} onGenerate={password => {
                 setPassphrase(password);
                 setConfirmPassphrase(password);
             }} />
@@ -563,10 +567,10 @@ function CreateAccountsFileModal(modalProps: ModalProps & { onFileCreated: () =>
 
             const encryptedData = await FileTokenEncryption.encryptAccountData(emptyData, passphrase);
 
-            const blob = new Blob([encryptedData], { type: 'text/plain' });
+            const blob = new Blob([encryptedData], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
 
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
             a.download = fileName;
             document.body.appendChild(a);
@@ -713,8 +717,8 @@ function AccountSwitcherModal(modalProps: ModalProps) {
                 <Forms.FormTitle tag="h4">Account Switcher</Forms.FormTitle>
                 <Forms.FormText type={Forms.FormText.Types.DESCRIPTION}>
                     {FileAccountManager.hasAccountsLoaded()
-                        ? `Loaded: ${FileAccountManager.getCurrentFilePath() || 'accounts file'} (${FileAccountManager.getAccounts().length} accounts)`
-                        : 'No accounts file loaded'
+                        ? `Loaded: ${FileAccountManager.getCurrentFilePath() || "accounts file"} (${FileAccountManager.getAccounts().length} accounts)`
+                        : "No accounts file loaded"
                     }
                 </Forms.FormText>
             </ModalHeader>
@@ -729,7 +733,7 @@ function AccountSwitcherModal(modalProps: ModalProps) {
                         </Flex>
                     ) : (
                         <Flex style={{ flexDirection: "column", gap: "8px" }}>
-                            {accounts.map((account) => (
+                            {accounts.map(account => (
                                 <Flex
                                     key={account.id}
                                     style={{
@@ -803,15 +807,10 @@ const settings = definePluginSettings({
     }
 });
 
-const dot = {
-    name: "dot",
-    id: 1400610916285812776n
-};
-
 export default definePlugin({
     name: "bypassAccounts",
     description: "Discord account switcher with file-based encrypted token storage.",
-    authors: [dot],
+    authors: [TestcordDevs.dot],
     settings,
 
     async start() {
