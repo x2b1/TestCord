@@ -92,122 +92,36 @@ const zeroWidthChars = [
 // Helper to get random zero-width character
 const getRandomZeroWidth = () => zeroWidthChars[Math.floor(Math.random() * zeroWidthChars.length)];
 
-// URL regex to detect links
-const urlRegex = /https?:\/\//i;
+// URL regex to detect links (updated to capture full URL)
+const urlRegex = /https?:\/\/[^\s<]+/gi;
 
 // Emoji regex to detect custom emojis: <:name:id> or <a:name:id>
 const emojiRegex = /<(a)?:(\w+):(\d+)>/g;
 
+// Mention regex to detect user/channel mentions: <@numbers> or <@!numbers> or <#numbers>
+const mentionRegex = /<@!?\d+>|<#\d+>/gi;
+
+// Combined regex for all protected patterns
+const protectedPattern = new RegExp(`(${urlRegex.source}|${emojiRegex.source}|${mentionRegex.source})`, "gi");
+
 const mapCharacters = (text: string, map: Record<string, string>) => {
-    // Skip emoji patterns
-    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
-    const parts: string[] = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = emojiRegexLocal.exec(text)) !== null) {
-        // Process text before emoji
-        if (match.index > lastIndex) {
-            parts.push(text.slice(lastIndex, match.index).split("").map(char => map[char] || char).join(""));
-        }
-        // Add emoji as-is
-        parts.push(match[0]);
-        lastIndex = match.index + match[0].length;
-    }
-
-    // Process remaining text after last emoji
-    if (lastIndex < text.length) {
-        parts.push(text.slice(lastIndex).split("").map(char => map[char] || char).join(""));
-    }
-
-    // If no emojis found, process entire text
-    if (parts.length === 0) {
-        return text.split("").map(char => map[char] || char).join("");
-    }
-
-    return parts.join("");
+    return text.split("").map(char => map[char] || char).join("");
 };
 
 const mapCharactersExtended = (text: string, map: Record<string, string>) => {
-    // Skip emoji patterns
-    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
-    const parts: string[] = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = emojiRegexLocal.exec(text)) !== null) {
-        // Process text before emoji
-        if (match.index > lastIndex) {
-            parts.push(text.slice(lastIndex, match.index).split("").map(char => {
-                if (map[char]) return map[char];
-                // Add subtle zalgo for unmapped alphanumeric
-                if (char.match(/[a-zA-Z0-9]/)) {
-                    const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
-                    return char + zalgo;
-                }
-                return char;
-            }).join(""));
+    return text.split("").map(char => {
+        if (map[char]) return map[char];
+        // Add subtle zalgo for unmapped alphanumeric
+        if (char.match(/[a-zA-Z0-9]/)) {
+            const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
+            return char + zalgo;
         }
-        // Add emoji as-is
-        parts.push(match[0]);
-        lastIndex = match.index + match[0].length;
-    }
-
-    // Process remaining text after last emoji
-    if (lastIndex < text.length) {
-        parts.push(text.slice(lastIndex).split("").map(char => {
-            if (map[char]) return map[char];
-            if (char.match(/[a-zA-Z0-9]/)) {
-                const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
-                return char + zalgo;
-            }
-            return char;
-        }).join(""));
-    }
-
-    // If no emojis found, process entire text
-    if (parts.length === 0) {
-        return text.split("").map(char => {
-            if (map[char]) return map[char];
-            if (char.match(/[a-zA-Z0-9]/)) {
-                const zalgo = zalgoChars[Math.floor(Math.random() * 3)];
-                return char + zalgo;
-            }
-            return char;
-        }).join("");
-    }
-
-    return parts.join("");
+        return char;
+    }).join("");
 };
 
 const mapCharactersZeroWidth = (text: string): string => {
-    // Skip emoji patterns
-    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
-    const parts: string[] = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = emojiRegexLocal.exec(text)) !== null) {
-        // Process text before emoji
-        if (match.index > lastIndex) {
-            parts.push(processZeroWidth(text.slice(lastIndex, match.index)));
-        }
-        // Add emoji as-is
-        parts.push(match[0]);
-        lastIndex = match.index + match[0].length;
-    }
-
-    // Process remaining text after last emoji
-    if (lastIndex < text.length) {
-        parts.push(processZeroWidth(text.slice(lastIndex)));
-    }
-
-    // If no emojis found, process entire text
-    if (parts.length === 0) {
-        return processZeroWidth(text);
-    }
-
-    return parts.join("");
+    return processZeroWidth(text);
 };
 
 const processZeroWidth = (text: string): string => {
@@ -246,46 +160,14 @@ const processZeroWidth = (text: string): string => {
 // Final Boss mode - purely invisible characters (maximum stealth)
 // Inserts zero-width characters between EVERY character in EVERY word
 const mapCharactersFinalBoss = (text: string): string => {
-    // Protect emojis first
-    const emojiRegexLocal = /<(a)?:(\w+):(\d+)>/g;
-    const segments: { text: string; isEmoji: boolean; }[] = [];
-    let lastIndex = 0;
-    let match;
+    return text.split(/(\s+)/).map(word => {
+        // Skip whitespace
+        if (/^\s*$/.test(word)) return word;
+        // Skip empty
+        if (word.length === 0) return word;
 
-    while ((match = emojiRegexLocal.exec(text)) !== null) {
-        // Add text before emoji
-        if (match.index > lastIndex) {
-            segments.push({ text: text.slice(lastIndex, match.index), isEmoji: false });
-        }
-        // Add emoji
-        segments.push({ text: match[0], isEmoji: true });
-        lastIndex = match.index + match[0].length;
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-        segments.push({ text: text.slice(lastIndex), isEmoji: false });
-    }
-
-    // If no emojis found, process entire text
-    if (segments.length === 0) {
-        segments.push({ text, isEmoji: false });
-    }
-
-    // Process each segment
-    return segments.map(segment => {
-        if (segment.isEmoji) return segment.text;
-
-        // Process words within this segment
-        return segment.text.split(/(\s+)/).map(word => {
-            // Skip whitespace
-            if (/^\s*$/.test(word)) return word;
-            // Skip empty
-            if (word.length === 0) return word;
-
-            // Add zero-width between every character
-            return word.split("").map(char => char + getRandomZeroWidth()).join("");
-        }).join("");
+        // Add zero-width between every character
+        return word.split("").map(char => char + getRandomZeroWidth()).join("");
     }).join("");
 };
 
@@ -330,14 +212,44 @@ function transformText(text: string, mode: string): string {
     }
 }
 
+// Transform text while preserving protected patterns (URLs, emojis, mentions)
+function transformTextWithProtection(text: string, mode: string): string {
+    const parts: string[] = [];
+    let lastIndex = 0;
+    let match;
+
+    // Reset regex state
+    protectedPattern.lastIndex = 0;
+
+    while ((match = protectedPattern.exec(text)) !== null) {
+        // Transform text before this protected pattern
+        if (match.index > lastIndex) {
+            const textToTransform = text.slice(lastIndex, match.index);
+            parts.push(transformText(textToTransform, mode));
+        }
+        // Add protected pattern as-is
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+    }
+
+    // Transform remaining text after last protected pattern
+    if (lastIndex < text.length) {
+        parts.push(transformText(text.slice(lastIndex), mode));
+    }
+
+    // If no protected patterns found, transform entire text
+    if (parts.length === 0) {
+        return transformText(text, mode);
+    }
+
+    return parts.join("");
+}
+
 function handleMessageSend(channelId: string, messageObj: any, options: any): void | { cancel: boolean; } {
     if (!settings.store.enabled || !settings.store.isEnabled) return;
 
     if (messageObj.content) {
-        // Skip filtering if message contains a URL
-        if (urlRegex.test(messageObj.content)) return;
-
-        messageObj.content = transformText(messageObj.content, settings.store.mode);
+        messageObj.content = transformTextWithProtection(messageObj.content, settings.store.mode);
     }
 }
 
