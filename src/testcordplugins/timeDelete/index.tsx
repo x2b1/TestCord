@@ -39,7 +39,10 @@ const settings = definePluginSettings({
         type: OptionType.NUMBER,
         description: "Delay before deleting your sent messages in seconds.",
         default: DEFAULT_DELAY_SECONDS,
-        isValid: value => Number.isFinite(value) && value >= 1 && value <= 3600
+        isValid: value => {
+            const delaySeconds = Number(value);
+            return Number.isFinite(delaySeconds) && delaySeconds >= 1 && delaySeconds <= 3600;
+        }
     }
 });
 
