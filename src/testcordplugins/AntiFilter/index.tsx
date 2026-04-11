@@ -157,6 +157,57 @@ const processZeroWidth = (text: string): string => {
     return modifiedMessage.trim();
 };
 
+// Tryhard mode - random bypass insertions at random positions
+// Inserts varying amounts of invisible characters at randomized positions within each word
+// Makes rule-based detection nearly impossible by varying character count and locations
+const mapCharactersTryhard = (text: string): string => {
+    return text.split(/(\s+)/).map(part => {
+        // Preserve whitespace
+        if (/^\s*$/.test(part)) return part;
+        if (part.length === 0) return part;
+
+        const word = part;
+        // Find all alphanumeric positions
+        const alphaPositions: number[] = [];
+        for (let i = 0; i < word.length; i++) {
+            if (/[a-zA-Z0-9]/.test(word[i])) {
+                alphaPositions.push(i);
+            }
+        }
+
+        // Not enough characters to bypass
+        if (alphaPositions.length < 2) return word;
+
+        // Determine number of bypass insertions (1 per char minimum, up to word length, max 12)
+        const maxBypasses = Math.min(alphaPositions.length, 12);
+        const numBypasses = Math.max(1, Math.floor(Math.random() * maxBypasses) + 1);
+
+        // Randomly select positions (no duplicates)
+        const shuffled = [...alphaPositions].sort(() => Math.random() - 0.5);
+        const selectedPositions = shuffled.slice(0, numBypasses).sort((a, b) => a - b);
+
+        // Build the modified word
+        let result = "";
+        let lastIdx = 0;
+        for (const pos of selectedPositions) {
+            // Add characters up to this position
+            result += word.slice(lastIdx, pos);
+            // Add random number of zero-width chars (2 to 6)
+            const numZalgo = 2 + Math.floor(Math.random() * 5);
+            for (let z = 0; z < numZalgo; z++) {
+                result += getRandomZeroWidth();
+            }
+            // Add the original character
+            result += word[pos];
+            lastIdx = pos + 1;
+        }
+        // Add remaining characters
+        result += word.slice(lastIdx);
+
+        return result;
+    }).join("");
+};
+
 // Final Boss mode - purely invisible characters (maximum stealth)
 // Inserts zero-width characters between EVERY character in EVERY word
 const mapCharactersFinalBoss = (text: string): string => {
@@ -190,6 +241,7 @@ const settings = definePluginSettings({
             { label: "Light (Math symbols)", value: "light" },
             { label: "Middle (Cyrillic)", value: "middle" },
             { label: "Extended (Cyrillic + Zalgo)", value: "extended" },
+            { label: "Tryhard (Random bypasses)", value: "tryhard" },
             { label: "Final Boss (Invisible + Zalgo)", value: "finalboss" }
         ]
     }
@@ -205,6 +257,8 @@ function transformText(text: string, mode: string): string {
             return mapCharacters(text, middleCharMap);
         case "extended":
             return mapCharactersExtended(text, extendedCharMap);
+        case "tryhard":
+            return mapCharactersTryhard(text);
         case "finalboss":
             return mapCharactersFinalBoss(text);
         default:
