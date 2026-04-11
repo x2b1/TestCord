@@ -9,9 +9,20 @@ import { addMessagePopoverButton as addButton, removeMessagePopoverButton as rem
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
+import type { MessageJSON } from "@vencord/discord-types";
 import { findByPropsLazy } from "@webpack";
-import { ChannelStore, Constants, RestAPI, UserStore } from "@webpack/common";
+import { ChannelStore, Constants, FluxDispatcher, RestAPI, UserStore } from "@webpack/common";
+
+const REPLACEMENT_DELETE_TTL_MS = 10_000;
+
 const MessageActions = findByPropsLazy("deleteMessage", "_sendMessage");
+
+interface MessageCreatePayload {
+    message: MessageJSON;
+    optimistic: boolean;
+    type?: string;
+}
+
 const settings = definePluginSettings({
     accentColor: {
         type: OptionType.STRING,
@@ -27,6 +38,11 @@ const settings = definePluginSettings({
         type: OptionType.NUMBER,
         description: "Delay in ms between delete and replacement send (for anti-logging).",
         default: 50
+    },
+    deleteReplacementMarker: {
+        type: OptionType.BOOLEAN,
+        description: "Delete the replacement marker after sending it instead of leaving it in chat.",
+        default: false
     },
     purgeInterval: {
         type: OptionType.NUMBER,
@@ -49,9 +65,45 @@ const TrashIcon = () => (
     </svg>
 );
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+const pendingReplacementDeletes = new Map<string, ReturnType<typeof setTimeout>>();
+
+function queueReplacementDelete(nonce: string) {
+    const existingTimeout = pendingReplacementDeletes.get(nonce);
+    if (existingTimeout) clearTimeout(existingTimeout);
+
+    const timeout = setTimeout(() => {
+        pendingReplacementDeletes.delete(nonce);
+    }, REPLACEMENT_DELETE_TTL_MS);
+
+    pendingReplacementDeletes.set(nonce, timeout);
+}
+
+function consumeReplacementDelete(nonce: string) {
+    const timeout = pendingReplacementDeletes.get(nonce);
+    if (!timeout) return false;
+
+    clearTimeout(timeout);
+    pendingReplacementDeletes.delete(nonce);
+    return true;
+}
+
+function handleMessageCreate({ message, optimistic, type }: MessageCreatePayload) {
+    if (!settings.store.deleteReplacementMarker || optimistic || type !== "MESSAGE_CREATE") return;
+    if (!message.nonce || !consumeReplacementDelete(message.nonce)) return;
+
+    setTimeout(() => {
+        void MessageActions.deleteMessage(message.channel_id, message.id);
+    }, settings.store.deleteDelay);
+}
+
 async function antiLogDelete(channelId: string, messageId: string): Promise<boolean> {
     try {
-        const { replacementMessage, deleteDelay } = settings.store;
+        const { replacementMessage, deleteDelay, deleteReplacementMarker } = settings.store;
+
+        if (deleteReplacementMarker) {
+            queueReplacementDelete(messageId);
+        }
+
         await MessageActions.deleteMessage(channelId, messageId);
         await sleep(deleteDelay);
         await MessageActions._sendMessage(channelId, {
@@ -62,6 +114,7 @@ async function antiLogDelete(channelId: string, messageId: string): Promise<bool
         }, { nonce: messageId });
         return true;
     } catch (error) {
+        consumeReplacementDelete(messageId);
         console.error("[AntilogPremium] Error:", error);
         return false;
     }
@@ -130,6 +183,7 @@ export default definePlugin({
         }
     ],
     start() {
+        FluxDispatcher.subscribe("MESSAGE_CREATE", handleMessageCreate);
         addButton("AntilogPremium", msg => {
             if (msg.author.id !== UserStore.getCurrentUser().id || msg.deleted) return null;
             return {
@@ -143,6 +197,9 @@ export default definePlugin({
         }, TrashIcon);
     },
     stop() {
+        FluxDispatcher.unsubscribe("MESSAGE_CREATE", handleMessageCreate);
+        pendingReplacementDeletes.forEach(timeout => clearTimeout(timeout));
+        pendingReplacementDeletes.clear();
         removeButton("AntilogPremium");
     }
 });
