@@ -8,11 +8,18 @@ import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { PencilIcon } from "@components/Icons";
 import { TestcordDevs } from "@utils/constants";
 import { getCurrentChannel, sendMessage } from "@utils/discord";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, Menu, React, showToast, Toasts, useState } from "@webpack/common";
+
+import type { CaptionMedia } from "../gifCaptioner/types";
+import { fetchMedia } from "../gifCaptioner/utils/fetchMedia";
+import { inspectMedia } from "../gifCaptioner/utils/media";
+import GifCaptionerModal from "../gifCaptioner/ui/modal";
+import { showError as showCaptionError } from "../gifCaptioner/ui/statusCard";
 
 const DATA_KEY = "heartGifs-data";
 const FOLDERS_KEY = "heartGifs-folders";
@@ -966,6 +973,7 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
                                             getMediaIcon(item.type),
                                             getTypeLabel(item.type)
                                         ),
+                                        (item.type === MediaType.GIF || item.type === MediaType.VIDEO || item.type === MediaType.IMAGE) && React.createElement(CaptionGifButton, { item: item }),
                                         selectedItems.has(item.id) && React.createElement("div", { style: { position: "absolute", top: "8px", left: "8px", width: "24px", height: "24px", background: pinkColor, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px" } }, "OK"),
                                         React.createElement("button", {
                                             onClick: function (e: React.MouseEvent) { e.stopPropagation(); handleRemoveItem(item.id); },
@@ -995,6 +1003,94 @@ var HeartGifsButton: ChatBarButtonFactory = function () {
         </ChatBarButton>
     );
 };
+
+function CaptionGifButton({ item }: { item: FavItem; }) {
+    var [loading, setLoading] = useState(false);
+
+    var handleClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (loading) return;
+        setLoading(true);
+
+        var mediaUrl = item.src || item.url;
+        try {
+            var result = await fetchMedia(mediaUrl);
+            if (!result) {
+                showCaptionError("Failed to load media for captioning.");
+                setLoading(false);
+                return;
+            }
+
+            var blob = new Blob([result.buffer], { type: result.contentType });
+            var metadata = await inspectMedia(result.buffer, result.contentType, blob);
+            if (!metadata) {
+                showCaptionError("Could not inspect media.");
+                setLoading(false);
+                return;
+            }
+
+            var previewUrl = URL.createObjectURL(blob);
+            var released = false;
+
+            var captionMedia: CaptionMedia = {
+                buffer: result.buffer,
+                contentType: result.contentType,
+                height: metadata.height,
+                isVideo: metadata.isVideo,
+                release: () => {
+                    if (released) return;
+                    released = true;
+                    URL.revokeObjectURL(previewUrl);
+                },
+                url: previewUrl,
+                width: metadata.width
+            };
+
+            openModal(modalProps => (
+                <GifCaptionerModal
+                    {...modalProps}
+                    media={captionMedia}
+                    onCancel={() => {
+                        captionMedia.release();
+                        setLoading(false);
+                    }}
+                    onSubmit={() => { }}
+                    onConfirm={() => {
+                        captionMedia.release();
+                        setLoading(false);
+                    }}
+                />
+            ));
+        } catch (err) {
+            showCaptionError("Error: " + err);
+            setLoading(false);
+        }
+    };
+
+    return React.createElement("button", {
+        type: "button",
+        onClick: handleClick,
+        disabled: loading,
+        title: "Caption this GIF",
+        style: {
+            position: "absolute",
+            bottom: "8px",
+            right: "40px",
+            background: "rgba(0,0,0,0.7)",
+            color: loading ? "gray" : "white",
+            border: "none",
+            borderRadius: "4px",
+            width: "28px",
+            height: "28px",
+            cursor: loading ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "14px",
+            zIndex: 10
+        }
+    }, loading ? "..." : React.createElement(PencilIcon, { width: 16, height: 16 }));
+}
 
 var addFavContextMenuPatch: NavContextMenuPatchCallback = function (children, props) {
     if (!props) return;
