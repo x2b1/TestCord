@@ -1,8 +1,9 @@
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
-import { FluxDispatcher, UserStore, RestAPI, ChannelStore, Menu, React, Toasts } from "@webpack/common";
+import { FluxDispatcher, UserStore, ChannelStore, Menu, React, Toasts } from "@webpack/common";
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { sendMessage } from "@utils/discord";
 
 const settings = definePluginSettings({
     enabled: {
@@ -316,17 +317,10 @@ class MimicManager {
 
     private async sendMessage(channelId: string, content: string): Promise<boolean> {
         try {
-            await RestAPI.post({
-                url: `/channels/${channelId}/messages`,
-                body: {
-                    content: content,
-                    tts: false,
-                    flags: 0
-                }
-            });
+            await sendMessage(channelId, { content });
             return true;
         } catch (error) {
-            console.error(`[MimicTroll] Failed to send message via API:`, error);
+            console.error(`[MimicTroll] Failed to send message:`, error);
             return false;
         }
     }
