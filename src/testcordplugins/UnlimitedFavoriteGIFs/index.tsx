@@ -6,6 +6,7 @@
 
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
+import { Link } from "@components/Link";
 import definePlugin, { OptionType } from "@utils/types";
 import { showToast, Toasts } from "@webpack/common";
 
@@ -67,15 +68,35 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "UnlimitedFavoriteGIFs",
-    description: "Bypasses the native GIF favorites size limit by patching FrecencyUserSettings.",
+    description: "Bypasses the native GIF favorites size limit, allowing you to save unlimited GIFs.",
     authors: [{ name: "www.miau.com", id: 1485706082080002140n }],
     settings,
 
+    settingsAboutComponent() {
+        return (
+            <div style={{ fontSize: "14px", lineHeight: "1.8" }}>
+                <p style={{ marginBottom: "12px", color: "var(--header-secondary, #b9bbbe)" }}>
+                    Patches Discord's internal <b style={{ color: "var(--header-primary, #fff)" }}>FrecencyUserSettings</b> to
+                    remove the GIF favorites size limit, allowing you to save as many GIFs as you want.
+                </p>
+                <p style={{ marginBottom: "16px", color: "var(--header-secondary, #b9bbbe)" }}>
+                    Works seamlessly with <b style={{ color: "var(--header-primary, #fff)" }}>GifTransfer</b> —
+                    import hundreds of GIFs without hitting Discord's limit.
+                </p>
+                <Link href="https://github.com/Mixiruri" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <img
+                        src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                        alt="GitHub"
+                        style={{ width: 20, height: 20, borderRadius: "50%", verticalAlign: "middle" }}
+                    />
+                    <span>Mixiruri on GitHub</span>
+                </Link>
+            </div>
+        );
+    },
+
     patches: [
         {
-            // Module 497685 — function wg/K — the real limit check:
-            // if(o.uz.toBinary(t).length > 762880) { show error toast; return false; }
-            // We find the module by a unique string inside that function and kill the condition.
             find: "toBinary(t).length>762880",
             replacement: {
                 match: /\.toBinary\(t\)\.length>762880/,
@@ -83,7 +104,6 @@ export default definePlugin({
             }
         },
         {
-            // Fallback: some Discord versions use a variable instead of the literal
             find: "toBinary(t).length>",
             replacement: {
                 match: /\.toBinary\(t\)\.length>\d+/,
