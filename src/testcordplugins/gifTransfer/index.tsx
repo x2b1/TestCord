@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -410,7 +410,7 @@ function stopObserver(): void {
 export default definePlugin({
     name: "GifTransfer",
     description: "Export and import all your favorite GIFs between accounts. Bypasses Discord's limit via patches.",
-    authors: [TestcordDevs.nnenaza],
+    authors: [TestcordDevs.nnenaza, TestcordDevs.x2b],
     settings,
 
     patches: [
