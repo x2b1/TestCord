@@ -1,0 +1,10 @@
+{
+  "name": "UnlimitedFavoriteGIFs",
+  "description": "Bypasses the GIF favorites limit. Patches FrecencyUserSettings to allow unlimited favorites.",
+  "authors": [{ "name": "Mixiruri", "id": "1467863852782850160" }],
+  "version": "2.0.0",
+  "updater": {
+    "type": "github",
+    "url": "https://github.com/Mixiruri/UnlimitedFavoriteGIFs"
+  }
+}
