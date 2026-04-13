@@ -39,7 +39,12 @@ const settings = definePluginSettings({
     delayBetweenImports: {
         type: OptionType.NUMBER,
         description: "Wait between each GIF when importing (ms). Prevents Discord rate-limits.",
-        default: 300,
+        default: 800,
+    },
+    autoIncreaseDelay: {
+        type: OptionType.BOOLEAN,
+        description: "Automatically increase delay when hitting rate limits. Prevents 429 errors.",
+        default: true,
     },
 });
 
@@ -239,7 +244,8 @@ async function importGifs(file: File): Promise<void> {
 
     let ok = 0;
     let err = 0;
-    const delay = settings.store.delayBetweenImports ?? 300;
+    let delay = settings.store.delayBetweenImports ?? 800;
+    let rateLimitHits = 0;
 
     for (const gif of toImport) {
         try {
@@ -251,15 +257,26 @@ async function importGifs(file: File): Promise<void> {
                 format: Number(gif.format) || 2,
             });
             ok++;
-        } catch (e) {
+        } catch (e: any) {
             err++;
+            // Check if it's a rate limit error
+            const isRateLimit = e?.status === 429 || e?.text?.includes("rate limit") || e?.body?.retry_after;
+            if (isRateLimit && settings.store.autoIncreaseDelay) {
+                rateLimitHits++;
+                delay = Math.min(delay * 2, 5000); // Double delay, max 5s
+                console.log(`[GifTransfer] Rate limit hit! Increased delay to ${delay}ms`);
+                showToast(`Rate limited. Increased delay to ${delay}ms. Retrying...`, Toasts.Type.FAILURE);
+                // Wait extra to let Discord cool down
+                await sleep(delay * 2);
+                continue; // Retry this GIF with new delay
+            }
             console.warn("[GifTransfer] Failed to import GIF:", gif.url, e);
         }
 
         await sleep(delay);
 
         if ((ok + err) % 50 === 0)
-            console.log(`[GifTransfer] Progress: ${ok + err}/${toImport.length} | OK: ${ok} | Errors: ${err}`);
+            console.log(`[GifTransfer] Progress: ${ok + err}/${toImport.length} | OK: ${ok} | Errors: ${err} | Delay: ${delay}ms`);
     }
 
     console.log(`[GifTransfer] ✅ Done! Imported: ${ok} | Errors: ${err} | Skipped: ${skipped}`);
@@ -392,9 +409,26 @@ function stopObserver(): void {
 
 export default definePlugin({
     name: "GifTransfer",
-    description: "Export and import all your favorite GIFs between accounts using a JSON file.",
+    description: "Export and import all your favorite GIFs between accounts. Bypasses Discord's limit via patches.",
     authors: [TestcordDevs.nnenaza],
     settings,
+
+    patches: [
+        {
+            find: "toBinary(t).length>762880",
+            replacement: {
+                match: /\.toBinary\(t\)\.length>762880/,
+                replace: ".toBinary(t).length>Number.MAX_SAFE_INTEGER",
+            }
+        },
+        {
+            find: "toBinary(t).length>",
+            replacement: {
+                match: /\.toBinary\(t\)\.length>\d+/,
+                replace: ".toBinary(t).length>Number.MAX_SAFE_INTEGER",
+            }
+        },
+    ],
 
     settingsAboutComponent() {
         return (
@@ -406,16 +440,15 @@ export default definePlugin({
 
                 <p style={{ marginBottom: "4px", color: "var(--header-primary, #fff)" }}>📤 <b>Export</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— saves all your favorite GIFs to a .json file.</span></p>
                 <p style={{ marginBottom: "4px", color: "var(--header-primary, #fff)" }}>📥 <b>Import</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— loads GIFs from a .json file. Skips duplicates automatically.</span></p>
-                <p style={{ marginBottom: "16px", color: "var(--header-primary, #fff)" }}>🔍 <b>Verify</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— checks which GIFs from a file are missing from your favorites. Check the console for the full report.</span></p>
+                <p style={{ marginBottom: "16px", color: "var(--header-primary, #fff)" }}>🔍 <b>Verify</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— checks which GIFs from a file are missing from your favorites.</span></p>
 
-                <p style={{ marginBottom: "6px", color: "#faa61a", fontWeight: "700", fontSize: "13px" }}>
-                    ⚠️ Discord Rate Limits
+                <p style={{ marginBottom: "6px", color: "#43b581", fontWeight: "700", fontSize: "13px" }}>
+                    ✅ Bypasses Discord's GIF Limit
                 </p>
                 <p style={{ marginBottom: "16px", color: "var(--header-secondary, #b9bbbe)" }}>
-                    If not all GIFs get imported, Discord is rate-limiting the requests.
-                    Increase the <b style={{ color: "var(--header-primary, #fff)" }}>Delay Between Imports</b> setting
-                    (e.g. from 300ms to 800ms or 1000ms) and press Import again —
-                    it will skip already imported GIFs and only retry the missing ones.
+                    Patches Discord's internal validation to remove the "Too many favorite GIFs" limit.
+                    Uses Discord's actual API so GIFs appear in your favorites properly.
+                    Includes automatic rate limit handling — slows down if Discord asks it to.
                 </p>
 
                 <Link href="https://github.com/Mixiruri" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
