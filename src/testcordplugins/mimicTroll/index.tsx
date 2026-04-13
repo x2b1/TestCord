@@ -1,9 +1,15 @@
-import { definePluginSettings } from "@api/Settings";
-import definePlugin, { OptionType } from "@utils/types";
-import { TestcordDevs } from "@utils/constants";
-import { FluxDispatcher, UserStore, ChannelStore, Menu, React, Toasts } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
+import definePlugin, { OptionType } from "@utils/types";
+import { ChannelStore, FluxDispatcher, Menu, React, Toasts, UserStore } from "@webpack/common";
 
 const settings = definePluginSettings({
     enabled: {
@@ -67,37 +73,37 @@ class ContentFilter {
     // Unicode character mappings for bypass detection
     private static readonly UNICODE_REPLACEMENTS: { [key: string]: string; } = {
         // Cyrillic look-alikes
-        'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x',
-        'А': 'A', 'В': 'B', 'Е': 'E', 'К': 'K', 'М': 'M', 'Н': 'H', 'О': 'O',
-        'Р': 'P', 'С': 'C', 'Т': 'T', 'У': 'Y', 'Х': 'X',
+        "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x",
+        "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H", "О": "O",
+        "Р": "P", "С": "C", "Т": "T", "У": "Y", "Х": "X",
 
         // Greek look-alikes
-        'α': 'a', 'β': 'b', 'γ': 'y', 'δ': 'd', 'ε': 'e', 'ζ': 'z', 'η': 'n',
-        'θ': 'o', 'ι': 'i', 'κ': 'k', 'λ': 'l', 'μ': 'm', 'ν': 'v', 'ξ': 'e',
-        'ο': 'o', 'π': 'n', 'ρ': 'p', 'σ': 'o', 'τ': 't', 'υ': 'y', 'φ': 'o',
-        'χ': 'x', 'ψ': 'y', 'ω': 'w',
+        "α": "a", "β": "b", "γ": "y", "δ": "d", "ε": "e", "ζ": "z", "η": "n",
+        "θ": "o", "ι": "i", "κ": "k", "λ": "l", "μ": "m", "ν": "v", "ξ": "e",
+        "ο": "o", "π": "n", "ρ": "p", "σ": "o", "τ": "t", "υ": "y", "φ": "o",
+        "χ": "x", "ψ": "y", "ω": "w",
 
         // Mathematical and other Unicode
-        '𝐚': 'a', '𝐛': 'b', '𝐜': 'c', '𝐝': 'd', '𝐞': 'e', '𝐟': 'f', '𝐠': 'g',
-        '𝐡': 'h', '𝐢': 'i', '𝐣': 'j', '𝐤': 'k', '𝐥': 'l', '𝐦': 'm', '𝐧': 'n',
-        '𝐨': 'o', '𝐩': 'p', '𝐪': 'q', '𝐫': 'r', '𝐬': 's', '𝐭': 't', '𝐮': 'u',
-        '𝐯': 'v', '𝐰': 'w', '𝐱': 'x', '𝐲': 'y', '𝐳': 'z',
+        "𝐚": "a", "𝐛": "b", "𝐜": "c", "𝐝": "d", "𝐞": "e", "𝐟": "f", "𝐠": "g",
+        "𝐡": "h", "𝐢": "i", "𝐣": "j", "𝐤": "k", "𝐥": "l", "𝐦": "m", "𝐧": "n",
+        "𝐨": "o", "𝐩": "p", "𝐪": "q", "𝐫": "r", "𝐬": "s", "𝐭": "t", "𝐮": "u",
+        "𝐯": "v", "𝐰": "w", "𝐱": "x", "𝐲": "y", "𝐳": "z",
 
         // Full-width characters
-        'ａ': 'a', 'ｂ': 'b', 'ｃ': 'c', 'ｄ': 'd', 'ｅ': 'e', 'ｆ': 'f', 'ｇ': 'g',
-        'ｈ': 'h', 'ｉ': 'i', 'ｊ': 'j', 'ｋ': 'k', 'ｌ': 'l', 'ｍ': 'm', 'ｎ': 'n',
-        'ｏ': 'o', 'ｐ': 'p', 'ｑ': 'q', 'ｒ': 'r', 'ｓ': 's', 'ｔ': 't', 'ｕ': 'u',
-        'ｖ': 'v', 'ｗ': 'w', 'ｘ': 'x', 'ｙ': 'y', 'ｚ': 'z',
+        "ａ": "a", "ｂ": "b", "ｃ": "c", "ｄ": "d", "ｅ": "e", "ｆ": "f", "ｇ": "g",
+        "ｈ": "h", "ｉ": "i", "ｊ": "j", "ｋ": "k", "ｌ": "l", "ｍ": "m", "ｎ": "n",
+        "ｏ": "o", "ｐ": "p", "ｑ": "q", "ｒ": "r", "ｓ": "s", "ｔ": "t", "ｕ": "u",
+        "ｖ": "v", "ｗ": "w", "ｘ": "x", "ｙ": "y", "ｚ": "z",
 
         // Numbers and symbols often used in bypasses
-        '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b',
-        '@': 'a', '$': 's', '!': 'i', '|': 'l', '()': 'o', '[]': 'o',
+        "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b",
+        "@": "a", "$": "s", "!": "i", "|": "l", "()": "o", "[]": "o",
 
         // Zero-width and invisible characters
-        '\u200B': '', '\u200C': '', '\u200D': '', '\uFEFF': '', '\u2060': '',
-        '\u00A0': ' ', '\u2000': ' ', '\u2001': ' ', '\u2002': ' ', '\u2003': ' ',
-        '\u2004': ' ', '\u2005': ' ', '\u2006': ' ', '\u2007': ' ', '\u2008': ' ',
-        '\u2009': ' ', '\u200A': ' ',
+        "\u200B": "", "\u200C": "", "\u200D": "", "\uFEFF": "", "\u2060": "",
+        "\u00A0": " ", "\u2000": " ", "\u2001": " ", "\u2002": " ", "\u2003": " ",
+        "\u2004": " ", "\u2005": " ", "\u2006": " ", "\u2007": " ", "\u2008": " ",
+        "\u2009": " ", "\u200A": " ",
     };
 
     public static normalizeText(text: string): string {
@@ -105,22 +111,22 @@ class ContentFilter {
 
         // Replace Unicode look-alikes
         for (const [unicode, replacement] of Object.entries(this.UNICODE_REPLACEMENTS)) {
-            normalized = normalized.replace(new RegExp(unicode, 'g'), replacement);
+            normalized = normalized.replace(new RegExp(unicode, "g"), replacement);
         }
 
         // Remove excessive punctuation and spacing
-        normalized = normalized.replace(/[^\w\s]/g, ' ');
-        normalized = normalized.replace(/\s+/g, ' ');
+        normalized = normalized.replace(/[^\w\s]/g, " ");
+        normalized = normalized.replace(/\s+/g, " ");
         normalized = normalized.trim();
 
         // Handle l33t speak and common substitutions
         const leetMap: { [key: string]: string; } = {
-            '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b',
-            '@': 'a', '$': 's', '!': 'i', '|': 'l', 'ph': 'f', 'ck': 'k'
+            "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b",
+            "@": "a", "$": "s", "!": "i", "|": "l", "ph": "f", "ck": "k"
         };
 
         for (const [leet, normal] of Object.entries(leetMap)) {
-            normalized = normalized.replace(new RegExp(leet, 'g'), normal);
+            normalized = normalized.replace(new RegExp(leet, "g"), normal);
         }
 
         return normalized;
@@ -133,21 +139,22 @@ class ContentFilter {
         for (const term of this.BLOCKED_TERMS) {
             const normalizedTerm = this.normalizeText(term);
 
-            // Direct match
+            // Direct substring match (catches phrases containing the term)
             if (normalizedMessage.includes(normalizedTerm)) {
                 console.log(`[MimicTroll] 🚫 Blocked content detected: "${term}"`);
                 return true;
             }
 
             // Spaced out version (e.g., "u n d e r a g e")
-            const spacedTerm = normalizedTerm.split('').join(' ');
+            const spacedTerm = normalizedTerm.split("").join(" ");
             if (normalizedMessage.includes(spacedTerm)) {
                 console.log(`[MimicTroll] 🚫 Blocked spaced content detected: "${term}"`);
                 return true;
             }
 
-            // Check for terms with extra characters inserted
-            const regex = new RegExp(normalizedTerm.split('').join('[^a-z]*'), 'i');
+            // Check for terms with extra characters inserted between letters
+            // Uses .+? instead of [^a-z]* to match any chars, not just non-letters
+            const regex = new RegExp(normalizedTerm.split("").join(".+?"), "i");
             if (regex.test(normalizedMessage)) {
                 console.log(`[MimicTroll] 🚫 Blocked obfuscated content detected: "${term}"`);
                 return true;
@@ -190,7 +197,7 @@ class ContentFilter {
         const specialCharCount = (message.match(/[^a-z0-9\s]/g) || []).length;
         const totalLength = message.length;
         if (totalLength > 10 && (specialCharCount / totalLength) > 0.4) {
-            console.log(`[MimicTroll] 🚫 Blocked heavily obfuscated message`);
+            console.log("[MimicTroll] 🚫 Blocked heavily obfuscated message");
             return true;
         }
 
@@ -304,7 +311,7 @@ class MimicManager {
                     await this.sendMessage(message.channelId, message.content);
                     console.log(`[MimicTroll] 📤 Sent mimic message: "${message.content}"`);
                 } catch (error) {
-                    console.error(`[MimicTroll] ❌ Failed to send message:`, error);
+                    console.error("[MimicTroll] ❌ Failed to send message:", error);
                 }
 
                 // Wait between messages to avoid rate limiting
@@ -320,7 +327,7 @@ class MimicManager {
             await sendMessage(channelId, { content });
             return true;
         } catch (error) {
-            console.error(`[MimicTroll] Failed to send message:`, error);
+            console.error("[MimicTroll] Failed to send message:", error);
             return false;
         }
     }
@@ -346,7 +353,7 @@ const mimicManager = new MimicManager();
 function getCurrentChannelId(): string {
     const path = window.location.pathname;
     const matches = path.match(/\/channels\/[^\/]+\/(\d+)/);
-    return matches ? matches[1] : '';
+    return matches ? matches[1] : "";
 }
 
 // User context menu patch
@@ -413,7 +420,7 @@ function MimicMenuItem(userId: string, username: string, channelId: string) {
 function handleMessageCreate(data: any) {
     if (!settings.store.enabled) return;
 
-    const message = data.message;
+    const { message } = data;
     if (!message?.author || !message.id || !message.channel_id) return;
 
     // Handle regular messages for mimicking
