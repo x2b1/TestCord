@@ -7,9 +7,9 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
-import { openModal } from "@utils/modal";
+import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
-import { FluxDispatcher, Menu, React, UserStore, Forms, TextInput, Button, showToast, Toasts, RestAPI } from "@webpack/common";
+import { Button, FluxDispatcher, Forms, Menu, React, RestAPI, showToast, TextInput, Toasts, UserStore } from "@webpack/common";
 
 interface UserReactRule {
     userId: string;
@@ -103,9 +103,11 @@ function handleMessageCreate(data: any) {
 }
 
 // Emoji Picker Modal Component
-function EmojiPickerModal({ userId, username, onClose }: { userId: string; username: string; onClose: () => void; }) {
+function EmojiPickerModal(props: any) {
     const [selectedEmojis, setSelectedEmojis] = React.useState<{ name: string; id: string | null; animated: boolean; }[]>([]);
     const [inputValue, setInputValue] = React.useState("");
+
+    const { userId, username, onClose, transitionState } = props;
 
     const rules = parseRules(settings.store.rules);
     const existingRule = rules.find(r => r.userId === userId);
@@ -116,19 +118,6 @@ function EmojiPickerModal({ userId, username, onClose }: { userId: string; usern
         }
     }, []);
 
-    const handleEmojiSelect = (emoji: any) => {
-        const newEmoji = {
-            name: emoji.name || emoji.surrogates || emoji.optionValue,
-            id: emoji.id ? String(emoji.id) : null,
-            animated: emoji.animated || false
-        };
-
-        // Check if already selected
-        if (!selectedEmojis.find(e => e.name === newEmoji.name && e.id === newEmoji.id)) {
-            setSelectedEmojis([...selectedEmojis, newEmoji]);
-        }
-    };
-
     const removeEmoji = (index: number) => {
         setSelectedEmojis(selectedEmojis.filter((_, i) => i !== index));
     };
@@ -138,7 +127,6 @@ function EmojiPickerModal({ userId, username, onClose }: { userId: string; usern
         const existingIndex = rules.findIndex(r => r.userId === userId);
 
         if (selectedEmojis.length === 0) {
-            // Remove rule if no emojis
             if (existingIndex !== -1) {
                 rules.splice(existingIndex, 1);
             }
@@ -161,112 +149,136 @@ function EmojiPickerModal({ userId, username, onClose }: { userId: string; usern
         onClose();
     };
 
+    const addEmoji = (emoji: { name: string; id: string | null; animated: boolean; }) => {
+        if (!selectedEmojis.find(e => e.name === emoji.name && e.id === emoji.id)) {
+            setSelectedEmojis([...selectedEmojis, emoji]);
+        }
+    };
+
     return (
-        <div style={{ padding: "20px", minWidth: "400px" }}>
-            <Forms.FormTitle tag="h4">UserReact: {username}</Forms.FormTitle>
-            <Forms.FormText style={{ marginBottom: "16px", color: "var(--text-muted)" }}>
-                Select emojis to auto-react to every message from this user
-            </Forms.FormText>
+        <ModalRoot {...props} size={ModalSize.DYNAMIC}>
+            <ModalHeader>
+                <Forms.FormTitle tag="h4">UserReact: {username}</Forms.FormTitle>
+                <ModalCloseButton onClick={onClose} />
+            </ModalHeader>
+            <ModalContent>
+                <Forms.FormText style={{ marginBottom: "12px", color: "var(--text-muted)" }}>
+                    Select emojis to auto-react to every message from this user
+                </Forms.FormText>
 
-            {/* Selected Emojis Display */}
-            <div style={{
-                padding: "12px",
-                background: "var(--background-secondary)",
-                borderRadius: "8px",
-                marginBottom: "16px",
-                minHeight: "50px",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "8px",
-                alignItems: "center"
-            }}>
-                {selectedEmojis.length === 0 && (
-                    <Forms.FormText style={{ color: "var(--text-muted)" }}>No emojis selected</Forms.FormText>
-                )}
-                {selectedEmojis.map((emoji, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            position: "relative",
-                            cursor: "pointer",
-                            fontSize: "24px"
-                        }}
-                        onClick={() => removeEmoji(i)}
-                        title="Click to remove"
-                    >
-                        {emoji.id
-                            ? `<${emoji.animated ? "a" : ""}:${emoji.name}:${emoji.id}>`
-                            : emoji.name
-                        }
-                        <div style={{
-                            position: "absolute",
-                            top: "-4px",
-                            right: "-4px",
-                            background: "var(--red-400)",
-                            borderRadius: "50%",
-                            width: "14px",
-                            height: "14px",
-                            fontSize: "10px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white"
-                        }}>×</div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Emoji Picker */}
-            <div style={{ marginBottom: "16px" }}>
-                <Forms.FormText style={{ marginBottom: "8px" }}>Pick Emojis:</Forms.FormText>
-                {/* Use Discord's built-in emoji picker if available, otherwise fallback to manual input */}
-                <TextInput
-                    value={inputValue}
-                    onChange={setInputValue}
-                    placeholder="Paste emoji here or use picker below"
-                />
-                <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    {/* Common emojis as quick picks */}
-                    {["👍", "❤️", "😂", "🔥", "👀", "💯", "🎉", "😎", "👌", "💪", "🙌", "✨"].map(emoji => (
-                        <button
-                            key={emoji}
-                            onClick={() => {
-                                const newEmoji = { name: emoji, id: null, animated: false };
-                                if (!selectedEmojis.find(e => e.name === emoji)) {
-                                    setSelectedEmojis([...selectedEmojis, newEmoji]);
-                                }
-                            }}
+                {/* Selected Emojis Display */}
+                <div style={{
+                    padding: "12px",
+                    background: "var(--background-secondary)",
+                    borderRadius: "8px",
+                    marginBottom: "16px",
+                    minHeight: "50px",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    alignItems: "center"
+                }}>
+                    {selectedEmojis.length === 0 && (
+                        <Forms.FormText style={{ color: "var(--text-muted)" }}>No emojis selected</Forms.FormText>
+                    )}
+                    {selectedEmojis.map((emoji, i) => (
+                        <div
+                            key={i}
                             style={{
-                                fontSize: "20px",
-                                padding: "4px 8px",
+                                position: "relative",
                                 cursor: "pointer",
-                                background: "var(--background-secondary)",
-                                border: "none",
-                                borderRadius: "4px"
                             }}
+                            onClick={() => removeEmoji(i)}
+                            title="Click to remove"
                         >
-                            {emoji}
-                        </button>
+                            {emoji.id
+                                ? <img
+                                    src={`https://cdn.discordapp.com/emojis/${emoji.id}.${emoji.animated ? "gif" : "png"}?size=32`}
+                                    alt={emoji.name}
+                                    style={{ width: "32px", height: "32px" }}
+                                />
+                                : <span style={{ fontSize: "28px" }}>{emoji.name}</span>
+                            }
+                            <div style={{
+                                position: "absolute",
+                                top: "-4px",
+                                right: "-4px",
+                                background: "var(--red-400)",
+                                borderRadius: "50%",
+                                width: "14px",
+                                height: "14px",
+                                fontSize: "10px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white"
+                            }}>×</div>
+                        </div>
                     ))}
                 </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <Button
-                    color={Button.Colors.TRANSPARENT}
-                    onClick={onClose}
-                >
-                    Cancel
-                </Button>
+                {/* Emoji Input */}
+                <div style={{ marginBottom: "16px" }}>
+                    <Forms.FormText style={{ marginBottom: "8px" }}>Paste or pick emojis:</Forms.FormText>
+                    <TextInput
+                        value={inputValue}
+                        onChange={text => {
+                            setInputValue(text);
+                            const customMatch = text.match(/<(a)?:(\w+):(\d+)>/);
+                            if (customMatch) {
+                                addEmoji({
+                                    name: customMatch[2],
+                                    id: customMatch[3],
+                                    animated: customMatch[1] === "a"
+                                });
+                                setInputValue("");
+                                return;
+                            }
+                            const trimmed = text.trim();
+                            if (trimmed.length > 0 && trimmed.length <= 10) {
+                                addEmoji({ name: trimmed, id: null, animated: false });
+                                setInputValue("");
+                            }
+                        }}
+                        placeholder="Paste emoji or <:name:id> here"
+                    />
+                    <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        {["👍", "❤️", "😂", "🔥", "👀", "💯", "🎉", "😎", "👌", "💪", "🙌", "✨"].map(emoji => (
+                            <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => addEmoji({ name: emoji, id: null, animated: false })}
+                                style={{
+                                    fontSize: "20px",
+                                    padding: "4px 8px",
+                                    cursor: "pointer",
+                                    background: "var(--background-secondary)",
+                                    border: "none",
+                                    borderRadius: "4px"
+                                }}
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </ModalContent>
+            <ModalFooter>
                 <Button
                     color={selectedEmojis.length > 0 ? Button.Colors.GREEN : Button.Colors.RED}
                     onClick={saveRule}
                 >
                     {selectedEmojis.length > 0 ? "Save Rule" : "Remove Rule"}
                 </Button>
-            </div>
-        </div>
+                <Button
+                    color={Button.Colors.TRANSPARENT}
+                    look={Button.Looks.LINK}
+                    onClick={onClose}
+                >
+                    Cancel
+                </Button>
+            </ModalFooter>
+        </ModalRoot>
     );
 }
 
@@ -282,9 +294,9 @@ function UserContextMenuPatch(): NavContextMenuPatchCallback {
         const openEmojiPicker = () => {
             openModal(modalProps => (
                 <EmojiPickerModal
+                    {...modalProps}
                     userId={user.id}
                     username={user.globalName || user.username}
-                    onClose={() => modalProps.onClose()}
                 />
             ));
         };
@@ -380,7 +392,7 @@ function SettingsPanel() {
 export default definePlugin({
     name: "UserReact",
     description: "Automatically react to every message from specific users with custom emojis",
-    authors: [{ name: "YourName", id: BigInt(0) }],
+    authors: [TestcordDevs.x2b],
     settings,
     settingsPanel: SettingsPanel,
 
