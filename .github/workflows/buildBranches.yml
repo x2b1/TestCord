@@ -27,6 +27,7 @@ jobs:
     Build:
         name: Build TestCord
         runs-on: ubuntu-latest
+        if: github.repository == 'Equicord/Equicord'
 
         steps:
             - uses: actions/checkout@v4
