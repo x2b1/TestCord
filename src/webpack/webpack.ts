@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { traceFunction } from "@debug/Tracer";
 import { makeLazy, proxyLazy } from "@utils/lazy";
 import { LazyComponent } from "@utils/lazyReact";
 import { Logger } from "@utils/Logger";
@@ -24,9 +25,8 @@ import { escapeRegExp } from "@utils/text";
 import type { FluxStore } from "@vencord/discord-types";
 import type { ModuleExports, ModuleFactory, WebpackRequire } from "@vencord/discord-types/webpack";
 
-import { traceFunction } from "../debug/Tracer";
 import { Flux } from "./common";
-import { AnyModuleFactory, AnyWebpackRequire } from "./types";
+import type { AnyModuleFactory, AnyWebpackRequire } from "./types";
 
 const logger = new Logger("Webpack");
 

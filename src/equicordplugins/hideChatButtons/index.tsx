@@ -8,7 +8,7 @@ import { ChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { OptionType, StartAt } from "@utils/types";
-import { React, useEffect, useState } from "@webpack/common";
+import { useEffect, useState } from "@webpack/common";
 import type { MouseEventHandler, ReactNode } from "react";
 
 let hidechatbuttonsopen: boolean | undefined;
@@ -50,8 +50,14 @@ function HideToggleButton(props: { open: boolean | undefined, onClick: MouseEven
     </ChatBarButton>);
 }
 
-function ButtonsInnerComponent({ buttons }: { buttons: ReactNode[]; }) {
-    if (!buttons || buttons.every(x => (x as any)?.props?.disabled === true)) return null;
+function ButtonsInnerComponent({ buttons }: { buttons: ReactNode; }) {
+    const buttonItems = Array.isArray(buttons)
+        ? buttons
+        : buttons == null
+            ? []
+            : [buttons];
+
+    if (buttonItems.length === 0 || buttonItems.every(button => (button as any)?.props?.disabled === true)) return null;
 
     const [open, setOpen] = useState(hidechatbuttonsopen);
 
@@ -66,7 +72,7 @@ function ButtonsInnerComponent({ buttons }: { buttons: ReactNode[]; }) {
             overflowX: "auto",
             overflowY: "hidden"
         }}>
-            {open && buttons.map((b, i) => <React.Fragment key={i}>{b}</React.Fragment>)}
+            {open && buttons}
             <HideToggleButton onClick={() => setOpen(!open)} open={open} />
         </div>
     );
@@ -75,6 +81,7 @@ function ButtonsInnerComponent({ buttons }: { buttons: ReactNode[]; }) {
 export default definePlugin({
     name: "HideChatButtons",
     description: "Able to hide the chat buttons",
+    tags: ["Chat", "Utility"],
     settings: settings,
     authors: [EquicordDevs.iamme],
     patches: [
@@ -87,7 +94,7 @@ export default definePlugin({
         }
     ],
     startAt: StartAt.Init,
-    buttonsInner(buttons: ReactNode[]) {
+    buttonsInner(buttons: ReactNode) {
         return <ButtonsInnerComponent buttons={buttons} />;
     },
     start() {

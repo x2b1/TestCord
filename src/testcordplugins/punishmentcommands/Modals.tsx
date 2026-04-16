@@ -1,8 +1,10 @@
 import ErrorBoundary from "@components/ErrorBoundary";
 import { openModal, ModalRoot, ModalSize, ModalHeader, ModalCloseButton, ModalContent, closeModal, closeAllModals } from "@utils/modal";
 import { Button, Forms, Parser, TextInput } from "@webpack/common";
-import { cl } from "plugins/memberCount";
+import { classNameFactory } from "@utils/css";
 import { SelectedChannelStore, useState } from "@webpack/common";
+
+const cl = classNameFactory("vc-membercount-");
 import "./style.css";
 import { sendMessage } from "@utils/discord";
 

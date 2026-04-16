@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { waitForStore } from "webpack/common/internal";
+import { waitForStore } from "@webpack/common/internal";
 
 import * as types from "../types";
 

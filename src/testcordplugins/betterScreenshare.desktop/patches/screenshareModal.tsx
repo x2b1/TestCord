@@ -18,7 +18,7 @@
 
 import { Flex } from "@components/Flex";
 import { React } from "@webpack/common";
-import { Settings } from "Vencord";
+import { Settings } from "@api/Settings";
 
 import { findChildren, SettingsModalCard, SettingsModalCardItem } from "../../philsPluginLibrary";
 import Plugin from "..";

@@ -3,7 +3,7 @@ import { React, Text } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 import definePlugin from "@utils/types";
 import { FluxDispatcher, Parser, UserStore, useState, useEffect } from "@webpack/common";
-import { Util } from "Vencord";
+import { openUserProfile } from "@utils/discord";
 import { sleep } from "@utils/misc";
 import { Constants, RestAPI } from "@webpack/common";
 import { Button } from "@webpack/common";
@@ -865,7 +865,7 @@ function BanList({
 
                                 {/* Avatar */}
                                 <img
-                                    onClick={() => Util.openUserProfile(id)}
+                                    onClick={() => openUserProfile(id)}
                                     src={user?.getAvatarURL?.() ?? "https://cdn.discordapp.com/embed/avatars/0.png"}
                                     style={{
                                         width: "48px",
