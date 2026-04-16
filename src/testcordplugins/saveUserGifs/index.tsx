@@ -6,6 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
+import { DataStore } from "@api/index";
 import { Link } from "@components/Link";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
@@ -48,6 +49,11 @@ const settings = definePluginSettings({
         description: "Max messages to scan (99999 = all)",
         default: 99999,
     },
+    useHeartGifs: {
+        type: OptionType.BOOLEAN,
+        description: "Save to HeartGifs (unlimited local storage) instead of Discord favorites. Requires HeartGifs plugin.",
+        default: false,
+    },
 });
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -57,6 +63,40 @@ let currentGifsFound = 0;
     const savePromises: Promise<void>[] = [];
 let stopRequested = false;
 
+
+// ─── HeartGifs Integration ───────────────────────────────────────────────────
+
+const HG_DATA_KEY = "heartGifs-data";
+
+async function addToHeartGifs(gif: GifEntry): Promise<boolean> {
+    try {
+        const items: any[] = (await DataStore.get(HG_DATA_KEY)) ?? [];
+        if (items.some((g: any) => g.url === gif.url)) return false;
+        const newItem = {
+            id: "nogl-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9),
+            url: gif.url,
+            src: gif.src || gif.url,
+            width: gif.width || 498,
+            height: gif.height || 280,
+            type: "gif",
+            addedAt: Date.now(),
+        };
+        items.unshift(newItem);
+        await DataStore.set(HG_DATA_KEY, items);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function isInHeartGifs(url: string): Promise<boolean> {
+    try {
+        const items: any[] = (await DataStore.get(HG_DATA_KEY)) ?? [];
+        return items.some((g: any) => g.url === url);
+    } catch {
+        return false;
+    }
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -258,17 +298,28 @@ async function scanUserGifs(userId: string, username: string, guildId: string | 
     showToast(`Scanning GIFs from ${username}...`, Toasts.Type.MESSAGE);
     console.log(`[SaveUserGifs] Starting scan for ${username} (${userId})`);
 
-    const addGif = getAddGifFn();
-    const favUrls = getCurrentFavoriteUrls();
+    const useHeartGifs = settings.store.useHeartGifs ?? false;
+    const addGif = !useHeartGifs ? getAddGifFn() : null;
+    const favUrls = !useHeartGifs ? getCurrentFavoriteUrls() : new Set<string>();
     const savedRealtime = new Set<string>();
 
-    const onGifFound = (saveMode === "favorites" || saveMode === "both") && addGif
-        ? (g: GifEntry) => {
-            if (!favUrls.has(g.url) && !savedRealtime.has(g.url)) {
-                savedRealtime.add(g.url);
-                try { addGif({ url: g.url, src: g.src ?? g.url, width: Number(g.width) || 498, height: Number(g.height) || 280, format: Number(g.format) || 2 }); } catch { }
+    const onGifFound = (saveMode === "favorites" || saveMode === "both")
+        ? (useHeartGifs
+            ? (g: GifEntry) => {
+                // Save to HeartGifs (async, fire-and-forget with tracking)
+                if (!savedRealtime.has(g.url)) {
+                    savedRealtime.add(g.url);
+                    addToHeartGifs(g).catch(() => { });
+                }
             }
-        }
+            : (addGif
+                ? (g: GifEntry) => {
+                    if (!favUrls.has(g.url) && !savedRealtime.has(g.url)) {
+                        savedRealtime.add(g.url);
+                        try { addGif({ url: g.url, src: g.src ?? g.url, width: Number(g.width) || 498, height: Number(g.height) || 280, format: Number(g.format) || 2 }); } catch { }
+                    }
+                }
+                : undefined))
         : undefined;
 
     const seen = new Set<string>();
@@ -308,13 +359,42 @@ async function scanUserGifs(userId: string, username: string, guildId: string | 
         a.click();
     }
 
-    const alreadyHad = allGifs.filter(g => favUrls.has(g.url)).length;
-    const saved = savedRealtime.size;
-
-    console.log(`[SaveUserGifs] Done! Found: ${allGifs.length} | Saved: ${saved} | Already had: ${alreadyHad}`);
     showToast(`✅ Found ${allGifs.length} GIFs from ${username}`, Toasts.Type.SUCCESS);
     await sleep(1500);
-    showToast(`Saved: ${saved} | Already had: ${alreadyHad}`, Toasts.Type.SUCCESS);
+
+    if (useHeartGifs && (saveMode === "favorites" || saveMode === "both")) {
+        // HeartGifs: verify against DataStore after a short wait
+        await sleep(800);
+        let hgSaved = 0;
+        let hgAlreadyHad = 0;
+        for (const g of allGifs) {
+            if (await isInHeartGifs(g.url)) {
+                if (savedRealtime.has(g.url)) hgSaved++;
+                else hgAlreadyHad++;
+            }
+        }
+        console.log(`[SaveUserGifs] Done! Found: ${allGifs.length} | Saved to HeartGifs: ${hgSaved} | Already had: ${hgAlreadyHad}`);
+        showToast(`💾 HeartGifs: Saved ${hgSaved} | Already had: ${hgAlreadyHad}`, Toasts.Type.SUCCESS);
+    } else {
+        const alreadyHad = allGifs.filter(g => favUrls.has(g.url)).length;
+
+        // Wait a moment for the Discord store to update, then verify what actually got saved
+        await sleep(1000);
+        const favUrlsAfter = getCurrentFavoriteUrls();
+        const reallySaved = allGifs.filter(g => !favUrls.has(g.url) && favUrlsAfter.has(g.url));
+        const failedToSave = allGifs.filter(g => !favUrls.has(g.url) && !favUrlsAfter.has(g.url) && savedRealtime.has(g.url));
+
+        console.log(`[SaveUserGifs] Done! Found: ${allGifs.length} | Actually saved: ${reallySaved.length} | Already had: ${alreadyHad} | Failed: ${failedToSave.length}`);
+        if (failedToSave.length > 0) {
+            console.warn("[SaveUserGifs] These GIFs failed to save:", failedToSave.map(g => g.url));
+        }
+
+        if (failedToSave.length > 0) {
+            showToast(`⚠️ Saved: ${reallySaved.length} | Failed: ${failedToSave.length} | Already had: ${alreadyHad}`, Toasts.Type.FAILURE);
+        } else {
+            showToast(`✅ Saved: ${reallySaved.length} | Already had: ${alreadyHad}`, Toasts.Type.SUCCESS);
+        }
+    }
 }
 
 // ─── Context Menu ─────────────────────────────────────────────────────────────

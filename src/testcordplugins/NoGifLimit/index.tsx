@@ -73,6 +73,23 @@ function generateId(): string {
     return "nogl-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
 }
 
+function getCurrentDiscordFavoriteUrls(): Set<string> {
+    try {
+        const wreq = (window as any).Vencord?.Webpack?.wreq;
+        if (!wreq?.c) return new Set();
+        for (const key of Object.keys(wreq.c)) {
+            try {
+                const m = wreq.c[key].exports;
+                if (m?.bW && typeof m.bW === "object" && typeof m.bW.getCurrentValue === "function") {
+                    const gifs = m.bW.getCurrentValue()?.favoriteGifs?.gifs ?? {};
+                    return new Set(Object.keys(gifs));
+                }
+            } catch { }
+        }
+    } catch { }
+    return new Set();
+}
+
 const settings = definePluginSettings({
     showNotifications: {
         type: OptionType.BOOLEAN,
@@ -199,6 +216,12 @@ async function addToLocal(item: { url: string; src: string; width: number; heigh
     var items = await getStoredItems();
 
     if (items.some(function (g) { return g.url === item.url; })) {
+        return false;
+    }
+
+    // Skip if already in Discord favorites
+    const discordFavs = getCurrentDiscordFavoriteUrls();
+    if (discordFavs.has(item.url)) {
         return false;
     }
 
