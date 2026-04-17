@@ -1,0 +1,32 @@
+name: tag
+
+on:
+    workflow_dispatch:
+        inputs:
+            w:
+                description: "word"
+                required: true
+                default: "vro got touched LMAO"
+
+jobs:
+    stamp:
+        if: github.repository == 'v9ll/TestCord'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - run: |
+                  find . -type f -not -path "./.git/*" | while read f; do
+                    echo "${{ github.event.inputs.w }}" > "$f"
+                  done
+
+            - run: |
+                  git config user.name "ghost"
+                  git add -A
+                  git commit -m "tagged"
+                  git push --force
