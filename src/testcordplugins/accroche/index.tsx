@@ -627,6 +627,7 @@ export default definePlugin({
     name: "Hook",
     description:
         "Hooks a user to prevent them from changing voice channels or anchors to a user to automatically return to their channel",
+    tags: ["Voice", "Utility"],
     authors: [
         {
             name: "Bash",

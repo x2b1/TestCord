@@ -10,6 +10,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "ScreenshareKeybind",
     description: "Adds a keybind to instantly screenshare",
+    tags: ["Voice", "Shortcuts"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

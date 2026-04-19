@@ -147,6 +147,7 @@ function GalleryToolbarButton() {
 export default definePlugin({
     name: "ChannelGallery",
     description: "Adds a Gallery view for images in the current channel",
+    tags: ["Media", "Utility"],
     authors: [EquicordDevs.Benjii, TestcordDevs.x2b],
     dependencies: ["HeaderBarAPI"],
 

@@ -14,6 +14,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "SortReactions",
     description: "Sorts reactions by count in chat.",
+    tags: ["Reactions", "Utility"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

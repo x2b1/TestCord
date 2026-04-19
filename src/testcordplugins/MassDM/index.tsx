@@ -119,6 +119,7 @@ function getUsersToMessage() {
 export default definePlugin({
     name: "MassDM",
     description: "Mass direct message users with customizable options and auto-responses",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     settings,
 

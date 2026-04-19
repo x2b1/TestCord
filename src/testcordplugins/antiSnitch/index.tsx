@@ -25,6 +25,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "antiSnitch",
     description: "Tools to avoid snitches",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.dot],
     settings,
     start() {

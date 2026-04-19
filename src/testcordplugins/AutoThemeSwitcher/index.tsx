@@ -106,6 +106,7 @@ function handleSystemThemeChange(event: MediaQueryListEvent) {
 export default definePlugin({
     name: "AutoThemeSwitcher",
     description: "Automatically switches between themes based on the time of day, or based on system appearance (ie. light/dark mode). Now supports custom themes!",
+    tags: ["Customisation", "Appearance"],
     authors: [{
         name: "maddie480",
         id: 354341658352943115n

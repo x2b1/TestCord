@@ -14,6 +14,7 @@ import { BooProps } from "./types";
 export default definePlugin({
     name: "Boo",
     description: "A cute ghost will appear if you don't answer their DMs",
+    tags: ["Fun", "Utility"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

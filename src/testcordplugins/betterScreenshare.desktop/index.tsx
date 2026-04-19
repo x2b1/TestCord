@@ -17,27 +17,56 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { PluginInfo } from "../betterScreenshare.desktop/constants";
+import { openScreenshareModal } from "../betterScreenshare.desktop/modals";
+import { ScreenshareAudioPatcher, ScreensharePatcher } from "../betterScreenshare.desktop/patchers";
+import { GoLivePanelWrapper, replacedSubmitFunction } from "../betterScreenshare.desktop/patches";
+import { initScreenshareAudioStore, initScreenshareStore } from "../betterScreenshare.desktop/stores";
+import { Emitter, ScreenshareSettingsIcon } from "../philsPluginLibrary";
+import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
+import { findComponentByCodeLazy } from "@webpack";
 
-import { addSettingsPanelButton, Emitter, removeSettingsPanelButton, ScreenshareSettingsIcon } from "../philsPluginLibrary";
-import { PluginInfo } from "./constants";
-import { openScreenshareModal } from "./modals";
-import { ScreenshareAudioPatcher, ScreensharePatcher } from "./patchers";
-import { replacedScreenshareModalComponent } from "./patches";
-import { initScreenshareAudioStore, initScreenshareStore } from "./stores";
+const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
+
+function screenshareSettingsButton() {
+
+    return (
+        <Button
+            tooltipText="Change screenshare settings"
+            icon={ScreenshareSettingsIcon}
+            role="button"
+            onClick={openScreenshareModal}
+        />
+    );
+}
 
 export default definePlugin({
     name: "BetterScreenshare",
     description: "This plugin allows you to further customize your screen sharing.",
-    authors: [TestcordDevs.x2b],
+    tags: ["Voice", "Utility"],
+    authors: [Devs.philhk],
     dependencies: ["PhilsPluginLibrary"],
     patches: [
         {
-            find: "Messages.SCREENSHARE_RELAUNCH",
+            find: "GoLiveModal: user cannot be undefined", // Module: 60594; canaryRelease: 364525; L431
             replacement: {
-                match: /((?:.*)(?<=function) .{0,8}?(?={).)(.{0,10000}Z.getVoiceChannelId\(\).{0,10000}]}\)}\))(})/,
-                replace: "$1return $self.replacedScreenshareModalComponent(function(){$2}, this, arguments)$3"
+                match: /onSubmit:(\w+)/,
+                replace: "onSubmit:$self.replacedSubmitFunction($1)"
+            }
+        },
+        {
+            find: "StreamSettings: user cannot be undefined", // Module: 641115; canaryRelease: 364525; L254
+            replacement: {
+                match: /\(.{0,10}(,{.{0,100}modalContent)/,
+                replace: "($self.GoLivePanelWrapper$1"
+            }
+        },
+        {
+            find: ".StreamPreviewIntro", // Stream settings modal
+            replacement: {
+                match: /className:\i\.buttons,.{0,100}children:\[/,
+                replace: "$&$self.screenshareSettingsButton(),"
             }
         }
     ],
@@ -54,24 +83,16 @@ export default definePlugin({
         this.screensharePatcher = new ScreensharePatcher().patch();
         this.screenshareAudioPatcher = new ScreenshareAudioPatcher().patch();
 
-        addSettingsPanelButton({
-            name: PluginInfo.PLUGIN_NAME,
-            icon: ScreenshareSettingsIcon,
-            tooltipText: "Screenshare Settings",
-            onClick: openScreenshareModal
-        });
     },
     stop(): void {
         this.screensharePatcher?.unpatch();
         this.screenshareAudioPatcher?.unpatch();
         Emitter.removeAllListeners(PluginInfo.PLUGIN_NAME);
-
-        removeSettingsPanelButton(PluginInfo.PLUGIN_NAME);
     },
-    replacedScreenshareModalComponent
+    toolboxActions: {
+        "Open Screenshare Settings": openScreenshareModal
+    },
+    replacedSubmitFunction,
+    GoLivePanelWrapper,
+    screenshareSettingsButton
 });
-
-
-
-
-

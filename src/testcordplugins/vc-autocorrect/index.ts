@@ -44,6 +44,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "AutoCorrect",
     description: "Configure auto text correction, completion, and capitalization",
+    tags: ["Chat", "Utility"],
     settings,
     authors: [TestcordDevs.x2b],
     patches: [

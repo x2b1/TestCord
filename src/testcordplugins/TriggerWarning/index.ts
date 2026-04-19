@@ -31,6 +31,7 @@ export default definePlugin({
     name: "TriggerWarning",
     authors: [TestcordDevs.x2b],
     description: "Spoiler attachments based on filenames and links.",
+    tags: ["Notifications", "Utility"],
     patches: [
         {
             find: "SimpleMessageAccessories:",

@@ -810,6 +810,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "bypassAccounts",
     description: "Discord account switcher with file-based encrypted token storage.",
+    tags: ["Utility", "Privacy"],
     authors: [TestcordDevs.dot],
     settings,
 

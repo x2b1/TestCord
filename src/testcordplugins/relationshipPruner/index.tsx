@@ -18,6 +18,7 @@ export const cl = classNameFactory("vc-relationshipPruner-");
 export default definePlugin({
     name: "RelationshipPruner",
     description: "Adds a way to easily prune your servers and friends. To open, right click the home button or friends tab button",
+    tags: ["Friends", "Utility"],
     authors: [
         Devs.Samwich
     , TestcordDevs.x2b],

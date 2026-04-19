@@ -160,6 +160,7 @@ function handleMessageDelete({ channelId, id }: { channelId: string; id: string;
 export default definePlugin({
     name: "TranslatePremium",
     description: "Auto translate messages from specific users to ur lang with context menu button",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     flux: {

@@ -16,9 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { panelClasses } from "../../../philsPluginLibrary/discordModules";
 import { React } from "@webpack/common";
-
-import { panelClasses } from "../../discordModules";
 
 
 export interface SettingsPanelProps {
@@ -33,5 +32,3 @@ export const SettingsPanel = ({ children }: SettingsPanelProps) => {
         </div>
     );
 };
-
-

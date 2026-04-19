@@ -46,6 +46,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MullvadDNS",
     description: "Force Discord to use Mullvad DNS servers for enhanced privacy",
+    tags: ["Utility", "Privacy"],
     authors: [{ name: "Irritably", id: 928787166916640838n }, TestcordDevs.nnenaza],
     settings,
 

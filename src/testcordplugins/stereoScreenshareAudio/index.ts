@@ -40,6 +40,7 @@ const patchSDPDesc = desc => {
 export default definePlugin({
     name: "StereoScreenshareAudio",
     description: "Patches Discord's WebRTC SDP to enable stereo audio while watching streams (should only be necessary with vesktop & co.)",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
 
     async start() {

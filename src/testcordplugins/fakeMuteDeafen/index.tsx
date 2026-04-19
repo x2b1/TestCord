@@ -193,6 +193,7 @@ function FakeMuteDeafenButton() {
 export default definePlugin({
     name: "FakeMuteDeafen",
     description: "Fake mute and deafen yourself. You can continue speaking and being heard during this time. Toggle via user area button or context menu.",
+    tags: ["Voice", "Privacy"],
     authors: [TestcordDevs.x2b],
     settings,
     start() {

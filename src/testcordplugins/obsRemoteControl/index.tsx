@@ -82,6 +82,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "OBS Remote Control",
     description: "Control OBS from Discord using websockets.",
+    tags: ["Utility", "Voice"],
     authors: [{
         name: "FawazT",
         id: 228825096360296448n

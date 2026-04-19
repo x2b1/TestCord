@@ -10,6 +10,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "NoDraftLengthLimit",
     description: "Removes the 4500 character saved draft message truncation",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

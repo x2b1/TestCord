@@ -203,6 +203,7 @@ function handleMessageCreate(data: any) {
 export default definePlugin({
     name: "AutoReact",
     description: "Automatically react to messages containing specific words",
+    tags: ["Reactions", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     settingsPanel: RulesEditor,

@@ -187,6 +187,7 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
 export default definePlugin({
     name: "Stalker",
     description: "Notifies you whenever a target user changes status, joins VC, or sends a message. (fixed by x2b)",
+    tags: ["Friends", "Utility"],
     authors: [{ name: "Reycko", id: 1123725368004726794n }, TestcordDevs.x2b],
 
     contextMenus: {

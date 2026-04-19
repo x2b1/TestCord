@@ -60,6 +60,7 @@ export const settings = definePluginSettings({
 export default definePlugin({
     name: "NavidromeRPC",
     description: "Show the currently playing song on your Navidrome server in your Rich Presence",
+    tags: ["Activity", "Media"],
     authors: [Devs.nin0dev],
     settings,
     interval: -1,

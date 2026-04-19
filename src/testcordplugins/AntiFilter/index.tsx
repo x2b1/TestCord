@@ -338,6 +338,7 @@ const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
 export default definePlugin({
     name: "AntiFilter",
     description: "Bypass automod filters using lookalike Unicode characters (credits to dot for givin me the dadscord bypass)",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.x2b, TestcordDevs.sirphantom89,
     { name: "dot", id: 1400610916285812776n }
     ],

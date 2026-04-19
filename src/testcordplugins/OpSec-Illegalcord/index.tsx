@@ -1348,6 +1348,7 @@ function addPeriodIfNeeded(text: string): string {
 export default definePlugin({
     name: "OpSec",
     description: "Autocorrect for English & Italian - Toggle each language in settings (contractions, punctuation, accents)",
+    tags: ["Privacy", "Utility"],
     authors: [
         { name: "Solace", id: 1472732509241479218n },
         { name: "irritably", id: 928787166916640838n }

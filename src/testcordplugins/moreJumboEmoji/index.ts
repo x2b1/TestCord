@@ -32,7 +32,7 @@ export default definePlugin({
     name: "MoreJumboEmoji",
     description: "Unlock the maximum amount of jumbo emoji",
     authors: [TestcordDevs.x2b],
-    tags: ["wumboji"],
+    tags: ["Emotes", "Customisation"],
     settings,
     patches: [{
         find: ".jumboable=",

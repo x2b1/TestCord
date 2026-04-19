@@ -73,6 +73,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Hisako's-Optimizations",
     description: "Comprehensive client optimization suite for lag-free Discord experience",
+    tags: ["Developers", "Utility"],
     authors: [{ name: "Irritably", id: 928787166916640838n }],
 
     settings,

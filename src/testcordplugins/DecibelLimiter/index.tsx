@@ -353,6 +353,7 @@ function cleanup() {
 export default definePlugin({
     name: "DecibelLimiter",
     description: "Automatically cuts off audio peaks that are too loud in voice calls",
+    tags: ["Voice", "Utility"],
     authors: [{
         name: "Bash",
         id: 1327483363518582784n

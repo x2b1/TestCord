@@ -179,6 +179,7 @@ const ChannelData = () => {
 export default definePlugin({
     name: "ReactionTracker",
     description: "See how much you've been reacted with a specific emoji, and by who",
+    tags: ["Reactions", "Utility"],
     authors: [TestcordDevs.x2b],
     flux: {
         async MESSAGE_REACTION_ADD(event) {

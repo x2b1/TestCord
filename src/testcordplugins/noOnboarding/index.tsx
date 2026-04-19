@@ -23,6 +23,7 @@ import { RestAPI } from "@webpack/common";
 export default definePlugin({
     name: "NoOnboarding",
     description: "Bypasses Discord's onboarding process for quicker server entry.",
+    tags: ["Privacy", "Utility"],
     authors: [EquicordDevs.omaw, Devs.Glitch],
     patches: [
         {

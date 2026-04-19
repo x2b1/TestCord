@@ -16,13 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { UserStore } from "@webpack/common";
-
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
+import { logger } from "../../betterScreenshare.desktop/logger";
+import { screenshareStore } from "../../betterScreenshare.desktop/stores";
 import { Emitter, MediaEngineStore, Patcher, types } from "../../philsPluginLibrary";
 import { patchConnectionVideoSetDesktopSourceWithOptions, patchConnectionVideoTransportOptions } from "../../philsPluginLibrary/patches/video";
-import { PluginInfo } from "../constants";
-import { logger } from "../logger";
-import { screenshareStore } from "../stores";
+import { UserStore } from "@webpack/common";
 
 export class ScreensharePatcher extends Patcher {
     private mediaEngineStore: types.MediaEngineStore;
@@ -69,24 +68,12 @@ export class ScreensharePatcher extends Patcher {
                 this.forceUpdateDesktopSourceOptions = forceUpdateDesktopSourceOptions;
                 this.forceUpdateTransportationOptions = forceUpdateTransportationOptions;
 
-                (Emitter.addListener as (
-                    emitter: any,
-                    type: "on" | "once",
-                    event: string,
-                    fn: (...args: any[]) => void,
-                    plugin?: string
-                ) => () => void)(connection.emitter as any, "on", "connected", () => {
+                Emitter.addListener(connection.emitter, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                     this.forceUpdateDesktopSourceOptions();
                 });
 
-                (Emitter.addListener as (
-                    emitter: any,
-                    type: "on" | "once",
-                    event: string,
-                    fn: (...args: any[]) => void,
-                    plugin?: string
-                ) => () => void)(connection.emitter as any, "on", "destroy", () => {
+                Emitter.addListener(connection.emitter, "on", "destroy", () => {
                     this.forceUpdateTransportationOptions = () => void 0;
                     this.forceUpdateDesktopSourceOptions = () => void 0;
                     this.oldSetTransportOptions = () => void 0;
@@ -94,17 +81,11 @@ export class ScreensharePatcher extends Patcher {
                 });
             };
 
-        (Emitter.addListener as (
-            emitter: any,
-            type: "on" | "once",
-            event: string,
-            fn: (...args: any[]) => void,
-            plugin?: string
-        ) => () => void)(
-            this.mediaEngine.emitter as any,
+        Emitter.addListener(
+            this.mediaEngine.emitter,
             "on",
             "connection",
-            connectionEventFunction as (...args: any[]) => void,
+            connectionEventFunction,
             PluginInfo.PLUGIN_NAME
         );
 
@@ -115,5 +96,3 @@ export class ScreensharePatcher extends Patcher {
         return this._unpatch();
     }
 }
-
-

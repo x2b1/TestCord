@@ -173,6 +173,7 @@ function ZipAttachmentPreview({ attachment }: { attachment: any; }) {
 export default definePlugin({
     name: "ZipPreview",
     description: "Preview and navigate inside zip files without extracting.",
+    tags: ["Utility", "Chat"],
     authors: [EquicordDevs.justjxke],
 
     patches: [

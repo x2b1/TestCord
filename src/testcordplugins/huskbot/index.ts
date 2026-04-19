@@ -15,6 +15,7 @@ import selfPlugin from ".";
 export default definePlugin({
     name: "Huskbot",
     description: "A bot to husk. THIS IS A SELFBOT AND MIGHT GET YOU BANNED",
+    tags: ["Utility", "Fun"],
     authors: [Devs.nin0dev],
     settings: definePluginSettings({
         channelIDs: {

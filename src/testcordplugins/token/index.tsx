@@ -28,6 +28,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Token Display",
     description: "shows ur token with the command: /mytoken",
+    tags: ["Privacy", "Developers"],
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
 

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-type TypedEmitter<T> = import("events").EventEmitter & { on: any; once: any; removeListener: any; };
+import TypedEmitter from "typed-emitter";
 
 import { Connection } from "./";
 
@@ -146,5 +146,3 @@ export interface WindowPreview {
     url: string;
     name: string;
 }
-
-

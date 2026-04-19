@@ -102,6 +102,7 @@ function applyRuntimePatch() {
 export default definePlugin({
     name: "UnlimitedFavoriteGIFs",
     description: "Bypasses the native GIF favorites size limit, allowing you to save unlimited GIFs.",
+    tags: ["Media", "Utility"],
     authors: [{ name: "www.miau.com", id: 1485706082080002140n }],
     settings,
 

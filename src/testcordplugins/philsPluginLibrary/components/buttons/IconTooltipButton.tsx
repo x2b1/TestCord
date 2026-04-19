@@ -18,7 +18,7 @@
 
 import { Flex } from "@components/Flex";
 import { Button, Tooltip } from "@webpack/common";
-import React, { type JSX } from "react";
+import React, { JSX } from "react";
 
 
 export interface IconTooltipButtonProps {
@@ -37,10 +37,8 @@ export const IconTooltipButton = (props: React.ComponentProps<typeof Button> & I
                 <Flex style={{ justifyContent: "center", alignItems: "center", width: 24, height: 24 }}>
                     {props.icon}
                 </Flex>
-                <span {...tooltipProps as any} style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} />
+                <span {...tooltipProps} style={{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 }} />
             </Button>}
         </Tooltip >
     );
 };
-
-

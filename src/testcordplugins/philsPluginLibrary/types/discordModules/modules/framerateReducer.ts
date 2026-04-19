@@ -34,5 +34,3 @@ export interface FramerateReducer_ {
     updateRemoteWantsFramerate: (...args: any[]) => any;
     userSpeakingChange: (...args: any[]) => any;
 }
-
-

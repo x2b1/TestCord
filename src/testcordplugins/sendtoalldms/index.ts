@@ -15,6 +15,7 @@ import { ChannelStore, RelationshipStore } from "@webpack/common";
 export default definePlugin({
     name: "SendToAllDMs",
     description: "Adds a command to send a message to all friends' DMs with blacklist/whitelist settings. WE CANNOT GUARANTEE THIS PLUGIN WON'T GET YOU BANNED.",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
         sendToAllDMs: {

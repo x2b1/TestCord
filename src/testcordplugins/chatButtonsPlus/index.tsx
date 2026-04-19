@@ -267,6 +267,7 @@ migratePluginSettings("ChatButtonsPlus", "Meow", "Woof");
 export default definePlugin({
     name: "ChatButtonsPlus",
     description: "Add custom chat buttons with personalized + messages and SVG icons",
+    tags: ["Chat", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings,
 

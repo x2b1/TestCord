@@ -148,6 +148,7 @@ export default definePlugin({
     name: "Server Pinner",
     description:
         "Allows pinning servers via context menu. Dedicated category will be added in a future update.",
+    tags: ["Servers", "Utility"],
     authors: [
         {
             name: "Bash",

@@ -485,6 +485,7 @@ export default definePlugin({
   name: "Audio Limiter",
   description:
     "Automatically limits output volume to avoid sounds that are too loud",
+    tags: ["Voice", "Utility"],
   authors: [TestcordDevs.x2b],
   settings,
   settingsAboutComponent: SettingsPanel,

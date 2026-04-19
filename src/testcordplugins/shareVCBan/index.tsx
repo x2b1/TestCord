@@ -387,6 +387,7 @@ function handleMessageCreate(data: any) {
 export default definePlugin({
     name: "ShareBanPerm",
     description: "Allow VC owners to trigger voice ban commands with spam protection",
+    tags: ["Servers", "Voice"],
     authors: [TestcordDevs.dot],
 
     settings,

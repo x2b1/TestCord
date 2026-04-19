@@ -22,8 +22,8 @@ import {
     MicrophoneStore as ScreenshareAudioStore,
     microphoneStoreDefault as screenshareAudioStoreDefault
 } from "../../betterMicrophone.desktop/stores";
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
 import { createPluginStore, ProfilableStore, profileable } from "../../philsPluginLibrary";
-import { PluginInfo } from "../constants";
 
 export let screenshareAudioStore: ProfilableStore<ScreenshareAudioStore, ScreenshareAudioProfile>;
 
@@ -39,5 +39,3 @@ export const initScreenshareAudioStore = () =>
     );
 
 export { defaultScreenshareAudioProfiles, ScreenshareAudioProfile, ScreenshareAudioStore, screenshareAudioStoreDefault };
-
-

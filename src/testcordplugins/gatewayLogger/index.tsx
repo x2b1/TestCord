@@ -12,6 +12,7 @@ const logger = new Logger("GatewayLogger");
 export default definePlugin({
     name: "GatewayLogger",
     description: "logs gateway events to the console",
+    tags: ["Developers", "Utility"],
     authors: [
         { id: 253302259696271360n, name: "zastix" },
         { id: 1003477997728313405n, name: "Death" }

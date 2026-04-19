@@ -282,6 +282,7 @@ function getServerName(): string {
 export default definePlugin({
     name: "MediaStatus",
     description: "Show your Jellyfin/Plex media activity as Discord Rich Presence",
+    tags: ["Activity", "Media"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     dependencies: ["UserSettingsAPI"],
     settings,

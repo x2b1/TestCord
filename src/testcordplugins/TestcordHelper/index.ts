@@ -202,6 +202,7 @@ async function _doSend() {
 export default definePlugin({
     name: "TestcordHelper",
     description: "Helper plugin for Testcord features, including custom badge management and debug reporting.",
+    tags: ["Utility", "Developers"],
     authors: [{ name: "x2b", id: 996137713432530976n }],
     required: true,
     settings,

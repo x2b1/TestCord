@@ -210,6 +210,7 @@ const getPresend = (): MessageSendListener => {
 export default definePlugin({
     name: "ChatGPTWriting",
     description: "Enhance your messages with kaomoji, emoji, and autocorrect",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,

@@ -82,6 +82,7 @@ export default definePlugin({
     name: "AutoUnmute",
     description:
         "Automatically unmutes and undeafens when server mute/deafen occurs if you have permissions (no notifications)",
+    tags: ["Voice", "Utility"],
     authors: [
         {
             name: "Bash",

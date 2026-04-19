@@ -112,7 +112,7 @@ export default definePlugin({
     description: "Hyprland-style tiled workspaces for Discord channels, DMs, and threads.",
     authors: [EquicordDevs.benjii],
     dependencies: ["ContextMenuAPI", "HeaderBarAPI"],
-    tags: ["workspace", "tiling", "layout", "productivity"],
+    tags: ["Customisation", "Appearance"],
 
     managedStyle,
     settings,

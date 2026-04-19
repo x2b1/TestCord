@@ -20,6 +20,7 @@ export default definePlugin({
     name: "EmbeddedURLs",
     description: `Turns plain social links into embeddable URLs so posts
     and videos are fully viewable in Discord instead of forcing users to open the external site.`,
+    tags: ["Chat", "Utility"],
     authors: [{ name: "Dadian1", id: 131825869302792192n }],
 
     replaceUrl(originalUrl: string): string {

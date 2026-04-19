@@ -11,6 +11,7 @@ import { ChannelRouter, UserStore } from "@webpack/common";
 export default definePlugin({
     name: "AutoJumpToMention",
     description: "Automatically takes you to the message when someone mentions you",
+    tags: ["Utility"],
     authors: [TestcordDevs.SirPhantom89],
     patches: [],
 

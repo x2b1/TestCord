@@ -10,13 +10,12 @@ import { Flex } from "@components/Flex";
 import { openUserProfile } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
-import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
 import { FluxDispatcher, GuildMemberStore, Menu, PresenceStore, ScrollerThin, Text, useEffect, UserStore, useStateFromStores } from "@webpack/common";
 import { classNameFactory } from "@utils/css";
 
-const cl = classNameFactory("vc-membercount-");
+const cl = classNameFactory("bc-");
 
 const logger = new Logger("showBoostCounts");
 const { getToken } = findByPropsLazy("setToken");
@@ -35,7 +34,7 @@ async function openViewBoosters(guild: string) {
                     <UserList guildId={guild} boosters={boosters} />
                 </ModalContent >
                 <ModalFooter>
-                    <Flex >
+                    <Flex cellSpacing={10}>
                     </Flex>
                 </ModalFooter>
             </ModalRoot >
@@ -71,6 +70,7 @@ function MakeContextCallback(): NavContextMenuPatchCallback {
 export default definePlugin({
     name: "BoostCounts",
     description: "Shows all the boosters in the server and the number of boosts for each booster.",
+    tags: ["Servers", "Utility"],
     dependencies: ["MessagePopoverAPI"],
     authors: [{
         name: "Raf", id: 121253596753952768n

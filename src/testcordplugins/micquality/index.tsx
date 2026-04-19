@@ -236,6 +236,7 @@ function onConnection(connection: any) {
 export default definePlugin({
     name: "CustomMicQuality",
     description: "Customize your microphone quality, bitrates, stereo mode, echo cancellation, and apply fun effects.",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     contextMenus: {

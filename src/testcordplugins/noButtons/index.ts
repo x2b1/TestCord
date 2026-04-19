@@ -50,6 +50,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "NoButtons",
     description: "Removes annoying buttons that you don't need",
+    tags: ["Customisation", "Appearance"],
     authors: [TestcordDevs.x2b],
     patches: [],
     settings,

@@ -76,6 +76,7 @@ function deleteMessage(channelId: string, messageId: string) {
 export default definePlugin({
     name: "SilentEdit",
     description: "\"Silently\" edit a message without showing the edit tag and bypass Vencord's message logger.",
+    tags: ["Chat", "Privacy"],
     authors: [{ name: "Aurick", id: 1348025017233047634n }, TestcordDevs.nnenaza],
     dependencies: ["MessagePopoverAPI"],
     settings,

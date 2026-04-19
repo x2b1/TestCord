@@ -83,5 +83,3 @@ export function profileable<
         ...f(set as any, get as any)
     });
 }
-
-

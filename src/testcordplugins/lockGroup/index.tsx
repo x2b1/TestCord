@@ -282,6 +282,7 @@ export default definePlugin({
     name: "LockGroup",
     description:
         "Allows locking/unlocking groups via context menu (prevents adding members)",
+    tags: ["Utility", "Chat"],
     authors: [
         {
             name: "Bash",

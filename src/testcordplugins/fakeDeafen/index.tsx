@@ -164,6 +164,7 @@ function handleKeydown(e: KeyboardEvent) {
 export default definePlugin({
     name: "fakeDeafen (dot's one)",
     description: "Control which voice states are updated with customizable keybinds.",
+    tags: ["Voice", "Privacy"],
     authors: [TestcordDevs.dot],
 
     state(type: string, real: boolean) {

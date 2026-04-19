@@ -37,6 +37,7 @@ export const settings = definePluginSettings({
 export default definePlugin({
     name: "UserpluginInstaller",
     description: "Install userplugins with a simple button click",
+    tags: ["Utility", "Developers"],
     async checkPluginUpdates() {
         for (const p of this.plugins.value()) {
             if (await Native.isUpdateAvailableForPlugin(p.directory!)) {

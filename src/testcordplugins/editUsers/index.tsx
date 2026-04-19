@@ -17,6 +17,7 @@ import { openUserEditModal } from "./modal";
 export default definePlugin({
     name: "EditUsers",
     description: "Edit users",
+    tags: ["Utility", "Customisation"],
     authors: [TestcordDevs.x2b],
 
     settings,

@@ -661,6 +661,7 @@ class PasswordManagerUI {
 export default definePlugin({
     name: "PasswordManager",
     description: "Securely store and manage your passwords",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.x2b],
 
     passwordManager: null as PasswordManager | null,

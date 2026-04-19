@@ -69,6 +69,7 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
     description: "Adds icons to indicate relationships with users.",
+    tags: ["Friends", "Utility"],
     start() {
         Object.entries(indicatorLocations).forEach(([key, value]) => {
             if (settings.store[key]) value.onEnable();

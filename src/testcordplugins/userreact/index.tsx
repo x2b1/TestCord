@@ -392,6 +392,7 @@ function SettingsPanel() {
 export default definePlugin({
     name: "UserReact",
     description: "Automatically react to every message from specific users with custom emojis",
+    tags: ["Reactions", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     settingsPanel: SettingsPanel,

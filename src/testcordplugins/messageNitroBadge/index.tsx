@@ -7,10 +7,9 @@
 import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { FluxDispatcher as Flux, Forms } from "@webpack/common";
-
 
 const options = {
     type: "EXPERIMENT_OVERRIDE_BUCKET" as const,
@@ -32,6 +31,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MessageNitroBadge",
     description: "Enables the Social Proofing Message Nitro Badge experiment",
+    tags: ["Chat", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings,
     dependencies: ["Experiments"],
@@ -46,8 +46,3 @@ export default definePlugin({
     start: () => Flux.dispatch({ ...options, experimentBucket: Number(settings.store.experimentTreatment) }),
     stop: () => Flux.dispatch({ ...options, experimentBucket: null }),
 });
-
-
-
-
-

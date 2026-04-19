@@ -330,6 +330,7 @@ const FormatButton: ChatBarButtonFactory = () => {
 export default definePlugin({
   name: "BetterFormattingRedux",
   description: "Adds a button to enable different text formatting options in the input-bar.",
+    tags: ["Chat", "Utility"],
   authors: [EquicordDevs.omaw],
   dependencies: ["MessageEventsAPI", "ChatInputButtonAPI"],
   start: () => {

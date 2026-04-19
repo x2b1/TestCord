@@ -29,7 +29,3 @@ export interface PluginInfo {
     CONTRIBUTORS?: Record<string, PluginAuthor & { github?: string; }>,
     README?: string;
 }
-
-
-
-

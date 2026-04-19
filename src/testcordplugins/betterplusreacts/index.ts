@@ -14,6 +14,7 @@ export default definePlugin({
     name: "BetterPlusReacts",
     authors: [TestcordDevs.x2b],
     description: "The amount of plus before :emoji: is the message to add it to",
+    tags: ["Reactions", "Utility"],
     patches: [
         {
             find: ".SLASH_COMMAND_USED,",

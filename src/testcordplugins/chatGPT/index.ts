@@ -158,6 +158,7 @@ export default definePlugin({
     name: "ChatGPT",
     description:
         "Allows using ChatGPT directly in Discord with configurable settings",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
     settings,

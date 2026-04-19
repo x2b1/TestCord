@@ -464,6 +464,7 @@ function onToggle(e: KeyboardEvent) {
 export default definePlugin({
     name: "ClassHighlighter",
     description: "Highlight and inspect elements easily, with focus on class names.",
+    tags: ["Customisation", "Developers"],
     authors: [TestcordDevs.x2b],
     settings,
 

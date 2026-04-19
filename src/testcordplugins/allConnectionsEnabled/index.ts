@@ -12,6 +12,7 @@ import { Connection } from "./connection-types";
 export default definePlugin({
     name: "AllConnectionsEnabled",
     description: "Enables all connections",
+    tags: ["Utility", "Customisation"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

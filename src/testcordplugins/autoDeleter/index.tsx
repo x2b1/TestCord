@@ -306,6 +306,7 @@ export default definePlugin({
     name: "AutoDeleter",
     description:
         "Automatically deletes your messages after a configurable delay (persists after restart)",
+    tags: ["Chat", "Utility"],
     authors: [
         {
             name: "Bash",

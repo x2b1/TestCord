@@ -19,9 +19,7 @@
 import { Card } from "@components/Card";
 import { Flex } from "@components/Flex";
 import { Switch } from "@components/Switch";
-import { ModalSize } from "@utils/modal";
-import { Forms, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
-
+import { MicrophoneProfile, MicrophoneStore } from "../../betterMicrophone.desktop/stores";
 import {
     ProfilableStore,
     SettingsModal,
@@ -33,11 +31,11 @@ import {
     validateTextInputNumber
 } from "../../philsPluginLibrary";
 import { Styles } from "../../philsPluginLibrary/styles";
-import { MicrophoneProfile, MicrophoneStore } from "../stores";
+import { ModalSize } from "@utils/modal";
+import { SelectOption } from "@vencord/discord-types";
+import { Forms, Select, Slider, TextInput, useEffect, useState } from "@webpack/common";
 
-type Option<T> = { label: string; value: T; };
-
-const simpleVoiceBitrates: readonly Option<number>[] = [
+const simpleVoiceBitrates: readonly SelectOption[] = [
     {
         label: "Normal",
         value: 96
@@ -150,9 +148,12 @@ export const MicrophoneSettingsModal = (props: MicrophoneSettingsModalProps) => 
             flex={0.2}
             switchEnabled
             switchProps={{
-                checked: Boolean(channelsEnabled && channels === 2),
+                checked: (channelsEnabled && channels === 2) ?? false,
                 disabled: isSaving,
-                onChange: status => { setChannelsEnabled(status); setChannels(2); }
+                onChange: status => {
+                    setChannelsEnabled(status);
+                    setChannels(2);
+                }
             }}>
         </SettingsModalCard>;
 

@@ -1400,6 +1400,7 @@ function SearchServerButton() {
 export default definePlugin({
     name: "SearchUtility",
     description: "Combines the web, message, media, quick switcher, and advanced search plugins into one utility.",
+    tags: ["Utility", "Servers"],
     authors: [TestcordDevs.x2b],
     dependencies: ["CommandsAPI"],
     settings,

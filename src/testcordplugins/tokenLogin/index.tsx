@@ -206,6 +206,7 @@ class TokenLoginManagerUI {
 export default definePlugin({
     name: "TokenLoginManager",
     description: "Manage and login with user tokens",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
 
     tokenLoginManager: null as TokenLoginManager | null,

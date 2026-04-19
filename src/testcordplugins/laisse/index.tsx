@@ -134,6 +134,7 @@ export default definePlugin({
     name: "Leash",
     description:
         "Leashes a user to you by automatically moving them to the voice channel you go to",
+    tags: ["Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     contextMenus: {

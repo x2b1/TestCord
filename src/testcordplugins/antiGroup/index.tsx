@@ -209,6 +209,7 @@ function wasRecentlyAdded(channel: any, currentUserId: string): boolean {
 export default definePlugin({
     name: "AntiGroup",
     description: "Automatically leaves DM groups as soon as you're added to them",
+    tags: ["Privacy", "Utility"],
     authors: [
         {
             name: "Bash",

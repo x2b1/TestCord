@@ -64,6 +64,7 @@ function messageDeleteWrapper(channelId, messageId) {
 export default definePlugin({
     name: "AntiLog",
     description: "abuses a discord client side glitch to mask your deleted message, so a user with vencord's messagelogger plugin enabled will not be able to see the deleted message.",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     dependencies: ["MessagePopoverAPI"],
     settings,

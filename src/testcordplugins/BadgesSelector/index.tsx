@@ -1,5 +1,4 @@
 import { Devs } from "@utils/constants";
-import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { Menu, Toasts } from "@webpack/common";
@@ -444,10 +443,11 @@ let originalGetUserProfile: any;
 export default definePlugin({
     name: "BadgeSelector",
     description: "Customize user badges - add, remove, or hide any Discord badge",
+    tags: ["Customisation", "Appearance"],
     authors: [
         { id: 1263457746829705310n, name: '.q1' },
         { id: 1147940825330876538n, name: 'Jelly' },
-        { id: 1403404140461297816n, name: 'Sami' }, TestcordDevs.nnenaza,
+        { id: 1403404140461297816n, name: 'Sami' },
     ],
 
     async start() {
@@ -532,7 +532,21 @@ export default definePlugin({
                             <Menu.MenuCheckboxItem
                                 key={badge.id}
                                 id={`badge-${badge.id}`}
-                                label={badge.title}
+                                label={
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <img
+                                            src={`https://cdn.discordapp.com/badge-icons/${badge.icon}.png`}
+                                            alt=""
+                                            width="18"
+                                            height="18"
+                                            style={{
+                                                borderRadius: "3px",
+                                                imageRendering: "crisp-edges"
+                                            }}
+                                        />
+                                        <span>{badge.title}</span>
+                                    </div>
+                                }
                                 checked={isChecked}
                                 action={() => toggleBadge(user.id, badge, !!hasActualBadge)}
                             />
@@ -582,4 +596,3 @@ export default definePlugin({
         }
     }
 });
-

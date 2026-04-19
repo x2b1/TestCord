@@ -30,6 +30,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ShyTyping",
     description: "Prevents you from accidentally revealing that you're lurking in a channel",
+    tags: ["Chat", "Privacy"],
     authors: [TestcordDevs.x2b],
     settings,
     patches: [

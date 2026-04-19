@@ -15,6 +15,7 @@ import { ArrowSvg, checkForIconExistence, cl, ServerProfileComponent } from "./u
 export default definePlugin({
     name: "BetterForwardMeta",
     description: "Access server profile under forwarded messages (if available) and always show time",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     ForwardFooter(message: any) {
         const { guild_id, channel_id, message_id } = message.message.messageReference;

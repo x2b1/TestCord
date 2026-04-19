@@ -55,6 +55,7 @@ let tooltipTimeout: any;
 export default definePlugin({
     name: "NativeTranslate",
     description: "translate plugin for those who wanna seem like real native lang speakers (removes capital letters commas and dots from translated content to seem more natural)",
+    tags: ["Chat", "Utility"],
     dependencies: ["ChatInputButtonAPI", "MessageAccessoriesAPI", "MessagePopoverAPI"],
     authors: [TestcordDevs.x2b],
     settings,

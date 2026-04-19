@@ -86,6 +86,7 @@ const patchDesc = (desc: any) => ({
 export default definePlugin({
     name: "StereoPremium",
     description: "All-in-one stereo: output, bitrate, screenshare.",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
 

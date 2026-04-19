@@ -270,6 +270,7 @@ function QuestButton() {
 export default definePlugin({
     name: "AutoQuestAccepter",
     description: "Auto-accepts quests, then auto-claims them one by one after completion (captcha handled manually). Uses questify for completion.",
+    tags: ["Utility", "Servers"],
     authors: [TestcordDevs.x2b],
     settings,
 

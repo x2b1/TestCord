@@ -632,6 +632,7 @@ export default definePlugin({
     name: "MessageCleaner",
     description:
         "Cleans all messages in a channel with intelligent rate limiting management, real-time statistics and secure confirmation",
+    tags: ["Chat", "Utility"],
     authors: [
         {
             name: "Bash",

@@ -9,6 +9,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "perf",
 description: "[RISKY]Collection of small performance improvements[RISKY]",
+    tags: ["Developers", "Utility"],
     authors: [
         {
             id: 579731384868798464n,

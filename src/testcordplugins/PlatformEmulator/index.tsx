@@ -33,6 +33,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "PlatformEmulator",
     description: "PlatformEmulator allows you to spoof your Discord platform (Windows, Linux, Android, iOS, ect.)",
+    tags: ["Privacy", "Utility"],
     authors: [{ name: "Sami", id: 1403404140461297816n }],
     patches: [
         {

@@ -4,6 +4,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "NSFWGateBypass",
     description: "Forces 'Verified Adult' status, unlocks Stages, and clears all invite blocks.",
+    tags: ["Privacy", "Utility"],
     authors: [
         {
             name: "dxrx99",

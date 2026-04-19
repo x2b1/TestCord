@@ -78,7 +78,8 @@ function Flag({ id }: { id: string; }) {
 
 export default definePlugin({
     name: "UserFlags",
-    description: "Add \"flags\" to users that will always show under their messages",
+    description: "Add \",
+    tags: ["Utility", "Appearance"]flags\" to users that will always show under their messages",
     authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {

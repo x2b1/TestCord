@@ -4,6 +4,7 @@ import { filters, find } from "@webpack";
 export default definePlugin({
     name: "AgeVerificationBypass",
     description: "Bypass Discord's age verification checks, allowing you to access everything without verifying your age.",
+    tags: ["Privacy", "Utility"],
     authors: [{
         name: "dxrx99",
         id: 1463629522359423152n 

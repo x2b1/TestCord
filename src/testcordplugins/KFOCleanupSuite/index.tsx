@@ -412,6 +412,7 @@ async function stopDelete(ctx: any) {
 export default definePlugin({
     name: "Smart Cleanup Suite",
     description: "Delete your messages or all messages + cleanup spam, media, and messages between two points",
+    tags: ["Utility", "Developers"],
     authors: [TestcordDevs.SirPhantom89,],
     settings,
     commands: [

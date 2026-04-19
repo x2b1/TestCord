@@ -10,6 +10,7 @@ import { TestcordDevs } from "@utils/constants";
 export default definePlugin({
     name: "NewlinesInCommands",
     description: "Allows shift+enter to create new lines in command inputs.",
+    tags: ["Chat", "Commands"],
     authors: [TestcordDevs.x2b],
 
     patches: [

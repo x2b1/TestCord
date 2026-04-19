@@ -16,12 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { createDummyUser, types, UserSummaryItem } from "../../philsPluginLibrary";
 import { PluginAuthor } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { useEffect, UserUtils, useState } from "@webpack/common";
 import React from "react";
-
-import { createDummyUser, types, UserSummaryItem } from "../../philsPluginLibrary";
 
 export interface AuthorUserSummaryItemProps extends Partial<React.ComponentProps<types.UserSummaryItem>> {
     authors: PluginAuthor[];
@@ -55,5 +54,3 @@ export const AuthorUserSummaryItem = (props: AuthorUserSummaryItemProps) => {
         />
     );
 };
-
-

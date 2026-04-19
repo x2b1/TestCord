@@ -1011,6 +1011,7 @@ export default definePlugin({
     name: "AudioCenter",
     description:
         "Complete audio center: mixing, virtual device, limiting and diagnostics",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
 

@@ -14,6 +14,7 @@ import { settings } from "./settings";
 export default definePlugin({
     name: "Maxwell :3",
     description: "Silly Silly Silly",
+    tags: ["Utility", "Fun"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     dependencies: ["CommandsAPI"],
     settings,

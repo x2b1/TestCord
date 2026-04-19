@@ -6,6 +6,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "Eval",
     description: "Adds a / command to evaluate JavaScript on your client",
+    tags: ["Developers", "Console"],
     authors: [Devs.nin0dev],
     commands: [{
         name: "eval",

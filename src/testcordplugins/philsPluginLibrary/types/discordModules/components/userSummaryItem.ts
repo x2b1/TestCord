@@ -33,5 +33,3 @@ export interface UserSummaryItemProps {
 }
 
 export type UserSummaryItem = ComponentType<UserSummaryItemProps>;
-
-

@@ -20,7 +20,7 @@ let originalUpdatePresence: Function;
 
 export default definePlugin({
     name: "AMRPCStatusDisplayType",
-    tags: ["AppleMusicRichPresence"],
+    tags: ["Activity", "Customisation"],
     description: "Make MusicRPC show the track / artist name in the member list",
     authors: [Devs.nin0dev],
     hidden: !IS_MAC,

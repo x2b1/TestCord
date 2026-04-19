@@ -111,6 +111,7 @@ export default definePlugin({
     settings,
     name: "CtrlEnterSave",
     description: "Adds a keybind to save settings. YOU HAVE TO SET THE KEYBIND IN SETTINGS.",
+    tags: ["Chat", "Shortcuts"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

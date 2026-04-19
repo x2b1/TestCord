@@ -15,6 +15,7 @@ export default definePlugin({
     settings,
     name: "CustomFolderIcons",
     description: "Customize folder icons with any png",
+    tags: ["Customisation", "Appearance"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

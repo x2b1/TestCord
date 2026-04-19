@@ -9,6 +9,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "TrustMeBro",
     description: "Bypasses Discord’s age verification required under the UK Online Safety Act.",
+    tags: ["Privacy", "Utility"],
     authors: [{ name: "Menhera.st Team", id: 1325012503419420734n }],
 
     start() {

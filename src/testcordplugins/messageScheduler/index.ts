@@ -129,6 +129,7 @@ function scheduleMessage(channelId: string, content: string, delay: number): voi
 export default definePlugin({
     name: "MessageScheduler",
     description: "Schedule messages to be sent at a specific time or after a delay",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
 

@@ -18,6 +18,7 @@ const FavoritesStore = findByPropsLazy("getGIFFavorites", "getFavorites");
 export default definePlugin({
     name: "GifSpammer",
     description: "Send all your favorite GIFs to the current channel with a 2 second delay between each.",
+    tags: ["Media", "Fun"],
     authors: [TestcordDevs.nnenaza],
 
     commands: [

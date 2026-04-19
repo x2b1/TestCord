@@ -10,6 +10,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "BlockKrisp",
     description: "Prevent Krisp from loading",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     patches: [
         // Block loading modules on Desktop

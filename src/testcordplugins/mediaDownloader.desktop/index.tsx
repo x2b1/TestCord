@@ -195,6 +195,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "MediaDownloader",
     description: "Download and send videos with from YouTube, Twitter, Reddit and more.",
+    tags: ["Media", "Utility"],
     authors: [TestcordDevs.x2b],
     reporterTestable: ReporterTestable.Patches,
     settings,

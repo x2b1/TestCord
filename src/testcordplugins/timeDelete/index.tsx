@@ -95,6 +95,7 @@ function TimeDeleteButton() {
 export default definePlugin({
     name: "timeDelete",
     description: "Automatically deletes your sent messages after a configurable delay.",
+    tags: ["Utility", "Chat"],
     authors: [TestcordDevs.x2b],
     dependencies: ["HeaderBarAPI"],
     settings,

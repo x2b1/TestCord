@@ -826,6 +826,7 @@ export default definePlugin({
     name: "SoundboardPro",
     description:
         "Advanced soundboard with real sounds and synthetic sounds. Plays sounds directly in Discord voice channel.",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     settingsAboutComponent: SettingsComponent,

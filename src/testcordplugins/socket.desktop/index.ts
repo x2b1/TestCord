@@ -35,6 +35,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "Socket",
     description: "Send messages to a channel through a TCP socket",
+    tags: ["Utility", "Developers"],
     authors: [Devs.nin0dev],
     settings,
     start: () => Native.startServer(),

@@ -29,6 +29,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "ReactionLogger",
     description: "Get notified when a user reacts to your messages",
+    tags: ["Reactions", "Utility"],
     authors: [TestcordDevs.x2b],
 
     settings,

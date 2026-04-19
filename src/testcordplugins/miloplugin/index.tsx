@@ -198,6 +198,7 @@ const SillyKittenButton: ChatBarButtonFactory = ({ isMainChat }) => {
 export default definePlugin({
     name: "Silly Kitten",
     description: "Transform your messages into cute silly kitten text! >w<",
+    tags: ["Utility", "Fun"],
     authors: [TestcordDevs.x2b, TestcordDevs.milo],
     settings: settings,
     dependencies: ["ChatInputButtonAPI"],

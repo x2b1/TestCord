@@ -44,6 +44,7 @@ function handler(c, msg) {
 export default definePlugin({
     name: "AntiNameChange",
     description: "for that one friend who keeps changing their username/account",
+    tags: ["Privacy", "Utility"],
     authors: [Devs.nin0dev],
     settings,
     onBeforeMessageSend: handler,

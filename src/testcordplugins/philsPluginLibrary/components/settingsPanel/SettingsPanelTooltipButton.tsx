@@ -32,5 +32,3 @@ export const SettingsPanelTooltipButton = (props: SettingsPanelTooltipButtonProp
         </Tooltip>
     );
 };
-
-

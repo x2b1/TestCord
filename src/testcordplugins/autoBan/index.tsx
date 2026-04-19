@@ -483,6 +483,7 @@ function EncModals(props) {
 export default definePlugin({
     name: "autoBan",
     description: "Tools to automatically ban users. Enhanced VC owner detection",
+    tags: ["Servers", "Utility"],
     authors: [TestcordDevs.dot],
     settings,
     contextMenus: {

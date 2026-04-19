@@ -103,6 +103,7 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = (children, { messag
 export default definePlugin({
     name: "SilentDelete",
     description: "\"Silently\" deletes a message. Bypass message loggers by replacing the message with a placeholder.",
+    tags: ["Chat", "Privacy"],
     authors: [
         { name: "Aurick", id: 1348025017233047634n },
         { name: "appleflyer", id: 1209096766075703368n }, TestcordDevs.nnenaza
@@ -196,5 +197,3 @@ export default definePlugin({
         removeButton("SilentDelete");
     }
 });
-
-

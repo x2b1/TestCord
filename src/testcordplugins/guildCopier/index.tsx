@@ -499,6 +499,7 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "GuildCopier",
     description: "Copy an entire guild including channels, roles, permissions, emotes, stickers, and categories to create a new identical guild.",
+    tags: ["Servers", "Utility"],
     authors: [TestcordDevs.x2b, TestcordDevs.nnenaza],
     dependencies: [],
 

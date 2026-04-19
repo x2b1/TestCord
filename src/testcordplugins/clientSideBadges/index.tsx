@@ -19,6 +19,7 @@ function isCurrentUser(userId: string) {
 export default definePlugin({
     name: "ClientSideBadges",
     description: "Adds client-side badges to your profile. Other users can't see them!",
+    tags: ["Customisation", "Appearance"],
     authors: [
         Devs.nin0dev,
         { name: "KrystalSkullOfficial", id: 929208515883569182n },

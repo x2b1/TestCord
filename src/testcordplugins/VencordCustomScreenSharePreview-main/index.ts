@@ -16,6 +16,7 @@ import { parseStreamKey, stopSendingScreenSharePreview } from "./utilities";
 export default definePlugin({
     name: "CustomScreenSharePreview",
     description: "Adds ability to select your own image as screen share preview.",
+    tags: ["Voice", "Utility"],
     authors: [{
         name: "no one",
         id: 238416205193847602n,

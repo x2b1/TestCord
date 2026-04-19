@@ -13,6 +13,7 @@ import style from "./style.css?managed";
 export default definePlugin({
     name: "FavoriteMedia",
     description: "Favorite any type of media",
+    tags: ["Media", "Utility"],
     authors: [TestcordDevs.x2b],
 
     patches: [

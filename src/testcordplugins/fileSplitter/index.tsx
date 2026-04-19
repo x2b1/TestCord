@@ -313,6 +313,7 @@ export default definePlugin({
     name: "File Splitter",
     description:
         "Split large files into multiple parts to bypass size limits and share them easily.",
+    tags: ["Utility", "Chat"],
     authors: [TestcordDevs.x2b],
     settings,
 

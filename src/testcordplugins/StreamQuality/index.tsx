@@ -473,6 +473,7 @@ function onConnection(connection: any) {
 export default definePlugin({
     name: "CustomStreamQuality",
     description: "Customize your stream quality beyond Discord's limits. Set custom FPS, resolution, bitrate, codec, keyframe interval, and HDR.",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
     patches: [

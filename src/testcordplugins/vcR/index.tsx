@@ -117,6 +117,7 @@ const settings = definePluginSettings(
 export default definePlugin({
     name: "vcGrape",
     description: "R any loser in a vc with this trolling bot, originally created by atticus. Updated and fixed by dot",
+    tags: ["Utility"],
     authors: [TestcordDevs.dot],
     contextMenus: {
         "channel-context": createContextMenuPatch(),

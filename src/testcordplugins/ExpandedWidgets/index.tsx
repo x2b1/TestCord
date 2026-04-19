@@ -10,6 +10,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "ExpandedWidgets",
     description: "Enables setting multiple of the same tags for a game in your profile, Author: sadie but they aint in devs so i have to replace w myself to complete gh checks.",
+    tags: ["Customisation", "Appearance"],
     authors: [
         TestcordDevs.x2b
     ],

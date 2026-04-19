@@ -46,6 +46,7 @@ function queueSong(id: string) {
 export default definePlugin({
     name: "SpotifyAddToQueue",
     description: "Adds a button in Spotify embeds to add the song to the queue",
+    tags: ["Media", "Utility"],
     authors: [Devs.nin0dev],
     iframeMessageListener: e => {
         try {

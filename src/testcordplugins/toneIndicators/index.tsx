@@ -89,6 +89,7 @@ type ParseReturn = ReactProps | { type: "text", content: string; };
 export default definePlugin({
     name: "ToneIndicators",
     description: "Adds descriptions when hovering over tone indicators.",
+    tags: ["Notifications", "Accessibility"],
     nexulien: true,
     authors: [TestcordDevs.x2b],
 

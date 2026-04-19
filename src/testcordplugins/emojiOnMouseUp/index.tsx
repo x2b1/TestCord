@@ -10,6 +10,7 @@ import definePlugin from "@utils/types";
 export default definePlugin({
     name: "EmojiOnMouseUp",
     description: "Sends the emoji you are hovering when you take your mouse button up.",
+    tags: ["Emotes", "Utility"],
     authors: [TestcordDevs.x2b],
     patches: [
         {

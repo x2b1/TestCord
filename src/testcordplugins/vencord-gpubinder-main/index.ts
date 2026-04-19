@@ -34,6 +34,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "GpuBinder",
     description: "Forces Discord to stay bound to a specific GPU even after updates by managing Windows Registry keys.",
+    tags: ["Utility", "Developers"],
     authors: [{ name: "unclide", id: "395504896817758210" }],
     
     // Safety check: registry access is only possible on Desktop

@@ -16,12 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { UserStore } from "@webpack/common";
-
+import { PluginInfo } from "../../betterScreenshare.desktop/constants";
+import { logger } from "../../betterScreenshare.desktop/logger";
+import { screenshareAudioStore } from "../../betterScreenshare.desktop/stores/screenshareAudioStore";
 import { Emitter, MediaEngineStore, patchConnectionAudioTransportOptions, Patcher, types } from "../../philsPluginLibrary";
-import { PluginInfo } from "../constants";
-import { logger } from "../logger";
-import { screenshareAudioStore } from "../stores/screenshareAudioStore";
+import { UserStore } from "@webpack/common";
 
 export class ScreenshareAudioPatcher extends Patcher {
     private mediaEngineStore: types.MediaEngineStore;
@@ -59,38 +58,20 @@ export class ScreenshareAudioPatcher extends Patcher {
                 this.forceUpdateTransportationOptions = forceUpdateTransportationOptionsAudio;
                 this.oldSetTransportOptions = oldSetTransportOptionsAudio;
 
-                (Emitter.addListener as (
-                    emitter: any,
-                    type: "on" | "once",
-                    event: string,
-                    fn: (...args: any[]) => void,
-                    plugin?: string
-                ) => () => void)(connection.emitter as any, "on", "connected", () => {
+                Emitter.addListener(connection.emitter, "on", "connected", () => {
                     this.forceUpdateTransportationOptions();
                 });
 
-                (Emitter.addListener as (
-                    emitter: any,
-                    type: "on" | "once",
-                    event: string,
-                    fn: (...args: any[]) => void,
-                    plugin?: string
-                ) => () => void)(connection.emitter as any, "on", "destroy", () => {
+                Emitter.addListener(connection.emitter, "on", "destroy", () => {
                     this.forceUpdateTransportationOptions = () => void 0;
                 });
             };
 
-        (Emitter.addListener as (
-            emitter: any,
-            type: "on" | "once",
-            event: string,
-            fn: (...args: any[]) => void,
-            plugin?: string
-        ) => () => void)(
-            this.mediaEngine.emitter as any,
+        Emitter.addListener(
+            this.mediaEngine.emitter,
             "on",
             "connection",
-            connectionEventFunction as (...args: any[]) => void,
+            connectionEventFunction,
             PluginInfo.PLUGIN_NAME
         );
 
@@ -101,5 +82,3 @@ export class ScreenshareAudioPatcher extends Patcher {
         return this._unpatch();
     }
 }
-
-

@@ -35,5 +35,3 @@ export const CopyButton = (props: React.ComponentProps<typeof Button>) => {
             {...props} />
     );
 };
-
-

@@ -494,6 +494,7 @@ function ZipAttachmentPreview({ attachment }: { attachment: ZipAttachmentLike; }
 export default definePlugin({
     name: "ZIP+",
     description: "Preview and navigate inside zip files, plus auto-zip uploads.",
+    tags: ["Utility", "Chat"],
     authors: [EquicordDevs.justjxke, EquicordDevs.SSnowly, EquicordDevs.benjii],
 
     settings,

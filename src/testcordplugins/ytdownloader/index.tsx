@@ -169,6 +169,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "YTdownloader",
     description: "Download music (320kbps) or video (1080p) from YouTube using yt-dlp and Deno. (plugin based on MediaDownloader)",
+    tags: ["Media", "Utility"],
     authors: [TestcordDevs.x2b],
     reporterTestable: ReporterTestable.Patches,
     settings,

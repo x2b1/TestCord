@@ -25,6 +25,7 @@ const settings = definePluginSettings(
 export default definePlugin({
     name: "Grammar",
     description: "Tweaks your messages to make them look nicer and have better grammar",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     start() {

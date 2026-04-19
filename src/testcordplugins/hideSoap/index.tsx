@@ -156,7 +156,7 @@ export default definePlugin({
     name: "AntiSoap (hideSoap)",
     description: "basically hide all messages from j*ws",
     authors: [TestcordDevs.x2b],
-    tags: ["hebrew", "jewish", "hide", "block", "soap", "language"],
+    tags: ["Customisation", "Appearance"],
     settings,
     shouldHideUser,
     hiddenReplyComponent,

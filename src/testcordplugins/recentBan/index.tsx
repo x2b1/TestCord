@@ -187,6 +187,7 @@ const good = async (e) => {
 export default definePlugin({
     name: "recentBan",
     description: "Tools to ban recently joined VC users (only if owner)",
+    tags: ["Servers", "Utility"],
     authors: [TestcordDevs.dot],
     settings,
     start() {

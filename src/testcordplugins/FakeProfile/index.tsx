@@ -25,6 +25,7 @@ import { fakeProfileSection } from "./ui/fakeProfileSection";
 export default definePlugin({
     name: "fakeProfile",
     description: "Unlock Discord profile effects, themes, avatar decorations, and custom badges without the need for Nitro.",
+    tags: ["Privacy", "Customisation"],
     authors: [{
         name: "Sampath",
         id: 984015688807100419n,

@@ -39,6 +39,7 @@ export default definePlugin({
     name: "RipCordStereoFixed",
     authors: [{ name: "Hahac", id: 1140323729432399882n }],
     description: "Enhanced stereo sound with configurable settings",
+    tags: ["Voice", "Utility"],
     settings,
 
     patches: [

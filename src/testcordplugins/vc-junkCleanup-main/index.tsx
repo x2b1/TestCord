@@ -37,7 +37,7 @@ export default definePlugin({
     authors: [Devs.Sqaaakoi],
     settings,
     patches: ParsedPatches.flatMap(p => p.patches),
-    tags: ["junk", "bloat", "debloat", "shop", "gift", "nitro", "ad", "advertisement", "adblock"],
+    tags: ["Utility", "Developers"],
     settingsAboutComponent: () => {
         return <div>
             <Forms.FormTitle>Total patch count: {ParsedPatches.length}</Forms.FormTitle>

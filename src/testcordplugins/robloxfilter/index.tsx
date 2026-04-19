@@ -548,6 +548,7 @@ async function onBeforeMessageSend(channelId: string, messageObj: { content: str
 export default definePlugin({
     name: "RobloxFilter",
     description: "Protects your main account by filtering messages that violate Discord's ToS. Block, censor with asterisks, or SFW-replace offensive content. Named RobloxFilter because it sounds funny.",
+    tags: ["Fun", "Utility"],
     authors: [TestcordDevs.x2b],
 
     settings,

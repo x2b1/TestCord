@@ -25,6 +25,7 @@ async function getWhateverShouldBeSentFromMy() {
 export default definePlugin({
     name: "SentFromMyUname",
     description: "Add your uname/useragent to every single message you send",
+    tags: ["Chat", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
         signatureToUse: {

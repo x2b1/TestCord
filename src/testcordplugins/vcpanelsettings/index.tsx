@@ -166,6 +166,7 @@ function VoiceSettings() {
 export default definePlugin({
     name: "VCPanelSettings",
     description: "Control voice settings right from the voice panel",
+    tags: ["Voice", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings: definePluginSettings({
         title1: {

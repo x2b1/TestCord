@@ -69,6 +69,7 @@ export default definePlugin({
     name: "ComposeMode",
     authors: [TestcordDevs.x2b],
     description: "Toggle writing multi-line messages by default",
+    tags: ["Chat", "Utility"],
     dependencies: ["CommandsAPI", "ChatInputButtonAPI"],
     settings,
 

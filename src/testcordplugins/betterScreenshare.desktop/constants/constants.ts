@@ -16,25 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { Devs } from "@utils/constants";
-
 import { types } from "../../philsPluginLibrary";
+import { Devs } from "@utils/constants";
 
 export const PluginInfo = {
     PLUGIN_NAME: "BetterScreenshare",
     DESCRIPTION: "This plugin allows you to further customize your screen sharing.",
     AUTHOR: {
-        ...Devs.feelslove,
-        github: "https://github.com/kanvekin"
+        ...Devs.philhk,
+        github: "https://github.com/philhk"
     },
     CONTRIBUTORS: {
-        feelslove: {
-            github: "https://github.com/kanvekin",
-            id: 1368308663504343041n,
-            name: "kaanseas"
+        walrus: {
+            github: "https://github.com/philhk",
+            id: 305317288775778306n,
+            name: "walrus"
         },
+        Loukious: {
+            github: "https://github.com/loukious",
+            id: 211461918127292416n,
+            name: "Loukious"
+        }
     },
     README: "https://github.com/Vendicated/Vencord/tree/main/src/plugins/betterScreenshare"
 } as const satisfies types.PluginInfo;
-
-

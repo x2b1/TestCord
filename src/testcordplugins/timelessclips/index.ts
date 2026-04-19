@@ -23,6 +23,7 @@ export default definePlugin({
     name: "TimelessClips",
     authors: [TestcordDevs.x2b],
     description: "Add a your own clip length",
+    tags: ["Voice", "Utility"],
     patches: [
         {
             find: '"Save clip keybind unset"',

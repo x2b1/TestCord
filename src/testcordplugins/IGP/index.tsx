@@ -8,7 +8,6 @@ import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
-import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
 
@@ -146,7 +145,6 @@ async function loadOpenPGP(): Promise<void> {
     if (openpgpLoaded) return;
     if (openpgpLoadPromise) return openpgpLoadPromise;
 
-    // eslint-disable-next-line no-async-promise-executor
     openpgpLoadPromise = new Promise(async (resolve, reject) => {
         // First try to load from unpkg
         const script = document.createElement("script");
@@ -299,7 +297,7 @@ class KeyManager {
 
     private loadKeys(): void {
         try {
-            const stored = JSON.parse(settings?.store?.knownPublicKeys || "{}");
+            const stored = JSON.parse(settings.store.knownPublicKeys || "{}");
             this.keyCache = new Map(Object.entries(stored));
             logger.info(`Loaded ${this.keyCache.size} known public keys`);
         } catch (err) {
@@ -622,6 +620,7 @@ const settings = definePluginSettings({
     pgpPrivateKey: {
         type: OptionType.STRING,
         description: "Your PGP private key (armored format)",
+    tags: ["Utility"],
         default: "",
         hidden: false,
     },
@@ -657,8 +656,8 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "IGP",
-    description: "PGP",
-    authors: [{ name: "irritably", id: 928787166916640838n }, TestcordDevs.nnenaza], 
+    description: "Illegalcord PGP encryption",
+    authors: [{ name: "irritably", id: 928787166916640838n }], 
     settings,
 
     renderChatBarButton: ChatBarIcon,
@@ -705,8 +704,8 @@ export default definePlugin({
                     { name: "email", description: "Your email", type: 3, required: true },
                     { name: "passphrase", description: "Passphrase for private key", type: 3, required: true },
                     { name: "type", description: "Key type", type: 3, choices: [
-                        { name: "ECC (recommended)", value: "ecc", label: "ECC (recommended)" },
-                        { name: "RSA 4096", value: "rsa", label: "RSA 4096" }
+                        { name: "ECC (recommended)", value: "ecc" },
+                        { name: "RSA 4096", value: "rsa" }
                     ]}
                 ]},
                 { name: "import", description: "Import a contact's public key", type: 1, options: [
@@ -858,5 +857,4 @@ export default definePlugin({
         }
     ],
 });
-
 

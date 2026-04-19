@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { PluginInfo } from "../../betterMicrophone.desktop/constants";
+import { logger } from "../../betterMicrophone.desktop/logger";
+import { microphoneStore } from "../../betterMicrophone.desktop/stores";
 import { Emitter, MediaEngineStore, Patcher, types } from "../../philsPluginLibrary";
 import { patchConnectionAudioTransportOptions } from "../../philsPluginLibrary/patches/audio";
-import { PluginInfo } from "../constants";
-import { logger } from "../logger";
-import { microphoneStore } from "../stores";
 
 export class MicrophonePatcher extends Patcher {
     private mediaEngineStore: types.MediaEngineStore;
@@ -54,17 +54,11 @@ export class MicrophonePatcher extends Patcher {
                 this.forceUpdateTransportationOptions = forceUpdateTransportationOptions;
             };
 
-        (Emitter.addListener as (
-            emitter: any,
-            type: "on" | "once",
-            event: string,
-            fn: (...args: any[]) => void,
-            plugin?: string
-        ) => () => void)(
-            this.mediaEngine.emitter as any,
+        Emitter.addListener(
+            this.mediaEngine.emitter,
             "on",
             "connection",
-            connectionEventFunction as (...args: any[]) => void,
+            connectionEventFunction,
             PluginInfo.PLUGIN_NAME
         );
 
@@ -75,5 +69,3 @@ export class MicrophonePatcher extends Patcher {
         return this._unpatch();
     }
 }
-
-

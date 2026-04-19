@@ -69,6 +69,7 @@ export default definePlugin({
     name: "AutoDisconnect",
     description:
         "Automatically disconnects from voice channel when a specific user joins",
+    tags: ["Utility", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings,
     contextMenus: {

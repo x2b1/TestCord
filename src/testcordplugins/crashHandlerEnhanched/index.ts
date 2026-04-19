@@ -297,7 +297,7 @@ function generateCrashId(): string {
 
 function getMemoryUsage(): any {
     if (typeof performance !== "undefined" && (performance as any).memory) {
-        const { memory } = (performance as any);
+        const memory = (performance as any).memory;
         return {
             usedJSHeapSize: memory.usedJSHeapSize,
             totalJSHeapSize: memory.totalJSHeapSize,
@@ -489,7 +489,8 @@ function stopPerformanceMonitoring(): void {
 export default definePlugin({
     name: "CrashHandlerEnhanced",
     description: "Advanced crash handling with detailed logging, statistics, preventive measures, and intelligent recovery",
-    authors: [Devs.Nuckyz],
+    tags: ["Developers", "Utility"],
+    authors: [Devs.Nuckyz, Devs.Mifu],
     enabledByDefault: true,
 
     settings,

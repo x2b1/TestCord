@@ -282,6 +282,7 @@ export default definePlugin({
     name: "Abbreviation",
     description:
         "Automatically transforms abbreviations into full text when sending messages",
+    tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     dependencies: ["MessageEventsAPI"],
     settings,

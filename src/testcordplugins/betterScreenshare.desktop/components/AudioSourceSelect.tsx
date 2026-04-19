@@ -16,17 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { screenshareStore } from "../../betterScreenshare.desktop/stores";
+import { MediaEngineStore, types } from "../../philsPluginLibrary";
 import { Select, useEffect, useState } from "@webpack/common";
 import React from "react";
 
-import { MediaEngineStore, types } from "../../philsPluginLibrary";
-import { screenshareStore } from "../stores";
-
-export const AudioSourceSelect = (
-    props?: Omit<React.ComponentProps<typeof Select>, "options" | "select" | "isSelected" | "serialize">
-) => {
+export const AudioSourceSelect = (props?: React.ComponentProps<typeof Select>) => {
     const { use } = screenshareStore;
-
     const { audioSource, setAudioSource } = use();
 
     const [windowPreviews, setWindowPreviews] = useState<types.WindowPreview[]>([]);
@@ -34,16 +30,22 @@ export const AudioSourceSelect = (
     useEffect(() => {
         const intervalFn = async () => {
             const newPreviews = await MediaEngineStore.getMediaEngine().getWindowPreviews(1, 1);
-            setWindowPreviews(oldPreviews => [...oldPreviews, ...newPreviews].filter((preview, index, array) => array.findIndex(t => t.id === preview.id) === index));
+            setWindowPreviews(oldPreviews =>
+                [...oldPreviews, ...newPreviews].filter(
+                    (preview, index, array) =>
+                        array.findIndex(t => t.id === preview.id) === index
+                )
+            );
         };
         intervalFn();
 
         const intervals = [
             setInterval(async () => {
                 intervalFn();
-            }, 4000), setInterval(async () => {
+            }, 4000),
+            setInterval(async () => {
                 setWindowPreviews(await MediaEngineStore.getMediaEngine().getWindowPreviews(1, 1));
-            }, 30000)
+            }, 30000),
         ];
 
         return () => intervals.forEach(interval => clearInterval(interval));
@@ -53,14 +55,21 @@ export const AudioSourceSelect = (
         <Select
             options={windowPreviews.map(({ name, id }) => ({
                 label: name,
-                value: id
+                value: id,
             }))}
             isSelected={value => audioSource === value}
             select={value => setAudioSource(value)}
             serialize={() => ""}
             {...props}
-        ></Select>
+        />
     );
 };
 
 
+// Set default props for AudioSourceSelect
+AudioSourceSelect.defaultProps = {
+    options: [],
+    isSelected: () => false,
+    select: () => { },
+    serialize: () => "",
+};

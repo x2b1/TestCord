@@ -187,6 +187,7 @@ let clientOldChannelId: string | undefined;
 export default definePlugin({
     name: "vcOwnerDetector",
     description: "Tools to detect the owner of VC",
+    tags: ["Voice", "Utility"],
     authors: [TestcordDevs.dot],
     settings,
 

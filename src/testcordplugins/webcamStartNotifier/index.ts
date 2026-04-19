@@ -34,6 +34,7 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "WebcamStartNotifier",
     description: "Plays a sound when someone enables/disables their camera in a voice channel",
+    tags: ["Voice", "Notifications"],
     authors: [TestcordDevs.x2b],
     settings,
 

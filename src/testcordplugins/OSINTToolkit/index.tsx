@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { definePluginSettings } from "@api/Settings";
+import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import definePlugin, { OptionType } from "@utils/types";
 
 interface DomainInfo {
@@ -268,6 +268,7 @@ function createIPMessage(info: IPInfo) {
 export default definePlugin({
     name: "OSINTToolkit",
     description: "OSINT - Domain age lookup, IP information, and username search",
+    tags: ["Utility", "Developers"],
     authors: [{ name: "Irritably", id: 928787166916640838n }],
     settings,
 

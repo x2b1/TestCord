@@ -52,6 +52,7 @@ export default definePlugin({
     name: "StereoSound",
     authors: [{ name: "shaun", id: 840347082430873611n }],
     description: "Adds stereo sound to your own microphone's output. Requires a capable stereo microphone.",
+    tags: ["Voice", "Utility"],
     settings,
 
     patches: [

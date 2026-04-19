@@ -13,6 +13,7 @@ const alarm = "https://www.myinstants.com/media/sounds/tmp_7901-951678082.mp3";
 export default definePlugin({
     name: "antiMod",
     description: "Tools to avoid mods",
+    tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.dot],
     start() { FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb); }
 
