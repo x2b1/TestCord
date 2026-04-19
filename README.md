@@ -1,9 +1,10 @@
-<img src="./browser/icon.png" width="40" align="left" alt="Testcord">Testcord
+`<img src="./browser/icon.png" width="40" align="left" alt="Testcord">`Testcord
 
 [![Release](https://img.shields.io/github/v/release/x2b1/TestCord?label=Latest+Release&color=blue)](https://github.com/x2b1/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
 [![Discord](https://img.shields.io/discord/1434211283317690502?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/EMDpkV57gW)
 [![Owner](https://img.shields.io/badge/Owner-Mixiruri-ff69b4?logo=github&logoColor=white)](https://github.com/Mixiruri)
-[![Owner](https://img.shields.io/badge/Owner-x2b1-orange?logo=github&logoColor=white)](https://github.com/x2b1)
+[![Owner](https://img.shields.io/badge/Owner-x2b1-red?logo=github&logoColor=white)](https://github.com/x2b1) 
+[![Owner](https://img.shields.io/badge/Owner-dxrx99-orange?logo=github&logoColor=white)](https://github.com/dxrx99)
 
 Testcord is a fork of [Equicord](https://github.com/Equicord/Equicord) which is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 500 plugins.
 
@@ -25,13 +26,16 @@ Equicord's included plugins can be found [here](https://equicord.org). We curren
 > ⚠️ The GUI/CLI installers currently download Equicord, not Testcord. Use the devbuild method below instead.
 
 **Windows**
+
 - [GUI](https://github.com/Equicord/Equibop)
 - [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
 
 **MacOS**
+
 - [GUI](https://github.com/Equicord/Equibop)
 
 **Linux**
+
 - [GUI](https://github.com/Equicord/Equibop)
 - [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
 - [AUR](https://aur.archlinux.org/packages/equicord-desktop-git)
