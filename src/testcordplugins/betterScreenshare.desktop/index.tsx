@@ -45,7 +45,7 @@ export default definePlugin({
     name: "BetterScreenshare",
     description: "This plugin allows you to further customize your screen sharing.",
     tags: ["Voice", "Utility"],
-    authors: [Devs.philhk],
+    authors: [{ name: "philhk", id: 0n }],
     dependencies: ["PhilsPluginLibrary"],
     patches: [
         {

@@ -24,7 +24,7 @@ const plugin = definePlugin({
     name: "PhilsPluginLibrary",
     description: "A library for phil's plugins",
     tags: ["Utility", "Developers"],
-    authors: [Devs.philhk],
+    authors: [{ name: "philhk", id: 0n }],
     patches: [
         {
             find: "Unknown frame rate",

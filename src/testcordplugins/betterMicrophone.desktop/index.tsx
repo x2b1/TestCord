@@ -17,14 +17,14 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
+import definePlugin, { OptionType } from "@utils/types";
+import { findComponentByCodeLazy } from "@webpack";
+
 import { PluginInfo } from "../betterMicrophone.desktop/constants";
 import { openMicrophoneSettingsModal } from "../betterMicrophone.desktop/modals";
 import { MicrophonePatcher } from "../betterMicrophone.desktop/patchers";
 import { initMicrophoneStore } from "../betterMicrophone.desktop/stores";
 import { Emitter, MicrophoneSettingsIcon } from "../philsPluginLibrary";
-import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
-import { findComponentByCodeLazy } from "@webpack";
 
 const Button = findComponentByCodeLazy(".NONE,disabled:", ".PANEL_BUTTON");
 
@@ -53,7 +53,10 @@ export default definePlugin({
     name: "BetterMicrophone",
     description: "This plugin allows you to further customize your microphone.",
     tags: ["Voice", "Utility"],
-    authors: [Devs.philhk],
+    authors: [{
+        name: philk,
+        id: 0n
+    }],
     dependencies: ["PhilsPluginLibrary"],
     patches: [
         {
