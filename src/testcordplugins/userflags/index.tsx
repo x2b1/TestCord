@@ -7,7 +7,7 @@
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import { DataStore } from "@api/index";
 import { addMessageAccessory } from "@api/MessageAccessories";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Parser, React, Text } from "@webpack/common";
 
@@ -49,7 +49,6 @@ const flagRegistry: Record<FlagType, FlagRegistryEntry> = {
     }
 };
 
-
 type Flag = {
     type: FlagType;
     text: string;
@@ -78,8 +77,8 @@ function Flag({ id }: { id: string; }) {
 
 export default definePlugin({
     name: "UserFlags",
-    description: "Add \",
-    tags: ["Utility", "Appearance"]flags\" to users that will always show under their messages",
+    description: "Add flags to users that will always show under their messages",
+    tags: ["Utility", "Appearance"],
     authors: [TestcordDevs.x2b],
     dependencies: ["MessageAccessoriesAPI"],
     async start() {
@@ -167,8 +166,3 @@ export default definePlugin({
         }
     ]
 });
-
-
-
-
-
