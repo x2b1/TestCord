@@ -5,7 +5,7 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { EquicordDevs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ColorPicker, React } from "@webpack/common";
 
@@ -254,7 +254,7 @@ function cleanup() {
 export default definePlugin({
     name: "TypingSettings",
     description: "Smooth caret movement, character animation, change color cursor typing.",
-    authors: [TestcordDevs.SirPhantom89, EquicordDevs.r3r1],
+    authors: [TestcordDevs.SirPhantom89],
     settings,
 
     start() {
