@@ -170,138 +170,164 @@ export async function parseFile(fileName: string) {
         return new Error(`Invalid plugin ${fileName}, because ${reason}`);
     };
 
+    let pluginObj: ObjectLiteralExpression | null = null;
+
     for (const node of file.getChildAt(0).getChildren()) {
-        if (!isExportAssignment(node) || !isCallExpression(node.expression)) continue;
+        if (!isExportAssignment(node)) continue;
 
-        const call = node.expression;
-        if (!isIdentifier(call.expression) || call.expression.text !== "definePlugin") continue;
+        if (isCallExpression(node.expression)) {
+            const call = node.expression;
+            if (!isIdentifier(call.expression) || call.expression.text !== "definePlugin") continue;
 
-        const pluginObj = node.expression.arguments[0];
-        if (!isObjectLiteralExpression(pluginObj)) throw fail("no object literal passed to definePlugin");
+            const arg = call.arguments[0];
+            if (!isObjectLiteralExpression(arg)) throw fail("no object literal passed to definePlugin");
 
-        const data = {
-            hasPatches: false,
-            hasCommands: false,
-            enabledByDefault: false,
-            required: false,
-            isModified: false,
-            tags: [] as string[],
-            searchTerms: [] as string[],
-        } as PluginData;
-
-        for (const prop of pluginObj.properties) {
-            const key = getName(prop);
-            const value = isPropertyAssignment(prop) ? prop.initializer : prop;
-
-            switch (key) {
-                case "name":
-                case "description":
-                    if (!isStringLiteral(value) && !isNoSubstitutionTemplateLiteral(value)) throw fail(`${key} is not a string literal`);
-                    data[key] = value.text;
-                    break;
-                case "patches":
-                    data.hasPatches = true;
-                    break;
-                case "commands":
-                    data.hasCommands = true;
-                    if (isArrayLiteralExpression(value)) {
-                        data.commands = value.elements.map((e) => {
-                            if (isObjectLiteralExpression(e)) {
-                                const nameProperty = e.properties.find((p): p is PropertyAssignment =>
-                                    isPropertyAssignment(p) && isIdentifier(p.name) && p.name.escapedText === "name"
-                                );
-                                const descriptionProperty = e.properties.find((p): p is PropertyAssignment =>
-                                    isPropertyAssignment(p) && isIdentifier(p.name) && p.name.escapedText === "description"
-                                );
-                                if (!nameProperty || !descriptionProperty) throw fail("command missing required properties");
-                                const name = isStringLiteral(nameProperty.initializer) ? nameProperty.initializer.text : "";
-                                const description = isStringLiteral(descriptionProperty.initializer) ? descriptionProperty.initializer.text : "";
-                                return { name, description };
-                            } else if (isCallExpression(e) && isIdentifier(e.expression)) {
-                                const [nameArg] = e.arguments;
-                                if (!isStringLiteral(nameArg)) throw fail("first argument must be a string");
-                                return { name: nameArg.text, description: "" };
-                            } else if (e.kind === SyntaxKind.SpreadElement) {
-                                return undefined;
-                            }
-                            throw fail("commands array contains invalid elements");
-                        }).filter((c): c is { name: string; description: string; } => Boolean(c)) as Command[];
-                    } else if (isIdentifier(value)) {
-                        data.commands = [];
-                    } else {
-                        throw fail("commands is not an array literal or identifier");
-                    }
-                    break;
-                case "authors":
-                    if (!isArrayLiteralExpression(value)) throw fail("authors is not an array literal");
-                    data.authors = value.elements.map(e => {
-                        if (isPropertyAccessExpression(e)) {
-                            const d = devs[getName(e)!] || equicordDevs[getName(e)!] || testcordDevs[getName(e)!];
-                            if (!d) throw fail(`couldn't look up author ${getName(e)}`);
-                            return d;
-                        } else if (isObjectLiteralExpression(e)) {
-                            const nameProp = e.properties.find(p => hasName(p, "name"));
-                            const idProp = e.properties.find(p => hasName(p, "id"));
-                            if (!nameProp || !idProp) throw fail("inline author object missing name or id");
-                            const name = isPropertyAssignment(nameProp) ? nameProp.initializer : nameProp;
-                            const id = isPropertyAssignment(idProp) ? idProp.initializer : idProp;
-                            if (!isStringLiteral(name)) throw fail("inline author name is not a string literal");
-                            if (!isStringLiteral(id) && id.kind !== SyntaxKind.BigIntLiteral) throw fail("inline author id is not a literal");
-                            return {
-                                name: name.text,
-                                id: id.kind === SyntaxKind.BigIntLiteral ? (id as BigIntLiteral).text.slice(0, -1) : (id as StringLiteral).text
-                            };
-                        } else {
-                            throw fail("authors array contains invalid element");
-                        }
-                    });
-                    break;
-                case "tags":
-                case "searchTerms":
-                    if (!isArrayLiteralExpression(value)) throw fail(`${key} is not an array literal`);
-                    data[key] = value.elements.map(e => {
-                        if (!isStringLiteral(e)) throw fail(`${key} array contains non-string literals`);
-                        return e.text;
-                    });
-                    break;
-                case "dependencies":
-                    if (!isArrayLiteralExpression(value)) throw fail("dependencies is not an array literal");
-                    const { elements } = value;
-                    if (elements.some(e => !isStringLiteral(e))) throw fail("dependencies array contains non-string elements");
-                    data.dependencies = (elements as NodeArray<StringLiteral>).map(e => e.text);
-                    break;
-                case "required":
-                case "isModified":
-                case "enabledByDefault":
-                    data[key] = value.kind === SyntaxKind.TrueKeyword;
-                    break;
-            }
+            pluginObj = arg;
+            break;
         }
 
-        if (!data.name || !data.description || !data.authors) throw fail("name, description or authors are missing");
+        if (!isIdentifier(node.expression)) continue;
 
-        const target = getPluginTarget(fileName);
-        if (target) {
-            if (!["web", "discordDesktop", "vesktop", "equibop", "desktop", "dev"].includes(target)) throw fail(`invalid target ${target}`);
-            data.target = target as any;
+        const exportName = node.expression.text;
+        for (const child of file.getChildAt(0).getChildren()) {
+            if (!isVariableStatement(child)) continue;
+
+            const declaration = child.declarationList.declarations.find(d => hasName(d, exportName));
+            if (!declaration?.initializer || !isCallExpression(declaration.initializer)) continue;
+            if (!isIdentifier(declaration.initializer.expression) || declaration.initializer.expression.text !== "definePlugin") continue;
+
+            const arg = declaration.initializer.arguments[0];
+            if (!isObjectLiteralExpression(arg)) throw fail("no object literal passed to definePlugin");
+
+            pluginObj = arg;
+            break;
         }
 
-        data.filePath = posixNormalize(fileName)
-            .split(sep)
-            .join(posixSep)
-            .replace(/\/index\.([jt]sx?)$/, "");
-
-        data.dirName = posixNormalize(fileName)
-            .split(sep)
-            .join(posixSep)
-            .replace(/\/index\.([jt]sx?)$/, "")
-            .replace(/^src\/plugins\//, "")
-            .replace(/^src\/equicordplugins\//, "");
-
-        return [data] as const;
+        if (pluginObj) break;
     }
 
-    throw fail("no default export called 'definePlugin' found");
+    if (!pluginObj) throw fail("no default export called 'definePlugin' found");
+
+    const data = {
+        hasPatches: false,
+        hasCommands: false,
+        enabledByDefault: false,
+        required: false,
+        isModified: false,
+        tags: [] as string[],
+        searchTerms: [] as string[],
+    } as PluginData;
+
+    for (const prop of pluginObj.properties) {
+        const key = getName(prop);
+        const value = isPropertyAssignment(prop) ? prop.initializer : prop;
+
+        switch (key) {
+            case "name":
+            case "description":
+                if (!isStringLiteral(value) && !isNoSubstitutionTemplateLiteral(value)) throw fail(`${key} is not a string literal`);
+                data[key] = value.text;
+                break;
+            case "patches":
+                data.hasPatches = true;
+                break;
+            case "commands":
+                data.hasCommands = true;
+                if (isArrayLiteralExpression(value)) {
+                    data.commands = value.elements.map((e) => {
+                        if (isObjectLiteralExpression(e)) {
+                            const nameProperty = e.properties.find((p): p is PropertyAssignment =>
+                                isPropertyAssignment(p) && isIdentifier(p.name) && p.name.escapedText === "name"
+                            );
+                            const descriptionProperty = e.properties.find((p): p is PropertyAssignment =>
+                                isPropertyAssignment(p) && isIdentifier(p.name) && p.name.escapedText === "description"
+                            );
+                            if (!nameProperty || !descriptionProperty) throw fail("command missing required properties");
+                            const name = isStringLiteral(nameProperty.initializer) ? nameProperty.initializer.text : "";
+                            const description = isStringLiteral(descriptionProperty.initializer) ? descriptionProperty.initializer.text : "";
+                            return { name, description };
+                        } else if (isCallExpression(e) && isIdentifier(e.expression)) {
+                            const [nameArg] = e.arguments;
+                            if (!isStringLiteral(nameArg)) throw fail("first argument must be a string");
+                            return { name: nameArg.text, description: "" };
+                        } else if (e.kind === SyntaxKind.SpreadElement) {
+                            return undefined;
+                        }
+                        throw fail("commands array contains invalid elements");
+                    }).filter((c): c is { name: string; description: string; } => Boolean(c)) as Command[];
+                } else if (isIdentifier(value)) {
+                    data.commands = [];
+                } else {
+                    throw fail("commands is not an array literal or identifier");
+                }
+                break;
+            case "authors":
+                if (!isArrayLiteralExpression(value)) throw fail("authors is not an array literal");
+                data.authors = value.elements.map(e => {
+                    if (isPropertyAccessExpression(e)) {
+                        const d = devs[getName(e)!] || equicordDevs[getName(e)!] || testcordDevs[getName(e)!];
+                        if (!d) throw fail(`couldn't look up author ${getName(e)}`);
+                        return d;
+                    } else if (isObjectLiteralExpression(e)) {
+                        const nameProp = e.properties.find(p => hasName(p, "name"));
+                        const idProp = e.properties.find(p => hasName(p, "id"));
+                        if (!nameProp || !idProp) throw fail("inline author object missing name or id");
+                        const name = isPropertyAssignment(nameProp) ? nameProp.initializer : nameProp;
+                        const id = isPropertyAssignment(idProp) ? idProp.initializer : idProp;
+                        if (!isStringLiteral(name)) throw fail("inline author name is not a string literal");
+                        if (!isStringLiteral(id) && id.kind !== SyntaxKind.BigIntLiteral) throw fail("inline author id is not a literal");
+                        return {
+                            name: name.text,
+                            id: id.kind === SyntaxKind.BigIntLiteral ? (id as BigIntLiteral).text.slice(0, -1) : (id as StringLiteral).text
+                        };
+                    } else {
+                        throw fail("authors array contains invalid element");
+                    }
+                });
+                break;
+            case "tags":
+            case "searchTerms":
+                if (!isArrayLiteralExpression(value)) throw fail(`${key} is not an array literal`);
+                data[key] = value.elements.map(e => {
+                    if (!isStringLiteral(e)) throw fail(`${key} array contains non-string literals`);
+                    return e.text;
+                });
+                break;
+            case "dependencies":
+                if (!isArrayLiteralExpression(value)) throw fail("dependencies is not an array literal");
+                const { elements } = value;
+                if (elements.some(e => !isStringLiteral(e))) throw fail("dependencies array contains non-string elements");
+                data.dependencies = (elements as NodeArray<StringLiteral>).map(e => e.text);
+                break;
+            case "required":
+            case "isModified":
+            case "enabledByDefault":
+                data[key] = value.kind === SyntaxKind.TrueKeyword;
+                break;
+        }
+    }
+
+    if (!data.name || !data.description || !data.authors) throw fail("name, description or authors are missing");
+
+    const target = getPluginTarget(fileName);
+    if (target) {
+        if (!["web", "discordDesktop", "vesktop", "equibop", "desktop", "dev"].includes(target)) throw fail(`invalid target ${target}`);
+        data.target = target as any;
+    }
+
+    data.filePath = posixNormalize(fileName)
+        .split(sep)
+        .join(posixSep)
+        .replace(/\/index\.([jt]sx?)$/, "");
+
+    data.dirName = posixNormalize(fileName)
+        .split(sep)
+        .join(posixSep)
+        .replace(/\/index\.([jt]sx?)$/, "")
+        .replace(/^src\/plugins\//, "")
+        .replace(/^src\/equicordplugins\//, "");
+
+    return [data] as const;
 }
 
 export async function getEntryPoint(dir: string, dirent: Dirent) {
@@ -316,7 +342,7 @@ export async function getEntryPoint(dir: string, dirent: Dirent) {
         } catch { }
     }
 
-    throw new Error(`${dirent.name}: Couldn't find entry point`);
+    return null;
 }
 
 export function isPluginFile({ name }: { name: string; }) {

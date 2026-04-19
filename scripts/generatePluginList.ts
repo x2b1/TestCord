@@ -48,7 +48,10 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseTestcor
             readdirSync(dir, { withFileTypes: true })
                 .filter(isPluginFile)
                 .map(async dirent => {
-                    const [data] = await parseFile(await getEntryPoint(dir, dirent));
+                    const entryPoint = await getEntryPoint(dir, dirent);
+                    if (!entryPoint) return;
+
+                    const [data] = await parseFile(entryPoint);
                     plugins.sort().push(data);
                 })
         )

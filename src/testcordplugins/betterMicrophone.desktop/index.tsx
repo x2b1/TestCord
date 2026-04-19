@@ -54,7 +54,7 @@ export default definePlugin({
     description: "This plugin allows you to further customize your microphone.",
     tags: ["Voice", "Utility"],
     authors: [{
-        name: philk,
+        name: "philhk",
         id: 0n
     }],
     dependencies: ["PhilsPluginLibrary"],
