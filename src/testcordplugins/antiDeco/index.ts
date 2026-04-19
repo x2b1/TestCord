@@ -1,7 +1,13 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { UserStore, FluxDispatcher } from "@webpack/common";
-import { TestcordDevs } from "@utils/constants";
+import { UserStore } from "@webpack/common";
 
 // Retrieval of necessary stores and actions
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
@@ -55,7 +61,7 @@ function markChannelSwitch() {
 }
 
 export default definePlugin({
-    name: "AntiDéconnexion",
+    name: "AntiDisconnect",
     description:
         "Automatically reconnects to voice channel in case of forced disconnection",
     authors: [TestcordDevs.x2b],
@@ -95,7 +101,7 @@ export default definePlugin({
                     // Check if it's a voluntary disconnection
                     if (isVoluntaryDisconnect) {
                         console.log(
-                            `[AntiDéco] Voluntary disconnection confirmed, no reconnection`
+                            "[AntiDéco] Voluntary disconnection confirmed, no reconnection"
                         );
                         return;
                     }
@@ -103,7 +109,7 @@ export default definePlugin({
                     // Check if it's a channel change in progress
                     if (isChannelSwitching) {
                         console.log(
-                            `[AntiDéco] Channel change in progress, no reconnection`
+                            "[AntiDéco] Channel change in progress, no reconnection"
                         );
                         return;
                     }
@@ -113,7 +119,7 @@ export default definePlugin({
                         // Check again if it's not a voluntary disconnection
                         if (isVoluntaryDisconnect || isChannelSwitching) {
                             console.log(
-                                `[AntiDéco] Voluntary disconnection or channel change detected during wait`
+                                "[AntiDéco] Voluntary disconnection or channel change detected during wait"
                             );
                             return;
                         }
@@ -245,8 +251,3 @@ export default definePlugin({
         lastChannelId = null;
     },
 });
-
-
-
-
-

@@ -17,7 +17,7 @@ import definePlugin, { OptionType } from "@utils/types";
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Enable Abreviation plugin",
+        description: "Enable Abbreviation plugin",
         default: true,
     },
     showNotifications: {
@@ -51,7 +51,7 @@ const settings = definePluginSettings({
         description:
             "Abbreviations (format: abbrev1=full text1|abbrev2=full text2)",
         default:
-            "btw=by the way|omg=oh my god|brb=be right back|afk=away from keyboard|imo=in my opinion|tbh=to be honest|lol=laughing out loud|wtf=what the f*ck|nvm=never mind|thx=thanks|pls=please|u=you|ur=your|bc=because|rn=right now|irl=in real life|fyi=for your information|asap=as soon as possible|ttyl=talk to you later|gtg=got to go|idk=I don't know|ikr=I know right|smh=shaking my head|dm=direct message|gm=good morning|gn=good night|gl=good luck|hf=have fun|wp=well played|gg=good game|ez=easy|op=overpowered|nerf=reduce power|buff=increase power|meta=most effective tactics available|fdp=fils de pute",
+            "btw=by the way|omg=oh my god|brb=be right back|afk=away from keyboard|imo=in my opinion|tbh=to be honest|lol=laughing out loud|wtf=what the f*ck|nvm=never mind|thx=thanks|pls=please|u=you|ur=your|bc=because|rn=right now|irl=in real life|fyi=for your information|asap=as soon as possible|ttyl=talk to you later|gtg=got to go|idk=I don't know|ikr=I know right|smh=shaking my head|dm=direct message|gm=good morning|gn=good night|gl=good luck|hf=have fun|wp=well played|gg=good game|ez=easy|op=overpowered|nerf=reduce power|buff=increase power|meta=most effective tactics available",
     },
     customAbbreviations: {
         type: OptionType.STRING,
@@ -66,7 +66,7 @@ let isPluginActive = true;
 // Log function with prefix
 function log(message: string, level: "info" | "warn" | "error" = "info") {
     const timestamp = new Date().toLocaleTimeString();
-    const prefix = `[Abreviation ${timestamp}]`;
+    const prefix = `[Abbreviation ${timestamp}]`;
 
     switch (level) {
         case "warn":
@@ -129,7 +129,7 @@ function togglePlugin() {
 
     if (settings.store.showToggleNotification) {
         showNotification({
-            title: `${emoji} Abreviation ${status}`,
+            title: `${emoji} Abbreviation ${status}`,
             body: isPluginActive
                 ? "Abbreviations will be expanded"
                 : "Abbreviations will no longer be expanded",
@@ -270,7 +270,7 @@ const messagePreSendListener: MessageSendListener = (
                 .map((e) => `"${e.abbrev}" → "${e.expansion}"`)
                 .join(", ");
             showNotification({
-                title: "📝 Abreviation",
+                title: "📝 Abbreviation",
                 body: `Expansions: ${expansionText}`,
                 icon: undefined,
             });
@@ -279,7 +279,7 @@ const messagePreSendListener: MessageSendListener = (
 };
 
 export default definePlugin({
-    name: "Abreviation",
+    name: "Abbreviation",
     description:
         "Automatically transforms abbreviations into full text when sending messages",
     authors: [TestcordDevs.x2b],
@@ -287,7 +287,7 @@ export default definePlugin({
     settings,
 
     start() {
-        log("🚀 Abreviation plugin started");
+        log("🚀 Abbreviation plugin started");
 
         // Reset active state
         isPluginActive = settings.store.enabled;
@@ -308,7 +308,7 @@ export default definePlugin({
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📝 Abreviation enabled",
+                title: "📝 Abbreviation enabled",
                 body: `${abbreviations.size} abbreviations available. Toggle: ${settings.store.toggleKeybind}`,
                 icon: undefined,
             });
@@ -316,7 +316,7 @@ export default definePlugin({
     },
 
     stop() {
-        log("🛑 Abreviation plugin stopped");
+        log("🛑 Abbreviation plugin stopped");
 
         // Remove listeners
         removeMessagePreSendListener(messagePreSendListener);
@@ -324,7 +324,7 @@ export default definePlugin({
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "📝 Abreviation disabled",
+                title: "📝 Abbreviation disabled",
                 body: "Plugin stopped",
                 icon: undefined,
             });

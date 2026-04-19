@@ -4,20 +4,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
+import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { showNotification } from "@api/Notifications";
-import definePlugin, { OptionType } from "@utils/types";
+import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import {
-    UserStore,
-    FluxDispatcher,
     Constants,
-    RestAPI,
     Menu,
     React,
+    RestAPI,
+    UserStore,
 } from "@webpack/common";
-import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 
 // Retrieval of necessary stores and actions
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
@@ -40,11 +39,11 @@ interface VoiceState {
     requestToSpeakTimestamp: string | null;
 }
 
-interface AccrochedUserInfo {
+interface HookedUserInfo {
     userId: string;
     username: string;
     lastChannelId: string | null;
-    isAccroched: boolean;
+    isHooked: boolean;
 }
 
 interface AnchoredUserInfo {
@@ -57,7 +56,7 @@ interface AnchoredUserInfo {
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Enable Accroche plugin",
+        description: "Enable Hook plugin",
         default: true,
     },
     showNotifications: {
@@ -104,16 +103,16 @@ const settings = definePluginSettings({
 });
 
 // Global variables
-let accrochedUserInfo: AccrochedUserInfo | null = null;
+let hookedUserInfo: HookedUserInfo | null = null;
 let anchoredUserInfo: AnchoredUserInfo | null = null;
 let originalSelectVoiceChannel: any = null;
-let isPreventingMove = false;
+const isPreventingMove = false;
 let anchorMonitoringInterval: NodeJS.Timeout | null = null;
 
 // Log function with prefix
 function log(message: string, level: "info" | "warn" | "error" = "info") {
     const timestamp = new Date().toLocaleTimeString();
-    const prefix = `[Accroche ${timestamp}]`;
+    const prefix = `[Hook ${timestamp}]`;
 
     switch (level) {
         case "warn":
@@ -160,21 +159,21 @@ async function moveUserToVoiceChannel(
         if (settings.store.showNotifications) {
             const user = UserStore.getUser(userId);
             showNotification({
-                title: "🔗 Accroche - Success",
+                title: "🔗 Hook - Success",
                 body: `${user?.username || "User"
                     } has been brought back to your voice channel`,
             });
         }
     } catch (error) {
-        console.error("Accroche: Discord API error:", error);
+        console.error("Hook: Discord API error:", error);
         throw error;
     }
 }
 
 // Function to hook a user
-async function accrocherUtilisateur(userId: string, username: string) {
+async function hookUser(userId: string, username: string) {
     verboseLog(
-        `🚀 Starting accrocherUtilisateur function for ${username} (${userId})`
+        `🚀 Starting hookUser function for ${username} (${userId})`
     );
 
     const currentUser = UserStore.getCurrentUser();
@@ -192,7 +191,7 @@ async function accrocherUtilisateur(userId: string, username: string) {
         log("❌ Cannot hook to yourself", "warn");
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche - Error",
+                title: "🔗 Hook - Error",
                 body: "You cannot hook to yourself!",
             });
         }
@@ -200,11 +199,11 @@ async function accrocherUtilisateur(userId: string, username: string) {
     }
 
     // Check if user is already hooked
-    if (accrochedUserInfo && accrochedUserInfo.userId === userId) {
+    if (hookedUserInfo && hookedUserInfo.userId === userId) {
         log(`⚠️ User ${username} is already hooked`, "warn");
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche - Info",
+                title: "🔗 Hook - Info",
                 body: `${username} is already hooked to you`,
             });
         }
@@ -222,9 +221,9 @@ async function accrocherUtilisateur(userId: string, username: string) {
 
     // If voice state is not immediately available, wait a bit
     if (!userVoiceState?.channelId || !currentVoiceState?.channelId) {
-        verboseLog(`⏳ Voice state not immediately available, waiting 500ms...`);
+        verboseLog("⏳ Voice state not immediately available, waiting 500ms...");
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         userVoiceState = VoiceStateStore.getVoiceStateForUser(userId);
         currentVoiceState = VoiceStateStore.getVoiceStateForUser(currentUserId);
@@ -239,7 +238,7 @@ async function accrocherUtilisateur(userId: string, username: string) {
         log(`❌ User ${username} is not in a voice channel`, "warn");
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche - Error",
+                title: "🔗 Hook - Error",
                 body: `${username} is not in a voice channel`,
             });
         }
@@ -247,10 +246,10 @@ async function accrocherUtilisateur(userId: string, username: string) {
     }
 
     if (!currentVoiceState?.channelId) {
-        log(`❌ You are not in a voice channel`, "warn");
+        log("❌ You are not in a voice channel", "warn");
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche - Error",
+                title: "🔗 Hook - Error",
                 body: "You must be in a voice channel to hook someone",
             });
         }
@@ -258,11 +257,11 @@ async function accrocherUtilisateur(userId: string, username: string) {
     }
 
     // Hook the user
-    accrochedUserInfo = {
+    hookedUserInfo = {
         userId,
         username,
         lastChannelId: userVoiceState.channelId,
-        isAccroched: true,
+        isHooked: true,
     };
 
     log(`🔗 User ${username} (${userId}) hooked successfully`);
@@ -273,36 +272,36 @@ async function accrocherUtilisateur(userId: string, username: string) {
 
     if (settings.store.showNotifications) {
         showNotification({
-            title: "🔗 Accroche - Enabled",
+            title: "🔗 Hook - Enabled",
             body: `${username} is now hooked to you`,
         });
     }
 }
 
 // Function to unhook a user
-function decrocherUtilisateur() {
-    if (!accrochedUserInfo) {
+function unhookUser() {
+    if (!hookedUserInfo) {
         log("⚠️ No user hooked", "warn");
         return;
     }
 
-    const { username } = accrochedUserInfo;
-    accrochedUserInfo = null;
+    const { username } = hookedUserInfo;
+    hookedUserInfo = null;
 
     log(`🔓 User ${username} unhooked`);
 
     if (settings.store.showNotifications) {
         showNotification({
-            title: "🔗 Accroche - Disabled",
+            title: "🔗 Hook - Disabled",
             body: `${username} is no longer hooked`,
         });
     }
 }
 
 // Function to anchor a user (follow them)
-async function ancrerUtilisateur(userId: string, username: string) {
+async function anchorUser(userId: string, username: string) {
     verboseLog(
-        `🚀 Starting ancrerUtilisateur function for ${username} (${userId})`
+        `🚀 Starting anchorUser function for ${username} (${userId})`
     );
 
     const currentUser = UserStore.getCurrentUser();
@@ -320,7 +319,7 @@ async function ancrerUtilisateur(userId: string, username: string) {
         log("❌ Cannot anchor to yourself", "warn");
         if (settings.store.anchorNotifications) {
             showNotification({
-                title: "⚓ Ancrage - Error",
+                title: "⚓ Anchor - Error",
                 body: "You cannot anchor to yourself!",
             });
         }
@@ -332,7 +331,7 @@ async function ancrerUtilisateur(userId: string, username: string) {
         log(`⚠️ User ${username} is already anchored`, "warn");
         if (settings.store.anchorNotifications) {
             showNotification({
-                title: "⚓ Ancrage - Info",
+                title: "⚓ Anchor - Info",
                 body: `${username} is already anchored`,
             });
         }
@@ -351,10 +350,10 @@ async function ancrerUtilisateur(userId: string, username: string) {
     // If voice state is not immediately available, wait a bit
     if (!userVoiceState?.channelId || !currentVoiceState?.channelId) {
         verboseLog(
-            `⏳ Voice state not immediately available for anchoring, waiting 500ms...`
+            "⏳ Voice state not immediately available for anchoring, waiting 500ms..."
         );
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         userVoiceState = VoiceStateStore.getVoiceStateForUser(userId);
         currentVoiceState = VoiceStateStore.getVoiceStateForUser(currentUserId);
@@ -369,7 +368,7 @@ async function ancrerUtilisateur(userId: string, username: string) {
         log(`❌ User ${username} is not in a voice channel`, "warn");
         if (settings.store.anchorNotifications) {
             showNotification({
-                title: "⚓ Ancrage - Error",
+                title: "⚓ Anchor - Error",
                 body: `${username} is not in a voice channel`,
             });
         }
@@ -377,10 +376,10 @@ async function ancrerUtilisateur(userId: string, username: string) {
     }
 
     if (!currentVoiceState?.channelId) {
-        log(`❌ You are not in a voice channel`, "warn");
+        log("❌ You are not in a voice channel", "warn");
         if (settings.store.anchorNotifications) {
             showNotification({
-                title: "⚓ Ancrage - Error",
+                title: "⚓ Anchor - Error",
                 body: "You must be in a voice channel to anchor someone",
             });
         }
@@ -406,14 +405,14 @@ async function ancrerUtilisateur(userId: string, username: string) {
 
     if (settings.store.anchorNotifications) {
         showNotification({
-            title: "⚓ Ancrage - Enabled",
+            title: "⚓ Anchor - Enabled",
             body: `You will automatically return to ${username}'s channel if you are moved`,
         });
     }
 }
 
 // Function to unanchor a user
-function desancrerUtilisateur() {
+function unanchorUser() {
     if (!anchoredUserInfo) {
         log("⚠️ No user anchored", "warn");
         return;
@@ -429,7 +428,7 @@ function desancrerUtilisateur() {
 
     if (settings.store.anchorNotifications) {
         showNotification({
-            title: "⚓ Ancrage - Disabled",
+            title: "⚓ Anchor - Disabled",
             body: `You are no longer anchored to ${username}`,
         });
     }
@@ -540,12 +539,12 @@ async function moveCurrentUserToVoiceChannel(channelId: string): Promise<void> {
 
         if (settings.store.anchorNotifications) {
             showNotification({
-                title: "⚓ Ancrage - Automatic return",
+                title: "⚓ Anchor - Automatic return",
                 body: `You have returned to ${anchoredUserInfo?.username}'s channel`,
             });
         }
     } catch (error) {
-        console.error("Ancrage: Discord API error:", error);
+        console.error("Anchor: Discord API error:", error);
         throw error;
     }
 }
@@ -556,7 +555,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
     { user }: { user: any; }
 ) => {
     console.log(
-        "🔍🔍🔍 ACCROCHE CONTEXT MENU CALLED 🔍🔍🔍",
+        "🔍🔍🔍 HOOK CONTEXT MENU CALLED 🔍🔍🔍",
         user?.username || "unknown user"
     );
     verboseLog(`🔍 Context menu called for ${user?.username || "unknown user"}`);
@@ -584,21 +583,21 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
 
     verboseLog(`✅ Context menu added for ${user.username}`);
 
-    const isCurrentlyAccroched = accrochedUserInfo?.userId === user.id;
+    const isCurrentlyHooked = hookedUserInfo?.userId === user.id;
     const isCurrentlyAnchored = anchoredUserInfo?.userId === user.id;
 
     children.push(
         React.createElement(Menu.MenuSeparator, {}),
         React.createElement(Menu.MenuItem, {
-            id: "accroche-user",
-            label: isCurrentlyAccroched
+            id: "hook-user",
+            label: isCurrentlyHooked
                 ? `🔓 Unhook ${user.username}`
                 : `🔗 Hook ${user.username}`,
             action: async () => {
-                if (isCurrentlyAccroched) {
-                    decrocherUtilisateur();
+                if (isCurrentlyHooked) {
+                    unhookUser();
                 } else {
-                    await accrocherUtilisateur(user.id, user.username);
+                    await hookUser(user.id, user.username);
                 }
             },
         })
@@ -614,9 +613,9 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
                     : `⚓ Anchor ${user.username}`,
                 action: async () => {
                     if (isCurrentlyAnchored) {
-                        desancrerUtilisateur();
+                        unanchorUser();
                     } else {
-                        await ancrerUtilisateur(user.id, user.username);
+                        await anchorUser(user.id, user.username);
                     }
                 },
             })
@@ -625,7 +624,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
 };
 
 export default definePlugin({
-    name: "Accroche",
+    name: "Hook",
     description:
         "Hooks a user to prevent them from changing voice channels or anchors to a user to automatically return to their channel",
     authors: [
@@ -699,7 +698,7 @@ export default definePlugin({
                             );
                             if (settings.store.anchorNotifications) {
                                 showNotification({
-                                    title: "⚓ Ancrage - Suspended",
+                                    title: "⚓ Anchor - Suspended",
                                     body: `${anchoredUserInfo!.username} left the voice channel`,
                                 });
                             }
@@ -751,7 +750,7 @@ export default definePlugin({
 
                                     if (settings.store.anchorNotifications) {
                                         showNotification({
-                                            title: "⚓ Ancrage - Error",
+                                            title: "⚓ Anchor - Error",
                                             body: `Unable to return to ${anchoredUserInfo!.username
                                                 }'s channel`,
                                         });
@@ -764,31 +763,31 @@ export default definePlugin({
             }
 
             // Hooking logic (prevent a user from moving)
-            if (!accrochedUserInfo) return;
+            if (!hookedUserInfo) return;
 
             for (const voiceState of voiceStates) {
                 const { userId, channelId, oldChannelId } = voiceState;
 
                 // Detect when the hooked user changes voice channel
                 if (
-                    userId === accrochedUserInfo!.userId &&
-                    channelId !== accrochedUserInfo!.lastChannelId
+                    userId === hookedUserInfo!.userId &&
+                    channelId !== hookedUserInfo!.lastChannelId
                 ) {
                     verboseLog(
-                        `🔄 Channel change detected for ${accrochedUserInfo!.username
+                        `🔄 Channel change detected for ${hookedUserInfo!.username
                         }: ${oldChannelId} -> ${channelId}`
                     );
 
                     // Update the last known channel
-                    accrochedUserInfo!.lastChannelId = channelId || null;
+                    hookedUserInfo!.lastChannelId = channelId || null;
 
                     // If the hooked user left the voice channel
                     if (!channelId) {
-                        log(`🚪 ${accrochedUserInfo!.username} left the voice channel`);
+                        log(`🚪 ${hookedUserInfo!.username} left the voice channel`);
                         if (settings.store.showNotifications) {
                             showNotification({
-                                title: "🔗 Accroche - Info",
-                                body: `${accrochedUserInfo!.username} left the voice channel`,
+                                title: "🔗 Hook - Info",
+                                body: `${hookedUserInfo!.username} left the voice channel`,
                             });
                         }
                         continue;
@@ -797,7 +796,7 @@ export default definePlugin({
                     // If the hooked user is in a different channel than yours
                     if (channelId !== currentVoiceState.channelId) {
                         log(
-                            `⚠️ ${accrochedUserInfo!.username
+                            `⚠️ ${hookedUserInfo!.username
                             } changed channels, attempting to bring back to your channel`
                         );
 
@@ -805,14 +804,14 @@ export default definePlugin({
                         setTimeout(async () => {
                             try {
                                 // Check that the user is still hooked and in a different channel
-                                const currentAccrochedState =
+                                const currentHookedState =
                                     VoiceStateStore.getVoiceStateForUser(
-                                        accrochedUserInfo!.userId
+                                        hookedUserInfo!.userId
                                     );
                                 const myCurrentState =
                                     VoiceStateStore.getVoiceStateForUser(currentUserId);
 
-                                if (!accrochedUserInfo || !myCurrentState?.channelId) {
+                                if (!hookedUserInfo || !myCurrentState?.channelId) {
                                     verboseLog(
                                         "🔍 User no longer hooked or you are no longer in a voice channel"
                                     );
@@ -820,7 +819,7 @@ export default definePlugin({
                                 }
 
                                 if (
-                                    currentAccrochedState?.channelId === myCurrentState.channelId
+                                    currentHookedState?.channelId === myCurrentState.channelId
                                 ) {
                                     verboseLog("✅ User is already in your channel");
                                     return;
@@ -828,20 +827,20 @@ export default definePlugin({
 
                                 // Bring the user back to your channel
                                 await moveUserToVoiceChannel(
-                                    accrochedUserInfo!.userId,
+                                    hookedUserInfo!.userId,
                                     myCurrentState.channelId
                                 );
                             } catch (error) {
                                 log(
-                                    `❌ Error during move of ${accrochedUserInfo!.username
+                                    `❌ Error during move of ${hookedUserInfo!.username
                                     }: ${error}`,
                                     "error"
                                 );
 
                                 if (settings.store.showNotifications) {
                                     showNotification({
-                                        title: "🔗 Accroche - Error",
-                                        body: `Unable to bring ${accrochedUserInfo!.username
+                                        title: "🔗 Hook - Error",
+                                        body: `Unable to bring ${hookedUserInfo!.username
                                             } back to your channel`,
                                     });
                                 }
@@ -860,29 +859,29 @@ export default definePlugin({
                     );
 
                     // If we have a hooked user and we join a new channel
-                    if (channelId && accrochedUserInfo) {
-                        const accrochedUserVoiceState =
-                            VoiceStateStore.getVoiceStateForUser(accrochedUserInfo.userId);
+                    if (channelId && hookedUserInfo) {
+                        const hookedUserVoiceState =
+                            VoiceStateStore.getVoiceStateForUser(hookedUserInfo.userId);
 
                         // If the hooked user is in a different voice channel
                         if (
-                            accrochedUserVoiceState?.channelId &&
-                            accrochedUserVoiceState.channelId !== channelId
+                            hookedUserVoiceState?.channelId &&
+                            hookedUserVoiceState.channelId !== channelId
                         ) {
                             log(
-                                `🔄 You changed channels, moving ${accrochedUserInfo!.username
+                                `🔄 You changed channels, moving ${hookedUserInfo!.username
                                 } to your new channel`
                             );
 
                             setTimeout(async () => {
                                 try {
                                     await moveUserToVoiceChannel(
-                                        accrochedUserInfo!.userId,
+                                        hookedUserInfo!.userId,
                                         channelId
                                     );
                                 } catch (error) {
                                     log(
-                                        `❌ Error during move of ${accrochedUserInfo!.username
+                                        `❌ Error during move of ${hookedUserInfo!.username
                                         }: ${error}`,
                                         "error"
                                     );
@@ -896,8 +895,8 @@ export default definePlugin({
     },
 
     start() {
-        console.log("🚀🚀🚀 ACCROCHE PLUGIN STARTED 🚀🚀🚀");
-        log("🚀 Accroche plugin started");
+        console.log("🚀🚀🚀 HOOK PLUGIN STARTED 🚀🚀🚀");
+        log("🚀 Hook plugin started");
         log(`⚙️ Current configuration:
 - Notifications: ${settings.store.showNotifications ? "ON" : "OFF"}
 - Verbose logs: ${settings.store.verboseLogs ? "ON" : "OFF"}
@@ -926,16 +925,16 @@ export default definePlugin({
 
             // Intercept channel change attempts from the hooked user
             ChannelActions.selectVoiceChannel = function (channelId: string | null) {
-                if (accrochedUserInfo && !isPreventingMove) {
+                if (hookedUserInfo && !isPreventingMove) {
                     const currentUser = UserStore.getCurrentUser();
-                    if (currentUser && accrochedUserInfo.userId === currentUser.id) {
+                    if (currentUser && hookedUserInfo.userId === currentUser.id) {
                         log(
-                            `🚫 Manual move attempt blocked for ${accrochedUserInfo.username}`
+                            `🚫 Manual move attempt blocked for ${hookedUserInfo.username}`
                         );
 
                         if (settings.store.showNotifications) {
                             showNotification({
-                                title: "🔗 Accroche - Blocked",
+                                title: "🔗 Hook - Blocked",
                                 body: "You cannot change voice channels because you are hooked",
                             });
                         }
@@ -949,14 +948,14 @@ export default definePlugin({
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche enabled",
+                title: "🔗 Hook enabled",
                 body: "User hooking and anchoring plugin enabled - You will automatically return to the anchored person's channel if you are moved",
             });
         }
     },
 
     stop() {
-        log("🛑 Accroche plugin stopped");
+        log("🛑 Hook plugin stopped");
 
         // Stop periodic monitoring
         stopAnchorMonitoring();
@@ -968,24 +967,20 @@ export default definePlugin({
         }
 
         // Unhook the user if there is one
-        if (accrochedUserInfo) {
-            decrocherUtilisateur();
+        if (hookedUserInfo) {
+            unhookUser();
         }
 
         // Unanchor the user if there is one
         if (anchoredUserInfo) {
-            desancrerUtilisateur();
+            unanchorUser();
         }
 
         if (settings.store.showNotifications) {
             showNotification({
-                title: "🔗 Accroche disabled",
+                title: "🔗 Hook disabled",
                 body: "User hooking and anchoring plugin disabled",
             });
         }
     },
 });
-
-
-
-

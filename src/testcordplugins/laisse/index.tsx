@@ -42,7 +42,7 @@ const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Enable laisse plugin",
+        description: "Enable Leash plugin",
     },
     onlyWhenInVoice: {
         type: OptionType.BOOLEAN,
@@ -78,13 +78,13 @@ async function moveUserToVoiceChannel(
         if (settings.store.showNotifications) {
             const user = UserStore.getUser(userId);
             showNotification({
-                title: "laisse - Success",
+                title: "Leash - Success",
                 body: `${user?.username || "User"
                     } has been moved to your voice channel`,
             });
         }
     } catch (error) {
-        console.error("laisse: Discord API error:", error);
+        console.error("Leash: Discord API error:", error);
         throw error;
     }
 }
@@ -103,14 +103,14 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
         <Menu.MenuSeparator />,
         <Menu.MenuCheckboxItem
             id="laisse-leash-user"
-            label="laisse - Hook the user"
+            label="Leash - Hook the user"
             checked={checked}
             action={() => {
                 if (leashedUserInfo?.userId === user.id) {
                     leashedUserInfo = null;
                     setChecked(false);
                     showNotification({
-                        title: "laisse",
+                        title: "Leash",
                         body: `User ${user.username} is no longer hooked`,
                     });
                     return;
@@ -122,7 +122,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
                 };
                 setChecked(true);
                 showNotification({
-                    title: "laisse",
+                    title: "Leash",
                     body: `User ${user.username} is now hooked to you`,
                 });
             }}
@@ -131,9 +131,9 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (
 };
 
 export default definePlugin({
-    name: "laisse",
+    name: "Leash",
     description:
-        "Hooks a user to you by automatically moving them to the voice channel you go to",
+        "Leashes a user to you by automatically moving them to the voice channel you go to",
     authors: [TestcordDevs.x2b],
     settings,
     contextMenus: {
@@ -175,7 +175,7 @@ export default definePlugin({
 
                                 if (settings.store.showNotifications) {
                                     showNotification({
-                                        title: "laisse",
+                                        title: "Leash",
                                         body: `Attempting to move ${user?.username || "user"
                                             } to your voice channel`,
                                     });
@@ -187,10 +187,10 @@ export default definePlugin({
                                     voiceState.channelId
                                 );
                             } catch (error) {
-                                console.error("laisse: Error during move:", error);
+                                console.error("Leash: Error during move:", error);
                                 if (settings.store.showNotifications) {
                                     showNotification({
-                                        title: "laisse - Error",
+                                        title: "Leash - Error",
                                         body: "Unable to move user (insufficient permissions)",
                                     });
                                 }
