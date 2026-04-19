@@ -58,8 +58,8 @@ async function applyHouse(houseId: number) {
 }
 
 export default definePlugin({
-    name: "rzSquad",
-    description: "عشان واحد عزيز علي بس ولا كان ما دريت عنه ",
+    name: "HypeSquad",
+    description: "Apply or remove your HypeSquad badge with ease",
 
     authors:[TestcordDevs.SirPhantom89],
     settings,
