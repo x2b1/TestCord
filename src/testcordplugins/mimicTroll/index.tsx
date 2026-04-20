@@ -23,10 +23,10 @@ const settings = definePluginSettings({
         default: 1000,
         validators: [value => value >= 500 && value <= 10000]
     },
-    mimicPrefix: {
+    messageTemplate: {
         type: OptionType.STRING,
-        description: "Prefix to add before mimic messages (optional)",
-        default: "",
+        description: "Message template. Use {mimic} as placeholder for the mimicked message",
+        default: "{mimic}",
     },
     showMimicStatus: {
         type: OptionType.BOOLEAN,
@@ -274,20 +274,22 @@ class MimicManager {
         // Don't mimic empty messages
         if (!message.content || message.content.trim() === "") return;
 
-        // Content filtering check
-        let mimicContent = message.content;
-        if (ContentFilter.containsBlockedContent(mimicContent)) {
-            console.log(`[MimicTroll] 🚫 Blocked and replaced harmful content from ${message.author.username}`);
-            mimicContent = ContentFilter.getBlockedResponse();
-        }
+        // Process async to avoid blocking UI
+        setTimeout(() => {
+            // Content filtering check
+            let mimicContent = message.content;
+            if (ContentFilter.containsBlockedContent(mimicContent)) {
+                console.log(`[MimicTroll] 🚫 Blocked and replaced harmful content from ${message.author.username}`);
+                mimicContent = ContentFilter.getBlockedResponse();
+            }
 
-        // Add prefix if configured
-        if (settings.store.mimicPrefix) {
-            mimicContent = settings.store.mimicPrefix + " " + mimicContent;
-        }
+            // Apply message template
+            const template = settings.store.messageTemplate || "{mimic}";
+            const finalMessage = template.replace(/\{mimic\}/g, mimicContent);
 
-        // Queue the message to be sent
-        this.queueMessage(target.channelId, mimicContent);
+            // Queue the message to be sent
+            this.queueMessage(target.channelId, finalMessage);
+        }, 0);
     }
 
     private queueMessage(channelId: string, content: string) {
