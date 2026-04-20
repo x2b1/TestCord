@@ -546,9 +546,16 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
                 var mediaUrl = item.src || item.url;
                 if (mediaUrl.indexOf("tenor.com") !== -1 && /\.mp4(\?.*)?$/i.test(mediaUrl)) {
                     var gifUrl = mediaUrl.replace(/\.mp4(\?.*)?$/i, ".gif");
-                    tenorFallbackRef.current.add(id);
                     setOverrideSrc(function (prev) { var o = {}; for (var k in prev) o[k] = prev[k]; o[id] = gifUrl; return o; });
                     return;
+                }
+                if (mediaUrl.indexOf("giphy.com") !== -1) {
+                    var giphyIdMatch = mediaUrl.match(/giphy\.com\/gifs\/([^\/\?]+)/);
+                    if (giphyIdMatch && giphyIdMatch[1]) {
+                        var giphyId = giphyIdMatch[1];
+                        setOverrideSrc(function (prev) { var o = {}; for (var k in prev) o[k] = prev[k]; o[id] = "https://media.giphy.com/media/" + giphyId + "/200.gif"; return o; });
+                        return;
+                    }
                 }
             }
         }
@@ -866,8 +873,8 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
         }
     };
 
-    return React.createElement(ModalRoot, modalProps,
-        React.createElement("div", { style: { width: "900px", maxWidth: "95vw", background: bgPrimary, borderRadius: "8px", display: "flex", flexDirection: "column", maxHeight: "85vh" } },
+    return React.createElement(ModalRoot, { ...modalProps, size: "large" as any },
+        React.createElement("div", { style: { width: "1400px", maxWidth: "95vw", background: bgPrimary, borderRadius: "8px", display: "flex", flexDirection: "column", maxHeight: "90vh", margin: "auto" } },
             React.createElement(ModalHeader, null,
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", padding: "16px", boxSizing: "border-box" } },
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px" } },
@@ -961,15 +968,19 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
                                                 onClick: function (e: React.MouseEvent) { handleItemClick(item, e); }
                                             },
                                                 imageErrors[item.id] ? (
-                                                    React.createElement("div", { style: { textAlign: "center", color: mutedColor, padding: "12px", fontSize: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", width: "100%" } },
-                                                        React.createElement("div", { style: { fontSize: "20px", opacity: 0.5 } }, "[Error]"),
-                                                        React.createElement("div", { style: { fontSize: "11px" } }, "Failed to load")
+                                                    (item.url.indexOf("tenor.com") !== -1 || item.url.indexOf("giphy.com") !== -1) ? (
+                                                        React.createElement("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", style: { color: "#5865F2", fontSize: "11px", textDecoration: "underline", padding: "8px" } }, "Open in new tab")
+                                                    ) : (
+                                                        React.createElement("div", { style: { textAlign: "center", color: mutedColor, padding: "12px", fontSize: "12px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", width: "100%" } },
+                                                            React.createElement("div", { style: { fontSize: "20px", opacity: 0.5 } }, "[Error]"),
+                                                            React.createElement("div", { style: { fontSize: "11px" } }, "Failed to load")
+                                                        )
                                                     )
                                                 ) : (function () {
                                                     var mediaUrl = item.src || item.url;
                                                     var fallback = overrideSrc[item.id];
                                                     var src = fallback || item.cachedUrl || mediaUrl;
-                                                    var isVideo = !fallback && (/\.(mp4|webm|mov)(\?.*)?$/i.test(mediaUrl) || mediaUrl.indexOf("format=mp4") !== -1 || mediaUrl.indexOf("format=webm") !== -1 || (mediaUrl.indexOf("tenor.com") !== -1 && !/\.gif(\?.*)?$/i.test(mediaUrl)));
+                                                    var isVideo = !fallback && (/\.(mp4|webm|mov)(\?.*)?$/i.test(mediaUrl) || mediaUrl.indexOf("format=mp4") !== -1 || mediaUrl.indexOf("format=webm") !== -1 || (mediaUrl.indexOf("tenor.com") !== -1 && /\.gifv(\?.*)?$/i.test(mediaUrl)) || mediaUrl.indexOf(".gifv") !== -1);
                                                     if (isVideo) {
                                                         return React.createElement("video", {
                                                             src: src,
@@ -1124,9 +1135,37 @@ var addFavContextMenuPatch: NavContextMenuPatchCallback = function (children, pr
     var itemUrl = "";
     if (itemSrc) itemUrl = itemSrc;
     else if (itemHref) itemUrl = itemHref;
-    else if (message && message.content) {
-        var urlMatch = message.content.match(/(https?:\/\/[^\s]+\.(gif|webp|mp4|jpg|jpeg|png|mp3|wav|ogg))/i);
-        if (urlMatch) itemUrl = urlMatch[1];
+    else if (message) {
+        if (message.content) {
+            var urlMatch = message.content.match(/(https?:\/\/[^\s]+\.(gif|webp|mp4|jpg|jpeg|png|mp3|wav|ogg))/i);
+            if (!urlMatch) {
+                var contentUrl = message.content.match(/(https?:\/\/[^\s]+)/i);
+                if (contentUrl && (contentUrl[1].includes("tenor.com") || contentUrl[1].includes("giphy.com") || contentUrl[1].includes("media.tenor") || contentUrl[1].includes("media.giphy"))) {
+                    urlMatch = contentUrl;
+                }
+            }
+            if (urlMatch) itemUrl = urlMatch[1];
+        }
+        if (!itemUrl && message.embeds) {
+            for (var embed of message.embeds) {
+                if (embed.video && embed.video.url && (embed.video.url.includes("tenor.com") || embed.video.url.includes("giphy.com") || embed.video.url.includes("media.tenor") || embed.video.url.includes("media.giphy"))) {
+                    itemUrl = embed.video.url;
+                    break;
+                }
+                if (embed.thumbnail && embed.thumbnail.url && (embed.thumbnail.url.includes("tenor.com") || embed.thumbnail.url.includes("giphy.com") || embed.thumbnail.url.includes("media.tenor") || embed.thumbnail.url.includes("media.giphy"))) {
+                    itemUrl = embed.thumbnail.url;
+                    break;
+                }
+                if (embed.image && embed.image.url && (embed.image.url.includes("tenor.com") || embed.image.url.includes("giphy.com") || embed.image.url.includes("media.tenor") || embed.image.url.includes("media.giphy"))) {
+                    itemUrl = embed.image.url;
+                    break;
+                }
+                if (embed.url && (embed.url.includes("tenor.com") || embed.url.includes("giphy.com"))) {
+                    itemUrl = embed.url;
+                    break;
+                }
+            }
+        }
     }
 
     if (!itemUrl) return;
@@ -1180,6 +1219,24 @@ export default definePlugin({
             // Try to extract media URL from message
             var content = msg.content || "";
             var urlMatch = content.match(/(https?:\/\/[^\s]+\.(gif|webp|mp4|jpg|jpeg|png|mp3|wav|ogg))/i);
+            if (!urlMatch && content.match(/(tenor\.com|giphy\.com|media\.tenor|media\.giphy)/i)) {
+                urlMatch = content.match(/(https?:\/\/[^\s]+)/i);
+            }
+
+            if (!urlMatch) {
+                if (msg.embeds) {
+                    for (var embed of msg.embeds) {
+                        if (embed.url && (embed.url.includes("tenor.com") || embed.url.includes("giphy.com"))) {
+                            urlMatch = [embed.url, embed.url];
+                            break;
+                        }
+                        if (embed.video && embed.video.url) {
+                            urlMatch = [embed.video.url, embed.video.url];
+                            break;
+                        }
+                    }
+                }
+            }
 
             if (!urlMatch) {
                 // Check attachments
