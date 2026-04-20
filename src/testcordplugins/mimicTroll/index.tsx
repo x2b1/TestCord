@@ -437,7 +437,7 @@ export default definePlugin({
     name: "MimicTroll",
     description: "Right-click users and toggle 'Mimic' to copy their messages with content filtering for safety",
     tags: ["Chat", "Fun"],
-    authors: [TestcordDevs.dot],
+    authors: [TestcordDevs.dot, TestcordDevs.x2b],
 
     settings,
     contextMenus,
