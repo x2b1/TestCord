@@ -7,9 +7,10 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
-import { classes } from "@utils/misc";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy, findStoreLazy } from "@webpack";
+import type { Channel, User } from "@vencord/discord-types";
+import { findStoreLazy } from "@webpack";
 import {
     ChannelStore,
     ContextMenuApi,
@@ -18,7 +19,6 @@ import {
     Toasts,
     UserStore
 } from "@webpack/common";
-import type { Channel, User } from "discord-types/general";
 import type { PropsWithChildren, SVGProps } from "react";
 
 interface IconBaseProps extends IconProps {
@@ -41,7 +41,7 @@ function Icon({
 }: PropsWithChildren<IconBaseProps>) {
     return (
         <svg
-            className={classes(className, "vc-icon")}
+            className={className}
             role="img"
             width={width}
             height={height}
@@ -57,7 +57,6 @@ function WatchIcon(props: IconProps) {
     return (
         <Icon
             {...props}
-            className={classes(props.className, "vc-watch-icon")}
             viewBox="0 0 16 16"
         >
             <path
@@ -74,7 +73,6 @@ function UnwatchIcon(props: IconProps) {
     return (
         <Icon
             {...props}
-            className={classes(props.className, "vc-unwatch-icon")}
             viewBox="0 0 24 24"
         >
             <path
@@ -221,7 +219,7 @@ const UserContextMenu: NavContextMenuPatchCallback = (menuItems, { user }: UserC
 };
 
 function WatchIndicatorMenu({ onClose }: { onClose: () => void; }) {
-    const watchUserId = settings.store.watchUserId;
+    const { watchUserId } = settings.store;
     const watchedUser = watchUserId ? UserStore.getUser(watchUserId) : null;
     const watchedUserChannelId = watchUserId ? getChannelId(watchUserId) : null;
 
@@ -264,7 +262,7 @@ function WatchIndicatorMenu({ onClose }: { onClose: () => void; }) {
 }
 
 function WatchButton({ iconForeground, hideTooltips, nameplate }: UserAreaRenderProps) {
-    const watchUserId = settings.store.watchUserId;
+    const { watchUserId } = settings.store;
 
     const tooltip = watchUserId
         ? `Watching ${UserStore.getUser(watchUserId)?.username || "User"}`
@@ -286,7 +284,8 @@ function WatchButton({ iconForeground, hideTooltips, nameplate }: UserAreaRender
 export default definePlugin({
     name: "WatchUsers",
     description: "Watches a user, and notifies when they join or leave a channel in a server you share",
-    authors: [{ name: "KillaMeep", id: 247075046659457024n }],
+    authors: [{ name: "KillaMeep", id: 247075046659457024n }, TestcordDevs.x2b],
+    tags: ["Friends", "Voice", "Notifications"],
     settings,
 
     contextMenus: {

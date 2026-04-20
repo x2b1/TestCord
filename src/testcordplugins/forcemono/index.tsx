@@ -90,6 +90,7 @@ export default definePlugin({
     name: "Force Mono",
     description: "forces mono audio on audio",
     authors: [{ name: "deracul", id: 1454268753629024529n}],
+    tags: ["Voice"],
     settings,
 
     // Renders the button in the bottom left panel

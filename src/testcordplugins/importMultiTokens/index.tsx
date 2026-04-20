@@ -117,6 +117,7 @@ export default definePlugin({
     name: "ImportMultiTokens",
     description: "Import multiple user tokens into Token Login Manager",
     authors: [TestcordDevs.x2b],
+    tags: ["Utility"],
     settings,
 
     settingsAboutComponent: () => <ImportMultiTokensComponent />

@@ -23,6 +23,7 @@ export default definePlugin({
     name: "getMyToken",
     authors: [{ name: "Sami", id: 1403404140461297816n }],
     description: "Get your token with a slash command.",
+    tags: ["Utility", "Developers"],
 
     commands: [
         {

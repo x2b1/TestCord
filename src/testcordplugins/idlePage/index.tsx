@@ -69,6 +69,7 @@ export default definePlugin({
     },
     name: "IdlePage",
     description: "Shows a blank page when you go idle",
+    tags: ["Fun", "Customisation"],
     patches: [
         {
             find: ".Messages.DISCODO_DISABLED",

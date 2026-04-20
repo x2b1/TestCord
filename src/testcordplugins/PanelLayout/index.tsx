@@ -529,6 +529,7 @@ export default definePlugin({
     name: "deraculpanellayout",
     description: "Customize the layout, style, and visibility of panel and call buttons.",
     authors: [{ name: "deracul", id: 1454268753629024529n }],
+    tags: ["Customisation", "Appearance"],
     dependencies: ["UserSettingsAPI"],
     settings,
     userAreaButton: { icon: Icon, render: Btn },

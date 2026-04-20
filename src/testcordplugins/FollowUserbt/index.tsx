@@ -513,6 +513,7 @@ export default definePlugin({
     name: "deraculfollouser",
     description: "Follow a friend into voice channels. Click the panel icon to manage.",
     authors: [EquicordDevs.TheArmagan],
+    tags: ["Voice", "Friends", "Utility"],
     dependencies: ["UserSettingsAPI"],
     settings,
 
