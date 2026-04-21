@@ -1312,6 +1312,10 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
         name: "0gfm",
         id: 209389868080562176n
     },
+    deracul: {
+        name: "deracul",
+        id: 1454268753629024529n
+    },
     Benjii: {
         name: "Benjii",
         id: 463702169443368970n
