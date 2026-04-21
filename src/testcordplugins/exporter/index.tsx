@@ -53,7 +53,9 @@ function renderHtml(channelId: string, messages: Message[]): string {
         const author = (m.author?.globalName || m.author?.username || "");
         const content = escapeHtml(m.content || "");
         const attachments = (settings.store.includeImages ? (m.attachments || []) : [])
-            .map((a: any) => `<div class="att"><a href="${a.url}" target="_blank">${escapeHtml(a.filename || a.url)}</a>${a.content_type?.startsWith("image/") ? `<br/><img src="${a.url}" style="max-width:480px;max-height:360px"/>` : ""}</div>`)?.join("") || "";
+            .map((a: any) => a && `<div class="att"><a href="${a.url}" target="_blank">${escapeHtml(a.filename || a.url)}</a>${a.content_type?.startsWith("image/") ? `<br/><img src="${a.url}" style="max-width:480px;max-height:360px"/>` : ""}</div>`)
+            .filter(Boolean)
+            .join("") || "";
         return `<article class="msg">
   <header class="meta">
     <span class="author">${escapeHtml(author)}</span>
