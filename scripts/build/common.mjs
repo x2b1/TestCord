@@ -189,6 +189,7 @@ export const globPlugins = (kind) => ({
                 const files = await readdir(fullDir, { withFileTypes: true });
                 for (const file of files) {
                     const fileName = file.name;
+                    if (!fileName) continue;
                     if (fileName.startsWith("_") || fileName.startsWith("."))
                         continue;
                     if (fileName === "index.ts") continue;
