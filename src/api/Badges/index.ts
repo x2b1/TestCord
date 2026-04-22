@@ -87,20 +87,23 @@ function applyBadgesPatches() {
         const newStartBadges = startBadges.map(b => ({
             id: `custom-${b.description.replace(/[^a-z0-9]/gi, "")}-${userId.slice(-8)}`,
             description: b.description,
-            icon: b.image.startsWith("http") ? b.image : `/assets/${b.image}.png`,
+            icon: b.image?.startsWith("http") ?? false ? b.image! : `/assets/${b.image!}.png`,
             link: b.link
         }));
 
         const newEndBadges = endBadges.map(b => ({
             id: `custom-${b.description.replace(/[^a-z0-9]/gi, "")}-${userId.slice(-8)}`,
             description: b.description,
-            icon: b.image.startsWith("http") ? b.image : `/assets/${b.image}.png`,
+            icon: b.image?.startsWith("http") ?? false ? b.image! : `/assets/${b.image!}.png`,
             link: b.link
         }));
 
+        // Filter out invalid badges (missing image/description) to prevent renderer crash
+        const validBadges = profile.badges.filter(b => b && b.icon && typeof b.icon === "string" && b.description);
+
         profile.badges = [
             ...newStartBadges,
-            ...profile.badges,
+            ...validBadges,
             ...newEndBadges
         ];
 

@@ -297,7 +297,7 @@ export default definePlugin({
             replacement: {
                 match: /(componentDidMount\(\){)(.{1,150}===(.+?)\.LOADING)/,
                 replace:
-                    "$1if(this.props?.src?.startsWith('blob:') && this.props?.item?.type === 'VIDEO')" +
+                    "$1if(this.props?.src && this.props.src.startsWith('blob:') && this.props?.item?.type === 'VIDEO')" +
                     "return this.setState({readyState: $3.READY});$2"
             }
         },

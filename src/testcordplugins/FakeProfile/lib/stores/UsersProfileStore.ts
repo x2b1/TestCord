@@ -64,13 +64,19 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
 
         newBadges.forEach((userBadges, userId) => {
             if (Array.isArray(userBadges)) {
-                userBadges.forEach(badge => {
+                userBadges.forEach((badge, index) => {
+                    const iconSrc = typeof badge.badge === "string" ? badge.badge.trim() : "";
+                    if (!iconSrc) return;
+
+                    const description = typeof badge.tooltip === "string" && badge.tooltip.length
+                        ? badge.tooltip
+                        : "fakeProfile badge";
                     const newBadge = {
-                        iconSrc: badge.badge,
-                        description: badge.tooltip,
+                        id: badge.badge_id ?? `fakeprofile-${userId}-${index}`,
+                        iconSrc,
+                        description,
                         position: BadgePosition.START,
                         shouldShow: ({ userId: badgeUserId }) => badgeUserId === userId,
-                        ...(badge.badge_id && { id: badge.badge_id })
                     };
                     addProfileBadge(newBadge);
                     newAddedBadges.push(newBadge);
@@ -84,10 +90,12 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
         });
     }),
     fetchProfileEffects: debounce(async () => {
-        const { profileEffects } = get();
         const fetchedProfileEffects = await getEffects();
         const newProfileEffects = new Map(
-            Object.entries(fetchedProfileEffects).map(([key, value]) => [key, value])
+            fetchedProfileEffects.flatMap(effect => [
+                [effect.skuId, effect] as const,
+                [effect.id, effect] as const
+            ])
         );
         set({
             profileEffects: newProfileEffects,
@@ -95,7 +103,6 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
 
     }),
     fetchDecorations: debounce(async () => {
-        const { decorations } = get();
         const fetchedDecorations = await getPresets();
         const newDecorations = new Map(
             fetchedDecorations.map(decoration => [decoration.asset, decoration])
@@ -117,8 +124,6 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
         const fetchedUsers = await getUsers(fetchIds);
 
         const newUsers = new Map(users);
-
-        const now = new Date();
         for (const fetchId of fetchIds) {
             const newUser = fetchedUsers[fetchId] ?? null;
             newUsers.set(fetchId, newUser);
@@ -155,9 +160,18 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
         set({ fetchQueue: newFetchQueue });
         bulkFetch();
     },
-    get(userId: string) { return get().users.get(userId); },
-    getDecorAsset(userId: string) { return get().users.get(userId)?.decoration; },
-    getEffectAsset(userId: string) { return get().users.get(userId)?.profileEffectId; },
+    get(userId: string) {
+        const user = get().users.get(userId);
+        return user && typeof user === "object" ? user : undefined;
+    },
+    getDecorAsset(userId: string) {
+        const user = get().users.get(userId);
+        return user && typeof user === "object" ? user.decoration : undefined;
+    },
+    getEffectAsset(userId: string) {
+        const user = get().users.get(userId);
+        return user && typeof user === "object" ? user.profileEffectId : undefined;
+    },
     set(userId: string, data: Partial<UserData>) {
         const { users } = get();
         const newUsers = new Map(users);
@@ -166,7 +180,6 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
         set({ users: newUsers });
     }
 } as UsersDecorationsState)));
-
 
 export function useUserAvatarDecoration(user?: User): Decoration | null | undefined {
     try {
@@ -202,9 +215,9 @@ export function useUserAvatarDecoration(user?: User): Decoration | null | undefi
             if (!decoration) {
                 useUsersProfileStore.getState().fetchDecorations();
                 const decoration = useUsersProfileStore.getState().decorations.get(AvatarDecoration);
-                return { asset: AvatarDecoration, skuId: decoration.skuId, animated: decoration.animated };
+                return decoration ? { asset: AvatarDecoration, skuId: decoration.skuId, animated: decoration.animated } : null;
             }
-            return { asset: AvatarDecoration, skuId: decoration.skuId, animated: decoration.animated };
+            return decoration ? { asset: AvatarDecoration, skuId: decoration.skuId, animated: decoration.animated } : null;
         }
         return null;
     } catch (e) {

@@ -48,6 +48,12 @@ const badges: Record<string, ProfileBadge> = {
 const fetching = new Set<string>();
 const queue = new Queue(5);
 
+function isValidProfileBadge(badge: ProfileBadge | null | undefined): badge is ProfileBadge {
+    return typeof badge?.id === "string"
+        && typeof badge.icon === "string"
+        && badge.icon.length > 0;
+}
+
 interface MentionProps {
     data: {
         userId?: string;
@@ -90,7 +96,8 @@ async function getUser(id: string) {
     const fakeBadges: ProfileBadge[] = Object.entries(UserFlags)
         .filter(([_, flag]) => !isNaN(flag) && userObj.hasFlag(flag))
         .map(([key]) => badges[key.toLowerCase()])
-        .filter(isNonNullish);
+        .filter(isNonNullish)
+        .filter(isValidProfileBadge);
     if (user.premium_type || !user.bot && (user.banner || user.avatar?.startsWith?.("a_")))
         fakeBadges.push(badges.premium);
 
@@ -98,7 +105,7 @@ async function getUser(id: string) {
     const profile = UserProfileStore.getUserProfile(id);
     if (profile) {
         profile.accentColor = user.accent_color;
-        profile.badges = fakeBadges;
+        profile.badges = fakeBadges.filter(isValidProfileBadge);
         profile.banner = user.banner;
         profile.premiumType = user.premium_type;
     }

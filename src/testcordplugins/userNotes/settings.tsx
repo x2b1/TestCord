@@ -27,7 +27,7 @@ export default definePluginSettings({
         type: OptionType.BOOLEAN,
         description:
             'Replace the regular "Notes" section by a button that opens notes from this plugin',
-        default: true,
+        default: false,
         restartNeeded: true,
     },
     disableSpellCheck: {
@@ -59,6 +59,10 @@ export default definePluginSettings({
                         Authorization: token.getToken(),
                     }
                 }).then(async r => {
+                    if (!r.ok) {
+                        showToast("Unable to retrieve regular notes from Discord", Toasts.Type.FAILURE);
+                        return;
+                    }
                     r.json().then(resularUsersNotes => {
                         transferUserNotes(resularUsersNotes);
                         showToast("Successfully transferred notes from Discord", Toasts.Type.SUCCESS);

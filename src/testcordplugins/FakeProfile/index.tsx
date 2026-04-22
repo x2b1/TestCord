@@ -9,7 +9,7 @@ import { ErrorBoundary } from "@components/index";
 import { copyWithToast } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin from "@utils/types";
-import { User } from "@vencord/discord-types";
+import { ProfileEffect, User } from "@vencord/discord-types";
 import { Button, Toasts, UserStore } from "@webpack/common";
 import virtualMerge from "virtual-merge";
 
@@ -183,13 +183,28 @@ export default definePlugin({
                 let mergeData: Partial<UserProfile> = {};
                 const userData = useUsersProfileStore.getState().get(user.userId);
                 const colors = decode(user.bio);
-                if (settings.store.enableProfileEffects && userData?.profileEffectId) {
+                const profileEffect = userData?.profileEffectId
+                    ? useUsersProfileStore.getState().profileEffects.get(userData.profileEffectId)
+                    : null;
+                const effects = profileEffect?.config.effects.filter(effect => typeof effect?.src === "string");
+                if (settings.store.enableProfileEffects && profileEffect && effects?.length) {
                     mergeData = {
                         ...mergeData,
                         profileEffect: {
-                            expireAt: null,
-                            skuId: userData.profileEffectId,
-                        }
+                            skuId: profileEffect.skuId,
+                            title: profileEffect.config.title,
+                            description: profileEffect.config.description,
+                            accessibilityLabel: profileEffect.config.accessibilityLabel,
+                            reducedMotionSrc: typeof profileEffect.config.reducedMotionSrc === "string"
+                                ? profileEffect.config.reducedMotionSrc
+                                : undefined,
+                            thumbnailPreviewSrc: typeof profileEffect.config.thumbnailPreviewSrc === "string"
+                                ? profileEffect.config.thumbnailPreviewSrc
+                                : undefined,
+                            effects,
+                            animationType: profileEffect.config.animationType,
+                            type: profileEffect.config.type
+                        } satisfies ProfileEffect
                     };
                 }
                 if (settings.store.enableProfileThemes && colors) {
@@ -213,40 +228,51 @@ export default definePlugin({
             return 2;
     },
     getAvatarHook: (original: any) => (user: User, animated: boolean, size: number) => {
-        if (settings.store.nitroFirst && user.avatar?.startsWith("a_")) return original(user, animated, size);
+        if (!user) return original(user, animated, size);
+        if (settings.store.nitroFirst && user.avatar && typeof user.avatar === "string" && user.avatar.startsWith("a_")) return original(user, animated, size);
         const userData = useUsersProfileStore.getState().get(user.id);
         if (animated) {
             return userData?.avatar ?? original(user, animated, size);
         } else {
             const avatarUrl = userData?.avatar;
             if (avatarUrl && typeof avatarUrl === "string") {
-                const parsedUrl = new URL(avatarUrl);
-                const image_name = parsedUrl.pathname.split("/").pop()?.replace(/\.(gif|webp)$/i, ".png");
-                if (image_name) {
-                    return BASE_URL + "/image/" + image_name;
+                try {
+                    const parsedUrl = new URL(avatarUrl);
+                    const image_name = parsedUrl.pathname.split("/").pop()?.replace(/\.(gif|webp)$/i, ".png");
+                    if (image_name) {
+                        return BASE_URL + "/image/" + image_name;
+                    }
+                } catch (e) {
+                    console.error("Failed to parse avatar URL", e);
                 }
             }
             return original(user, animated, size);
         }
     },
     getAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: Decoration | null; canAnimate?: boolean; }) {
-        if (!avatarDecoration || !settings.store.enableAvatarDecorations) return;
-        if (canAnimate && avatarDecoration?.animated) {
-            if (avatarDecoration?.skuId === SKU_ID) {
-                const url = new URL(`${BASE_URL}/avatar-decoration-presets/a_${avatarDecoration?.asset}.png`);
-                return url.toString();
+        if (!avatarDecoration || !avatarDecoration.asset || !settings.store.enableAvatarDecorations) return;
+        try {
+            if (canAnimate && avatarDecoration.animated) {
+                if (avatarDecoration.skuId === SKU_ID) {
+                    const url = new URL(`${BASE_URL}/avatar-decoration-presets/a_${avatarDecoration.asset}.png`);
+                    return url.toString();
+                } else {
+                    const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration.asset}.png`);
+                    return url.toString();
+                }
             } else {
-                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png`);
-                return url.toString();
+                if (avatarDecoration.skuId === SKU_ID) {
+                    const assetName = typeof avatarDecoration.asset === "string" ? avatarDecoration.asset.replace("a_", "") : avatarDecoration.asset;
+                    const url = new URL(`${BASE_URL}/avatar-decoration-presets/${assetName}.png`);
+                    return url.toString();
+                } else {
+                    const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration.asset}.png?passthrough=false`);
+                    return url.toString();
+                }
             }
-        } else {
-            if (avatarDecoration?.skuId === SKU_ID) {
-                const url = new URL(`${BASE_URL}/avatar-decoration-presets/${avatarDecoration?.asset.replace("a_", "")}.png`);
-                return url.toString();
-            } else {
-                const url = new URL(`https://cdn.discordapp.com/avatar-decoration-presets/${avatarDecoration?.asset}.png?passthrough=false`);
-                return url.toString();
-            }
+        } catch (e) {
+            console.error("Failed to construct avatar decoration URL", e);
+            return undefined;
         }
     },
     nameplate(nameplate: Nameplate | undefined) {

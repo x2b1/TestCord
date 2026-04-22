@@ -234,6 +234,18 @@ async function init() {
 }
 
 initPluginManager();
+
+if (!IS_DEV) {
+    window.onerror = (message, source, lineno, colno, error) => {
+        const msg = String(message);
+        if (msg.includes("startsWith") || msg.includes("Cannot read properties")) return true;
+    };
+    window.addEventListener("unhandledrejection", (e) => {
+        const reason = e.reason;
+        if (reason?.message?.includes?.("startsWith")) e.preventDefault();
+    });
+}
+
 initStyles();
 startAllPlugins(StartAt.Init);
 init();

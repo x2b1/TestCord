@@ -29,7 +29,7 @@ function parseStringArray(value: unknown) {
         return value.filter((item): item is string => typeof item === "string" && item.length > 0);
     }
 
-    if (typeof value !== "string" || value.length === 0) {
+    if (value == null || typeof value !== "string" || value.length === 0) {
         return [];
     }
 

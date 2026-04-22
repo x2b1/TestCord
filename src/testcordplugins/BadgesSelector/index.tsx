@@ -8,6 +8,28 @@ const userBadgesMap = new Map<string, any[]>();
 
 const removedBadgesMap = new Map<string, Set<string>>();
 
+function isDefined<T>(value: T | null | undefined): value is T {
+    return value != null;
+}
+
+function normalizeBadge(badge: any) {
+    if (!badge || typeof badge !== "object") return null;
+
+    const id = typeof badge.id === "string" ? badge.id : null;
+    const icon = [badge.icon, badge.iconSrc, badge.image].find(value => typeof value === "string" && value.length > 0);
+    if (!id || typeof icon !== "string") return null;
+
+    return {
+        ...badge,
+        id,
+        icon,
+        description: typeof badge.description === "string" && badge.description.length
+            ? badge.description
+            : badge.title ?? id,
+        link: typeof badge.link === "string" ? badge.link : undefined
+    };
+}
+
 function getNitroSinceDate(months: number): string {
     const currentDate = new Date();
     const sinceDate = new Date(currentDate);
@@ -286,12 +308,15 @@ async function loadData() {
     if (savedUserBadges) {
         Object.entries(savedUserBadges).forEach(([userId, badges]) => {
             const updatedBadges = (badges as any[]).map(badge => {
+                const normalizedBadge = normalizeBadge(badge);
+                if (!normalizedBadge) return null;
+
                 const freshBadge = availableBadges.find(b => b.id === badge.id);
-                if (freshBadge && (badge.id.startsWith("premium_tenure_") || badge.id.startsWith("guild_booster_"))) {
-                    return { ...badge, description: freshBadge.description };
+                if (freshBadge && (normalizedBadge.id.startsWith("premium_tenure_") || normalizedBadge.id.startsWith("guild_booster_"))) {
+                    return { ...normalizedBadge, description: freshBadge.description };
                 }
-                return badge;
-            });
+                return normalizedBadge;
+            }).filter(isDefined);
             userBadgesMap.set(userId, updatedBadges);
         });
     }
@@ -458,7 +483,7 @@ export default definePlugin({
             const userProfile = originalGetUserProfile.call(this, userId);
             if (!userProfile) return userProfile;
 
-            let newBadges = [...(userProfile.badges || [])];
+            let newBadges = (userProfile.badges || []).map(normalizeBadge).filter(isDefined);
 
             if (removedBadgesMap.has(userId)) {
                 const hiddenBadges = removedBadgesMap.get(userId)!;
@@ -468,7 +493,10 @@ export default definePlugin({
             if (userBadgesMap.has(userId)) {
                 const userBadges = userBadgesMap.get(userId)!;
                 userBadges.forEach(badgeObj => {
-                    const { id, description, icon, link } = badgeObj;
+                    const normalizedBadge = normalizeBadge(badgeObj);
+                    if (!normalizedBadge) return;
+
+                    const { id, description, icon, link } = normalizedBadge;
                     const badgeIndex = newBadges.findIndex(b => b.id === id);
                     if (badgeIndex === -1) {
                         newBadges.push({ id, description, icon, link });
@@ -488,7 +516,7 @@ export default definePlugin({
 
             return {
                 ...userProfile,
-                badges: newBadges
+                badges: newBadges.map(normalizeBadge).filter(isDefined)
             };
         };
     },

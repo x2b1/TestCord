@@ -150,12 +150,12 @@ export default definePlugin({
 
     getDecorAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: AvatarDecoration | null; canAnimate?: boolean; }) {
         // Only Decor avatar decorations have this SKU ID
-        if (avatarDecoration?.skuId === SKU_ID) {
+        if (avatarDecoration?.skuId === SKU_ID && typeof avatarDecoration.asset === "string" && avatarDecoration.asset.length > 0) {
             const parts = avatarDecoration.asset.split("_");
             // Remove a_ prefix if it's animated and animation is disabled
             if (avatarDecoration.asset.startsWith("a_") && !canAnimate) parts.shift();
             return `${CDN_URL}/${parts.join("_")}.png`;
-        } else if (avatarDecoration?.skuId === RAW_SKU_ID) {
+        } else if (avatarDecoration?.skuId === RAW_SKU_ID && typeof avatarDecoration.asset === "string" && avatarDecoration.asset.length > 0) {
             return avatarDecoration.asset;
         }
     },
