@@ -70,6 +70,7 @@ const EquicordContributorBadge: ProfileBadge = {
 };
 
 const TestcordContributorBadge: ProfileBadge = {
+    id: "testcord_contributor",
     description: "Testcord Contributor",
     iconSrc: TESTCORD_CONTRIBUTOR_BADGE,
     position: BadgePosition.START,
@@ -106,6 +107,7 @@ const UserPluginContributorBadge: ProfileBadge = {
 };
 
 const TestcordAdminBadge: ProfileBadge = {
+    id: "testcord_admin",
     description: "Testcord Admin",
     iconSrc: TESTCORD_ADMIN_BADGE,
     position: BadgePosition.START,
@@ -119,6 +121,7 @@ const TestcordAdminBadge: ProfileBadge = {
 };
 
 const TestcordOwnerBadge: ProfileBadge = {
+    id: "testcord_owner",
     description: "Testcord Owner",
     iconSrc: TESTCORD_OWNER_BADGE,
     position: BadgePosition.START,
@@ -132,6 +135,7 @@ const TestcordOwnerBadge: ProfileBadge = {
 };
 
 const TestcordDevBadge: ProfileBadge = {
+    id: "testcord_developer",
     description: "Testcord Dev",
     iconSrc: TESTCORD_DEV_BADGE,
     position: BadgePosition.START,
@@ -378,6 +382,7 @@ export default definePlugin({
                 : `${TBADGES_REPO_URL}/${badge.badge}`;
 
             return {
+                id: `external_badge_${badge.badge}`,
                 iconSrc,
                 description: badge.tooltip,
                 position: BadgePosition.START,
