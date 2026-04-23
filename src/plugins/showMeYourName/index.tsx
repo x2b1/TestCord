@@ -26,7 +26,7 @@ import { JSX } from "react";
 const SMYNC = classNameFactory();
 const UserStore = findStoreLazy("UserStore");
 const wrapEmojis = findByCodeLazy("lastIndex;return");
-const adjustColor = findByCodeLazy("light1", "dark1", "toonStroke");
+const adjustColor = findByCodeLazy("light1", '.get("hsl.s"))');
 const AccessibilityStore = findStoreLazy("AccessibilityStore");
 
 const roleColorPattern = /^role((?:\+|-)\d{0,4})?$/iu;
@@ -1122,7 +1122,7 @@ export default definePlugin({
             // because the name is the same as the username.
             find: "location:\"DiscordTag\"});",
             replacement: {
-                match: /(?<=forceUsername:(\i),.{0,550}?displayNameStyles:)\i!==\i\?(\i.displayNameStyles):null/,
+                match: /(?<=,forceUsername:(\i),.*?displayNameStyles:)\i!==\i\?(\i.displayNameStyles):null/,
                 replace: "!$1?$2:null"
             },
         },

@@ -41,26 +41,35 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 };
 
 function StandingButton() {
-    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
-    const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized());
-    const [hovered, setHovered] = React.useState(false);
+    const [error, setError] = React.useState(false);
 
-    React.useEffect(() => {
-        if (!isInitialized) fetchSafetyHub().catch(() => { });
-    }, [isInitialized]);
+    if (error) return null;
 
-    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+    try {
+        const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
+        const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized());
+        const [hovered, setHovered] = React.useState(false);
 
-    return (
-        <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-            <HeaderBarButton
-                tooltip={config.label}
-                position="bottom"
-                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
-                onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
-            />
-        </div>
-    );
+        React.useEffect(() => {
+            if (!isInitialized) fetchSafetyHub().catch(() => { });
+        }, [isInitialized]);
+
+        const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+
+        return (
+            <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+                <HeaderBarButton
+                    tooltip={config.label}
+                    position="bottom"
+                    icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
+                    onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+                />
+            </div>
+        );
+    } catch (e) {
+        setError(true);
+        return null;
+    }
 }
 
 const listener = async (channelId, msg) => {
