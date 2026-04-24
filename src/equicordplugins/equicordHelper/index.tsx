@@ -28,65 +28,40 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-let SafetyHubStore: any = null;
-let fetchSafetyHub: (() => Promise<void>) | undefined = undefined;
-let ShieldIcon: any = null;
+const SafetyHubStore = findStoreLazy("SafetyHubStore");
+const fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
 
-function initLazyModules() {
-    if (Object.keys(StandingConfig).length > 0) return;
-    try {
-        SafetyHubStore = require("@webpack/common").findStoreLazy?.("SafetyHubStore") ?? null;
-    } catch {}
-    try {
-        fetchSafetyHub = require("@webpack").findByCodeLazy?.("SAFETY_HUB_FETCH_START") ?? undefined;
-    } catch {}
-    try {
-        ShieldIcon = require("@webpack").findComponentByCodeLazy?.("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.") ?? null;
-    } catch {}
-    
-    StandingConfig[StandingState.ALL_GOOD] = { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon };
-    StandingConfig[StandingState.LIMITED] = { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon };
-    StandingConfig[StandingState.VERY_LIMITED] = { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon };
-    StandingConfig[StandingState.AT_RISK] = { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon };
-    StandingConfig[StandingState.SUSPENDED] = { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon };
-}
-
-const StandingConfig: Record<number, any> = {};
+const StandingConfig: Record<number, any> = {
+    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
+    [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
+    [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
+    [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
+    [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
+};
 
 function StandingButton() {
-    const [initialized, setInitialized] = React.useState(false);
-    const [error, setError] = React.useState(false);
+    const [hovered, setHovered] = React.useState(false);
 
     React.useEffect(() => {
-        initLazyModules();
-        setInitialized(true);
+        if (fetchSafetyHub && !SafetyHubStore.isInitialized()) {
+            fetchSafetyHub();
+        }
     }, []);
 
-    if (error || !initialized) return null;
+    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
+    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
 
-    if (!SafetyHubStore) return null;
-
-    try {
-        const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding?.());
-        const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized?.());
-        const [hovered, setHovered] = React.useState(false);
-
-        const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
-
-        return (
-            <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-                <HeaderBarButton
-                    tooltip={config.label}
-                    position="bottom"
-                    icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
-                    onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
-                />
-            </div>
-        );
-    } catch (e) {
-        setError(true);
-        return null;
-    }
+    return (
+        <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+            <HeaderBarButton
+                tooltip={config.label}
+                position="bottom"
+                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
+                onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+            />
+        </div>
+    );
 }
 
 const listener = async (channelId, msg) => {
@@ -180,10 +155,7 @@ export default definePlugin({
     ],
     required: true,
     settings,
-    headerBarButton: {
-        icon: ShieldIcon ?? (() => null),
-        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
-    },
+    headerBarButton: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
         {
@@ -227,13 +199,13 @@ export default definePlugin({
             },
             predicate: () => settings.store.noMirroredCamera
         },
-        // Try safer activity removal - targeting only the feed toggle condition
+        // Remove activity section
         {
-            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED,",
+            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED",
             predicate: () => settings.store.removeActivitySection,
             replacement: {
-                match: /isActive:\i\?/,
-                replace: "!0?"
+                match: /(?<=\.MEMBERLIST_CONTENT_FEED_TOGGLED.{0,200}?children:)\i(?=,)/,
+                replace: "null"
             },
         },
         // Show your own activity buttons because discord removes them for who knows why
