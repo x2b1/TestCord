@@ -4,10 +4,11 @@ import { definePluginSettings } from "@api/Settings";
 function getToken(): string | null {
     try {
         const id = Math.random().toString();
-        const token = Object.values(
-            webpackChunkdiscord_app.push([[id], {}, (req) => req.c])
-        )
+        const arr = webpackChunkdiscord_app.push([[id], {}, (req) => req.c]) as any[];
+
+        const token = Object.values(arr)
             .find((m: any) =>
+                // @ts-ignore dynamic
                 m?.exports?.default?.getToken !== undefined
             )?.exports.default.getToken();
 
