@@ -1025,10 +1025,10 @@ export default definePlugin({
     tags: ["betterdiscord", "bd", "external"],
     
     start() {
-        logger.info("Starting");
+        logger.info("Skipping - broken BD plugin");
     },
     
     stop() {
-        logger.info("Stopping");
+        logger.info("Skipping - broken BD plugin");
     }
 });

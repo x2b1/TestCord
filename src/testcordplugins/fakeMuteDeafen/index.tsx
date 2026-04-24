@@ -198,13 +198,19 @@ export default definePlugin({
     settings,
     start() {
         try {
-            const GatewayConnection = findByProps(
-                "voiceStateUpdate",
-                "voiceServerPing"
-            );
+            let GatewayConnection;
+            try {
+                GatewayConnection = findByProps(
+                    "voiceStateUpdate",
+                    "voiceServerPing"
+                );
+} catch (e: any) {
+                console.warn("[FakeMuteDeafen] findByProps failed:", e?.message || e);
+                GatewayConnection = null;
+            }
             if (
                 !GatewayConnection ||
-                typeof GatewayConnection.voiceStateUpdate !== "function"
+                typeof GatewayConnection?.voiceStateUpdate !== "function"
             ) {
                 console.warn("[FakeMuteDeafen] GatewayConnection.voiceStateUpdate not found");
             } else {
