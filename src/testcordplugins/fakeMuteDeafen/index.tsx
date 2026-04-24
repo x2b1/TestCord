@@ -132,13 +132,13 @@ function FakeMuteDeafenButton() {
         fakeVoiceState.selfDeaf = !fakeVoiceState.selfDeaf;
         fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
 
-        const ChannelStore = findByProps("getChannel", "getDMFromUserId");
-        const SelectedChannelStore = findByProps("getVoiceChannelId");
-        const GatewayConnection = findByProps(
+        const ChannelStore = findByPropsLazy("getChannel", "getDMFromUserId");
+        const SelectedChannelStore = findByPropsLazy("getVoiceChannelId");
+        const GatewayConnection = findByPropsLazy(
             "voiceStateUpdate",
             "voiceServerPing"
         );
-        const MediaEngineStore = findByProps("isDeaf", "isMute");
+        const MediaEngineStore = findByPropsLazy("isDeaf", "isMute");
 
         if (
             ChannelStore &&
@@ -198,15 +198,10 @@ export default definePlugin({
     settings,
     start() {
         try {
-            let GatewayConnection: any = null;
-            try {
-                GatewayConnection = findByProps(
-                    "voiceStateUpdate",
-                    "voiceServerPing"
-                );
-            } catch (e) {
-                console.warn("[FakeMuteDeafen] findByProps failed:", String(e));
-            }
+            const GatewayConnection = findByPropsLazy(
+                "voiceStateUpdate",
+                "voiceServerPing"
+            );
             if (
                 !GatewayConnection ||
                 typeof GatewayConnection?.voiceStateUpdate !== "function"
@@ -230,7 +225,7 @@ export default definePlugin({
         }
     },
     stop() {
-        const GatewayConnection = findByProps(
+        const GatewayConnection = findByPropsLazy(
             "voiceStateUpdate",
             "voiceServerPing"
         );
