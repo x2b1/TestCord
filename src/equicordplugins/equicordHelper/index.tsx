@@ -28,14 +28,11 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-// SafetyHub not available in Discord canary - use fallback only
-const fetchSafetyHub = undefined;
-const ShieldIcon = undefined;
-const SafetyHubStore = undefined;
+const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
+const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
 
-// StandingConfig - SafetyHub not available, show generic messages
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
-    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: WarningIcon },
+    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
     [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
@@ -43,16 +40,26 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 };
 
 function StandingButton() {
-    // SafetyHub not available in canary - just show account settings button
-    if (!settings.store.accountStandingButton) return null;
-    
+    const SafetyHubStore = findStoreLazy("SafetyHubStore");
+    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.getAccountStanding?.() ?? null);
+    const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.isInitialized?.() ?? false);
+    const [hovered, setHovered] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!isInitialized) fetchSafetyHub().catch(() => { });
+    }, [isInitialized]);
+
+    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+
     return (
-        <HeaderBarButton
-            tooltip="Account Settings"
-            position="bottom"
-            icon={WarningIcon}
-            onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
-        />
+        <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+            <HeaderBarButton
+                tooltip={config.label}
+                position="bottom"
+                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
+                onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+            />
+        </div>
     );
 }
 
@@ -148,7 +155,7 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: WarningIcon,
+        icon: ShieldIcon,
         render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     },
     patches: [

@@ -276,8 +276,7 @@ export default definePlugin({
     authors: [EquicordDevs.omaw],
     dependencies: ["ChatInputButtonAPI"],
     start: () => {
-        console.log("[BetterFormattingRedux] Adding FormatButton to chat bar");
-        addChatBarButton("FormatButton", FormatButton as any, FormatIcon);
+        addChatBarButton("FormatButton", FormatButton, FormatIcon);
     },
     stop: () => {
         removeChatBarButton("FormatButton");

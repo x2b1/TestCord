@@ -2,7 +2,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
 import { Toasts, FluxDispatcher, PermissionsBits, UserStore, GuildStore, GuildMemberStore, RestAPI } from "@webpack/common";
 import { definePluginSettings } from "@api/Settings";
-import { Guild, GuildMember, Role } from "discord-types/general";
+import { Guild, GuildMember, Role } from "@vencord/discord-types";
 import { findByPropsLazy, findStoreLazy, findByCodeLazy, findLazy } from "@webpack";
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
@@ -42,6 +42,7 @@ const cb = async (e: any) => {
     const channelVoiceStates = VoiceStateStore.getVoiceStatesForChannel(state?.channelId) ?? {};
     if (!Object.keys(channelVoiceStates).includes(UserStore.getCurrentUser().id)) return;
     const member = GuildMemberStore.getMember(state.guildId, state.userId!);
+    if (!member) return;
 
     const roles = getSortedRoles(GuildStore.getGuild(state.guildId), member)
         .map(role => ({
@@ -69,6 +70,7 @@ const cb = async (e: any) => {
 };
 
 function getSortedRoles({ id }: Guild, member: GuildMember) {
+    // @ts-expect-error Discord API changed
     const roles = GuildStore.getRoles(id);
 
     return [...member.roles, id]
