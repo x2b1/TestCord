@@ -290,28 +290,44 @@ interface StoredKey {
 
 class KeyManager {
     private keyCache: Map<string, StoredKey> = new Map();
+    private initialized = false;
 
     constructor() {
-        this.loadKeys();
     }
 
     private loadKeys(): void {
+        if (this.initialized) return;
         try {
-            const stored = JSON.parse(settings.store.knownPublicKeys || "{}");
+            const stored = JSON.parse(settings.store?.knownPublicKeys || "{}");
             this.keyCache = new Map(Object.entries(stored || {}));
+            this.initialized = true;
             logger.info(`Loaded ${this.keyCache.size} known public keys`);
         } catch (err) {
             logger.error("Failed to load keys:", err);
             this.keyCache = new Map();
+            this.initialized = true;
         }
     }
 
-    private saveKeys(): void {
+    private ensureInitialized() {
+        if (!this.initialized) {
+            this.loadKeys();
+        }
+    }
+
+private saveKeys(): void {
+        this.ensureInitialized();
         const obj = Object.fromEntries(this.keyCache);
         settings.store.knownPublicKeys = JSON.stringify(obj);
     }
 
+    getVerifiedKeyForUser(userId: string): StoredKey | null {
+        this.ensureInitialized();
+        return this.keyCache.get(userId) || null;
+    }
+
     async importPublicKeyForUser(userId: string, armoredKey: string): Promise<StoredKey> {
+        this.ensureInitialized();
         await ensureOpenPGP();
         const pgp = requireOpenPGP();
         // Preprocess the key to handle single-line format
@@ -331,14 +347,17 @@ class KeyManager {
     }
 
     getPublicKeyForUser(userId: string): string | null {
+        this.ensureInitialized();
         return this.keyCache.get(userId)?.publicKey || null;
     }
 
     getAllKeysWithUsers(): Array<{ userId: string; key: StoredKey }> {
+        this.ensureInitialized();
         return Array.from(this.keyCache.entries()).map(([userId, key]) => ({ userId, key }));
     }
 
     removeKeyForUser(userId: string): boolean {
+        this.ensureInitialized();
         const had = this.keyCache.delete(userId);
         if (had) this.saveKeys();
         return had;

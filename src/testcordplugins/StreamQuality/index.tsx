@@ -489,12 +489,12 @@ export default definePlugin({
             find: "canUseCustomStickersEverywhere:",
             replacement: [
                 {
-                    match: /(?<=canStreamQuality:)[^{]+/,
-                    replace: "() => true",
+                    match: /canStreamQuality:function\([^)]+\)\{[^}]+\},?/,
+                    replace: "canStreamQuality:() => true,",
                 },
                 {
-                    match: /(?<=canUseHighVideoUploadQuality:)[^{]+/,
-                    replace: "() => true",
+                    match: /canUseHighVideoUploadQuality:function\([^)]+\)\{[^}]+\},?/,
+                    replace: "canUseHighVideoUploadQuality:() => true,",
                 },
             ],
         },
