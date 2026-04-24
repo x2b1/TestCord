@@ -44,13 +44,15 @@ function StandingButton() {
     const [hovered, setHovered] = React.useState(false);
 
     React.useEffect(() => {
-        if (fetchSafetyHub && !SafetyHubStore.isInitialized()) {
-            fetchSafetyHub();
+        if (SafetyHubStore && !SafetyHubStore.isInitialized && !SafetyHubStore.isInitialized()) {
+            fetchSafetyHub?.();
         }
     }, []);
 
-    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
+    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.getAccountStanding?.() ?? { state: StandingState.ALL_GOOD });
     const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+
+    if (!config.Icon) return null;
 
     return (
         <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
@@ -155,7 +157,10 @@ export default definePlugin({
     ],
     required: true,
     settings,
-    headerBarButton: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
+    headerBarButton: {
+        icon: ShieldIcon ?? WarningIcon,
+        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null)
+    },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
         {
