@@ -28,13 +28,21 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-// SAFETY_HUB modules not available in Discord canary - disabled for safety
-// let fetchSafetyHub: (() => Promise<void>) | undefined;
-// let ShieldIcon: ComponentType<any> | undefined;
-// let SafetyHubStore: any;
-const fetchSafetyHub = undefined;
-const ShieldIcon = undefined;
-const SafetyHubStore = undefined;
+// Safe lazy loading (with error suppression)
+let fetchSafetyHub: (() => Promise<void>) | undefined;
+let ShieldIcon: ComponentType<any> | undefined;
+let SafetyHubStore: any;
+
+try {
+    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+    SafetyHubStore = findStoreLazy("SafetyHubStore");
+} catch (e) {
+    console.warn("[EquiCordHelper] SafetyHub not available:", e?.message);
+    fetchSafetyHub = undefined;
+    ShieldIcon = undefined;
+    SafetyHubStore = undefined;
+}
 
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
     [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: WarningIcon },
@@ -46,13 +54,55 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 
 function StandingButton() {
     if (!settings.store.accountStandingButton) return null;
+    
+    // If SafetyHub unavailable, show fallback
+    if (!SafetyHubStore || !ShieldIcon) {
+        return (
+            <HeaderBarButton
+                tooltip="Account Standing"
+                position="bottom"
+                icon={WarningIcon}
+                onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+            />
+        );
+    }
+    
+    const [hovered, setHovered] = React.useState(false);
+
+    const getStanding = () => {
+        try {
+            return SafetyHubStore?.getAccountStanding?.() ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    const getInitialized = () => {
+        try {
+            return SafetyHubStore?.isInitialized?.() ?? false;
+        } catch {
+            return false;
+        }
+    };
+
+    const standing = useStateFromStores([SafetyHubStore], getStanding);
+    const isInitialized = useStateFromStores([SafetyHubStore], getInitialized);
+
+    React.useEffect(() => {
+        if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => {});
+    }, [isInitialized]);
+
+    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+
     return (
-        <HeaderBarButton
-            tooltip="Account Standing"
-            position="bottom"
-            icon={WarningIcon}
-            onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
-        />
+        <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+            <HeaderBarButton
+                tooltip={config.label}
+                position="bottom"
+                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
+                onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+            />
+        </div>
     );
 }
 

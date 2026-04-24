@@ -67,7 +67,10 @@ export const PluginTags = [
     "Servers",
     "Shortcuts",
     "Utility",
-    "Voice"
+    "Voice",
+    "betterdiscord",
+    "bd",
+    "loader"
 ] as const;
 
 export type PluginTag = typeof PluginTags[number];
