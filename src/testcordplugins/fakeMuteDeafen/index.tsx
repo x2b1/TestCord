@@ -128,47 +128,21 @@ function FakeDeafenIcon() {
 function FakeMuteDeafenButton() {
     const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-    const handleClick = React.useCallback(() => {
+    const handleClick = React.useCallback(async () => {
         fakeVoiceState.selfDeaf = !fakeVoiceState.selfDeaf;
         fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
 
-        const ChannelStore = findByPropsLazy("getChannel", "getDMFromUserId");
-        const SelectedChannelStore = findByPropsLazy("getVoiceChannelId");
-        const GatewayConnection = findByPropsLazy(
-            "voiceStateUpdate",
-            "voiceServerPing"
-        );
-        const MediaEngineStore = findByPropsLazy("isDeaf", "isMute");
-
-        if (
-            ChannelStore &&
-            SelectedChannelStore &&
-            GatewayConnection &&
-            typeof GatewayConnection.voiceStateUpdate === "function"
-        ) {
-            const channelId = SelectedChannelStore.getVoiceChannelId?.();
-            const channel = channelId
-                ? ChannelStore.getChannel?.(channelId)
-                : null;
-
-            if (channel) {
-                if (fakeVoiceState.selfDeaf) {
-                    GatewayConnection.voiceStateUpdate({
-                        channelId: channel.id,
-                        guildId: channel.guild_id,
-                        selfMute: true,
-                        selfDeaf: true,
-                    });
-                } else {
-                    const selfMute = MediaEngineStore?.isMute?.() ?? false;
-                    const selfDeaf = MediaEngineStore?.isDeaf?.() ?? false;
-                    GatewayConnection.voiceStateUpdate({
-                        channelId: channel.id,
-                        guildId: channel.guild_id,
-                        selfMute,
-                        selfDeaf,
-                    });
-                }
+        // Use VoiceActions instead of the broken voiceStateUpdate
+        const VoiceActions = findByPropsLazy("toggleSelfMute", "toggleSelfDeaf");
+        if (VoiceActions) {
+            if (fakeVoiceState.selfDeaf) {
+                // Enable fake: actually mute/deafen
+                await VoiceActions.toggleSelfDeaf?.();
+                await VoiceActions.toggleSelfMute?.();
+            } else {
+                // Disable fake: actually unmute/undeafen
+                await VoiceActions.toggleSelfMute?.();
+                await VoiceActions.toggleSelfDeaf?.();
             }
         }
         forceUpdate();
