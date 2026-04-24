@@ -67,10 +67,9 @@ function StandingButton() {
 
     if (error) return null;
 
+    if (!SafetyHubStore) return null;
+
     try {
-        if (!SafetyHubStore) {
-            return null;
-        }
         const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding?.());
         const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized?.());
         const [hovered, setHovered] = React.useState(false);
