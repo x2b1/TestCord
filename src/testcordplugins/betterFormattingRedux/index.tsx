@@ -119,6 +119,7 @@ const FormatButton: ChatBarButtonFactory = () => {
     }
 
     useEffect(() => {
+        console.log("[BFR] useEffect triggered, open:", open, "wrapperRef:", !!wrapperRef.current, "body:", !!document.body);
         formatFrame.current?.remove();
         formatFrame.current = null;
         if (!open || !wrapperRef.current) return;
@@ -258,6 +259,7 @@ const FormatButton: ChatBarButtonFactory = () => {
                 tooltip={tooltip}
                 onClick={() => {
                     setOpen(o => !o);
+                    setTooltip("Text Formatting");
                     setTooltip("");
                 }}
             >
@@ -281,6 +283,7 @@ export default definePlugin({
     },
     stop: () => {
         removeChatBarButton("FormatButton");
+        console.log("[BFR] useEffect triggered, open:", open, "wrapperRef:", !!wrapperRef.current, "body:", !!document.body);
         formatFrame.current?.remove();
     }
 });
