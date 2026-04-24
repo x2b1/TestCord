@@ -227,15 +227,15 @@ export default definePlugin({
             },
             predicate: () => settings.store.noMirroredCamera
         },
-        // Remove Activity Section above Member List
-        {
-            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED,",
-            predicate: () => settings.store.removeActivitySection,
-            replacement: {
-                match: /null==\i\|\|/,
-                replace: "true||$&"
-            },
-        },
+        // Remove Activity Section above Member List (disabled - too risky/breaks member list)
+        // {
+        //     find: ".MEMBERLIST_CONTENT_FEED_TOGGLED,",
+        //     predicate: () => settings.store.removeActivitySection,
+        //     replacement: {
+        //         match: /null==\i\|\|/,
+        //         replace: "true||$&"
+        //     },
+        // },
         // Show your own activity buttons because discord removes them for who knows why
         {
             find: ".USER_PROFILE_ACTIVITY_BUTTONS),",
