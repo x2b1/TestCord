@@ -9,7 +9,7 @@ import "./style.css";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { FluxDispatcher, Forms, React, TextInput, UserStore } from "@webpack/common";
+import { FluxDispatcher, Forms, React, TextInput, UserStore, RestAPI } from "@webpack/common";
 
 interface AutoReactRule {
     triggerWord: string;
@@ -107,6 +107,7 @@ function RulesEditor() {
                 value={rulesText}
                 onChange={handleChange}
                 placeholder="happy:😀,🔥|ok:👌"
+                // @ts-ignore API changed
                 multiLine={true}
             />
             {rules.length > 0 && (
