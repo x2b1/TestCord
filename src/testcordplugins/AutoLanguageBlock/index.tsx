@@ -241,7 +241,7 @@ const handleMessage = (payload: any) => {
 
     const { bannedLanguage, minMatches, logToConsole } = settings.store;
 
-    const detected = detectLanguage(message.content, bannedLanguage, minMatches);
+    const detected = detectLanguage(message.content, bannedLanguage ?? "", minMatches);
 
     if (logToConsole) {
         console.log(
@@ -258,7 +258,7 @@ const handleMessage = (payload: any) => {
             const displayName = message.author.globalName ?? message.author.username;
 
             Toasts.show({
-                message: `🚫 Blocked: ${displayName} (detected language: ${bannedLanguage.toUpperCase()})`,
+                message: `🚫 Blocked: ${displayName} (detected language: ${(bannedLanguage ?? "").toUpperCase()})`,
                 type: Toasts.Type.FAILURE,
                 id: Toasts.genId(),
             });
