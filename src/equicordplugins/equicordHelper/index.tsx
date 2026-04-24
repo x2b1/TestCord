@@ -28,11 +28,20 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
-const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+let fetchSafetyHub: (() => Promise<void>) | undefined;
+let ShieldIcon: ComponentType<any> | undefined;
+let SafetyHubStore: any;
+
+try {
+    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+    SafetyHubStore = findStoreLazy("SafetyHubStore");
+} catch {
+    SafetyHubStore = undefined;
+}
 
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
-    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
+    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon! },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
     [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
@@ -40,13 +49,31 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 };
 
 function StandingButton() {
-    const SafetyHubStore = findStoreLazy("SafetyHubStore");
-    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.getAccountStanding?.() ?? null);
-    const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.isInitialized?.() ?? false);
+    if (!SafetyHubStore || !ShieldIcon) return null;
+
     const [hovered, setHovered] = React.useState(false);
 
+    const getStanding = () => {
+        try {
+            return SafetyHubStore?.getAccountStanding?.() ?? null;
+        } catch {
+            return null;
+        }
+    };
+
+    const getInitialized = () => {
+        try {
+            return SafetyHubStore?.isInitialized?.() ?? false;
+        } catch {
+            return false;
+        }
+    };
+
+    const standing = useStateFromStores([SafetyHubStore], getStanding);
+    const isInitialized = useStateFromStores([SafetyHubStore], getInitialized);
+
     React.useEffect(() => {
-        if (!isInitialized) fetchSafetyHub().catch(() => { });
+        if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => { });
     }, [isInitialized]);
 
     const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
@@ -155,7 +182,7 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: ShieldIcon,
+        icon: ShieldIcon ?? WarningIcon,
         render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     },
     patches: [
