@@ -210,7 +210,7 @@ function startOwnershipMonitoring() {
 
         if (clientChannelId && currentVcOwners.has(clientChannelId)) {
             const channel = ChannelStore.getChannel(clientChannelId);
-            if (channel && channel.guildId && isGuildAllowed(channel.guildId) && isCustomVoiceChannel(clientChannelId)) {
+            if (channel && channel.guild_id && isGuildAllowed(channel.guild_id) && isCustomVoiceChannel(clientChannelId)) {
                 updateVcOwnerTracking(clientChannelId);
             }
         }
@@ -485,7 +485,7 @@ export default definePlugin({
                                 attemptClaim(oldChannelId, `Auto-claim after user left - no owner detected`);
                             }
                             // If ownership transferred to someone else who just left
-                            else if (newOwner !== previousOwner && !isOwnerInChannel(oldChannelId, newOwner) && settings.store.autoClaimOnTransfer) {
+                            else if (newOwner && newOwner !== previousOwner && !isOwnerInChannel(oldChannelId, newOwner) && settings.store.autoClaimOnTransfer) {
                                 console.log(`New owner ${newOwner} not in channel ${oldChannelId}, attempting auto-claim`);
                                 attemptClaim(oldChannelId, `Auto-claim - transferred owner not present`);
                             }
