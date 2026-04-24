@@ -12,7 +12,7 @@ import { User } from "@vencord/discord-types";
 
 const fs = (window as any).require?.("fs");
 const os = (window as any).require?.("os");
-const path = (window as any).require?.("path");
+const pathModule = (window as any).require?.("path");
 
 const log = new Logger("LastOnline");
 
@@ -24,13 +24,14 @@ interface PresenceStatus {
 const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
 
 function getFilePath() {
-    return path.join(os.homedir(), "Downloads", "onlinelist.json");
+    if (!fs || !os || !pathModule) return null;
+    return pathModule.join(os.homedir(), "Downloads", "onlinelist.json");
 }
 
 function saveOnlineList() {
     const data = Object.fromEntries(recentlyOnlineList);
-    if (fs && os && path) {
-        const filePath = getFilePath();
+    const filePath = getFilePath();
+    if (fs && filePath) {
         try {
             fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
         } catch (e) {
@@ -40,8 +41,8 @@ function saveOnlineList() {
 }
 
 function loadOnlineList() {
-    if (fs && os && path) {
-        const filePath = getFilePath();
+    const filePath = getFilePath();
+    if (fs && filePath) {
         try {
             if (fs.existsSync(filePath)) {
                 const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -106,29 +107,37 @@ export default definePlugin({
 
         loadOnlineList();
 
-        // Lazy import to avoid early execution
-        const { addMemberListDecorator } = require("@api/MemberListDecorators");
+        try {
+            // Lazy import to avoid early execution
+            const { addMemberListDecorator } = require("@api/MemberListDecorators");
 
-        // Add decorator to member list
-        addMemberListDecorator("last-online-indicator", props => {
-            if (!props.user) {
-                log.debug(`Decorator called with no user, type: ${props.type}`);
+            // Add decorator to member list
+            addMemberListDecorator("last-online-indicator", props => {
+                if (!props.user) {
+                    log.debug(`Decorator called with no user, type: ${props.type}`);
+                    return null;
+                }
+                log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
+                if (this.shouldShowRecentlyOffline(props.user)) {
+                    log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
+                    return this.buildRecentlyOffline(props.user);
+                }
+                log.debug(`Not showing last online for user ${props.user.username}#${props.user.discriminator}`);
                 return null;
-            }
-            log.debug(`Decorator called for user ${props.user.username}#${props.user.discriminator}, type: ${props.type}`);
-            if (this.shouldShowRecentlyOffline(props.user)) {
-                log.debug(`Showing last online for user ${props.user.username}#${props.user.discriminator}`);
-                return this.buildRecentlyOffline(props.user);
-            }
-            log.debug(`Not showing last online for user ${props.user.username}#${props.user.discriminator}`);
-            return null;
-        });
+            });
 
-        log.info("LastOnline decorators added");
+            log.info("LastOnline decorators added");
+        } catch (e) {
+            log.error("Failed to add member list decorator:", e);
+        }
     },
     stop() {
-        const { removeMemberListDecorator } = require("@api/MemberListDecorators");
-        removeMemberListDecorator("last-online-indicator");
+        try {
+            const { removeMemberListDecorator } = require("@api/MemberListDecorators");
+            removeMemberListDecorator("last-online-indicator");
+        } catch (e) {
+            log.error("Failed to remove member list decorator:", e);
+        }
     },
     shouldShowRecentlyOffline(user: User) {
         const presenceStatus = recentlyOnlineList.get(user.id);
