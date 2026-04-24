@@ -28,30 +28,54 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+let ShieldIcon: ComponentType<any> | null = null;
+let SafetyHubStore: any = null;
+let fetchSafetyHub: (() => Promise<void>) | null = null;
 
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
-    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
+    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon! },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
     [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
     [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
 };
 
-let SafetyHubStore: any = null;
-let fetchSafetyHub: (() => Promise<void>) | null = null;
+// Initialize lazily to avoid crashes - will just not render if modules not found
+try {
+    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+} catch { }
 
-// SafetyHubStore and related APIs no longer exist in newer Discord versions
-// Keeping the code structure but disabling the feature
-// try {
-//     SafetyHubStore = findStoreLazy("SafetyHubStore");
-//     fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
-// } catch { }
+try {
+    SafetyHubStore = findStoreLazy("SafetyHubStore");
+    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+} catch { }
+
+// Initialize lazily to avoid crashes - will just not render if modules not found
+try {
+    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+} catch { }
+
+try {
+    SafetyHubStore = findStoreLazy("SafetyHubStore");
+    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+} catch { }
 
 function StandingButton() {
     const [hovered, setHovered] = React.useState(false);
 
-    if (!SafetyHubStore) return null;
+    if (!SafetyHubStore) {
+        // Fallback: show a simple shield button even without SafetyHub
+        return (
+            <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+                <HeaderBarButton
+                    tooltip="Account Standing"
+                    position="bottom"
+                    icon={props => ShieldIcon ? <ShieldIcon {...props} color={hovered ? "var(--status-positive)" : "currentColor"} /> : null}
+                    onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+                />
+            </div>
+        );
+    }
 
     const standing = SafetyHubStore?.getAccountStanding?.() ?? null;
     const isInitialized = SafetyHubStore?.isInitialized?.() ?? false;
