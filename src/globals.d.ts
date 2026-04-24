@@ -64,6 +64,7 @@ declare global {
     export var Equibop: any;
     export var VesktopNative: any;
     export var unsafeWindow: any;
+    export var webpackChunkdiscord_app: any;
 
     interface Window extends Record<PropertyKey, any> { }
 }
