@@ -28,30 +28,43 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-let ShieldIcon: ComponentType<any> | null = null;
+const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
+const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
 
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
-    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon! },
+    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
     [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
     [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
 };
 
-// SafetyHubStore no longer exists in newer Discord - just use fallback
-const SafetyHubStore = null;
-const fetchSafetyHub = null;
-
 function StandingButton() {
+    const SafetyHubStore = findStoreLazy("SafetyHubStore");
+    const standing = useStateFromStores([SafetyHubStore], () => {
+        try {
+            return SafetyHubStore?.getAccountStanding?.() ?? null;
+        } catch { return null; }
+    });
+    const isInitialized = useStateFromStores([SafetyHubStore], () => {
+        try {
+            return SafetyHubStore?.isInitialized?.() ?? false;
+        } catch { return false; }
+    });
     const [hovered, setHovered] = React.useState(false);
 
-    // Always show fallback since SafetyHubStore doesn't exist anymore
+    React.useEffect(() => {
+        if (!isInitialized) fetchSafetyHub().catch(() => { });
+    }, [isInitialized]);
+
+    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
+
     return (
         <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
             <HeaderBarButton
-                tooltip="Account Standing"
+                tooltip={config.label}
                 position="bottom"
-                icon={props => ShieldIcon ? React.createElement(ShieldIcon as any, { ...props, color: hovered ? "var(--status-positive)" : "currentColor" }) : null}
+                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
                 onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
             />
         </div>
