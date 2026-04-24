@@ -198,12 +198,22 @@ export default definePlugin({
     settings,
     start() {
         // The voiceStateUpdate module doesn't exist in current Discord version
-        // Skip initialization entirely - plugin will be non-functional but won't error
-        console.warn("[FakeMuteDeafen] voiceStateUpdate module not found - plugin disabled");
-        return;
+        // But we can still show the button for visual indication that the feature exists
+        if (settings.store.userAreaButton) {
+            try {
+                Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
+            } catch (e) {
+                console.warn("[FakeMuteDeafen] Failed to add user area button:", e);
+            }
+        }
+        console.warn("[FakeMuteDeafen] voiceStateUpdate module not found - faking disabled");
     },
     stop() {
-        // No-op - plugin was disabled in start()
+        try {
+            Vencord.Api.UserArea.removeUserAreaButton("fake-mute-deafen");
+        } catch (e) {
+            // Ignore
+        }
     },
     contextMenus: {
         "audio-device-context"(children, d) {
