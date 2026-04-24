@@ -29,8 +29,6 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 let clicked = false;
 
 let ShieldIcon: ComponentType<any> | null = null;
-let SafetyHubStore: any = null;
-let fetchSafetyHub: (() => Promise<void>) | null = null;
 
 const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
     [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon! },
@@ -40,58 +38,20 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
     [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
 };
 
-// Initialize lazily to avoid crashes - will just not render if modules not found
-try {
-    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
-} catch { }
-
-try {
-    SafetyHubStore = findStoreLazy("SafetyHubStore");
-    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
-} catch { }
-
-// Initialize lazily to avoid crashes - will just not render if modules not found
-try {
-    ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
-} catch { }
-
-try {
-    SafetyHubStore = findStoreLazy("SafetyHubStore");
-    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
-} catch { }
+// SafetyHubStore no longer exists in newer Discord - just use fallback
+const SafetyHubStore = null;
+const fetchSafetyHub = null;
 
 function StandingButton() {
     const [hovered, setHovered] = React.useState(false);
 
-    if (!SafetyHubStore) {
-        // Fallback: show a simple shield button even without SafetyHub
-        return (
-            <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-                <HeaderBarButton
-                    tooltip="Account Standing"
-                    position="bottom"
-                    icon={props => ShieldIcon ? <ShieldIcon {...props} color={hovered ? "var(--status-positive)" : "currentColor"} /> : null}
-                    onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
-                />
-            </div>
-        );
-    }
-
-    const standing = SafetyHubStore?.getAccountStanding?.() ?? null;
-    const isInitialized = SafetyHubStore?.isInitialized?.() ?? false;
-
-    React.useEffect(() => {
-        if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => { });
-    }, [isInitialized]);
-
-    const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
-
+    // Always show fallback since SafetyHubStore doesn't exist anymore
     return (
         <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
             <HeaderBarButton
-                tooltip={config.label}
+                tooltip="Account Standing"
                 position="bottom"
-                icon={props => <config.Icon {...props} color={hovered ? config.hoverColor : "currentColor"} />}
+                icon={props => ShieldIcon ? React.createElement(ShieldIcon as any, { ...props, color: hovered ? "var(--status-positive)" : "currentColor" }) : null}
                 onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
             />
         </div>
@@ -190,8 +150,8 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: () => (SafetyHubStore ? (ShieldIcon ? <ShieldIcon /> : null) : null),
-        render: () => (settings.store.accountStandingButton && SafetyHubStore ? <StandingButton /> : null),
+        icon: () => ShieldIcon ? React.createElement(ShieldIcon) : null,
+        render: () => settings.store.accountStandingButton ? <StandingButton /> : null,
     },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
