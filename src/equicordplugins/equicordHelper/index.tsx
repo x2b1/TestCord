@@ -45,7 +45,15 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 };
 
 function StandingButton() {
-    return null;
+    if (!settings.store.accountStandingButton) return null;
+    return (
+        <HeaderBarButton
+            tooltip="Account Standing"
+            position="bottom"
+            icon={WarningIcon}
+            onClick={() => SettingsRouter.openUserSettings("my_account_panel")}
+        />
+    );
 }
 
 const listener = async (channelId, msg) => {
