@@ -354,6 +354,10 @@ export function detectProfileChanges(prev: ProfileSnapshot, current: ProfileSnap
 // load logs from disk
 export async function loadPresenceLogs() {
     try {
+        if (!Native?.readLogs) {
+            logger.warn("Native readLogs not available, skipping log loading");
+            return;
+        }
         // Load logs for all users
         const userIds = getWhitelistedIds();
         const allLogs: PresenceLogEntry[] = [];
