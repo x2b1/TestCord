@@ -28,44 +28,41 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-const getSafetyHubStore = () => {
-    try {
-        return findStoreLazy("SafetyHubStore");
-    } catch {
-        return null;
-    }
-};
-const SafetyHubStore = getSafetyHubStore();
-const fetchSafetyHub: (() => Promise<void>) | undefined = (() => {
-    try {
-        return findByCodeLazy("SAFETY_HUB_FETCH_START");
-    } catch {
-        return undefined;
-    }
-})();
-const getShieldIcon = () => {
-    try {
-        return findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
-    } catch {
-        return null;
-    }
-};
-const ShieldIcon = getShieldIcon();
+let SafetyHubStore: any = null;
+let fetchSafetyHub: (() => Promise<void>) | undefined = undefined;
+let ShieldIcon: any = null;
 
-const getStandingConfig = () => ({
-    [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
-    [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
-    [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
-    [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
-    [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
-});
+function initLazyModules() {
+    if (Object.keys(StandingConfig).length > 0) return;
+    try {
+        SafetyHubStore = require("@webpack/common").findStoreLazy?.("SafetyHubStore") ?? null;
+    } catch {}
+    try {
+        fetchSafetyHub = require("@webpack").findByCodeLazy?.("SAFETY_HUB_FETCH_START") ?? undefined;
+    } catch {}
+    try {
+        ShieldIcon = require("@webpack").findComponentByCodeLazy?.("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.") ?? null;
+    } catch {}
+    
+    StandingConfig[StandingState.ALL_GOOD] = { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon };
+    StandingConfig[StandingState.LIMITED] = { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon };
+    StandingConfig[StandingState.VERY_LIMITED] = { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon };
+    StandingConfig[StandingState.AT_RISK] = { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon };
+    StandingConfig[StandingState.SUSPENDED] = { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon };
+}
 
-const StandingConfig = getStandingConfig();
+const StandingConfig: Record<number, any> = {};
 
 function StandingButton() {
+    const [initialized, setInitialized] = React.useState(false);
     const [error, setError] = React.useState(false);
 
-    if (error) return null;
+    React.useEffect(() => {
+        initLazyModules();
+        setInitialized(true);
+    }, []);
+
+    if (error || !initialized) return null;
 
     if (!SafetyHubStore) return null;
 
@@ -73,10 +70,6 @@ function StandingButton() {
         const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding?.());
         const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized?.());
         const [hovered, setHovered] = React.useState(false);
-
-        React.useEffect(() => {
-            if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => { });
-        }, [isInitialized]);
 
         const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
 
