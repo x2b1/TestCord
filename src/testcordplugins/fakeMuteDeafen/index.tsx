@@ -197,27 +197,31 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
     start() {
-        const GatewayConnection = findByProps(
-            "voiceStateUpdate",
-            "voiceServerPing"
-        );
-        if (
-            !GatewayConnection ||
-            typeof GatewayConnection.voiceStateUpdate !== "function"
-        ) {
-            console.warn("[FakeMuteDeafen] GatewayConnection.voiceStateUpdate not found");
-        } else {
-            originalVoiceStateUpdate = GatewayConnection.voiceStateUpdate;
-            GatewayConnection.voiceStateUpdate = function (args) {
-                if (args && typeof args === "object") {
-                    args = modifyVoiceState(args);
-                }
-                return originalVoiceStateUpdate.apply(this, arguments);
-            };
-        }
+        try {
+            const GatewayConnection = findByProps(
+                "voiceStateUpdate",
+                "voiceServerPing"
+            );
+            if (
+                !GatewayConnection ||
+                typeof GatewayConnection.voiceStateUpdate !== "function"
+            ) {
+                console.warn("[FakeMuteDeafen] GatewayConnection.voiceStateUpdate not found");
+            } else {
+                originalVoiceStateUpdate = GatewayConnection.voiceStateUpdate;
+                GatewayConnection.voiceStateUpdate = function (args) {
+                    if (args && typeof args === "object") {
+                        args = modifyVoiceState(args);
+                    }
+                    return originalVoiceStateUpdate.apply(this, arguments);
+                };
+            }
 
-        if (settings.store.userAreaButton) {
-            Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
+            if (settings.store.userAreaButton) {
+                Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
+            }
+        } catch (e) {
+            console.warn("[FakeMuteDeafen] Failed to start:", e);
         }
     },
     stop() {
