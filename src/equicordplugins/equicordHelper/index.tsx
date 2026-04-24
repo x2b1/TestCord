@@ -28,6 +28,7 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
+const SafetyHubStore = findStoreLazy("SafetyHubStore");
 const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
 const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
 
@@ -40,17 +41,8 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 };
 
 function StandingButton() {
-    const SafetyHubStore = findStoreLazy("SafetyHubStore");
-    const standing = useStateFromStores([SafetyHubStore], () => {
-        try {
-            return SafetyHubStore?.getAccountStanding?.() ?? null;
-        } catch { return null; }
-    });
-    const isInitialized = useStateFromStores([SafetyHubStore], () => {
-        try {
-            return SafetyHubStore?.isInitialized?.() ?? false;
-        } catch { return false; }
-    });
+    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
+    const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized());
     const [hovered, setHovered] = React.useState(false);
 
     React.useEffect(() => {
@@ -163,8 +155,8 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: () => ShieldIcon ? React.createElement(ShieldIcon) : null,
-        render: () => settings.store.accountStandingButton ? <StandingButton /> : null,
+        icon: ShieldIcon,
+        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
@@ -211,7 +203,7 @@ export default definePlugin({
         },
         // Remove Activity Section above Member List
         {
-            find: ".GLOBAL_FEED});",
+            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED,",
             predicate: () => settings.store.removeActivitySection,
             replacement: {
                 match: /null==\i\|\|0.{0,100}VIEW_CHANNEL\)&&/,

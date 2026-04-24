@@ -282,7 +282,6 @@ export default definePlugin({
     },
     stop: () => {
         removeChatBarButton("FormatButton");
-        console.log("[BFR] useEffect triggered, open:", open, "wrapperRef:", !!wrapperRef.current, "body:", !!document.body);
         formatFrame.current?.remove();
     }
 });

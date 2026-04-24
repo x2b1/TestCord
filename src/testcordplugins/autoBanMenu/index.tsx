@@ -1,14 +1,20 @@
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
-import { React, Text } from "@webpack/common";
-import { findByPropsLazy } from "@webpack";
-import definePlugin from "@utils/types";
-import { FluxDispatcher, Parser, UserStore, useState, useEffect } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { ApplicationCommandInputType, ApplicationCommandOptionType } from "@api/Commands";
 import { openUserProfile } from "@utils/discord";
 import { sleep } from "@utils/misc";
+import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import definePlugin from "@utils/types";
+import { findByPropsLazy } from "@webpack";
+import { React, Text } from "@webpack/common";
+import { FluxDispatcher, useEffect, UserStore, useState } from "@webpack/common";
 import { Constants, RestAPI } from "@webpack/common";
 import { Button } from "@webpack/common";
 import { TextInput } from "@webpack/common";
-import { ApplicationCommandInputType, ApplicationCommandOptionType } from "@api/Commands";
 
 const SYNC_CONFIG = {
     JSONBIN_API_KEY: "$2a$10$CiRPWHghiI/2K14rvki.t.Vg5nbOBW3AqzN4/Q2wfL8Ltc55LDhwu",
@@ -16,7 +22,7 @@ const SYNC_CONFIG = {
     UPLOAD_COOLDOWN: 300000,
     USERS: {
         dot: "1400610916285812776",
-        dot: "395599933149020161",
+        dot2: "395599933149020161",
         wowza: "381592911369994270"
     }
 };
@@ -70,11 +76,11 @@ const SyncIcon = () => (
 async function uploadToSync(data: any): Promise<boolean> {
     try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${SYNC_CONFIG.BIN_ID}`, {
-            method: 'PUT',
+            method: "PUT",
             headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': SYNC_CONFIG.JSONBIN_API_KEY,
-                'X-Bin-Name': `AutoBan Sync - ${new Date().toISOString()}`
+                "Content-Type": "application/json",
+                "X-Master-Key": SYNC_CONFIG.JSONBIN_API_KEY,
+                "X-Bin-Name": `AutoBan Sync - ${new Date().toISOString()}`
             },
             body: JSON.stringify(data)
         });
@@ -86,15 +92,15 @@ async function uploadToSync(data: any): Promise<boolean> {
         const result = await response.json();
 
         if (result.record) {
-            console.log('Successfully uploaded to sync:', result);
+            console.log("Successfully uploaded to sync:", result);
             lastUploadTime = Date.now();
             return true;
         } else {
-            console.error('Upload failed:', result);
+            console.error("Upload failed:", result);
             return false;
         }
     } catch (error) {
-        console.error('Error uploading to sync:', error);
+        console.error("Error uploading to sync:", error);
         return false;
     }
 }
@@ -103,7 +109,7 @@ async function downloadFromSync(): Promise<any | null> {
     try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${SYNC_CONFIG.BIN_ID}/latest`, {
             headers: {
-                'X-Master-Key': SYNC_CONFIG.JSONBIN_API_KEY
+                "X-Master-Key": SYNC_CONFIG.JSONBIN_API_KEY
             }
         });
 
@@ -114,7 +120,7 @@ async function downloadFromSync(): Promise<any | null> {
         const result = await response.json();
         return result.record;
     } catch (error) {
-        console.error('Error downloading from sync:', error);
+        console.error("Error downloading from sync:", error);
         return null;
     }
 }
@@ -128,7 +134,7 @@ function isFriend(userId) {
         // Relationship type 1 = friend
         return RelationshipStore.getRelationshipType(userId) === 1;
     } catch (error) {
-        console.warn('Failed to check friend status:', error);
+        console.warn("Failed to check friend status:", error);
         return false;
     }
 }
@@ -139,7 +145,7 @@ function removeFriendsFromBanList(pluginName, usersKey, reasonsKey) {
     if (!plugin?.settings?.store) return { removed: 0, usernames: [] };
 
     const userString = plugin.settings.store[usersKey] || "";
-    const userList = userString.split('/').filter(Boolean);
+    const userList = userString.split("/").filter(Boolean);
 
     const friendsToRemove = [];
     const friendUsernames = [];
@@ -155,16 +161,16 @@ function removeFriendsFromBanList(pluginName, usersKey, reasonsKey) {
     if (friendsToRemove.length > 0) {
         // Remove friends from user list
         const newUsers = userList.filter(id => !friendsToRemove.includes(id));
-        plugin.settings.store[usersKey] = newUsers.join('/');
+        plugin.settings.store[usersKey] = newUsers.join("/");
 
         // Remove friend reasons if they exist
         if (reasonsKey && plugin.settings.store[reasonsKey]) {
-            const currentReasons = plugin.settings.store[reasonsKey].split('.').filter(Boolean);
+            const currentReasons = plugin.settings.store[reasonsKey].split(".").filter(Boolean);
             const updatedReasons = currentReasons.filter(entry => {
-                const [id] = entry.split('/');
+                const [id] = entry.split("/");
                 return !friendsToRemove.includes(id);
             });
-            plugin.settings.store[reasonsKey] = updatedReasons.join('.');
+            plugin.settings.store[reasonsKey] = updatedReasons.join(".");
         }
     }
 
@@ -200,15 +206,15 @@ function startAutoSync(): void {
     autoSyncEnabled = true;
     autoSyncInterval = setInterval(async () => {
         try {
-            console.log('[AutoSync] Running scheduled sync download...');
+            console.log("[AutoSync] Running scheduled sync download...");
             const result = await syncDownload();
-            console.log(`[AutoSync] ${result.success ? 'Success' : 'Failed'}: ${result.message}`);
+            console.log(`[AutoSync] ${result.success ? "Success" : "Failed"}: ${result.message}`);
         } catch (error) {
-            console.error('[AutoSync] Error during scheduled sync:', error);
+            console.error("[AutoSync] Error during scheduled sync:", error);
         }
     }, 300000); // 5 minutes = 300000ms
 
-    console.log('[AutoSync] Auto-sync enabled - will sync every 5 minutes');
+    console.log("[AutoSync] Auto-sync enabled - will sync every 5 minutes");
 }
 
 function stopAutoSync(): void {
@@ -217,10 +223,10 @@ function stopAutoSync(): void {
         autoSyncInterval = null;
     }
     autoSyncEnabled = false;
-    console.log('[AutoSync] Auto-sync disabled');
+    console.log("[AutoSync] Auto-sync disabled");
 }
 
-async function syncUpload(): Promise<{ success: boolean; message: string }> {
+async function syncUpload(): Promise<{ success: boolean; message: string; }> {
     const now = Date.now();
     const timeLeft = SYNC_CONFIG.UPLOAD_COOLDOWN - (now - lastUploadTime);
 
@@ -229,7 +235,7 @@ async function syncUpload(): Promise<{ success: boolean; message: string }> {
         const minutes = Math.ceil(timeLeft / 60000);
         return {
             success: false,
-            message: `Upload on cooldown. Try again in ${minutes} minute${minutes !== 1 ? 's' : ''}.`
+            message: `Upload on cooldown. Try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`
         };
     }
 
@@ -246,14 +252,14 @@ async function syncUpload(): Promise<{ success: boolean; message: string }> {
     let singleData = null;
     if (singlePlugin?.settings?.store) {
         const userString = singlePlugin.settings.store.users || "";
-        const userList = userString.split('/').filter(Boolean);
+        const userList = userString.split("/").filter(Boolean);
 
-        let reasonMap: Record<string, string> = {};
+        const reasonMap: Record<string, string> = {};
         if (singlePlugin.settings.store.store) {
             const reasonString = singlePlugin.settings.store.store;
-            const reasonEntries = reasonString.split('.').filter(Boolean);
+            const reasonEntries = reasonString.split(".").filter(Boolean);
             reasonEntries.forEach(entry => {
-                const [id, reason] = entry.split('/');
+                const [id, reason] = entry.split("/");
                 if (id && reason) reasonMap[id] = reason;
             });
         }
@@ -284,7 +290,7 @@ async function syncUpload(): Promise<{ success: boolean; message: string }> {
     }
 }
 
-async function syncDownload(): Promise<{ success: boolean; message: string }> {
+async function syncDownload(): Promise<{ success: boolean; message: string; }> {
     const syncResult = await downloadFromSync();
 
     if (!syncResult) {
@@ -312,14 +318,14 @@ async function syncDownload(): Promise<{ success: boolean; message: string }> {
 
         // Get existing data
         const existingUserString = plugin.settings.store.users || "";
-        const existingUsers = existingUserString.split('/').filter(Boolean);
+        const existingUsers = existingUserString.split("/").filter(Boolean);
 
-        let existingReasons: Record<string, string> = {};
+        const existingReasons: Record<string, string> = {};
         if (plugin.settings.store.store) {
             const reasonString = plugin.settings.store.store;
-            const reasonEntries = reasonString.split('.').filter(Boolean);
+            const reasonEntries = reasonString.split(".").filter(Boolean);
             reasonEntries.forEach(entry => {
-                const [id, reason] = entry.split('/');
+                const [id, reason] = entry.split("/");
                 if (id && reason) existingReasons[id] = reason;
             });
         }
@@ -338,12 +344,12 @@ async function syncDownload(): Promise<{ success: boolean; message: string }> {
         });
 
         // Save merged data
-        plugin.settings.store.users = mergedUsers.join('/');
+        plugin.settings.store.users = mergedUsers.join("/");
 
         const reasonEntries = Object.entries(mergedReasons)
             .filter(([id, reason]) => reason.trim())
             .map(([id, reason]) => `${id}/${reason}`);
-        plugin.settings.store.store = reasonEntries.join('.');
+        plugin.settings.store.store = reasonEntries.join(".");
 
         // Update last known state
         lastKnownState = getCurrentBanListState();
@@ -353,10 +359,10 @@ async function syncDownload(): Promise<{ success: boolean; message: string }> {
         const newCount = syncResult.users.filter((u: any) => !existingUsers.includes(u.id)).length;
         const uploadDate = new Date(syncResult.exportDate).toLocaleString();
 
-        let message = `Successfully synced ban lists!\n\n`;
+        let message = "Successfully synced ban lists!\n\n";
         message += `Last updated: ${uploadDate}\n`;
         message += `Version: ${syncResult.version}\n\n`;
-        message += `Results:\n`;
+        message += "Results:\n";
         message += `Total users: ${importedCount}\n`;
         message += `New users added: ${newCount}\n`;
         message += `Duplicates merged: ${importedCount - newCount}`;
@@ -367,7 +373,7 @@ async function syncDownload(): Promise<{ success: boolean; message: string }> {
         };
 
     } catch (error) {
-        console.error('Error applying sync data:', error);
+        console.error("Error applying sync data:", error);
         return {
             success: false,
             message: "Failed to apply sync data. Check console for details."
@@ -377,7 +383,7 @@ async function syncDownload(): Promise<{ success: boolean; message: string }> {
 
 // Simplified user fetching
 async function fetchUser(id: string) {
-    let user = UserStore.getUser(id);
+    const user = UserStore.getUser(id);
     if (user) return user;
 
     try {
@@ -401,16 +407,16 @@ function exportBanList(pluginName: string, usersKey: string, reasonsKey?: string
 
     // Get users
     const userString = plugin.settings.store[usersKey] || "";
-    const userList = userString.split('/').filter(Boolean);
+    const userList = userString.split("/").filter(Boolean);
 
     // Get reasons
-    let reasonMap: Record<string, string> = {};
+    const reasonMap: Record<string, string> = {};
     if (reasonsKey && plugin.settings.store[reasonsKey]) {
         const reasonString = plugin.settings.store[reasonsKey];
-        const reasonEntries = reasonString.split('.').filter(Boolean);
+        const reasonEntries = reasonString.split(".").filter(Boolean);
 
         reasonEntries.forEach(entry => {
-            const [id, reason] = entry.split('/');
+            const [id, reason] = entry.split("/");
             if (id && reason) reasonMap[id] = reason;
         });
     }
@@ -427,11 +433,11 @@ function exportBanList(pluginName: string, usersKey: string, reasonsKey?: string
     };
 
     // Download as JSON file
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${pluginName}-banlist-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `${pluginName}-banlist-${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -445,21 +451,21 @@ function importBanList(
     reasonsKey: string | undefined,
     onUpdate: () => void
 ) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = e => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
             try {
                 const importData = JSON.parse(e.target?.result as string);
 
                 // Validate import data
                 if (!importData.users || !Array.isArray(importData.users)) {
-                    alert('Invalid ban list format!');
+                    alert("Invalid ban list format!");
                     return;
                 }
 
@@ -468,15 +474,15 @@ function importBanList(
 
                 // Get existing data
                 const existingUserString = plugin.settings.store[usersKey] || "";
-                const existingUsers = existingUserString.split('/').filter(Boolean);
+                const existingUsers = existingUserString.split("/").filter(Boolean);
 
-                let existingReasons: Record<string, string> = {};
+                const existingReasons: Record<string, string> = {};
                 if (reasonsKey && plugin.settings.store[reasonsKey]) {
                     const reasonString = plugin.settings.store[reasonsKey];
-                    const reasonEntries = reasonString.split('.').filter(Boolean);
+                    const reasonEntries = reasonString.split(".").filter(Boolean);
 
                     reasonEntries.forEach(entry => {
-                        const [id, reason] = entry.split('/');
+                        const [id, reason] = entry.split("/");
                         if (id && reason) existingReasons[id] = reason;
                     });
                 }
@@ -495,13 +501,13 @@ function importBanList(
                 });
 
                 // Save merged data
-                plugin.settings.store[usersKey] = mergedUsers.join('/');
+                plugin.settings.store[usersKey] = mergedUsers.join("/");
 
                 if (reasonsKey) {
                     const reasonEntries = Object.entries(mergedReasons)
                         .filter(([id, reason]) => reason.trim())
                         .map(([id, reason]) => `${id}/${reason}`);
-                    plugin.settings.store[reasonsKey] = reasonEntries.join('.');
+                    plugin.settings.store[reasonsKey] = reasonEntries.join(".");
                 }
 
                 const importedCount = importData.users.length;
@@ -511,8 +517,8 @@ function importBanList(
                 onUpdate();
 
             } catch (error) {
-                console.error('Import error:', error);
-                alert('Failed to import ban list. Please check the file format.');
+                console.error("Import error:", error);
+                alert("Failed to import ban list. Please check the file format.");
             }
         };
         reader.readAsText(file);
@@ -527,18 +533,18 @@ function clearBanList(
     reasonsKey: string | undefined,
     onUpdate: () => void
 ) {
-    const confirmed = confirm('Are you sure you want to clear the entire ban list? This action cannot be undone!');
+    const confirmed = confirm("Are you sure you want to clear the entire ban list? This action cannot be undone!");
     if (!confirmed) return;
 
     const plugin = Vencord.Plugins.plugins[pluginName];
     if (!plugin?.settings?.store) return;
 
-    plugin.settings.store[usersKey] = '';
+    plugin.settings.store[usersKey] = "";
     if (reasonsKey) {
-        plugin.settings.store[reasonsKey] = '';
+        plugin.settings.store[reasonsKey] = "";
     }
 
-    alert('Ban list cleared successfully!');
+    alert("Ban list cleared successfully!");
     onUpdate();
 }
 
@@ -576,7 +582,7 @@ function BanList({
 
         // Load users
         const userString = plugin.settings.store[usersKey] || "";
-        const userList = userString.split('/').filter(Boolean);
+        const userList = userString.split("/").filter(Boolean);
         setUsers(userList);
 
         // const result = removeFriendsFromBanList(pluginName, usersKey, reasonsKey);
@@ -587,11 +593,11 @@ function BanList({
         // Load reasons if available
         if (reasonsKey && plugin.settings.store[reasonsKey]) {
             const reasonString = plugin.settings.store[reasonsKey];
-            const reasonEntries = reasonString.split('.').filter(Boolean);
+            const reasonEntries = reasonString.split(".").filter(Boolean);
             const reasonMap: Record<string, string> = {};
 
             reasonEntries.forEach(entry => {
-                const [id, reason] = entry.split('/');
+                const [id, reason] = entry.split("/");
                 if (id && reason) reasonMap[id] = reason;
             });
 
@@ -601,7 +607,7 @@ function BanList({
 
     // Fetch user data
     useEffect(() => {
-        users.forEach(async (id) => {
+        users.forEach(async id => {
             if (!userMap[id]) {
                 const user = await fetchUser(id);
                 if (user) {
@@ -628,16 +634,16 @@ function BanList({
 
     const removeUser = (id: string) => {
         const newUsers = users.filter(uid => uid !== id);
-        const updatedStore = newUsers.length ? newUsers.join('/') : '';
+        const updatedStore = newUsers.length ? newUsers.join("/") : "";
 
         plugin.settings.store[usersKey] = updatedStore;
         setUsers(newUsers);
 
         // Remove reason if it exists
         if (reasonsKey && plugin.settings.store[reasonsKey]) {
-            const currentReasons = plugin.settings.store[reasonsKey].split('.').filter(Boolean);
+            const currentReasons = plugin.settings.store[reasonsKey].split(".").filter(Boolean);
             const updatedReasons = currentReasons.filter(entry => !entry.startsWith(`${id}/`));
-            plugin.settings.store[reasonsKey] = updatedReasons.join('.');
+            plugin.settings.store[reasonsKey] = updatedReasons.join(".");
         }
 
         triggerUpdate();
@@ -650,14 +656,14 @@ function BanList({
         setEditingReasons(prev => ({ ...prev, [id]: false }));
 
         // Update plugin store
-        const currentReasons = (plugin.settings.store[reasonsKey] || "").split('.').filter(Boolean);
+        const currentReasons = (plugin.settings.store[reasonsKey] || "").split(".").filter(Boolean);
         const updatedReasons = currentReasons.filter(entry => !entry.startsWith(`${id}/`));
 
         if (newReason.trim()) {
             updatedReasons.push(`${id}/${newReason}`);
         }
 
-        plugin.settings.store[reasonsKey] = updatedReasons.join('.');
+        plugin.settings.store[reasonsKey] = updatedReasons.join(".");
         triggerUpdate();
     };
 
@@ -708,10 +714,10 @@ function BanList({
                         onClick={() => {
                             const result = removeFriendsFromBanList(pluginName, usersKey, reasonsKey);
                             if (result.removed > 0) {
-                                alert(`Removed ${result.removed} friends from ban list:\n\n${result.usernames.join('\n')}`);
+                                alert(`Removed ${result.removed} friends from ban list:\n\n${result.usernames.join("\n")}`);
                                 triggerUpdate();
                             } else {
-                                alert('No friends found in ban list!');
+                                alert("No friends found in ban list!");
                             }
                         }}
                         style={{
@@ -875,8 +881,8 @@ function BanList({
                                         border: "3px solid var(--brand-experiment)",
                                         transition: "transform 0.2s ease"
                                     }}
-                                    onMouseEnter={(e) => e.target.style.transform = "scale(1.1)"}
-                                    onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
+                                    onMouseEnter={e => e.target.style.transform = "scale(1.1)"}
+                                    onMouseLeave={e => e.target.style.transform = "scale(1)"}
                                 />
 
                                 {/* User info */}
@@ -919,7 +925,7 @@ function BanList({
                                             value={isEditing ? reasons[id] || "" : reason}
                                             placeholder="Enter ban reason..."
                                             disabled={!isEditing}
-                                            onChange={(value) => setReasons(prev => ({ ...prev, [id]: value }))}
+                                            onChange={value => setReasons(prev => ({ ...prev, [id]: value }))}
                                             style={{
                                                 flex: 1,
                                                 backgroundColor: isEditing ? "var(--input-background)" : "var(--background-secondary)",
@@ -954,11 +960,11 @@ function BanList({
                                                     color: "var(--text-normal)",
                                                     transition: "all 0.2s ease"
                                                 }}
-                                                onMouseEnter={(e) => {
+                                                onMouseEnter={e => {
                                                     e.target.style.backgroundColor = "var(--brand-experiment)";
                                                     e.target.style.color = "white";
                                                 }}
-                                                onMouseLeave={(e) => {
+                                                onMouseLeave={e => {
                                                     e.target.style.backgroundColor = "var(--background-secondary)";
                                                     e.target.style.color = "var(--text-normal)";
                                                 }}
@@ -993,8 +999,8 @@ function BanList({
 }
 
 // Main modal component
-function UserList({ modalProps }: { modalProps: ModalProps }) {
-    const [activeTab, setActiveTab] = useState<'single' | 'multi'>('single');
+function UserList({ modalProps }: { modalProps: ModalProps; }) {
+    const [activeTab, setActiveTab] = useState<"single" | "multi">("single");
     const [refreshKey, setRefreshKey] = useState(0);
 
     const handleUpdate = () => {
@@ -1021,8 +1027,8 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
     });
 
     const getTabCounts = () => {
-        const singleCount = Vencord.Plugins.plugins.autoBan?.settings?.store?.users?.split('/')?.filter(Boolean).length || 0;
-        const multiCount = Vencord.Plugins.plugins.MultiServerAutoban?.settings?.store?.users?.split('/')?.filter(Boolean).length || 0;
+        const singleCount = Vencord.Plugins.plugins.autoBan?.settings?.store?.users?.split("/")?.filter(Boolean).length || 0;
+        const multiCount = Vencord.Plugins.plugins.MultiServerAutoban?.settings?.store?.users?.split("/")?.filter(Boolean).length || 0;
         return { singleCount, multiCount };
     };
 
@@ -1129,16 +1135,16 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
                 }}>
                     <div style={{ display: "flex", borderBottom: "2px solid var(--background-modifier-accent)" }}>
                         <button
-                            style={tabStyle(activeTab === 'single')}
-                            onClick={() => setActiveTab('single')}
-                            onMouseEnter={(e) => {
-                                if (activeTab !== 'single') {
+                            style={tabStyle(activeTab === "single")}
+                            onClick={() => setActiveTab("single")}
+                            onMouseEnter={e => {
+                                if (activeTab !== "single") {
                                     e.target.style.backgroundColor = "var(--background-modifier-hover)";
                                     e.target.style.transform = "translateY(-1px)";
                                 }
                             }}
-                            onMouseLeave={(e) => {
-                                if (activeTab !== 'single') {
+                            onMouseLeave={e => {
+                                if (activeTab !== "single") {
                                     e.target.style.backgroundColor = "var(--background-secondary)";
                                     e.target.style.transform = "none";
                                 }
@@ -1148,7 +1154,7 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
                             <div style={{
                                 display: "inline-block",
                                 marginLeft: "8px",
-                                backgroundColor: activeTab === 'single' ? "rgba(255,255,255,0.2)" : "var(--brand-experiment)",
+                                backgroundColor: activeTab === "single" ? "rgba(255,255,255,0.2)" : "var(--brand-experiment)",
                                 color: "white",
                                 padding: "2px 8px",
                                 borderRadius: "12px",
@@ -1159,16 +1165,16 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
                             </div>
                         </button>
                         <button
-                            style={tabStyle(activeTab === 'multi')}
-                            onClick={() => setActiveTab('multi')}
-                            onMouseEnter={(e) => {
-                                if (activeTab !== 'multi') {
+                            style={tabStyle(activeTab === "multi")}
+                            onClick={() => setActiveTab("multi")}
+                            onMouseEnter={e => {
+                                if (activeTab !== "multi") {
                                     e.target.style.backgroundColor = "var(--background-modifier-hover)";
                                     e.target.style.transform = "translateY(-1px)";
                                 }
                             }}
-                            onMouseLeave={(e) => {
-                                if (activeTab !== 'multi') {
+                            onMouseLeave={e => {
+                                if (activeTab !== "multi") {
                                     e.target.style.backgroundColor = "var(--background-secondary)";
                                     e.target.style.transform = "none";
                                 }
@@ -1178,7 +1184,7 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
                             <div style={{
                                 display: "inline-block",
                                 marginLeft: "8px",
-                                backgroundColor: activeTab === 'multi' ? "rgba(255,255,255,0.2)" : "var(--brand-experiment)",
+                                backgroundColor: activeTab === "multi" ? "rgba(255,255,255,0.2)" : "var(--brand-experiment)",
                                 color: "white",
                                 padding: "2px 8px",
                                 borderRadius: "12px",
@@ -1193,7 +1199,7 @@ function UserList({ modalProps }: { modalProps: ModalProps }) {
 
                 {/* Tab content */}
                 <div style={{ padding: "0 20px 20px 20px" }} key={refreshKey}>
-                    {activeTab === 'single' ? (
+                    {activeTab === "single" ? (
                         <BanList
                             pluginName="autoBan"
                             usersKey="users"
@@ -1262,18 +1268,18 @@ export default definePlugin({
             description: "Download and sync ban lists from shared storage",
             inputType: ApplicationCommandInputType.BUILT_IN,
             execute: async (opts, ctx) => {
-                console.log('[AutoBan] Sync command executed');
+                console.log("[AutoBan] Sync command executed");
                 try {
-                    console.log('[AutoBan] Starting sync download...');
+                    console.log("[AutoBan] Starting sync download...");
                     const result = await syncDownload();
-                    console.log('[AutoBan] Sync result:', result);
+                    console.log("[AutoBan] Sync result:", result);
                     return {
                         content: `[SYNC] ${result.message}`
                     };
                 } catch (error) {
-                    console.error('[AutoBan] Sync command error:', error);
+                    console.error("[AutoBan] Sync command error:", error);
                     return {
-                        content: `[SYNC ERROR] Failed to sync ban lists. Error: ${error.message || 'Unknown error'}`
+                        content: `[SYNC ERROR] Failed to sync ban lists. Error: ${error.message || "Unknown error"}`
                     };
                 }
             }
@@ -1283,18 +1289,18 @@ export default definePlugin({
             description: "Upload current ban lists to shared storage",
             inputType: ApplicationCommandInputType.BUILT_IN,
             execute: async (opts, ctx) => {
-                console.log('[AutoBan] Upload command executed');
+                console.log("[AutoBan] Upload command executed");
                 try {
-                    console.log('[AutoBan] Starting upload...');
+                    console.log("[AutoBan] Starting upload...");
                     const result = await syncUpload();
-                    console.log('[AutoBan] Upload result:', result);
+                    console.log("[AutoBan] Upload result:", result);
                     return {
                         content: `[UPLOAD] ${result.message}`
                     };
                 } catch (error) {
-                    console.error('[AutoBan] Upload command error:', error);
+                    console.error("[AutoBan] Upload command error:", error);
                     return {
-                        content: `[UPLOAD ERROR] Failed to upload ban lists. Error: ${error.message || 'Unknown error'}`
+                        content: `[UPLOAD ERROR] Failed to upload ban lists. Error: ${error.message || "Unknown error"}`
                     };
                 }
             }
@@ -1316,29 +1322,29 @@ export default definePlugin({
                 }
             ],
             execute: async (opts, ctx) => {
-                console.log('[AutoSync] Command executed with:', opts);
+                console.log("[AutoSync] Command executed with:", opts);
                 try {
                     const state = opts[0]?.value?.toLowerCase();
 
                     if (state === "on") {
                         startAutoSync();
                         return {
-                            content: `[AUTOSYNC] Auto-sync enabled! Ban lists will be downloaded every 5 minutes.`
+                            content: "[AUTOSYNC] Auto-sync enabled! Ban lists will be downloaded every 5 minutes."
                         };
                     } else if (state === "off") {
                         stopAutoSync();
                         return {
-                            content: `[AUTOSYNC] Auto-sync disabled.`
+                            content: "[AUTOSYNC] Auto-sync disabled."
                         };
                     } else {
                         return {
-                            content: `[AUTOSYNC ERROR] Please use 'on' or 'off' as the argument.`
+                            content: "[AUTOSYNC ERROR] Please use 'on' or 'off' as the argument."
                         };
                     }
                 } catch (error) {
-                    console.error('[AutoSync] Command error:', error);
+                    console.error("[AutoSync] Command error:", error);
                     return {
-                        content: `[AUTOSYNC ERROR] Failed to toggle auto-sync. Error: ${error.message || 'Unknown error'}`
+                        content: `[AUTOSYNC ERROR] Failed to toggle auto-sync. Error: ${error.message || "Unknown error"}`
                     };
                 }
             }
