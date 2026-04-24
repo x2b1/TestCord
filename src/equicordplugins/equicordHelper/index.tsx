@@ -41,25 +41,20 @@ const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: 
 let SafetyHubStore: any = null;
 let fetchSafetyHub: (() => Promise<void>) | null = null;
 
-try {
-    SafetyHubStore = findStoreLazy("SafetyHubStore");
-    fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
-} catch { }
+// SafetyHubStore and related APIs no longer exist in newer Discord versions
+// Keeping the code structure but disabling the feature
+// try {
+//     SafetyHubStore = findStoreLazy("SafetyHubStore");
+//     fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+// } catch { }
 
 function StandingButton() {
+    const [hovered, setHovered] = React.useState(false);
+
     if (!SafetyHubStore) return null;
 
-    const standing = useStateFromStores([SafetyHubStore], () => {
-        try {
-            return SafetyHubStore?.getAccountStanding?.() ?? null;
-        } catch { return null; }
-    });
-    const isInitialized = useStateFromStores([SafetyHubStore], () => {
-        try {
-            return SafetyHubStore?.isInitialized?.() ?? false;
-        } catch { return false; }
-    });
-    const [hovered, setHovered] = React.useState(false);
+    const standing = SafetyHubStore?.getAccountStanding?.() ?? null;
+    const isInitialized = SafetyHubStore?.isInitialized?.() ?? false;
 
     React.useEffect(() => {
         if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => { });
@@ -171,8 +166,8 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: () => ShieldIcon ? <ShieldIcon /> : null,
-        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
+        icon: () => (SafetyHubStore ? (ShieldIcon ? <ShieldIcon /> : null) : null),
+        render: () => (settings.store.accountStandingButton && SafetyHubStore ? <StandingButton /> : null),
     },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
