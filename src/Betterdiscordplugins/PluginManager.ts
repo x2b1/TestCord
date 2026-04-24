@@ -203,6 +203,13 @@ export class BDPluginManager {
             const meta = parsePluginMeta(sourceCode, fileName);
             const pluginId = meta.name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
 
+            // Skip loading problematic BD plugins
+            const disabledPlugins = ["BetterFormattingRedux", "Embed_More_Images", "SimpleAnimations", "Uncompressed_Images"];
+            if (disabledPlugins.includes(pluginId) || disabledPlugins.includes(meta.name)) {
+                logger.info(`Skipping loading of broken BD plugin: ${meta.name}`);
+                return null;
+            }
+
             // Create BdApi instance for this plugin
             const bdApi = createBdApi(meta.name);
             this.bdApis.set(pluginId, bdApi);
