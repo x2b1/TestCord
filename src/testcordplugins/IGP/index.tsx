@@ -298,7 +298,7 @@ class KeyManager {
     private loadKeys(): void {
         try {
             const stored = JSON.parse(settings.store.knownPublicKeys || "{}");
-            this.keyCache = new Map(Object.entries(stored));
+            this.keyCache = new Map(Object.entries(stored || {}));
             logger.info(`Loaded ${this.keyCache.size} known public keys`);
         } catch (err) {
             logger.error("Failed to load keys:", err);

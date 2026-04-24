@@ -489,11 +489,11 @@ export default definePlugin({
             find: "canUseCustomStickersEverywhere:",
             replacement: [
                 {
-                    match: /(?<=canStreamQuality:)\i/,
+                    match: /(?<=canStreamQuality:)[^{]+/,
                     replace: "() => true",
                 },
                 {
-                    match: /(?<=canUseHighVideoUploadQuality:)\i/,
+                    match: /(?<=canUseHighVideoUploadQuality:)[^{]+/,
                     replace: "() => true",
                 },
             ],

@@ -383,6 +383,7 @@ export default definePlugin({
     },
 
     applyKeywordEntries(m: Message) {
+        if (!m?.author?.id) return;
         let matches = false;
 
         for (const entry of keywordEntries) {
