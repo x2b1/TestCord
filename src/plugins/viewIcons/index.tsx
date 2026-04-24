@@ -200,7 +200,7 @@ export default definePlugin({
             find: "return{avatarProps:{",
             replacement: {
                 match: /(?<=avatarProps:(\i),eventHandlers:(\i).{0,50}?)return null==/,
-                replace: 'Object.assign($2,{style:{cursor:"pointer"},onClick:()=>$self.openAvatar($1.src)});$&',
+                replace: 'if($1&&$2)Object.assign($2,{style:{cursor:"pointer"},onClick:()=>$1.src&&$self.openAvatar($1.src)});$&',
             }
         },
         // Banners
@@ -208,7 +208,7 @@ export default definePlugin({
             find: 'backgroundColor:"COMPLETE"',
             replacement: {
                 match: /(overflow:"visible",.{0,125}?!1\),)style:{(?=.+?backgroundImage:null!=(\i)\?`url\(\$\{\2\}\))/,
-                replace: (_, rest, bannerSrc) => `${rest}onClick:()=>${bannerSrc}!=null&&$self.openBanner(${bannerSrc}),style:{cursor:${bannerSrc}!=null?"pointer":void 0,`
+                replace: (_, rest, bannerSrc) => `${rest}onClick:()=>{try{if(${bannerSrc}!=null)$self.openBanner(${bannerSrc});}catch(e){}},style:{cursor:${bannerSrc}!=null?"pointer":void 0,`
             }
         },
         // Group DMs top small & large icon
@@ -225,7 +225,7 @@ export default definePlugin({
             find: ".channel.getRecipientId(),",
             replacement: {
                 match: /(?=,src:(\i.getAvatarURL\(.+?[)]))/,
-                replace: (_, avatarUrl) => `,onClick:()=>$self.openAvatar(${avatarUrl})`
+                replace: (_, avatarUrl) => `,onClick:()=>{try{const _u=${avatarUrl};if(_u)$self.openAvatar(_u);}catch(e){}}`
             }
         },
         // User Dms top large icon
@@ -233,7 +233,7 @@ export default definePlugin({
             find: ".EMPTY_GROUP_DM)",
             replacement: {
                 match: /(?<=SIZE_80,)(?=src:(.+?\))[,}])/,
-                replace: (_, avatarUrl) => `onClick:()=>$self.openAvatar(${avatarUrl}),`
+                replace: (_, avatarUrl) => `onClick:()=>{try{const _u=${avatarUrl};if(_u)$self.openAvatar(_u);}catch(e){}},`
             }
         }
     ]
