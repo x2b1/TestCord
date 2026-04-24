@@ -35,9 +35,10 @@ import definePlugin, { OptionType } from "@utils/types";
 import { chooseFile } from "@utils/web";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
 import { Button, CloudUploader, Constants, FluxDispatcher, Forms, lodash, Menu, MessageActions, PendingReplyStore, PermissionsBits, PermissionStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Toasts, useEffect, useState } from "@webpack/common";
+import { ComponentType } from "react";
 
 import { VoiceRecorderDesktop } from "./components/DesktopRecorder";
-import { VoicePreview } from "./components/VoicePreview";
+import { VoiceMessageProps, VoicePreview } from "./components/VoicePreview";
 import { VoiceRecorderWeb } from "./components/WebRecorder";
 
 const VOICE_MESSAGE_FLAG = 1 << 13;
@@ -60,6 +61,8 @@ export type VoiceRecorder = React.ComponentType<{
     setAudioBlob(blob: Blob): void;
     onRecordingChange?(recording: boolean): void;
 }>;
+
+export let VoiceMessage: ComponentType<VoiceMessageProps> = () => null;
 
 type AudioMetadata = {
     waveform: string,
@@ -275,6 +278,19 @@ export default definePlugin({
     tags: ["Voice"],
     authors: [Devs.Ven, Devs.Vap, Devs.Nickyux],
     settings,
+    patches: [
+        {
+            find: "#{intl::3XohGn::raw}",
+            replacement: {
+                match: /(?<=\i=)(?=\i\.memo\(.{0,50}?=1,onVolumeChange:[^}]+?waveform:[^}]+?playbackCacheKey:)/,
+                replace: "$self.VoiceMessage=",
+            }
+        }
+    ],
+
+    set VoiceMessage(value) {
+        VoiceMessage = value;
+    },
     contextMenus: {
         "channel-attach": ctxMenuPatch
     }
