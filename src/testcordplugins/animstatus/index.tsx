@@ -286,7 +286,9 @@ function StatusesTab({ statuses, filteredStatuses, presetNames, presets, filterP
     return (
         <div className={cl("tab-content")}>
             <StatusPreview emojiId={previewData.emojiId} emojiName={previewData.emojiName} animated={previewData.animated} text={previewData.text} statusType={previewData.status || "online"} />
+            {/* @ts-ignore */}
             <Forms.FormDivider />
+            {/* @ts-ignore */}
             <Forms.FormSection className={cl("section")}>
                 <Text className={cl("section-title")} variant="heading-md/bold">Add New Status</Text>
                 <Text className={cl("section-desc")} variant="text-md/normal">Enter your status text or paste a Discord emoji (e.g., &lt;:emoji:123456789&gt;)</Text>

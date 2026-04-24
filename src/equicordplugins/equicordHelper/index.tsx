@@ -156,7 +156,7 @@ export default definePlugin({
     settings,
     headerBarButton: {
         icon: ShieldIcon,
-        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
+        render: () => (settings.store.accountStandingButton ? null : null),
     },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
