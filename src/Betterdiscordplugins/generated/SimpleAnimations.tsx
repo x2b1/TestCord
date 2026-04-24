@@ -214,10 +214,15 @@ export default definePlugin({
     tags: ["betterdiscord", "bd", "external"],
     
     start() {
-        logger.info("Skipping - broken BD plugin");
+        logger.info("Starting");
+        if (!Settings.plugins["SimpleAnimations"]) {
+            Settings.plugins["SimpleAnimations"] = { enabled: true };
+        }
+        BDPluginManager.startPlugin("SimpleAnimations");
     },
     
     stop() {
-        logger.info("Skipping - broken BD plugin");
+        logger.info("Stopping");
+        BDPluginManager.stopPlugin("SimpleAnimations");
     }
 });

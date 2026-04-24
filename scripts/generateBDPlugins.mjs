@@ -34,7 +34,21 @@ async function loadBDPlugins() {
     const files = await readdir(BD_PLUGINS_DIR);
     const pluginFiles = files.filter(f => f.endsWith(".plugin.js"));
 
+    // List of broken BD plugins that can't be loaded - skip them entirely
+    const brokenPlugins = [
+        "BetterFormattingRedux.plugin.js",
+        "Embed_More_Images.plugin.js",
+        "SimpleAnimations.plugin.js",
+        "Uncompressed_Images.plugin.js"
+    ];
+
     for (const file of pluginFiles) {
+        // Skip broken plugins
+        if (brokenPlugins.includes(file)) {
+            console.log(`Skipping broken BD plugin: ${file}`);
+            continue;
+        }
+
         try {
             const filePath = join(BD_PLUGINS_DIR, file);
             const content = await readFile(filePath, "utf-8");
@@ -106,7 +120,7 @@ export default definePlugin({
         }
     }
 
-    console.log(`\nGenerated ${pluginFiles.length} BD plugin wrapper(s)`);
+    console.log(`\nGenerated ${pluginFiles.length - brokenPlugins.length} BD plugin wrapper(s) (${brokenPlugins.length} skipped)`);
 }
 
 loadBDPlugins().catch(console.error);

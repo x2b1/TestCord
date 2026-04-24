@@ -371,10 +371,15 @@ export default definePlugin({
     tags: ["betterdiscord", "bd", "external"],
     
     start() {
-        logger.info("Skipping - broken BD plugin");
+        logger.info("Starting");
+        if (!Settings.plugins["Uncompressed_Images"]) {
+            Settings.plugins["Uncompressed_Images"] = { enabled: true };
+        }
+        BDPluginManager.startPlugin("Uncompressed_Images");
     },
     
     stop() {
-        logger.info("Skipping - broken BD plugin");
+        logger.info("Stopping");
+        BDPluginManager.stopPlugin("Uncompressed_Images");
     }
 });

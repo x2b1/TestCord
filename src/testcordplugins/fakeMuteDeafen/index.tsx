@@ -198,15 +198,14 @@ export default definePlugin({
     settings,
     start() {
         try {
-            let GatewayConnection;
+            let GatewayConnection: any = null;
             try {
                 GatewayConnection = findByProps(
                     "voiceStateUpdate",
                     "voiceServerPing"
                 );
-} catch (e: any) {
-                console.warn("[FakeMuteDeafen] findByProps failed:", e?.message || e);
-                GatewayConnection = null;
+            } catch (e) {
+                console.warn("[FakeMuteDeafen] findByProps failed:", String(e));
             }
             if (
                 !GatewayConnection ||
