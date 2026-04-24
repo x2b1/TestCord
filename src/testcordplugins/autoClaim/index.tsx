@@ -5,7 +5,7 @@ import { Devs, EquicordDevs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByCodeLazy, findStoreLazy, findByPropsLazy } from "@webpack";
 import { FluxDispatcher, Menu, MessageActions, MessageStore, ChannelStore, Button, Tooltip, RestAPI, useStateFromStores, SelectedGuildStore, RelationshipStore, SelectedChannelStore, Toasts, GuildStore, PermissionStore, React, UserStore } from "@webpack/common";
-import { Message, User } from "discord-types/general";
+import { Message, User } from "@vencord/discord-types";
 import { classes } from "@utils/misc";
 
 export const cl = classNameFactory("vc-voice-channel-log-");
