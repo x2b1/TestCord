@@ -460,12 +460,17 @@ export class BDPluginManager {
      * Check if a plugin is enabled
      */
     static isPluginEnabled(pluginId: string): boolean {
+        // Disable problematic BD plugins by default due to compatibility issues
+        const disabledPlugins = ["BetterFormattingRedux", "Embed_More_Images", "SimpleAnimations", "Uncompressed_Images"];
+        if (disabledPlugins.includes(pluginId)) {
+            return false;
+        }
         // First check Settings system, then fall back to localStorage
         if (Settings.plugins[pluginId]) {
-            return Settings.plugins[pluginId].enabled ?? true; // Default to enabled
+            return Settings.plugins[pluginId].enabled ?? false;
         }
         const enabled = localStorage.getItem("Testcord_BDPlugins_enabled");
-        if (!enabled) return true; // Default to enabled if no preference stored
+        if (!enabled) return false;
         const enabledList: string[] = JSON.parse(enabled);
         return enabledList.includes(pluginId);
     }

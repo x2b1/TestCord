@@ -28,17 +28,39 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-const SafetyHubStore = findStoreLazy("SafetyHubStore");
-const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
-const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+const getSafetyHubStore = () => {
+    try {
+        return findStoreLazy("SafetyHubStore");
+    } catch {
+        return null;
+    }
+};
+const SafetyHubStore = getSafetyHubStore();
+const fetchSafetyHub: (() => Promise<void>) | undefined = (() => {
+    try {
+        return findByCodeLazy("SAFETY_HUB_FETCH_START");
+    } catch {
+        return undefined;
+    }
+})();
+const getShieldIcon = () => {
+    try {
+        return findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
+    } catch {
+        return null;
+    }
+};
+const ShieldIcon = getShieldIcon();
 
-const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
+const getStandingConfig = () => ({
     [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
     [StandingState.AT_RISK]: { label: "At risk", hoverColor: "var(--status-danger)", Icon: WarningIcon },
     [StandingState.SUSPENDED]: { label: "Suspended", hoverColor: "var(--interactive-muted)", Icon: WarningIcon },
-};
+});
+
+const StandingConfig = getStandingConfig();
 
 function StandingButton() {
     const [error, setError] = React.useState(false);
@@ -167,7 +189,7 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: ShieldIcon,
+        icon: ShieldIcon ?? (() => null),
         render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     },
     patches: [
