@@ -215,14 +215,9 @@ export default definePlugin({
     
     start() {
         logger.info("Starting");
-        if (!Settings.plugins["SimpleAnimations"]) {
-            Settings.plugins["SimpleAnimations"] = { enabled: true };
-        }
-        BDPluginManager.startPlugin("SimpleAnimations");
     },
     
     stop() {
         logger.info("Stopping");
-        BDPluginManager.stopPlugin("SimpleAnimations");
     }
 });

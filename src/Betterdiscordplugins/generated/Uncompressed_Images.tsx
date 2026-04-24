@@ -372,14 +372,9 @@ export default definePlugin({
     
     start() {
         logger.info("Starting");
-        if (!Settings.plugins["Uncompressed_Images"]) {
-            Settings.plugins["Uncompressed_Images"] = { enabled: true };
-        }
-        BDPluginManager.startPlugin("Uncompressed_Images");
     },
     
     stop() {
         logger.info("Stopping");
-        BDPluginManager.stopPlugin("Uncompressed_Images");
     }
 });

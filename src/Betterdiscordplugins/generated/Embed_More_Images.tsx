@@ -623,14 +623,9 @@ export default definePlugin({
     
     start() {
         logger.info("Starting");
-        if (!Settings.plugins["Embed_More_Images"]) {
-            Settings.plugins["Embed_More_Images"] = { enabled: true };
-        }
-        BDPluginManager.startPlugin("Embed_More_Images");
     },
     
     stop() {
         logger.info("Stopping");
-        BDPluginManager.stopPlugin("Embed_More_Images");
     }
 });

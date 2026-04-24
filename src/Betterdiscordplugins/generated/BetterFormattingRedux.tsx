@@ -1026,14 +1026,9 @@ export default definePlugin({
     
     start() {
         logger.info("Starting");
-        if (!Settings.plugins["BetterFormattingRedux"]) {
-            Settings.plugins["BetterFormattingRedux"] = { enabled: true };
-        }
-        BDPluginManager.startPlugin("BetterFormattingRedux");
     },
     
     stop() {
         logger.info("Stopping");
-        BDPluginManager.stopPlugin("BetterFormattingRedux");
     }
 });
