@@ -434,7 +434,7 @@ export default definePlugin({
             }
         },
         {
-            name: "freaky-more",
+            name: "freaky",
             description: "it's freaky.",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [{

@@ -30,10 +30,10 @@ function makeFreaky(text: string) {
 export default definePlugin({
     name: "Freaky",
     description: "freaky.",
-    authors: [TestcordDevs.nyx],
+    authors: [TestcordDevs.x2b],
     commands: [
         {
-            name: "freaky",
+            name: "freakytransform",
             description: "it's freaky.",
             inputType: ApplicationCommandInputType.BUILT_IN,
             options: [{

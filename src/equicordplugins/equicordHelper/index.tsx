@@ -28,11 +28,10 @@ migratePluginToSettings(true, "EquicordHelper", "GuildTagSettings", "disableAdop
 
 let clicked = false;
 
-const SafetyHubStore = findStoreLazy("SafetyHubStore");
-const fetchSafetyHub = findByCodeLazy("SAFETY_HUB_FETCH_START");
+const fetchSafetyHub: () => Promise<void> = findByCodeLazy("SAFETY_HUB_FETCH_START");
 const ShieldIcon = findComponentByCodeLazy("0 0 1-1.29-.88c-.36-.33-.7-.73-.88-1.13-.33-.");
 
-const StandingConfig: Record<number, any> = {
+const StandingConfig: Record<number, { label: string; hoverColor: string; Icon: ComponentType<any>; }> = {
     [StandingState.ALL_GOOD]: { label: "All good!", hoverColor: "var(--status-positive)", Icon: ShieldIcon },
     [StandingState.LIMITED]: { label: "Limited", hoverColor: "var(--status-warning)", Icon: WarningIcon },
     [StandingState.VERY_LIMITED]: { label: "Very limited", hoverColor: "var(--orange-345)", Icon: WarningIcon },
@@ -41,18 +40,16 @@ const StandingConfig: Record<number, any> = {
 };
 
 function StandingButton() {
+    const SafetyHubStore = findStoreLazy("SafetyHubStore");
+    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.getAccountStanding?.() ?? null);
+    const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.isInitialized?.() ?? false);
     const [hovered, setHovered] = React.useState(false);
 
     React.useEffect(() => {
-        if (SafetyHubStore && !SafetyHubStore.isInitialized && !SafetyHubStore.isInitialized()) {
-            fetchSafetyHub?.();
-        }
-    }, []);
+        if (!isInitialized) fetchSafetyHub().catch(() => { });
+    }, [isInitialized]);
 
-    const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore?.getAccountStanding?.() ?? { state: StandingState.ALL_GOOD });
     const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
-
-    if (!config.Icon) return null;
 
     return (
         <div style={{ display: "contents" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
@@ -158,8 +155,8 @@ export default definePlugin({
     required: true,
     settings,
     headerBarButton: {
-        icon: ShieldIcon ?? WarningIcon,
-        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null)
+        icon: ShieldIcon,
+        render: () => (settings.store.accountStandingButton ? <StandingButton /> : null),
     },
     patches: [
         // Fixes Unknown Resolution/FPS Crashing
@@ -204,13 +201,13 @@ export default definePlugin({
             },
             predicate: () => settings.store.noMirroredCamera
         },
-        // Remove activity section
+        // Remove Activity Section above Member List
         {
-            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED",
+            find: ".MEMBERLIST_CONTENT_FEED_TOGGLED,",
             predicate: () => settings.store.removeActivitySection,
             replacement: {
-                match: /(?<=\.MEMBERLIST_CONTENT_FEED_TOGGLED.{0,200}?children:)\i(?=,)/,
-                replace: "null"
+                match: /null==\i\|\|/,
+                replace: "true||$&"
             },
         },
         // Show your own activity buttons because discord removes them for who knows why

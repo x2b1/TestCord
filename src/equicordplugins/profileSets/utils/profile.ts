@@ -76,34 +76,6 @@ function hasAvatarDecoration(value: unknown): value is AvatarDecorationLike {
         && isNonEmptyString((value as { skuId?: unknown; }).skuId);
 }
 
-function hasNameplate(value: unknown): value is Nameplate {
-    return typeof value === "object"
-        && value != null
-        && isNonEmptyString((value as { asset?: unknown; }).asset)
-        && isNonEmptyString((value as { skuId?: unknown; }).skuId);
-}
-
-function normalizeProfileEffect(value: ProfileEffect | null | undefined): ProfileEffect | null {
-    if (!value?.skuId) return null;
-
-    const effects = Array.isArray(value.effects)
-        ? value.effects.filter(effect => typeof effect?.src === "string" && effect.src.length > 0)
-        : undefined;
-
-    return {
-        skuId: value.skuId,
-        title: value.title,
-        description: value.description,
-        accessibilityLabel: value.accessibilityLabel,
-        reducedMotionSrc: isNonEmptyString(value.reducedMotionSrc) ? value.reducedMotionSrc : undefined,
-        thumbnailPreviewSrc: isNonEmptyString(value.thumbnailPreviewSrc) ? value.thumbnailPreviewSrc : undefined,
-        effects: effects?.length ? effects : undefined,
-        animationType: value.animationType,
-        staticFrameSrc: isNonEmptyString(value.staticFrameSrc) ? value.staticFrameSrc : undefined,
-        type: value.type
-    };
-}
-
 function normalizeDisplayNameStyles(value: DisplayNameStylesLike | null | undefined): DisplayNameStylesLike | null {
     if (!value) return null;
     const fontId = value.fontId ?? value.font_id;
@@ -204,7 +176,7 @@ export async function getCurrentProfile(guildId?: string, options: CurrentProfil
 
     if (effectToUse) {
         if (effectToUse.skuId && effectToUse.effects) {
-            profileEffect = normalizeProfileEffect({
+            profileEffect = {
                 skuId: effectToUse.skuId,
                 title: effectToUse.title,
                 description: effectToUse.description,
@@ -215,12 +187,12 @@ export async function getCurrentProfile(guildId?: string, options: CurrentProfil
                 animationType: effectToUse.animationType,
                 staticFrameSrc: effectToUse.staticFrameSrc,
                 type: effectToUse.type || 1
-            });
+            };
         } else if (effectToUse.skuId) {
             const collectibles = userProfile?.collectibles;
             const collectible = collectibles?.find(c => c?.skuId === effectToUse.skuId);
             if (collectible) {
-                profileEffect = normalizeProfileEffect({
+                profileEffect = {
                     skuId: collectible.skuId,
                     title: collectible.title,
                     description: collectible.description,
@@ -231,14 +203,14 @@ export async function getCurrentProfile(guildId?: string, options: CurrentProfil
                     animationType: collectible.animationType,
                     staticFrameSrc: collectible.staticFrameSrc,
                     type: collectible.type || 1
-                });
+                };
             }
         }
     }
 
     const nameplateToUse = pendingChanges.pendingNameplate
         ?? (isGuildProfile ? guildMember?.collectibles?.nameplate : userAny.collectibles?.nameplate);
-    const nameplate = hasNameplate(nameplateToUse) ? {
+    const nameplate = nameplateToUse ? {
         skuId: nameplateToUse.skuId,
         asset: nameplateToUse.asset,
         label: nameplateToUse.label,
