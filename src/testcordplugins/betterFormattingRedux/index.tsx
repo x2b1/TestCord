@@ -88,7 +88,7 @@ const FormatButton: ChatBarButtonFactory = () => {
     const [open, setOpen] = useState(false);
     const [activeTags] = useState(new Set(lastFormats));
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const [tooltip, setTooltip] = useState<string>("");
+    const [tooltip, setTooltip] = useState<string>("Text Formatting");
 
     function ContextMenu() {
         const handleInsertCodeblock = (lang: string) => {
