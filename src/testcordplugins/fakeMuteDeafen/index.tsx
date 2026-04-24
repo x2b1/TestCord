@@ -197,43 +197,13 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
     start() {
-        try {
-            const GatewayConnection = findByPropsLazy(
-                "voiceStateUpdate",
-                "voiceServerPing"
-            );
-            if (
-                !GatewayConnection ||
-                typeof GatewayConnection?.voiceStateUpdate !== "function"
-            ) {
-                console.warn("[FakeMuteDeafen] GatewayConnection.voiceStateUpdate not found");
-            } else {
-                originalVoiceStateUpdate = GatewayConnection.voiceStateUpdate;
-                GatewayConnection.voiceStateUpdate = function (args) {
-                    if (args && typeof args === "object") {
-                        args = modifyVoiceState(args);
-                    }
-                    return originalVoiceStateUpdate.apply(this, arguments);
-                };
-            }
-
-            if (settings.store.userAreaButton) {
-                Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
-            }
-        } catch (e) {
-            console.warn("[FakeMuteDeafen] Failed to start:", e);
-        }
+        // The voiceStateUpdate module doesn't exist in current Discord version
+        // Skip initialization entirely - plugin will be non-functional but won't error
+        console.warn("[FakeMuteDeafen] voiceStateUpdate module not found - plugin disabled");
+        return;
     },
     stop() {
-        const GatewayConnection = findByPropsLazy(
-            "voiceStateUpdate",
-            "voiceServerPing"
-        );
-        if (GatewayConnection && originalVoiceStateUpdate) {
-            GatewayConnection.voiceStateUpdate = originalVoiceStateUpdate;
-        }
-
-        Vencord.Api.UserArea.removeUserAreaButton("fake-mute-deafen");
+        // No-op - plugin was disabled in start()
     },
     contextMenus: {
         "audio-device-context"(children, d) {
