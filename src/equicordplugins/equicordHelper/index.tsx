@@ -46,12 +46,15 @@ function StandingButton() {
     if (error) return null;
 
     try {
-        const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding());
-        const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized());
+        if (!SafetyHubStore) {
+            return null;
+        }
+        const standing = useStateFromStores([SafetyHubStore], () => SafetyHubStore.getAccountStanding?.());
+        const isInitialized = useStateFromStores([SafetyHubStore], () => SafetyHubStore.isInitialized?.());
         const [hovered, setHovered] = React.useState(false);
 
         React.useEffect(() => {
-            if (!isInitialized) fetchSafetyHub().catch(() => { });
+            if (!isInitialized && fetchSafetyHub) fetchSafetyHub().catch(() => { });
         }, [isInitialized]);
 
         const config = StandingConfig[standing?.state] ?? StandingConfig[StandingState.ALL_GOOD];
