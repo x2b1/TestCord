@@ -37,9 +37,9 @@ async function loadBDPlugins() {
     // List of broken BD plugins that can't be loaded - skip them entirely
     const brokenPlugins = [
         "BetterFormattingRedux.plugin.js",
-        "Embed_More_Images.plugin.js",
+        "EmbedMoreImages.plugin.js",
         "SimpleAnimations.plugin.js",
-        "Uncompressed_Images.plugin.js"
+        "UncompressedImages.plugin.js"
     ];
 
     for (const file of pluginFiles) {
