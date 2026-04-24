@@ -20,7 +20,7 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
-    name: "NeverPausePreviews",
+    name: "NeverPausePreviews", hidden: true,
     description: "Prevents in-call/PiP previews (screenshare, streams, etc) from pausing even if the client loses focus",
     tags: ["Media", "Utility"],
     authors: [TestcordDevs.x2b],
