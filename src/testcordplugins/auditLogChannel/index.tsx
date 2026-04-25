@@ -24,12 +24,8 @@ export default definePlugin({
             group: true,
             replacement: [
                 {
-                    match: /let \i=\(0,\i\.\i\)\((\i\.id)\)/,
-                    replace: "$&,vcHasAuditLogPermission=$self.useAuditLogPermission($1)"
-                },
-                {
                     match: /(\i)\.push\(\i\.\i\.GUILD_MOD_DASH_MEMBER_SAFETY\),/,
-                    replace: '$&vcHasAuditLogPermission&&$1.push("audit-log"),'
+                    replace: '$&$1.push("audit-log"),'
                 }
             ]
         },
@@ -66,7 +62,6 @@ export default definePlugin({
         }
     ],
 
-    useAuditLogPermission,
     AuditLogChannelRow,
     AuditLogPage,
     AuditLogPageWrapper,

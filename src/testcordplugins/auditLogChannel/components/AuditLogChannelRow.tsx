@@ -8,12 +8,16 @@ import { LogIcon } from "@components/Icons";
 import { getIntlMessage } from "@utils/discord";
 import { Guild } from "@vencord/discord-types";
 import { findByPropsLazy, findComponentByCodeLazy } from "@webpack";
-import { NavigationRouter } from "@webpack/common";
+import { NavigationRouter, useStateFromStores, PermissionStore, PermissionsBits, GuildStore, UserStore } from "@webpack/common";
 
 const ChannelRow = findComponentByCodeLazy(".basicChannelRowLink,");
 const Routes = findByPropsLazy("INDEX", "FRIENDS", "ME");
 
 export default function AuditLogChannelRow(props: { guild: Guild, selected: boolean; }) {
+    const canViewAuditLog = useStateFromStores([GuildStore, UserStore, PermissionStore], () => PermissionStore.canWithPartialContext(PermissionsBits.VIEW_AUDIT_LOG, { guildId: props.guild.id }), [props.guild.id]);
+
+    if (!canViewAuditLog) return null;
+
     return <ChannelRow
         id={`audit-log-${props.guild.id}`}
         renderIcon={(className: string) => <LogIcon className={className} />}

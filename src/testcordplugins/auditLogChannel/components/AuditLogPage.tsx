@@ -7,6 +7,7 @@
 import { LogIcon } from "@components/Icons";
 import { findByCodeLazy, findByPropsLazy, findComponentByCodeLazy, findLazy, findStoreLazy } from "@webpack";
 import { GuildStore, UserStore, useStateFromStores } from "@webpack/common";
+import React from "react";
 
 const PageWrapper = findComponentByCodeLazy("forumOrHome]:null");
 const mainClasses = findByPropsLazy("chat", "threadSidebarOpen");
@@ -17,7 +18,8 @@ const { elevationBorderHigh } = findByPropsLazy("elevationBorderHigh");
 
 const { SearchableQuickSelect } = findByPropsLazy("SearchableQuickSelect");
 
-const AuditLog = findByPropsLazy("vcAuditLogComponent").vcAuditLogComponent;
+const AuditLogModule = findByPropsLazy("vcAuditLogComponent");
+const getAuditLog = (): any => AuditLogModule?.vcAuditLogComponent;
 
 const GuildSettingsAuditLogStore = findStoreLazy("GuildSettingsAuditLogStore");
 const ThemeStore = findStoreLazy("ThemeStore");
@@ -33,6 +35,9 @@ export default function AuditLogPage({ guildId }: { guildId: string; }) {
     const theme = useStateFromStores([ThemeStore], () => ThemeStore.theme);
     const streamerMode = useStateFromStores([StreamerModeStore], () => StreamerModeStore.enabled);
     const logs = useStateFromStores([GuildSettingsAuditLogStore], () => GuildSettingsAuditLogStore.logs);
+    const AuditLogComponent = getAuditLog();
+
+    if (!AuditLogComponent) return null;
 
     return <div className={mainClasses.chat}>
         <PageWrapper
@@ -47,8 +52,7 @@ export default function AuditLogPage({ guildId }: { guildId: string; }) {
             <Icon icon={LogIcon} />
             <Title>Audit Log</Title>
         </PageWrapper>
-        {/* <AuditLog /> */}
-        <AuditLog
+        <AuditLogComponent
             guildId={guildId}
             guild={guild}
             moderators={GuildSettingsAuditLogStore.userIds.map(e => UserStore.getUser(e)).filter(i => i !== null)}
