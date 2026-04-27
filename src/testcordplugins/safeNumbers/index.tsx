@@ -23,14 +23,13 @@ const DIGIT_MAP: Record<string, string> = {
     "9": "𝟿",
 };
 
-const URL_REGEX = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
-
 function replaceDigits(content: string): string {
     const parts: string[] = [];
     let lastIndex = 0;
 
+    const combinedRegex = /(?:<(a?):[\w]+:\d+>|https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
     let match;
-    while ((match = URL_REGEX.exec(content)) !== null) {
+    while ((match = combinedRegex.exec(content)) !== null) {
         if (match.index > lastIndex) {
             parts.push(content.slice(lastIndex, match.index).replace(/\d/g, d => DIGIT_MAP[d] ?? d));
         }
