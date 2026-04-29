@@ -27,7 +27,7 @@ function replaceDigits(content: string): string {
     const parts: string[] = [];
     let lastIndex = 0;
 
-    const combinedRegex = /(?:<(a?):[\w]+:\d+>|https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
+    const combinedRegex = /(?:<@\d+>|<(a?):[\w]+:\d+>|https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
     let match;
     while ((match = combinedRegex.exec(content)) !== null) {
         if (match.index > lastIndex) {
