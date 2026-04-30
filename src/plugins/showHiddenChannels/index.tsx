@@ -169,8 +169,8 @@ export default definePlugin({
             predicate: () => settings.store.showMode === ShowMode.LockIcon,
             replacement: {
                 // Lock Icon
-                match: /(?=switch\((\i)\.type\).{0,30}\.GUILD_ANNOUNCEMENT.{0,70}\(0,\i\.\i\))/,
-                replace: (_, channel) => `if($self.isHiddenChannel(${channel}))return $self.LockIcon;`
+                match: /(?<=(\i)\.isNSFW\(\);)switch\(\i\.type\)/,
+                replace: (m, channel) => `if($self.isHiddenChannel(${channel}))return $self.LockIcon;${m}`
             }
         },
         {
