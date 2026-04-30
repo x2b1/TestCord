@@ -11,14 +11,23 @@ import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import { getStegCloak } from "@utils/dependencies";
 import { Logger } from "@utils/Logger";
-import definePlugin, { OptionType } from "@utils/types";
+import definePlugin, { IconComponent, OptionType } from "@utils/types";
 import { findExportedComponentLazy } from "@webpack";
 import { FluxDispatcher } from "@webpack/common";
 
-const LockIcon = findExportedComponentLazy("LockIcon");
-const LockUnlockedIcon = findExportedComponentLazy("LockUnlockedIcon");
-
 const logger = new Logger("GoofcordSecurity");
+
+const LockIcon: IconComponent = ({ height = 20, width = 20, className }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24" className={className}>
+        <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6z" />
+    </svg>
+);
+
+const LockUnlockedIcon: IconComponent = ({ height = 20, width = 20, className }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24" className={className}>
+        <path fill="currentColor" d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-11.1 4c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H6.9V6z" />
+    </svg>
+);
 
 // ────────────────────────────────────────────────────────────────── settings
 
@@ -106,6 +115,10 @@ export const settings = definePluginSettings({
         type: OptionType.BOOLEAN, default: false, restartNeeded: true,
         description: "Enable StegCloak-based message encryption (toggle the lock button in the chat bar to encrypt messages).",
     },
+    encryptionActive: {
+        type: OptionType.BOOLEAN, default: false,
+        description: "Toggle encryption on/off",
+    },
     encryptionPasswords: {
         type: OptionType.STRING, default: "password",
         description: "Comma-separated list of passwords. The first is used for encryption; all are tried for decryption.",
@@ -168,7 +181,6 @@ function unpatchWebRtc() {
 // ────────────────────────────────────────────────────────────── stegcloak
 
 let steggo: any = null;
-let encryptNextMessage = false;
 
 // matches strings produced by StegCloak (zero-width chars)
 const INV_REGEX = /( \u200c|\u200d |[\u2060-\u2064])[^\u200b]/;
@@ -203,24 +215,23 @@ function tryDecrypt(content: string): string | null {
 }
 
 const ChatBarIcon: ChatBarButtonFactory = ({ isMainChat }) => {
-    const { messageEncryption } = settings.use(["messageEncryption"]);
+    const { messageEncryption, encryptionActive } = settings.use(["messageEncryption", "encryptionActive"]);
     if (!isMainChat || !messageEncryption) return null;
     return (
         <ChatBarButton
-            tooltip={encryptNextMessage ? "Encryption ON" : "Encryption OFF"}
+            tooltip={encryptionActive ? "Encryption ON" : "Encryption OFF"}
             onClick={() => {
-                encryptNextMessage = !encryptNextMessage;
-                FluxDispatcher.dispatch({ type: "GOOFCORDSEC_ENC_TOGGLE" });
+                settings.store.encryptionActive = !encryptionActive;
             }}
             buttonProps={{ "aria-haspopup": "dialog" }}
         >
-            {encryptNextMessage ? <LockIcon /> : <LockUnlockedIcon />}
+            {encryptionActive ? <LockIcon /> : <LockUnlockedIcon />}
         </ChatBarButton>
     );
 };
 
 const onSend: MessageSendListener = async (_channelId, msg) => {
-    if (!settings.store.messageEncryption || !encryptNextMessage) return;
+    if (!settings.store.messageEncryption || !settings.store.encryptionActive) return;
     if (!msg.content) return;
 
     const passwords = getPasswords();
