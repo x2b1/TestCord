@@ -172,6 +172,22 @@ export default definePlugin({
                 }
             ]
         },
+        // Fix a race condition?
+        {
+            find: ".completeOperation(",
+            replacement: {
+                match: /(?<=this\.nextId\(\);)(\i\(\i\)),(.{0,200}reject:\i\}\))/,
+                replace: "$2,$1"
+            }
+        },
+        // catch if it cant open
+        {
+            find: "discarding speculative database",
+            replacement: {
+                match: /await (\i)\((\i)\)(?=;.{0,15}this\.databases)/,
+                replace: "$&.catch(()=>null)"
+            }
+        },
         // When focused on voice channel or group chat voice call
         {
             find: ".STATUS_WARNING_BACKGROUND})})",
@@ -309,7 +325,7 @@ export default definePlugin({
                 }
             ],
             predicate: () => Settings.winNativeTitleBar,
-        }
+        },
     ],
     renderMessageAccessory(props) {
         return (
