@@ -1400,9 +1400,9 @@ export default definePlugin({
     patches: [
         {
             // Needed for GuildlessServerListItemComponent component in components.tsx
-            find: "=\"DOWNLOAD_APPS\";function",
+            find: '="DOWNLOAD_APPS";function',
             replacement: {
-                match: /(?<=function\(\i,\i,\i\){\i.\i\(\i,{)(?=.{0,25000}?ariaHidden:!0,asContainer:!\i,children:\i}\)}var \i=\i\(\d+\);let (\i)=\i.forwardRef\(function)/,
+                match: /(?=\i:\(\)=>\i.*?asContainer:!\i.{0,50};let (\i)=\i.forwardRef\(function)/,
                 replace: "GuildlessServerListItemComponent:()=>$1,"
             }
         },
@@ -1810,24 +1810,6 @@ export default definePlugin({
             ]
         },
         {
-            // Adds support for dev://experiment/2025-12-quest-cta-refactor-rollout
-            find: "WATCH_VIDEO?async()=>{await",
-            replacement: [
-                {
-                    match: /(?=let{quest:)/,
-                    replace: "const questifyText=$self.getQuestUnacceptedButtonText(arguments[0].quest)??$self.getQuestAcceptedButtonText(arguments[0].quest);"
-                },
-                {
-                    match: /(?<=}\),)(\i\?\.\(\))/,
-                    replace: "!$self.processQuestForAutoComplete(arguments[0].quest,true)&&($1)"
-                },
-                {
-                    match: /(?<=,text:)(\i),icon:\i/,
-                    replace: "questifyText??$1"
-                }
-            ]
-        },
-        {
             // Same thing as above, maybe? Different location though.
             find: ".ACCEPT_QUEST),",
             replacement: [
@@ -1842,7 +1824,11 @@ export default definePlugin({
                 {
                     match: /(?<="primary",onClick:)(\i)/,
                     replace: "()=>{!$self.processQuestForAutoComplete(arguments[0].quest,true)&&$1()}"
-                }
+                },
+                {
+                    match: /(?<=}\),)(\i\?\.\(\))/,
+                    replace: "!$self.processQuestForAutoComplete(arguments[0].quest,true)&&($1)"
+                },
             ]
         },
         {

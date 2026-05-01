@@ -374,6 +374,7 @@ export function isConfigured(): boolean {
         case ServiceType.BUZZHEAVIER:
         case ServiceType.TEMPSH:
         case ServiceType.FILEBIN:
+        case ServiceType.PIXELDRAIN:
             return true;
         case ServiceType.PIXELVAULT:
             return Boolean((settings.store as { pixelVaultKey?: string; }).pixelVaultKey);
@@ -714,6 +715,45 @@ async function uploadToPixelVault(fileBlob: Blob, filename: string): Promise<str
     return url;
 }
 
+async function uploadToPixelDrain(fileBlob: Blob, filename: string): Promise<string> {
+    const { pixelDrainKey } = settings.store as { pixelDrainKey?: string; };
+
+    if (Native) {
+        const result = await Native.uploadToPixelDrain(await fileBlob.arrayBuffer(), filename, pixelDrainKey?.trim() || undefined);
+        if (!result.success || !result.url) throw new Error(result.error || "No URL returned from upload");
+        return result.url;
+    }
+
+    const headers: Record<string, string> = {};
+    if (pixelDrainKey?.trim()) {
+        headers.Authorization = `Basic ${btoa(`:${pixelDrainKey.trim()}`)}`;
+    }
+
+    const response = await fetchWithTimeout(`https://pixeldrain.com/api/file/${encodeURIComponent(filename)}`, {
+        method: "PUT",
+        headers,
+        body: fileBlob
+    });
+
+    const text = await response.text();
+    let data: { id?: string; success?: boolean; message?: string; } | null = null;
+    try {
+        data = text ? JSON.parse(text) : null;
+    } catch {
+        data = null;
+    }
+
+    if (!response.ok) {
+        throw new Error(data?.message || `Upload failed: ${response.status} ${text}`);
+    }
+
+    if (!data?.id) {
+        throw new Error(data?.message || "No URL returned from upload");
+    }
+
+    return `https://pixeldrain.com/u/${data.id}`;
+}
+
 async function uploadToService(serviceType: ServiceType, fileBlob: Blob, filename: string): Promise<string> {
     switch (serviceType) {
         case ServiceType.ZIPLINE:
@@ -744,6 +784,8 @@ async function uploadToService(serviceType: ServiceType, fileBlob: Blob, filenam
             return uploadToFilebin(fileBlob, filename);
         case ServiceType.PIXELVAULT:
             return uploadToPixelVault(fileBlob, filename);
+        case ServiceType.PIXELDRAIN:
+            return uploadToPixelDrain(fileBlob, filename);
         default:
             throw new Error("Unknown service type");
     }
@@ -854,6 +896,14 @@ function finalizeUploadedUrl(url: string): string {
     }
 }
 
+function getFilenameExtension(filename: string): string | undefined {
+    const dotIndex = filename.lastIndexOf(".");
+    if (dotIndex < 1 || dotIndex === filename.length - 1) return undefined;
+
+    const ext = filename.slice(dotIndex + 1).toLowerCase();
+    return ext.length <= 10 ? ext : undefined;
+}
+
 async function notifyUploadSuccess(finalUrl: string): Promise<void> {
     if (settings.store.autoCopy) {
         if (!finalUrl || !finalUrl.trim()) {
@@ -960,8 +1010,20 @@ async function uploadWithFallbacks(fileBlob: Blob, filename: string, primary: Se
 }
 
 async function normalizeUploadBlob(blob: Blob, sourceUrl?: string): Promise<{ blob: Blob; filename: string; }> {
+    let sourceFileName = "";
+    if (blob instanceof File && blob.name) {
+        sourceFileName = blob.name;
+    } else if (sourceUrl && URL.canParse(sourceUrl)) {
+        const segment = new URL(sourceUrl).pathname.split("/").pop();
+        if (segment) sourceFileName = decodeURIComponent(segment);
+    }
+
     const extGuessFromSource = sourceUrl ? getUrlExtension(sourceUrl) : undefined;
-    let ext = await getExtensionFromBytes(blob) || getExtensionFromMime(blob.type) || extGuessFromSource || "png";
+    let ext = await getExtensionFromBytes(blob)
+        || getExtensionFromMime(blob.type)
+        || getFilenameExtension(sourceFileName)
+        || extGuessFromSource
+        || "bin";
 
     if (ext === "apng" && settings.store.apngToGif) {
         const gifBlob = await convertApngToGif(blob);
@@ -975,14 +1037,6 @@ async function normalizeUploadBlob(blob: Blob, sourceUrl?: string): Promise<{ bl
 
     const mimeType = getMimeFromExtension(ext);
     const { preserveOriginalFilename } = settings.store;
-    let sourceFileName = "";
-    if (blob instanceof File && blob.name) {
-        sourceFileName = blob.name;
-    } else if (sourceUrl && URL.canParse(sourceUrl)) {
-        const segment = new URL(sourceUrl).pathname.split("/").pop();
-        if (segment) sourceFileName = decodeURIComponent(segment);
-    }
-
     let filename = `upload.${ext}`;
     if (preserveOriginalFilename && sourceFileName) {
         const dotIndex = sourceFileName.lastIndexOf(".");

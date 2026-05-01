@@ -32,11 +32,11 @@ import { getEntryPoint, isPluginFile, parseDevs, parseEquicordDevs, parseTestcor
     let dirs: string[];
 
     if (equicordFlag) {
-        dirs = ["src/equicordplugins"];
+        dirs = ["src/equicordplugins/_core", "src/equicordplugins"];
     } else if (vencordFlag) {
         dirs = ["src/plugins", "src/plugins/_core"];
     } else {
-        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins", "src/testcordplugins"];
+        dirs = ["src/plugins", "src/plugins/_core", "src/equicordplugins", "src/equicordplugins/_core ", "src/testcordplugins"];
     }
 
     const outputPath = args.find(a => !a.startsWith("--")) ?? null;

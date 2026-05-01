@@ -203,17 +203,8 @@ export default definePlugin({
     description: "Quickly run actions through a searchable command palette",
     tags: ["Appearance", "Customisation", "Commands", "Shortcuts"],
     authors: [EquicordDevs.justjxke],
+    dependencies: ["ChatInputButtonAPI"],
     settings,
-    patches: [
-        {
-            find: '"sticker")',
-            replacement: {
-                match: /("div",\{.{0,15}children:)(.+?)\}/,
-                replace: "$1$self.wrapChatBarChildren($2)}"
-            }
-        }
-    ],
-
     start() {
         registerBuiltInCommands();
         window.addEventListener("keydown", this.handleKeydown);
@@ -238,5 +229,5 @@ export default definePlugin({
         });
     },
 
-    wrapChatBarChildren,
+    chatBarButtonWrapper: wrapChatBarChildren,
 });

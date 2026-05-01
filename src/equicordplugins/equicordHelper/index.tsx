@@ -281,7 +281,7 @@ export default definePlugin({
         },
         // Removes Modal Animation
         {
-            find: "renderLurkerModeUpsellPopout,position:",
+            find: ".SWITCH_THUMB_BACKGROUND_SELECTED_DEFAULT)",
             predicate: () => settings.store.noModalAnimation,
             replacement: {
                 match: /200:300/g,

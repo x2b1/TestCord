@@ -100,7 +100,7 @@ export default definePlugin({
             },
         },
         {
-            find: "keybindActionTypes()",
+            find: '"push-to-talk-priority"',
             predicate: () => settings.store.keybindScreenshare,
             replacement: {
                 match: /=\[(\{id:.{0,25}value:\i\.\i\.UNASSIGNED)/,

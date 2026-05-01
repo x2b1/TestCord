@@ -18,7 +18,7 @@
 
 import { AudioProcessor } from "@api/AudioPlayer";
 import type { ProfileBadge } from "@api/Badges";
-import type { ChatBarButtonData, ChatBarButtonFactory } from "@api/ChatButtons";
+import type { ChatBarButtonData, ChatBarButtonWrapper } from "@api/ChatButtons";
 import type { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { HeaderBarButtonData } from "@api/HeaderBar";
 import type { MemberListDecoratorFactory } from "@api/MemberListDecorators";
@@ -230,14 +230,17 @@ export interface PluginDef {
     renderMessageDecoration?: MessageDecorationFactory;
 
     renderMemberListDecorator?: MemberListDecoratorFactory;
-    renderChatBarButton?: ChatBarButtonFactory;
+    renderChatBarButton?: ChatBarButtonWrapper;
 
-    // Custom
+    /*
+    * Custom apis added by Equicord and were placed here for quicker identification rather then mixing them in
+    */
     renderNicknameIcon?: NicknameIconFactory;
     headerBarButton?: HeaderBarButtonData;
     audioProcessor?: AudioProcessor;
     userAreaButton?: UserAreaButtonData;
     renderProfileCollection?: ProfileCollectionFactory;
+    chatBarButtonWrapper?: ChatBarButtonWrapper;
 
     /**
      * A Vencord plugin that is modified for extra features in Equicord
