@@ -46,7 +46,7 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
-    start() {},
+    start() { },
 
     patches: [
         {
@@ -69,7 +69,7 @@ export default definePlugin({
         const { message } = props;
         const authorId = message?.author?.id;
         const currentUserId = UserStore.getCurrentUser()?.id;
-        
+
         if (!props.children) return null;
         if (!authorId || authorId !== currentUserId) return null;
 

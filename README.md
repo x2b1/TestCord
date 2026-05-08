@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/x2b1/TestCord?label=Latest+Release&color=blue)](https://github.com/x2b1/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
 [![Discord](https://img.shields.io/discord/1434211283317690502?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/EMDpkV57gW)
 [![Owner](https://img.shields.io/badge/Owner-Mixiruri-ff69b4?logo=github&logoColor=white)](https://github.com/Mixiruri)
-[![Owner](https://img.shields.io/badge/Owner-x2b1-red?logo=github&logoColor=white)](https://github.com/x2b1) 
+[![Owner](https://img.shields.io/badge/Owner-x2b1-red?logo=github&logoColor=white)](https://github.com/x2b1)
 [![Owner](https://img.shields.io/badge/Owner-dxrx99-orange?logo=github&logoColor=white)](https://github.com/dxrx99)
 
 Testcord is a fork of [Equicord](https://github.com/Equicord/Equicord) which is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 500 plugins.
@@ -12,33 +12,28 @@ You can join our [Discord server](https://discord.gg/EMDpkV57gW) for commits, ch
 
 ## What makes Testcord different?
 
-- **500+ plugins** — more than any other fork
+- **500+ plugins**, more than any other fork
 - **No rules** on which plugins can be added
-- You decide what goes in, not someone else
+- You decide what plugins you wanna use, not some admin that might not be comfortable with it (indi reference)
 - Less stable, more fun
 
 ## Included Plugins
 
-Equicord's included plugins can be found [here](https://equicord.org). We currently don't have a website.
+Testcord's included plugins can be found [here](https://catgirlhentai.online). (site by dxrx99)
 
 ## Installing / Uninstalling
 
-> ⚠️ The GUI/CLI installers currently download Equicord, not Testcord. Use the devbuild method below instead.
-
 **Windows**
 
-- [GUI](https://github.com/Equicord/Equibop)
-- [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
+- [CLI](https://github.com/x2b1/TestCord/releases/download/latest/Testcord_installer_cli.exe)
 
 **MacOS**
 
-- [GUI](https://github.com/Equicord/Equibop)
+- Currently no MacOS ver, js use goofcord w testcord js or sum like tha
 
 **Linux**
 
-- [GUI](https://github.com/Equicord/Equibop)
-- [CLI](https://github.com/Equicord/Equicord?tab=readme-ov-file#installing--uninstalling)
-- [AUR](https://aur.archlinux.org/packages/equicord-desktop-git)
+- installer making is still in the process, maybe come check later
 
 ## Installing Testcord Devbuild — recommended
 
@@ -112,5 +107,5 @@ After building Testcord's web extension, locate the appropriate ZIP file in the 
 Discord is a trademark of Discord Inc., and solely mentioned for the sake of descriptivity. Mentioning it does not imply any affiliation with or endorsement by Discord Inc. Testcord is not affiliated with Equicord or Vencord.
 
 <details>
-<summary>⚠️ Using Testcord, Equicord or Vencord violates Discord's Terms of Service</summary>
+<summary>⚠️ Using Testcord, Equicord or Vencord violates Discord's Terms of Service</summary><p>Any discord custom client is against TOS obviously, we never saw anyone getting banned for it yet tho, unless you abuse (and by that i really mean abuse the shi outta it) the risky plugins like statusRotation / sendtoalldms etc.. if you use them normally you are gonna be fine. </p>
 </details>
