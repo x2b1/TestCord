@@ -1378,8 +1378,8 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
         id: 1155026301791514655n
     },
     nnenaza: {
-        name: "www.miau.com",
-        id: 1485706082080002140n
+        name: "kiara",
+        id: 1501441039418785933n
     },
     neoarz: {
         name: "neoarz",
