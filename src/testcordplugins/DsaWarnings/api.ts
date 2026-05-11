@@ -17,7 +17,7 @@ const SUCCESS_CACHE_TTL_MS = 5 * 60 * 1000;
 const ERROR_CACHE_TTL_MS = 60 * 1000;
 const Native = VencordNative.pluginHelpers.DsaWarnings as PluginNative<typeof import("./native")>;
 
-const dsaCache = new Map<string, { expiresAt: number; result: Exclude<DsaLookupResult, { kind: "ready"; }>; } | { expiresAt: number; result: { kind: "ready"; actions: DsaAction[]; }; }>();
+const dsaCache = new Map<string, { expiresAt: number; result: DsaLookupResult; }>();
 const breachCache = new Map<string, { expiresAt: number; result: { breaches: BreachRecord[]; breachStatus: "ready" | "unavailable"; }; }>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -125,10 +125,10 @@ function asNonEmptyString(value: string | null | undefined) {
 
 export function getActiveRestrictionLabels(action: DsaAction) {
     const labels: string[] = [];
-    const decisionVisibility = Array.isArray(action.decisionVisibility)
-        ? action.decisionVisibility
+    const decisionVisibility: string[] = Array.isArray(action.decisionVisibility)
+        ? action.decisionVisibility.filter((v): v is string => typeof v === "string" && v.length > 0)
         : asNonEmptyString(action.decisionVisibility)
-            ? [action.decisionVisibility]
+            ? [asNonEmptyString(action.decisionVisibility)!]
             : [];
 
     if (action.decisionAccount && isRestrictionActive(action.endDateAccountRestriction)) {

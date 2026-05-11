@@ -63,8 +63,8 @@ export type DsaLookupResult =
     | {
         kind: "ready";
         actions: DsaAction[];
-        breaches: BreachRecord[];
-        breachStatus: "ready" | "unavailable";
+        breaches?: BreachRecord[];
+        breachStatus?: "ready" | "unavailable";
     }
     | { kind: "captcha"; }
     | { kind: "unavailable"; }

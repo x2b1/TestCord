@@ -8,7 +8,7 @@ import "./styles.css";
 
 import { playAudio } from "@api/AudioPlayer";
 import { addServerListElement, removeServerListElement, ServerListRenderPosition } from "@api/ServerList";
-import { Settings } from "@api/Settings";
+import { PlainSettings, Settings } from "@api/Settings";
 import { ErrorBoundary } from "@components/index";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin, { StartAt } from "@utils/types";
@@ -23,7 +23,7 @@ import { getQuestifySettings } from "./settings/access";
 import { resetQuestsToResume, startAutoFetchingQuests, stopAutoFetchingQuests } from "./settings/fetching";
 import { validateIgnoredQuests } from "./settings/ignoredQuests";
 import { rerenderQuests, useQuestRerender } from "./settings/rerender";
-import { disposeRestartTracking, initializeRestartTracking, promptToRestartIfDirty } from "./settings/restartTracking";
+import { disposeRestartTracking, initializeRestartTracking, promptToRestartIfDirty, setRestartDirty } from "./settings/restartTracking";
 import { settings } from "./settings/store";
 import { getSettingsModalOpen, initialQuestDataFetched, setInitialQuestDataFetched, setSettingsModalOpen } from "./state";
 import { canAutoCompleteQuest, getActiveAutoCompletes, getQuestAutoCompleteProgress, getQuestButtonProps, getQuestPanelSubtitleText, hasEnabledAutoCompleteQuestTypes, processQuestForAutoComplete, resumeInterruptedAutoCompletes, setHeartbeatStackTracePatchSucceeded, setVideoProgressStackTracePatchSucceeded, stopAllAutoCompletes, stopAutoCompletesForRunningGames, stopQuestAutoComplete } from "./utils/completion";
@@ -37,6 +37,7 @@ import { formatLowerBadge, QUEST_PAGE } from "./utils/ui";
 let isSwitchingAccount = false;
 let didAttemptAutoCompleteResume = false;
 const notifiedCompletedQuests = new Set<string>();
+export const enabledOnStartup = PlainSettings.plugins.Questify?.enabled;
 
 function setOnQuestsPage(force?: boolean): void {
     getQuestifySettings().isOnQuestsPage = force ?? (window.location.pathname === QUEST_PAGE);
@@ -321,7 +322,7 @@ export default definePlugin({
                 {
                     // Set the initial filters and update the filters and sort method when they change.
                     match: /(get\(\i\)\)\?\?)(\i,\[)(\i)(\]\),\i=\i.useCallback\((\i)=>{)(.{0,60}?useCallback\((\i)=>{)/,
-                    replace: "$1$self.getLastFilterChoices()??$2$3,questRerenderTrigger$4$self.setLastSortChoice($5);$6$self.setLastFilterChoices($7);$self.rerenderQuests();"
+                    replace: "$1$self.getLastFilterChoices()??$2$3$4$self.setLastSortChoice($5);$6$self.setLastFilterChoices($7);$self.rerenderQuests();"
                 },
                 {
                     // Update the last used sort and filter choices when the toggle setting for either is changed.
@@ -371,6 +372,11 @@ export default definePlugin({
             predicate: () => !getQuestifySettings().disableQuestsEverything,
             replacement: [
                 {
+                    // Alias the selected platform dropdown state before exposing CTA buttons.
+                    match: /(?<=var \i;)(?=let \i,\i,{quest:\i,questContent:)/,
+                    replace: "let questifySelectedPlatformDropdownVisible;"
+                },
+                {
                     // Prevent the platform selector if the Quest is auto-completable.
                     match: /(?<=ACCEPTED,\i=)(?=\i&&)/,
                     replace: "!$self.canAutoCompleteQuest(arguments[0].quest)&&"
@@ -378,30 +384,28 @@ export default definePlugin({
                 {
                     // Prevent the platform selector if the Quest is auto-completable.
                     match: /(?<=SELECT,\i=)(?=\i&&)/,
-                    replace: "!$self.canAutoCompleteQuest(arguments[0].quest)&&"
+                    replace: "questifySelectedPlatformDropdownVisible=!$self.canAutoCompleteQuest(arguments[0].quest)&&"
                 },
-                // If this group becomes unruly due to Discord refactoring and is unfixable,
-                // the 2nd, 3rd, and 4th can be commented out in favor of just the 1st at the
-                // expense of not seeing CTA buttons on completed but unclaimed Quests.
                 {
-                    // Always expose the CTA button when available instead of only for videos and activities.
-                    match: /(?<=wrap:!1,children:\[)\i&&[^?]+/,
-                    replace: "!!arguments[0].quest.config.ctaConfig"
+                    // Always expose the CTA button when available instead of only for videos and activities,
+                    // unless the selected platform dropdown is already taking the secondary slot.
+                    match: /(?<=wrap:!1,children:\[)(\i&&[^?]+)/,
+                    replace: "((!!arguments[0].quest.config.ctaConfig&&!questifySelectedPlatformDropdownVisible)||($1))"
                 },
                 {
                     // Let completed/claimed expired Quests with CTAs use the CTA-aware completed branch.
-                    match: /(?<=return\()(?=\i.enabled&&\i===\i\.\i\.EXPIRED_CLAIMABLE&&\i\.\i\.has\(\i\))/,
-                    replace: "!arguments[0].quest.config.ctaConfig&&"
+                    match: /(return\()(?=\i.enabled&&\i===\i\.\i\.EXPIRED_CLAIMABLE&&\i\.\i\.has\(\i\))/,
+                    replace: "$1!arguments[0].quest.config.ctaConfig&&"
                 },
                 {
                     // Let completed/claimed expired Quests with CTAs use the CTA-aware completed branch.
-                    match: /(?<=\):\i\?\i=)(\i)(?=\?\(0,\i\.jsx\)\(\i,\{quest:\i,sourceQuestContent:\i,onClick:\i,text:\i\}\):\(0,\i\.\i\)\(\i\)\?)/,
-                    replace: "arguments[0].quest.config.ctaConfig||$1"
+                    match: /(?<=\):\i\?\i=)(\i)(?=\?\(0,\i\.jsx\)\(\i,\{quest:\i,sourceQuestContent:\i,onClick:\i,text:\i\}\):)/,
+                    replace: "(arguments[0].quest.config.ctaConfig||$1)"
                 },
                 {
                     // Force the CTA-aware complete branch.
-                    match: /(?<=analyticsCtxQuestContentRowIndex:\i}\)}\):\i&&\i)(.{0,200}?fullWidth:!0}\)}\):)(\i.enabled)(.{0,50}?CLAIMED\))&&\i.\i.has\(\i\)(\?\i=)\i/,
-                    replace: "&&false$1arguments[0].quest.config.ctaConfig&&arguments[0].quest.userStatus?.completedAt&&($2||true)$3$4true"
+                    match: /(?<=analyticsCtxQuestContentRowIndex:\i}\)}\):\i&&\i)(.{0,200}?fullWidth:!0}\)}\):)(\i.enabled.{0,50}?CLAIMED\)&&\i.\i.has\(\i\))(\?\i=)(\i)/,
+                    replace: "&&false$1((arguments[0].quest.config.ctaConfig&&arguments[0].quest.userStatus?.completedAt)||($2))$3(true||$4)"
                 }
             ]
         },
@@ -615,8 +619,15 @@ export default definePlugin({
     renderQuestifyButton: ErrorBoundary.wrap(QuestButton, { noop: true }),
 
     start() {
+        if (!enabledOnStartup && PlainSettings.plugins.Questify?.enabled) {
+            setRestartDirty(true);
+        }
+
         initializeRestartTracking(settings);
-        addServerListElement(ServerListRenderPosition.Above, this.renderQuestifyButton);
+
+        if (enabledOnStartup) {
+            addServerListElement(ServerListRenderPosition.Above, this.renderQuestifyButton);
+        }
 
         onceReady.then(() => {
             if (!getQuestifySettings().disableQuestsEverything) {
