@@ -77,7 +77,6 @@ jobs:
                       gh release create latest --title "Testcord Latest" --notes "Automated release" --generate-notes
                   fi
 
-            - name: Upload Equicord Stable
-              if: ${{ vars.ACT == 'false' }}
+            - name: Upload to latest release
               run: |
                   gh release upload latest --clobber dist/release/*
