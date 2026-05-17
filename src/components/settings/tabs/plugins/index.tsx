@@ -211,14 +211,14 @@ export default function PluginSettings() {
             const category = folder.startsWith("src/testcordplugins/") ? "Testcord" : folder.startsWith("src/equicordplugins/") ? "Equicord" : folder.startsWith("src/plugins/") ? "Vencord" : "Other";
             for (const author of (plugin.authors || [])) {
                 if (!author || !author.name) continue;
-                if (!authors.has(author.name)) authors.set(author.name, category);
+                if (!authors.has(author.name)) authors.set(author.name, { category, github: (author).github });
             }
         }
         const grouped = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
-        for (const [name, cat] of authors.entries()) grouped[cat].push(name);
+        for (const [name, info] of authors.entries()) grouped[info.category].push(name);
         const result = [];
         for (const [cat, names] of Object.entries(grouped)) {
-            for (const name of names.sort()) result.push({ label: name + " (" + cat + ")", value: name });
+            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info.github }); }
         }
         return result;
     }, [sortedPlugins]);
@@ -407,7 +407,7 @@ export default function PluginSettings() {
     }, [isSentinelVisible, visibleCount, plugins.length, dLoadMore]);
 
     const visiblePlugins = plugins.slice(0, visibleCount);
-    const authorGithub = searchValue.author ? ("https://github.com/" + ((authorOptions.find(a => a.value === searchValue.author) || {}).github || searchValue.author)) : "";
+    const authorGithub = searchValue.author ? ("https://github.com/" + (authorOptions.find(a => a.value === searchValue.author)?.github || searchValue.author)) : "";
 
     return (
         <SettingsTab>
@@ -486,7 +486,7 @@ export default function PluginSettings() {
                             style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-link)", fontSize: "14px", textDecoration: "none", whiteSpace: "nowrap" }}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                            {searchValue.author}
+                            {authorOptions.find(a => a.value === searchValue.author)?.github || searchValue.author}
                         </a>
                     )}
                 </div>
