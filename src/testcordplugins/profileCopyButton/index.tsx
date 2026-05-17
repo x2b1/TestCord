@@ -20,7 +20,7 @@ import {
     Constants,
     DisplayProfileUtils,
     FluxDispatcher,
-    GuildStore,
+    IconUtils,
     PresenceStore,
     RestAPI,
     showToast,
@@ -53,11 +53,6 @@ const settings = definePluginSettings({
         description: "Also copy the target user's profile game widgets (favourite game, currently playing, want to play, played, game stats). Applies immediately, not via Save."
     }
 });
-
-interface ClanLike {
-    identityGuildId?: string;
-    identityEnabled?: boolean;
-}
 
 interface CustomStatusActivity {
     type: number;
@@ -194,10 +189,8 @@ async function copyProfileFromInput(input: string) {
     }
 
     if (targetUser.avatar) {
-        const animated = targetUser.avatar.startsWith("a_");
-        const ext = nitro && animated ? "gif" : "png";
-        const url = `https://cdn.discordapp.com/avatars/${targetUser.id}/${targetUser.avatar}.${ext}?size=4096`;
-        const dataUri = await urlToDataUri(url);
+        const url = IconUtils.getUserAvatarURL(targetUser, nitro, 512);
+        const dataUri = url ? await urlToDataUri(url) : null;
         if (dataUri) {
             setPendingChange({
                 pendingAvatar: {
@@ -211,27 +204,12 @@ async function copyProfileFromInput(input: string) {
     }
 
     if (nitro && profile?.banner) {
-        const animated = profile.banner.startsWith("a_");
-        const ext = animated ? "gif" : "png";
-        const url = `https://cdn.discordapp.com/banners/${targetUser.id}/${profile.banner}.${ext}?size=4096`;
-        const dataUri = await urlToDataUri(url);
+        const display = DisplayProfileUtils.getDisplayProfile(targetId);
+        const url = display?.getBannerURL({ canAnimate: true, size: 1024 })
+            ?? IconUtils.getUserBannerURL({ id: targetUser.id, banner: profile.banner, canAnimate: true, size: 1024 });
+        const dataUri = url ? await urlToDataUri(url) : null;
         if (dataUri) {
-            setPendingChange({
-                pendingBanner: {
-                    assetOrigin: "NEW_ASSET",
-                    imageUri: dataUri,
-                    description: `profile-banner-copy-${targetUser.id}`
-                }
-            });
-            dispatched++;
-        }
-    }
-
-    const primaryGuild = (targetUser as unknown as { primaryGuild?: ClanLike | null; }).primaryGuild;
-    if (primaryGuild?.identityGuildId && primaryGuild.identityEnabled !== false) {
-        const sharedGuild = GuildStore.getGuild(primaryGuild.identityGuildId);
-        if (sharedGuild) {
-            setPendingChange({ pendingPrimaryGuildId: primaryGuild.identityGuildId });
+            setPendingChange({ pendingBanner: dataUri });
             dispatched++;
         }
     }
@@ -331,7 +309,7 @@ function CopySection() {
 
 export default definePlugin({
     name: "ProfileCopyButton",
-    description: "Adds a button to the profile editor that fills your profile with another user's info (avatar, banner, bio, status, clan tag, optional game widgets).",
+    description: "Adds a button to the profile editor that fills your profile with another user's info (avatar, banner, bio, theme colors, status, optional game widgets).",
     tags: ["Utility", "Customisation"],
     authors: [TestcordDevs.x2b],
     settings,
