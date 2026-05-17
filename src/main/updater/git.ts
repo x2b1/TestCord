@@ -22,6 +22,7 @@ import { ipcMain } from "electron";
 import { join } from "path";
 import { promisify } from "util";
 
+import { RendererSettings } from "@main/settings";
 import { serializeErrors } from "./common";
 
 const VENCORD_SRC_DIR = join(__dirname, "..");
@@ -50,7 +51,7 @@ async function getRepo() {
 async function calculateGitChanges() {
     await git("fetch");
 
-    const branch = (await git("branch", "--show-current")).stdout.trim();
+    const branch = RendererSettings.store.updaterBranch ?? "main";
 
     const existsOnOrigin = (await git("ls-remote", "origin", branch)).stdout.length > 0;
     if (!existsOnOrigin) return [];
@@ -68,6 +69,8 @@ async function calculateGitChanges() {
 }
 
 async function pull() {
+    const branch = RendererSettings.store.updaterBranch ?? "main";
+    await git("checkout", branch);
     const res = await git("pull");
     return res.stdout.includes("Fast-forward");
 }

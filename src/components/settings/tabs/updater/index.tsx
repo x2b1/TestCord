@@ -29,7 +29,7 @@ import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { Margins } from "@utils/margins";
 import { useAwaiter } from "@utils/react";
 import { getRepo, isNewer, UpdateLogger } from "@utils/updater";
-import { React } from "@webpack/common";
+import { React, Select } from "@webpack/common";
 
 import gitHash from "~git-hash";
 
@@ -69,7 +69,7 @@ function EquibopSection() {
 }
 
 function Updater() {
-    const settings = useSettings(["autoUpdate", "autoUpdateNotification"]);
+    const settings = useSettings(["autoUpdate", "autoUpdateNotification", "updaterBranch"]);
 
     const [repo, err, repoPending] = useAwaiter(getRepo, { fallbackValue: "Loading..." });
 
@@ -105,6 +105,24 @@ function Updater() {
                 description="Receive a notification when Testcord finishes downloading an update in the background, so you know when to restart Discord."
                 disabled={!settings.autoUpdate}
                 hideBorder
+            />
+
+            <Divider className={Margins.top20} />
+
+            <Heading className={Margins.top20}>Branch</Heading>
+            <Paragraph className={Margins.bottom8}>
+                Choose which branch to receive updates from. Main is stable, dev is experimental, dev2 is the most unstable but gets updates fastest.
+            </Paragraph>
+            <Select
+                options={[
+                    { label: "main - The main and stable branch", value: "main" },
+                    { label: "dev - More experimental branch, something might break", value: "dev" },
+                    { label: "dev2 - Most exp branch, can brick ur whole updater but also u get updates the fastest", value: "dev2" }
+                ]}
+                placeholder="Select a branch"
+                select={v => settings.updaterBranch = v}
+                isSelected={v => v === settings.updaterBranch}
+                serialize={v => v}
             />
 
             <Divider className={Margins.top20} />
