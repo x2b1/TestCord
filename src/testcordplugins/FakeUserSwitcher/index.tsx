@@ -419,7 +419,7 @@ export default definePlugin({
     name: "FakeUserSwitcher",
     description: "Visually impersonate any Discord user client-side. Merges the best of FakeAccountSwitcher and FakeUserProfile.",
     tags: ["Customisation", "Privacy", "Fun"],
-    authors: [TestcordDevs.x2b, TestcordDevs.SirPhantom89, TestcordDevs.sadts],
+    authors: [TestcordDevs.x2b, TestcordDevs.SirPhantom89],
     dependencies: ["UserAreaAPI", "BadgeAPI", "MessageEventsAPI"],
 
     settings,
