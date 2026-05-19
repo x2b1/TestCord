@@ -1411,6 +1411,10 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
     dot: {
         name: "dot",
         id: 1400610916285812776n
+    },
+    hyyven: {
+        name: "hyyven",
+        id: 449282863582412850n
     }
 } satisfies Record<string, Dev>);
 
@@ -1438,6 +1442,3 @@ export const TestcordDevsById = /* #__PURE__*/ (() =>
             .map(([_, v]) => [v.id, v] as const)
     ))
 )() as Record<string, Dev>;
-
-
-
