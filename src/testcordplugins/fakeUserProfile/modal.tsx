@@ -18,7 +18,7 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const initial = getCachedTarget();
     const [value, setValue] = useState(initial?.id ?? settings.store.targetId ?? "");
     const [busy, setBusy] = useState(false);
-    const [enabled, setEnabledLocal] = useState(settings.store.enabled);
+    const [enabled, setEnabledLocal] = useState(settings.store.spoofActive);
     const [fakeMessages, setFakeMessages] = useState(settings.store.fakeMessages);
     const [sendRealToo, setSendRealToo] = useState(settings.store.sendRealToo);
     const [spoofBadges, setSpoofBadges] = useState(settings.store.spoofBadges);

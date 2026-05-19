@@ -330,7 +330,7 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
                     openModal(modalProps => <FakeUserProfileModal modalProps={modalProps} />);
                     return;
                 }
-                setEnabled(!settings.store.enabled);
+                setEnabled(!settings.store.spoofActive);
                 force();
             }}
         />
@@ -453,7 +453,7 @@ export default definePlugin({
         if (targetId) {
             try {
                 await loadTarget(targetId);
-                if (settings.store.enabled) syncSpoofState();
+                if (settings.store.spoofActive) syncSpoofState();
             } catch (e) {
                 logger.warn("Failed to restore cached target", e);
             }
@@ -472,7 +472,7 @@ export default definePlugin({
 
     flux: {
         CONNECTION_OPEN() {
-            if (settings.store.enabled && getCachedTarget()) {
+            if (settings.store.spoofActive && getCachedTarget()) {
                 syncSpoofState();
             }
         },

@@ -36,7 +36,7 @@ function makeSnowflake(): string {
 }
 
 function getTargetUser(): any {
-    if (settings.store.manualMode && settings.store.enabled) {
+    if (settings.store.manualMode && settings.store.spoofActive) {
         return {
             id: "0",
             username: settings.store.manualUsername || "FakeUser",
@@ -46,16 +46,16 @@ function getTargetUser(): any {
         };
     }
     const t = getCachedTarget();
-    if (!t || !settings.store.enabled) return null;
+    if (!t || !settings.store.spoofActive) return null;
     return t.user;
 }
 
 function getTargetProfile(): any {
-    if (settings.store.manualMode && settings.store.enabled) {
+    if (settings.store.manualMode && settings.store.spoofActive) {
         return { bio: "", badges: [] };
     }
     const t = getCachedTarget();
-    if (!t || !settings.store.enabled) return null;
+    if (!t || !settings.store.spoofActive) return null;
     return t.profile;
 }
 
@@ -318,7 +318,7 @@ function FakeUserSwitcherButton({ iconForeground, hideTooltips, nameplate }: Use
                     openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps} />);
                     return;
                 }
-                setEnabled(!settings.store.enabled);
+                setEnabled(!settings.store.spoofActive);
                 force();
             }}
         />
@@ -440,7 +440,7 @@ export default definePlugin({
         if (targetId) {
             try {
                 await loadTarget(targetId);
-                if (settings.store.enabled) syncSpoofState();
+                if (settings.store.spoofActive) syncSpoofState();
             } catch (e) {
                 logger.warn("Failed to restore cached target", e);
             }
@@ -458,7 +458,7 @@ export default definePlugin({
 
     flux: {
         CONNECTION_OPEN() {
-            if (settings.store.enabled && getCachedTarget()) {
+            if (settings.store.spoofActive && getCachedTarget()) {
                 syncSpoofState();
             }
         },

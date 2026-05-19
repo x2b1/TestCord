@@ -41,7 +41,7 @@ export function getCachedTarget() {
 export function clearTarget() {
     cached = null;
     settings.store.targetId = "";
-    settings.store.enabled = false;
+    settings.store.spoofActive = false;
     notify();
 }
 
@@ -85,12 +85,12 @@ export function isCurrentUser(userId: string | undefined): boolean {
 }
 
 export function isActive(): boolean {
-    if (settings.store.manualMode) return !!settings.store.enabled;
-    return !!settings.store.enabled && !!cached;
+    if (settings.store.manualMode) return !!settings.store.spoofActive;
+    return !!settings.store.spoofActive && !!cached;
 }
 
 export function setEnabled(value: boolean) {
-    settings.store.enabled = value;
+    settings.store.spoofActive = value;
     notify();
 }
 
@@ -102,7 +102,7 @@ export function setSavedUsers(list: { id: string; name: string; avatar: string |
 }
 
 export const settings = definePluginSettings({
-    enabled: {
+    spoofActive: {
         type: OptionType.BOOLEAN,
         description: "Whether the spoof is currently active.",
         default: false,

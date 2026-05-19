@@ -7,8 +7,7 @@
 import * as DataStore from "@api/DataStore";
 import { proxyLazy } from "@utils/lazy";
 import { Logger } from "@utils/Logger";
-import { openModal } from "@utils/modal";
-import { OAuth2AuthorizeModal, showToast, Toasts, UserStore, zustandCreate, zustandPersist } from "@webpack/common";
+import { OAuth2AuthorizeModal, openModal,showToast, Toasts, UserStore, zustandCreate, zustandPersist } from "@webpack/common";
 
 import { AUTHORIZE_URL, CLIENT_ID } from "../constants";
 import { useStreaksStore } from "./StreaksStore";
