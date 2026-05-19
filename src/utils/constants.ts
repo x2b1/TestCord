@@ -1373,11 +1373,13 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
     },
     dxrx99: {
         name: "SirPhantom89",
-        id: 1464279455844274188n // this vro got hacked so i need to change there his id to the new acc and also add a new record with his new name js so 2 plugins wont break.
+        id: 1464279455844274188n, // this vro got hacked so i need to change there his id to the new acc and also add a new record with his new name js so 2 plugins wont break.
+        github: "DxRx99"
     },
     SirPhantom89: {
         name: "SirPhantom89",
-        id: 1464279455844274188n
+        id: 1464279455844274188n,
+        github: "DxRx99"
     },
     omaw: {
         name: "oma",
@@ -1430,6 +1432,8 @@ export const TestcordDevsById = /* #__PURE__*/ (() =>
             .map(([_, v]) => [v.id, v] as const)
     ))
 )() as Record<string, Dev>;
+
+
 
 
 

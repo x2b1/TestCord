@@ -41,6 +41,7 @@ import { Alerts, lodash, Parser, React, SearchableSelect, Select, TextInput, Toa
 import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
+import { Devs, EquicordDevs, TestcordDevs } from "@utils/constants";
 
 import { PluginCard } from "./PluginCard";
 import { openWarningModal } from "./PluginModal";
@@ -203,6 +204,14 @@ export default function PluginSettings() {
     const search = searchValue.value.toLowerCase();
     const onSearch = (query: string) => setSearchValue(prev => ({ ...prev, value: query }));
 
+    const githubMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        const allDevs = { ...TestcordDevs, ...EquicordDevs, ...Devs };
+        for (const dev of Object.values(allDevs)) {
+            if ((dev as any).github) map[(dev as any).name] = (dev as any).github;
+        }
+        return map;
+    }, []);
     const authorOptions = useMemo(() => {
         const authors = new Map();
         for (const plugin of sortedPlugins) {
@@ -211,14 +220,14 @@ export default function PluginSettings() {
             const category = folder.startsWith("src/testcordplugins/") ? "Testcord" : folder.startsWith("src/equicordplugins/") ? "Equicord" : folder.startsWith("src/plugins/") ? "Vencord" : "Other";
             for (const author of (plugin.authors || [])) {
                 if (!author || !author.name) continue;
-                if (!authors.has(author.name)) authors.set(author.name, { category, github: (author).github });
+                if (!authors.has(author.name)) authors.set(author.name, { category, github: (author as any).github });
             }
         }
         const grouped = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
         for (const [name, info] of authors.entries()) grouped[info.category].push(name);
         const result = [];
         for (const [cat, names] of Object.entries(grouped)) {
-            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info.github }); }
+            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info.github || githubMap[name] }); }
         }
         return result;
     }, [sortedPlugins]);
@@ -535,6 +544,7 @@ export function PluginDependencyList({ deps }: { deps: string[]; }) {
         </>
     );
 }
+
 
 
 
