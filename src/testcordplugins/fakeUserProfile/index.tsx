@@ -6,6 +6,7 @@
 
 import { addProfileBadge, BadgePosition, type ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
+import BadgeAPIPlugin from "@plugins/_api/badges";
 import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
@@ -37,13 +38,13 @@ function makeSnowflake(): string {
 
 function getTargetUser(): User | null {
     const t = getCachedTarget();
-    if (!t || !settings.store.enabled) return null;
+    if (!t) return null;
     return t.user;
 }
 
 function getTargetProfile(): any {
     const t = getCachedTarget();
-    if (!t || !settings.store.enabled) return null;
+    if (!t) return null;
     return t.profile;
 }
 
@@ -254,6 +255,31 @@ function unpatchUtils() {
     utilsPatched = false;
 }
 
+// Redirect custom Testcord badges (managed by /badge, NOT the hardcoded admin/owner/dev/contributor
+// ones — those have their own shouldShow() against fixed user-id lists, so they remain unspoofable).
+let originalGetTestcordCustomBadges: any = null;
+let badgesPatched = false;
+
+function patchBadges() {
+    if (badgesPatched) return;
+    if (typeof BadgeAPIPlugin?.getTestCordCustomBadges !== "function") return;
+    badgesPatched = true;
+    originalGetTestcordCustomBadges = BadgeAPIPlugin.getTestCordCustomBadges.bind(BadgeAPIPlugin);
+    BadgeAPIPlugin.getTestCordCustomBadges = function (userId: string) {
+        if (settings.store.spoofBadges && isActive() && isCurrentUser(userId)) {
+            const target = getTargetUser();
+            if (target) return originalGetTestcordCustomBadges(target.id);
+        }
+        return originalGetTestcordCustomBadges(userId);
+    };
+}
+
+function unpatchBadges() {
+    if (!badgesPatched) return;
+    if (originalGetTestcordCustomBadges) BadgeAPIPlugin.getTestCordCustomBadges = originalGetTestcordCustomBadges;
+    badgesPatched = false;
+}
+
 function notifyUpdate() {
     clearWrapCache();
     const me = originalGetCurrentUser ? originalGetCurrentUser.call(UserStore) : UserStore.getCurrentUser();
@@ -304,7 +330,7 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
                     openModal(modalProps => <FakeUserProfileModal modalProps={modalProps} />);
                     return;
                 }
-                setEnabled(!settings.store.enabled);
+                setEnabled(!settings.store.spoofActive);
                 force();
             }}
         />
@@ -419,6 +445,7 @@ export default definePlugin({
         addProfileBadge(dynamicBadge);
         patchStore();
         patchUtils();
+        patchBadges();
 
         unsub = subscribe(syncSpoofState);
 
@@ -426,7 +453,7 @@ export default definePlugin({
         if (targetId) {
             try {
                 await loadTarget(targetId);
-                if (settings.store.enabled) syncSpoofState();
+                if (settings.store.spoofActive) syncSpoofState();
             } catch (e) {
                 logger.warn("Failed to restore cached target", e);
             }
@@ -435,6 +462,7 @@ export default definePlugin({
 
     stop() {
         clearWrapCache();
+        unpatchBadges();
         unpatchUtils();
         unpatchStore();
         removeProfileBadge(dynamicBadge);
@@ -444,7 +472,7 @@ export default definePlugin({
 
     flux: {
         CONNECTION_OPEN() {
-            if (settings.store.enabled && getCachedTarget()) {
+            if (settings.store.spoofActive && getCachedTarget()) {
                 syncSpoofState();
             }
         },
@@ -483,14 +511,14 @@ export default definePlugin({
             find: ".banner)==null",
             replacement: {
                 match: /(?<=void 0:)\i\.getPreviewBanner\(\i,\i,\i\)/,
-                replace: "$self.bannerHook(arguments[0])||$&"
+                replace: "($self.bannerHook(arguments[0])??($&))"
             }
         },
         {
             find: ":\"SHOULD_LOAD\");",
             replacement: {
                 match: /\i(?:\?)?\.getPreviewBanner\(\i,\i,\i\)(?=.{0,100}"COMPLETE")/,
-                replace: "$self.bannerHook(arguments[0])||$&"
+                replace: "($self.bannerHook(arguments[0])??($&))"
             }
         },
     ],
@@ -533,14 +561,27 @@ export default definePlugin({
         if (targetProfile.bio != null) overrides.bio = targetProfile.bio;
         if (targetProfile.pronouns != null) overrides.pronouns = targetProfile.pronouns;
         if (targetProfile.themeColors) overrides.themeColors = targetProfile.themeColors;
-        if (targetProfile.accentColor != null) overrides.accentColor = targetProfile.accentColor;
-        if (targetProfile.banner) overrides.banner = targetProfile.banner;
+        // Always override banner / accentColor so a target without one actually clears ours.
+        overrides.banner = targetProfile.banner ?? (target as any).banner ?? null;
+        overrides.accentColor = targetProfile.accentColor ?? (target as any).accentColor ?? null;
         if (targetProfile.profileEffect) overrides.profileEffect = targetProfile.profileEffect;
         if (targetProfile.popoutAnimationParticleType != null) overrides.popoutAnimationParticleType = targetProfile.popoutAnimationParticleType;
         if (targetProfile.profileEffectExpiresAt != null) overrides.profileEffectExpiresAt = targetProfile.profileEffectExpiresAt;
         if (targetProfile.premiumType != null) overrides.premiumType = targetProfile.premiumType;
         if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
         if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
+
+        // Mirror the userProfile sub-object so the popout's display-name section reflects the target.
+        const targetUserProfile = (targetProfile as any).userProfile ?? {};
+        const spoofedDisplayName = targetUserProfile.displayName
+            ?? targetUserProfile.display_name
+            ?? (target as any).globalName
+            ?? (target as any).username;
+        overrides.userProfile = {
+            ...(original?.userProfile ?? {}),
+            ...targetUserProfile,
+            displayName: spoofedDisplayName,
+        };
 
         if (settings.store.spoofBadges) {
             if (targetProfile.badges && targetProfile.badges.length) {
@@ -572,7 +613,13 @@ export default definePlugin({
             if (targetProfile.connectedAccounts) overrides.connectedAccounts = targetProfile.connectedAccounts;
             if (targetProfile.legacyApplications) overrides.legacyApplications = targetProfile.legacyApplications;
             if (targetProfile.applicationRoleConnections) overrides.applicationRoleConnections = targetProfile.applicationRoleConnections;
-            if (targetProfile.userProfile) overrides.userProfile = targetProfile.userProfile;
+            if (targetProfile.userProfile) {
+                overrides.userProfile = {
+                    ...overrides.userProfile,
+                    ...targetProfile.userProfile,
+                    displayName: spoofedDisplayName,
+                };
+            }
         }
 
         const merged = original
@@ -591,7 +638,9 @@ export default definePlugin({
             const ext = animated ? "gif" : "png";
             return `https://cdn.discordapp.com/banners/${target.id}/${target.banner}.${ext}?size=600`;
         }
-        return undefined;
+        // Spoofing as someone with no banner — return empty string so the `??` patches
+        // suppress the user's real banner instead of falling through to it.
+        return "";
     },
 
     onBeforeMessageSend(channelId, msg, options) {

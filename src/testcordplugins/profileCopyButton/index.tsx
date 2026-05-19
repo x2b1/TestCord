@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
-import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
 import { TestcordDevs } from "@utils/constants";
@@ -33,8 +33,8 @@ import {
     Text,
     TextInput,
     Toasts,
-    useState,
-    UserStore
+    UserStore,
+    useState
 } from "@webpack/common";
 
 const CustomizationSection = findComponentByCodeLazy(".DESCRIPTION", "hasBackground:");
@@ -488,7 +488,7 @@ export async function copyProfileFromId(targetId: string) {
     // Custom status
     const status = getCustomStatusActivity(targetId);
     if (status?.state || status?.emoji) {
-        const emoji = status.emoji;
+        const { emoji } = status;
         const useCustomEmoji = nitro && !!emoji?.id;
         CustomStatusSetting.updateSetting({
             text: status.state ?? "",

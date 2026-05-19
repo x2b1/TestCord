@@ -9,12 +9,11 @@ import { UserAreaButton } from "@api/UserArea";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { Menu, React } from "@webpack/common";
+import { Menu, React, SelectedChannelStore, Toasts } from "@webpack/common";
 
-const MediaEngineActions = findByPropsLazy("toggleSelfMute");
-const NotificationSettingsStore = findByPropsLazy("getDisableAllSounds", "getState");
-
-let originalVoiceStateUpdate: any;
+const wsModule = findByPropsLazy("getSocket");
+const ChannelStore = findByPropsLazy("getChannel", "getDMFromUserId");
+const MediaEngineStore = findByPropsLazy("isDeaf", "isMute");
 
 export const settings = definePluginSettings({
     userAreaButton: {
@@ -29,28 +28,20 @@ export const settings = definePluginSettings({
     },
     autoMute: {
         type: OptionType.BOOLEAN,
-        description: "Automatically mute when deafened.",
+        description: "Automatically fake mute when fake deafened.",
         default: true
+    },
+    muteKeybind: {
+        description: "⌨️ Keybind for toggling fake mute only (format: modifier+key, e.g., 'ctrl+j')",
+        type: OptionType.STRING,
+        default: "ctrl+j"
+    },
+    deafenKeybind: {
+        description: "⌨️ Keybind for toggling fake deafen + fake mute (format: modifier+key, e.g., 'ctrl+l')",
+        type: OptionType.STRING,
+        default: "ctrl+l"
     }
 });
-
-let updating = false;
-async function updateSound() {
-    if (updating) return setTimeout(updateSound, 125);
-    updating = true;
-    const state = NotificationSettingsStore.getState();
-    const toDisable: string[] = [];
-    if (!state.disabledSounds.includes("mute")) toDisable.push("mute");
-    if (!state.disabledSounds.includes("unmute")) toDisable.push("unmute");
-
-    state.disabledSounds.push(...toDisable);
-    await new Promise(r => setTimeout(r, 50));
-    await MediaEngineActions.toggleSelfMute();
-    await new Promise(r => setTimeout(r, 100));
-    await MediaEngineActions.toggleSelfMute();
-    state.disabledSounds = state.disabledSounds.filter((i: string) => !toDisable.includes(i));
-    updating = false;
-}
 
 const fakeVoiceState = {
     _selfMute: false,
@@ -69,14 +60,99 @@ const fakeVoiceState = {
     selfVideo: false
 };
 
-const StateKeys = ["selfDeaf", "selfMute", "selfVideo"];
+function refreshVoiceState() {
+    if (!wsModule || !SelectedChannelStore || !ChannelStore || !MediaEngineStore) return;
 
-function modifyVoiceState(e: any) {
-    for (let i = 0; i < StateKeys.length; i++) {
-        const stateKey = StateKeys[i];
-        e[stateKey] = fakeVoiceState[stateKey as keyof typeof fakeVoiceState] || e[stateKey];
+    const socket = wsModule.getSocket();
+    const channelId = SelectedChannelStore.getVoiceChannelId?.();
+    if (!socket || !channelId) return;
+
+    const channel = ChannelStore.getChannel(channelId);
+    try {
+        socket.send(4, {
+            guild_id: channel?.guild_id ?? null,
+            channel_id: channelId,
+            self_mute: fakeVoiceState.selfMute || (MediaEngineStore.isMute?.() ?? false),
+            self_deaf: fakeVoiceState.selfDeaf || (MediaEngineStore.isDeaf?.() ?? false),
+            self_video: fakeVoiceState.selfVideo,
+            flags: 0
+        });
+    } catch (error) {
+        console.error("[FakeMuteDeafen] Failed to broadcast forced voice state update:", error);
     }
-    return e;
+}
+
+function parseKeybind(keybind: string) {
+    const parts = keybind.toLowerCase().split("+");
+    const modifiers = {
+        ctrl: false,
+        alt: false,
+        shift: false,
+        meta: false
+    };
+    let key = "";
+
+    for (const part of parts) {
+        if (part === "ctrl") modifiers.ctrl = true;
+        else if (part === "alt") modifiers.alt = true;
+        else if (part === "shift") modifiers.shift = true;
+        else if (part === "meta" || part === "cmd") modifiers.meta = true;
+        else key = part;
+    }
+
+    return { ...modifiers, key };
+}
+
+function matchesKeybind(event: KeyboardEvent, keybind: string) {
+    const parsed = parseKeybind(keybind);
+    return (
+        event.ctrlKey === parsed.ctrl &&
+        event.altKey === parsed.alt &&
+        event.shiftKey === parsed.shift &&
+        event.metaKey === parsed.meta &&
+        event.key.toLowerCase() === parsed.key
+    );
+}
+
+function handleKeydown(e: KeyboardEvent) {
+    if (e.target && (
+        (e.target as HTMLElement).tagName === "INPUT" ||
+        (e.target as HTMLElement).tagName === "TEXTAREA" ||
+        (e.target as HTMLElement).contentEditable === "true"
+    )) {
+        return;
+    }
+
+    if (matchesKeybind(e, settings.store.muteKeybind)) {
+        e.preventDefault();
+        fakeVoiceState.selfMute = !fakeVoiceState.selfMute;
+        Toasts.show({
+            message: `🎤 Fake mute is now: ${fakeVoiceState.selfMute ? "enabled" : "disabled"}`,
+            id: "fake-mute",
+            type: fakeVoiceState.selfMute ? Toasts.Type.SUCCESS : Toasts.Type.FAILURE,
+            options: { position: Toasts.Position.BOTTOM }
+        });
+        refreshVoiceState();
+        return;
+    }
+
+    if (matchesKeybind(e, settings.store.deafenKeybind)) {
+        e.preventDefault();
+        fakeVoiceState.selfDeaf = !fakeVoiceState.selfDeaf;
+        if (settings.store.autoMute) {
+            fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
+        }
+        const statusMsg = fakeVoiceState.selfDeaf ? "enabled" : "disabled";
+        const muteStatusMsg = (fakeVoiceState.selfDeaf && settings.store.autoMute) ? " (+ fake mute)" : "";
+        Toasts.show({
+            message: `🔇 Fake deafen is now: ${statusMsg}${muteStatusMsg}`,
+            id: "fake-deafen",
+            type: fakeVoiceState.selfDeaf ? Toasts.Type.SUCCESS : Toasts.Type.FAILURE,
+            options: { position: Toasts.Position.BOTTOM }
+        });
+        refreshVoiceState();
+        return;
+    }
 }
 
 function FakeDeafenIcon() {
@@ -128,27 +204,22 @@ function FakeDeafenIcon() {
 function FakeMuteDeafenButton() {
     const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-    const handleClick = React.useCallback(async () => {
+    const handleClick = React.useCallback(() => {
         fakeVoiceState.selfDeaf = !fakeVoiceState.selfDeaf;
-        fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
-
-        // Use VoiceActions instead of the broken voiceStateUpdate
-        const VoiceActions = findByPropsLazy("toggleSelfMute", "toggleSelfDeaf");
-        if (VoiceActions) {
-            if (fakeVoiceState.selfDeaf) {
-                // Enable fake: actually mute/deafen
-                await VoiceActions.toggleSelfDeaf?.();
-                await VoiceActions.toggleSelfMute?.();
-            } else {
-                // Disable fake: actually unmute/undeafen
-                await VoiceActions.toggleSelfMute?.();
-                await VoiceActions.toggleSelfDeaf?.();
-            }
+        if (settings.store.autoMute) {
+            fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
         }
+
+        refreshVoiceState();
         forceUpdate();
     }, []);
 
     const isEnabled = fakeVoiceState.selfDeaf;
+
+    React.useEffect(() => {
+        const interval = setInterval(() => forceUpdate(), 500);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <UserAreaButton
@@ -164,15 +235,47 @@ function FakeMuteDeafenButton() {
     );
 }
 
+let lastVoiceChannelId: string | null = null;
+function handleVoiceChannelChange() {
+    try {
+        const currentChannelId = SelectedChannelStore?.getVoiceChannelId?.();
+        const previousChannelId = lastVoiceChannelId || null;
+
+        lastVoiceChannelId = currentChannelId ?? null;
+
+        if (currentChannelId && currentChannelId !== previousChannelId && (fakeVoiceState.selfMute || fakeVoiceState.selfDeaf)) {
+            setTimeout(() => {
+                refreshVoiceState();
+            }, 500);
+        }
+    } catch (error) {
+        console.error("[FakeMuteDeafen] Error in handleVoiceChannelChange:", error);
+    }
+}
+
+let originalSend: any;
+
 export default definePlugin({
     name: "FakeMuteDeafen",
-    description: "Fake mute and deafen yourself. You can continue speaking and being heard during this time. Toggle via user area button or context menu.",
+    description: "Fake mute and deafen yourself. You can continue speaking and being heard during this time. Toggle via user area button, context menu, or keybinds.",
     tags: ["Voice", "Privacy"],
-    authors: [TestcordDevs.x2b],
+    authors: [TestcordDevs.x2b, TestcordDevs.dot, TestcordDevs.sirphantom89],
     settings,
+
     start() {
-        // The voiceStateUpdate module doesn't exist in current Discord version
-        // But we can still show the button for visual indication that the feature exists
+        const socket = wsModule?.getSocket?.();
+        if (socket && !originalSend) {
+            originalSend = socket.send;
+            socket.send = function (op: number, data: any, ...args: any[]) {
+                if (op === 4 && data) {
+                    if (fakeVoiceState.selfMute) data.self_mute = true;
+                    if (fakeVoiceState.selfDeaf) data.self_deaf = true;
+                    if (fakeVoiceState.selfVideo) data.self_video = true;
+                }
+                return originalSend.apply(this, [op, data, ...args]);
+            };
+        }
+
         if (settings.store.userAreaButton) {
             try {
                 Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
@@ -180,15 +283,30 @@ export default definePlugin({
                 console.warn("[FakeMuteDeafen] Failed to add user area button:", e);
             }
         }
-        console.warn("[FakeMuteDeafen] voiceStateUpdate module not found - faking disabled");
-    },
-    stop() {
-        try {
-            Vencord.Api.UserArea.removeUserAreaButton("fake-mute-deafen");
-        } catch (e) {
-            // Ignore
+
+        document.addEventListener("keydown", handleKeydown);
+        if (SelectedChannelStore?.addChangeListener) {
+            SelectedChannelStore.addChangeListener(handleVoiceChannelChange);
         }
     },
+
+    stop() {
+        const socket = wsModule?.getSocket?.();
+        if (socket && originalSend) {
+            socket.send = originalSend;
+            originalSend = undefined;
+        }
+
+        try {
+            Vencord.Api.UserArea.removeUserAreaButton("fake-mute-deafen");
+        } catch (e) { }
+
+        document.removeEventListener("keydown", handleKeydown);
+        if (SelectedChannelStore?.removeChangeListener) {
+            SelectedChannelStore.removeChangeListener(handleVoiceChannelChange);
+        }
+    },
+
     contextMenus: {
         "audio-device-context"(children, d) {
             if (!settings.store.contextMenu) return;
@@ -202,7 +320,7 @@ export default definePlugin({
                         checked={fakeVoiceState.selfMute}
                         action={() => {
                             fakeVoiceState.selfMute = !fakeVoiceState.selfMute;
-                            updateSound();
+                            refreshVoiceState();
                         }}
                     />
                 );
@@ -217,10 +335,10 @@ export default definePlugin({
                         checked={fakeVoiceState.selfDeaf}
                         action={() => {
                             fakeVoiceState.selfDeaf = !fakeVoiceState.selfDeaf;
-                            if (settings.store.autoMute && fakeVoiceState.selfDeaf) {
-                                fakeVoiceState.selfMute = true;
+                            if (settings.store.autoMute) {
+                                fakeVoiceState.selfMute = fakeVoiceState.selfDeaf;
                             }
-                            updateSound();
+                            refreshVoiceState();
                         }}
                     />
                 );
@@ -237,7 +355,7 @@ export default definePlugin({
                     checked={fakeVoiceState.selfVideo}
                     action={() => {
                         fakeVoiceState.selfVideo = !fakeVoiceState.selfVideo;
-                        updateSound();
+                        refreshVoiceState();
                     }}
                 />
             );

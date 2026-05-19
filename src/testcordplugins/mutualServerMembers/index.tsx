@@ -6,7 +6,7 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { TestcordDevs } from "@utils/constants";
-import { ModalRoot, ModalContent, ModalFooter, ModalHeader, openModal } from "@utils/modal";
+import { ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import {
     GuildMemberStore,
@@ -16,9 +16,9 @@ import {
     showToast,
     Text,
     Toasts,
+    useMemo,
     UserStore,
     useState,
-    useMemo,
 } from "@webpack/common";
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
@@ -391,7 +391,7 @@ const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
 export default definePlugin({
     name: "MutualServerMembers",
     description: "Compare two servers you're in and see which members are in both. Right-click a server, use dropdowns, or enter IDs manually.",
-    tags: ["Servers", "Members", "Utility"],
+    tags: ["Servers", "Utility"],
     authors: [TestcordDevs.nnenaza],
 
     contextMenus: {
