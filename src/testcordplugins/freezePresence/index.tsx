@@ -99,7 +99,7 @@ export default definePlugin({
             find: "e.channel.id!==this.props.channel.id||e.version!==this.props.version",
             replacement: {
                 match: /shouldComponentUpdate\((\i)\)\{return \i\.channel\.id!==this\.props\.channel\.id\|\|\i\.version!==this\.props\.version\|\|\i\.groups\.length!==this\.props\.groups\.length\}/,
-                replace: "shouldComponentUpdate($1){if($self.isFrozen())return $1.channel.id!==this.props.channel.id;return $1.channel.id!==this.props.channel.id||$1.version!==this.props.version||$1.groups.length!==this.props.groups.length}"
+                replace: "shouldComponentUpdate($1){if($self.isFrozen())return $1.channel.id!==this.props.channel.id||$1.rows!==this.props.rows;return $1.channel.id!==this.props.channel.id||$1.version!==this.props.version||$1.groups.length!==this.props.groups.length}"
             }
         }
     ],
