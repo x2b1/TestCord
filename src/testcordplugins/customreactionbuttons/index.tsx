@@ -216,30 +216,20 @@ export default definePlugin({
                     icon: () => <EmojiDisplay emoji={btn.emoji} />,
                     message,
                     channel,
-                    onClick: e => {
-                        e.stopPropagation();
-                        this.addReaction(message.channel_id, message.id, btn.emoji);
+                    onClick: () => {
+                        RestAPI.put({
+                            url: Constants.Endpoints.REACTION(message.channel_id, message.id, emojiParam, "@me")
+                        }).catch(() => {
+                            Toasts.show({
+                                message: "Failed to add reaction",
+                                type: Toasts.Type.FAILURE,
+                                id: Toasts.genId(),
+                                options: { duration: 3000 }
+                            });
+                        });
                     }
                 };
             }, () => <EmojiDisplay emoji="👍" />);
-        }
-    },
-
-    async addReaction(channelId: string, messageId: string, emoji: string) {
-        const emojiParam = parseEmoji(emoji);
-        if (!emojiParam) return;
-
-        try {
-            await RestAPI.put({
-                url: Constants.Endpoints.REACTION(channelId, messageId, emojiParam, "@me")
-            });
-        } catch {
-            Toasts.show({
-                message: "Failed to add reaction",
-                type: Toasts.Type.FAILURE,
-                id: Toasts.genId(),
-                options: { duration: 3000 }
-            });
         }
     }
 });
