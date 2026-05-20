@@ -1,0 +1,1107 @@
+:root {
+    --vc-send-trail-accent: #f4bd6a;
+    --vc-send-trail-accent-soft: rgb(244 189 106 / 14%);
+    --vc-send-trail-danger-soft: rgb(237 66 69 / 14%);
+    --vc-send-trail-success-soft: rgb(59 165 92 / 16%);
+    --vc-send-trail-border: color-mix(in oklab, var(--border-subtle) 82%, #000 18%);
+    --vc-send-trail-surface: color-mix(in oklab, var(--background-secondary) 92%, #000 8%);
+    --vc-send-trail-surface-alt: color-mix(in oklab, var(--background-secondary) 82%, #0c1016 18%);
+    --vc-send-trail-shell: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--background-secondary) 76%, #7d8798 24%),
+        color-mix(in oklab, var(--background-primary) 42%, var(--background-secondary) 58%)
+    );
+    --vc-send-trail-shell-panel: color-mix(in oklab, var(--background-secondary) 86%, #9aa4b3 14%);
+    --vc-send-trail-record-surface: color-mix(in oklab, var(--background-primary) 52%, var(--background-secondary) 48%);
+}
+
+.vc-send-trail-hero-metrics,
+.vc-send-trail-meta-row,
+.vc-send-trail-toolbar-actions,
+.vc-send-trail-record-context-row,
+.vc-send-trail-record-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.vc-send-trail-hero-metrics {
+    margin-top: 1rem;
+}
+
+.vc-send-trail-hero-tag,
+.vc-send-trail-meta-tag,
+.vc-send-trail-scope-tag,
+.vc-send-trail-time-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 11px;
+    border: 1px solid var(--vc-send-trail-border);
+    border-radius: 8px;
+    background: var(--vc-send-trail-surface-alt);
+    color: var(--header-primary);
+    font-size: 0.84rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.vc-send-trail-hero-tag {
+    background: rgb(255 255 255 / 7%);
+    border-color: rgb(255 255 255 / 14%);
+}
+
+.vc-send-trail-meta-tag-accent {
+    background: var(--vc-send-trail-accent-soft);
+    border-color: rgb(244 189 106 / 26%);
+}
+
+.vc-send-trail-meta-tag-protected {
+    background: rgb(114 137 218 / 14%);
+    border-color: rgb(114 137 218 / 28%);
+}
+
+.vc-send-trail-meta-tag-quiet {
+    color: var(--text-muted);
+}
+
+.vc-send-trail-scope-tag-guild {
+    background: var(--vc-send-trail-accent-soft);
+}
+
+.vc-send-trail-scope-tag-dm {
+    background: rgb(114 137 218 / 14%);
+}
+
+.vc-send-trail-history-shell,
+.vc-send-trail-record-card,
+.vc-send-trail-empty-card,
+.vc-send-trail-config-empty,
+.vc-send-trail-config-item {
+    margin-top: 12px;
+    border: 1px solid var(--vc-send-trail-border);
+    background: var(--vc-send-trail-surface);
+    border-radius: 8px;
+}
+
+.vc-send-trail-history-shell-header,
+.vc-send-trail-history-filter-header,
+.vc-send-trail-history-controls-row,
+.vc-send-trail-history-footer,
+.vc-send-trail-group-header,
+.vc-send-trail-record-header,
+.vc-send-trail-record-footer,
+.vc-send-trail-purge-status,
+.vc-send-trail-config-switch-row,
+.vc-send-trail-config-list-header,
+.vc-send-trail-config-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.vc-send-trail-history-shell {
+    position: relative;
+    overflow: hidden;
+    background: var(--vc-send-trail-shell);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%), 0 18px 40px rgb(0 0 0 / 16%);
+}
+
+.vc-send-trail-history-shell-header {
+    margin-bottom: 12px;
+}
+
+.vc-send-trail-toolbar-actions {
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-send-trail-toolbar-actions .vc-btn-base {
+    gap: 8px;
+}
+
+.vc-send-trail-history-shell-copy {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-send-trail-history-subtitle {
+    margin: 0;
+    color: var(--text-muted);
+    max-width: 720px;
+}
+
+.vc-send-trail-history-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 0;
+    flex: 1 1 auto;
+}
+
+.vc-send-trail-history-controls-copy,
+.vc-send-trail-history-footer-copy,
+.vc-send-trail-history-footer-actions,
+.vc-send-trail-history-pagination-row,
+.vc-send-trail-pagination-controls,
+.vc-send-trail-pagination-field {
+    display: flex;
+}
+
+.vc-send-trail-history-controls-copy,
+.vc-send-trail-history-footer-copy {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-send-trail-history-controls-copy {
+    flex: 1 1 auto;
+}
+
+.vc-send-trail-history-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 5%);
+    color: var(--header-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.vc-send-trail-history-chip-value {
+    font-weight: 700;
+}
+
+.vc-send-trail-history-chip-label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vc-send-trail-history-chip-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #36d399;
+    box-shadow: 0 0 0 4px rgb(54 211 153 / 12%);
+}
+
+.vc-send-trail-history-chip-button {
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.vc-send-trail-history-chip-button:hover {
+    border-color: rgb(255 255 255 / 14%);
+    background: rgb(255 255 255 / 7%);
+    transform: translateY(-1px);
+}
+
+.vc-send-trail-history-chip-action {
+    color: var(--text-link);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.vc-send-trail-history-chip-accent {
+    background: var(--vc-send-trail-accent-soft);
+    border-color: rgb(244 189 106 / 22%);
+}
+
+.vc-send-trail-history-chip-protected {
+    background: rgb(114 137 218 / 12%);
+    border-color: rgb(114 137 218 / 24%);
+}
+
+.vc-send-trail-history-summary {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+.vc-send-trail-button-label {
+    display: inline-block;
+}
+
+.vc-send-trail-action-button {
+    gap: 5px;
+    min-height: 28px;
+    padding-inline: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.vc-send-trail-action-button-select {
+    min-width: 122px;
+}
+
+.vc-send-trail-action-button-purge {
+    min-width: 124px;
+    min-height: 36px;
+    padding-inline: 10px;
+    justify-content: center;
+    box-shadow: 0 10px 22px rgb(237 66 69 / 18%), inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+.vc-send-trail-action-icon-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    flex: 0 0 36px;
+}
+
+.vc-send-trail-action-button-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 9%);
+    color: inherit;
+    font-size: 0.69rem;
+    font-weight: 700;
+}
+
+.vc-send-trail-toolbar-clear {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    align-self: flex-start;
+}
+
+.vc-send-trail-history-filter-surface {
+    padding: 14px;
+    border: 1px solid rgb(255 255 255 / 5%);
+    border-radius: 8px;
+    background: var(--vc-send-trail-shell-panel);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.vc-send-trail-history-filter-header {
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.vc-send-trail-history-filter-meta {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vc-send-trail-toolbar-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.vc-send-trail-toolbar-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-send-trail-toolbar-field-search {
+    grid-column: 1 / -1;
+    max-width: 420px;
+}
+
+.vc-send-trail-field-label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vc-send-trail-search-shell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--vc-send-trail-border);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 64%, var(--background-secondary) 36%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.vc-send-trail-search-shell:focus-within {
+    border-color: color-mix(in oklab, var(--vc-send-trail-accent) 34%, var(--vc-send-trail-border) 66%);
+    background: color-mix(in oklab, var(--background-primary) 56%, var(--background-secondary) 44%);
+    box-shadow: 0 0 0 1px rgb(244 189 106 / 14%);
+}
+
+.vc-send-trail-search-icon {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+}
+
+.vc-send-trail-search-input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    -webkit-text-fill-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    caret-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    font: inherit;
+    line-height: 1.4;
+}
+
+.vc-send-trail-search-input::placeholder {
+    color: var(--text-muted, #949ba4);
+}
+
+.vc-send-trail-search-input:focus {
+    outline: none;
+}
+
+.vc-send-trail-search-input:disabled {
+    cursor: not-allowed;
+}
+
+.vc-send-trail-history-controls-row {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid rgb(255 255 255 / 6%);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 46%, var(--background-secondary) 54%);
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vc-send-trail-history-action-cluster {
+    flex: 0 0 auto;
+    gap: 10px;
+}
+
+.vc-send-trail-history-action-cluster .vc-send-trail-action-button {
+    justify-content: space-between;
+}
+
+.vc-send-trail-history-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.vc-send-trail-history-search-shell {
+    flex: 1 1 auto;
+    min-width: 280px;
+    max-width: none;
+    min-height: 44px;
+}
+
+.vc-send-trail-history-actions-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+}
+
+.vc-send-trail-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 14px;
+}
+
+.vc-send-trail-history-footer {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--vc-send-trail-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vc-send-trail-history-footer-main,
+.vc-send-trail-history-footer-secondary,
+.vc-send-trail-pagination-center,
+.vc-send-trail-pagination-page-size {
+    display: flex;
+}
+
+.vc-send-trail-history-footer-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+}
+
+.vc-send-trail-pagination-summary {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.vc-send-trail-pagination-center {
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 208px;
+}
+
+.vc-send-trail-pagination-nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--interactive-normal);
+    transition: background-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.vc-send-trail-pagination-nav-button:hover:not(:disabled) {
+    background: rgb(255 255 255 / 5%);
+    color: var(--interactive-hover);
+}
+
+.vc-send-trail-pagination-nav-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.vc-send-trail-pagination-nav-glyph {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.vc-send-trail-pagination-nav-chevron {
+    width: 7px;
+    height: 7px;
+    border-top: 1.5px solid currentColor;
+    border-right: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.vc-send-trail-pagination-nav-left .vc-send-trail-pagination-nav-chevron {
+    transform: rotate(-135deg);
+}
+
+.vc-send-trail-pagination-page-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 20px;
+    padding: 0 6px;
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 4%);
+    color: var(--header-primary);
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+.vc-send-trail-pagination-of-label {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1;
+    margin: 0 4px;
+}
+
+.vc-send-trail-pagination-page-size {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    justify-self: end;
+}
+
+.vc-send-trail-pagination-page-size-label {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.vc-send-trail-pagination-page-size-select {
+    width: 96px;
+}
+
+.vc-send-trail-pagination-page-size-control > div {
+    min-width: 96px;
+}
+
+.vc-send-trail-pagination-page-size-control [class*="singleValue"],
+.vc-send-trail-pagination-page-size-control [class*="placeholder"] {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+.vc-send-trail-history-footer-secondary {
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vc-send-trail-history-footer-clear {
+    font-size: 0.78rem;
+    flex: 0 0 auto;
+}
+
+.vc-send-trail-toolbar-hint,
+.vc-send-trail-record-timestamp,
+.vc-send-trail-record-muted,
+.vc-send-trail-config-copy,
+.vc-send-trail-config-hint,
+.vc-send-trail-purge-status-text {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.vc-send-trail-purge-status {
+    margin-top: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--vc-send-trail-border);
+    border-radius: 8px;
+    background: var(--vc-send-trail-surface);
+}
+
+.vc-send-trail-purge-status-region {
+    overflow: hidden;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition:
+        max-height 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        margin-top 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        opacity 220ms ease,
+        transform 220ms ease;
+    will-change: max-height, margin-top, opacity, transform;
+}
+
+.vc-send-trail-purge-status-region-mounted {
+    max-height: 220px;
+}
+
+.vc-send-trail-purge-status-region-visible {
+    margin-top: 12px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vc-send-trail-purge-status-region-hidden,
+.vc-send-trail-purge-status-region-empty {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.vc-send-trail-purge-status-running {
+    border-color: rgb(244 189 106 / 28%);
+}
+
+.vc-send-trail-purge-status-success {
+    border-color: rgb(59 165 92 / 28%);
+    background: color-mix(in oklab, var(--vc-send-trail-surface) 88%, #163620 12%);
+}
+
+.vc-send-trail-purge-status-partial,
+.vc-send-trail-purge-status-failure {
+    border-color: rgb(237 66 69 / 28%);
+    background: color-mix(in oklab, var(--vc-send-trail-surface) 90%, #2a0f12 10%);
+}
+
+.vc-send-trail-purge-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: var(--vc-send-trail-surface-alt);
+    flex: 0 0 42px;
+}
+
+.vc-send-trail-purge-status-success .vc-send-trail-purge-status-icon {
+    background: var(--vc-send-trail-success-soft);
+}
+
+.vc-send-trail-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgb(255 255 255 / 14%);
+    border-top-color: var(--vc-send-trail-accent);
+    border-radius: 999px;
+    animation: vc-send-trail-spin 0.9s linear infinite;
+}
+
+.vc-send-trail-checkmark {
+    color: var(--green-330);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    animation: vc-send-trail-pop 220ms ease-out;
+}
+
+.vc-send-trail-purge-status-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-send-trail-purge-status-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.vc-send-trail-purge-progress-track {
+    overflow: hidden;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 6%);
+}
+
+.vc-send-trail-purge-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f4bd6a, #ffe1ad);
+    transition: width 180ms ease;
+}
+
+.vc-send-trail-empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.vc-send-trail-empty-icon {
+    width: 36px;
+    height: 36px;
+    color: var(--vc-send-trail-accent);
+}
+
+.vc-send-trail-group {
+    margin-top: 16px;
+}
+
+.vc-send-trail-group-header {
+    margin-bottom: 12px;
+}
+
+.vc-send-trail-group-count {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.vc-send-trail-group-list {
+    display: grid;
+    gap: 10px;
+}
+
+.vc-send-trail-record-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--vc-send-trail-record-surface);
+    box-shadow: 0 10px 22px rgb(0 0 0 / 10%);
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    cursor: pointer;
+}
+
+.vc-send-trail-record-card:hover {
+    border-color: color-mix(in oklab, var(--vc-send-trail-border) 74%, #c8d0dd 26%);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgb(0 0 0 / 14%);
+}
+
+.vc-send-trail-record-card:focus-visible {
+    outline: 2px solid rgb(88 101 242 / 42%);
+    outline-offset: 2px;
+}
+
+.vc-send-trail-record-card-selected {
+    border-color: rgb(88 101 242 / 34%);
+    box-shadow: 0 14px 32px rgb(88 101 242 / 16%);
+}
+
+.vc-send-trail-record-card-deleting {
+    cursor: progress;
+}
+
+.vc-send-trail-record-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-send-trail-record-origin-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vc-send-trail-record-scope-label {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.vc-send-trail-record-separator {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.vc-send-trail-record-flag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border: 1px solid rgb(114 137 218 / 22%);
+    border-radius: 6px;
+    background: rgb(114 137 218 / 12%);
+    color: var(--header-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.vc-send-trail-record-flag-selected {
+    border-color: rgb(88 101 242 / 24%);
+    background: rgb(88 101 242 / 14%);
+}
+
+.vc-send-trail-channel-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--header-primary);
+}
+
+.vc-send-trail-record-header {
+    align-items: flex-start;
+}
+
+.vc-send-trail-record-footer {
+    padding-top: 2px;
+}
+
+.vc-send-trail-record-time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.vc-send-trail-record-open-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.vc-send-trail-record-open-icon {
+    color: currentColor;
+}
+
+.vc-send-trail-record-content {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-normal);
+}
+
+.vc-send-trail-record-message-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid rgb(255 255 255 / 6%);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 58%, var(--background-secondary) 42%);
+    box-shadow: inset 3px 0 0 rgb(244 189 106 / 20%);
+}
+
+.vc-send-trail-record-message-label {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vc-send-trail-preview-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.vc-send-trail-preview-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--vc-send-trail-border);
+    border-radius: 8px;
+    background: var(--vc-send-trail-surface-alt);
+    color: inherit;
+    text-decoration: none;
+}
+
+.vc-send-trail-preview-image,
+.vc-send-trail-preview-video {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    background: rgb(0 0 0 / 25%);
+}
+
+.vc-send-trail-preview-caption {
+    display: block;
+    padding: 10px 12px;
+    color: var(--text-normal);
+    font-size: 0.85rem;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.vc-send-trail-config-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vc-send-trail-config-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.vc-send-trail-config-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-send-trail-config-switch-row {
+    padding: 14px 16px;
+    border: 1px solid var(--vc-send-trail-border);
+    border-radius: 8px;
+    background: var(--vc-send-trail-surface-alt);
+    align-items: flex-start;
+}
+
+.vc-send-trail-config-list {
+    display: grid;
+    gap: 10px;
+}
+
+.vc-send-trail-config-manual-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.vc-send-trail-config-manual-field {
+    flex: 1 1 auto;
+}
+
+.vc-send-trail-config-id-input {
+    width: 100%;
+}
+
+.vc-send-trail-config-id-input input,
+.vc-send-trail-config-id-input [class*="input"],
+.vc-send-trail-config-id-input [class*="inner"] {
+    color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    -webkit-text-fill-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    caret-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    opacity: 1 !important;
+}
+
+.vc-send-trail-config-id-input input::placeholder,
+.vc-send-trail-config-id-input [class*="input"]::placeholder {
+    color: var(--text-muted, #949ba4);
+}
+
+.vc-send-trail-search-input:-webkit-autofill,
+.vc-send-trail-search-input:-webkit-autofill:hover,
+.vc-send-trail-search-input:-webkit-autofill:focus,
+.vc-send-trail-config-id-input input:-webkit-autofill,
+.vc-send-trail-config-id-input input:-webkit-autofill:hover,
+.vc-send-trail-config-id-input input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    caret-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    transition: background-color 99999s ease-in-out 0s;
+}
+
+.vc-send-trail-config-save-button {
+    min-height: 40px;
+    padding-inline: 14px;
+}
+
+.vc-send-trail-config-user-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.vc-send-trail-config-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: var(--vc-send-trail-surface-alt);
+    flex: 0 0 40px;
+}
+
+.vc-send-trail-config-item-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+@keyframes vc-send-trail-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes vc-send-trail-pop {
+    from {
+        transform: scale(0.84);
+        opacity: 0.4;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 920px) {
+    .vc-send-trail-toolbar-field-search {
+        grid-column: auto;
+        max-width: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .vc-send-trail-history-shell-header,
+    .vc-send-trail-history-filter-header,
+    .vc-send-trail-history-controls-row,
+    .vc-send-trail-group-header,
+    .vc-send-trail-record-header,
+    .vc-send-trail-record-footer,
+    .vc-send-trail-purge-status,
+    .vc-send-trail-config-switch-row,
+    .vc-send-trail-config-list-header,
+    .vc-send-trail-config-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vc-send-trail-toolbar-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vc-send-trail-history-action-cluster {
+        flex: 1 1 auto;
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .vc-send-trail-history-actions-row {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .vc-send-trail-history-search-shell {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .vc-send-trail-history-actions-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vc-send-trail-config-manual-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vc-send-trail-purge-status-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .vc-send-trail-history-filter-surface {
+        padding: 12px;
+    }
+
+    .vc-send-trail-action-button-select,
+    .vc-send-trail-action-button-purge {
+        min-width: 0;
+    }
+
+    .vc-send-trail-history-footer-main {
+        grid-template-columns: 1fr;
+        justify-items: start;
+        gap: 10px;
+    }
+
+    .vc-send-trail-pagination-center,
+    .vc-send-trail-pagination-page-size,
+    .vc-send-trail-history-footer-secondary {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vc-send-trail-pagination-page-size,
+    .vc-send-trail-history-footer-secondary {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .vc-send-trail-pagination-summary {
+        white-space: normal;
+    }
+
+    .vc-send-trail-pagination-page-size-select {
+        width: 96px;
+    }
+}

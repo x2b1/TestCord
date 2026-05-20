@@ -1,0 +1,772 @@
+.vc-presence-lab-shell {
+    --presence-lab-shell-width: min(1220px, calc(100vw - 240px), calc(100% + 220px));
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: var(--presence-lab-shell-width);
+    max-width: var(--presence-lab-shell-width);
+    min-width: 0;
+    box-sizing: border-box;
+    margin-top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    isolation: isolate;
+}
+
+.vc-presence-lab-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 18px;
+    background: radial-gradient(circle at center, rgba(226, 177, 90, 0.06), transparent 42%);
+    opacity: 0.22;
+    pointer-events: none;
+}
+
+.vc-presence-lab-shell > * {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.vc-presence-lab-shell > :first-child {
+    overflow: hidden;
+    border: 1px solid rgba(226, 177, 90, 0.14);
+    box-shadow: 0 26px 64px rgba(0, 0, 0, 0.28);
+}
+
+.vc-presence-lab-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 0;
+}
+
+.vc-presence-lab-dashboard-side {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+.vc-presence-lab-runtime-card,
+.vc-presence-lab-panel-card,
+.vc-presence-lab-session-card,
+.vc-presence-lab-history-card,
+.vc-presence-lab-cadence-strip {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%),
+        linear-gradient(180deg, rgba(226, 177, 90, 0.035), transparent 55%),
+        color-mix(in srgb, var(--background-secondary) 92%, black 8%);
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.vc-presence-lab-roster-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    margin-top: 0;
+}
+
+.vc-presence-lab-session-card {
+    margin-top: 0;
+}
+
+.vc-presence-lab-history-card {
+    margin-top: 0;
+    min-height: 420px;
+}
+
+.vc-presence-lab-hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.vc-presence-lab-hero-tag,
+.vc-presence-lab-cadence-badge,
+.vc-presence-lab-section-chip,
+.vc-presence-lab-session-badge,
+.vc-presence-lab-session-group-count,
+.vc-presence-lab-session-time,
+.vc-presence-lab-identity-meta,
+.vc-presence-lab-pair-minutes,
+.vc-presence-lab-session-duration-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vc-presence-lab-hero-tag,
+.vc-presence-lab-cadence-badge {
+    color: #f2d39b;
+    border-color: rgba(226, 177, 90, 0.22);
+    background: rgba(226, 177, 90, 0.08);
+}
+
+.vc-presence-lab-cadence-strip {
+    position: relative;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.vc-presence-lab-cadence-strip::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        radial-gradient(circle at 36% 50%, rgba(240, 186, 98, 0.16), transparent 20%),
+        linear-gradient(90deg, rgba(240, 186, 98, 0.08), transparent 24%, transparent 76%, rgba(141, 183, 216, 0.08));
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.vc-presence-lab-cadence-strip-top,
+.vc-presence-lab-cadence-strip-bottom,
+.vc-presence-lab-section-head,
+.vc-presence-lab-history-toolbar,
+.vc-presence-lab-inline-actions,
+.vc-presence-lab-toggle-row,
+.vc-presence-lab-runtime-footer,
+.vc-presence-lab-session-entry-top,
+.vc-presence-lab-session-entry-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.vc-presence-lab-section-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.vc-presence-lab-section-head > :first-child {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.vc-presence-lab-cadence-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vc-presence-lab-cadence-icon-shell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+}
+
+.vc-presence-lab-cadence-icon-shell.active {
+    color: var(--header-primary);
+    border-color: rgba(226, 177, 90, 0.26);
+    background:
+        linear-gradient(180deg, rgba(226, 177, 90, 0.18), rgba(226, 177, 90, 0.06)),
+        rgba(255, 255, 255, 0.02);
+    box-shadow: 0 10px 22px rgba(226, 177, 90, 0.16);
+}
+
+.vc-presence-lab-cadence-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.vc-presence-lab-cadence-strip-bottom {
+    margin-top: 16px;
+}
+
+.vc-presence-lab-cadence-time-label {
+    color: var(--text-normal);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vc-presence-lab-cadence-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.vc-presence-lab-cadence-track-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f0ba62, #e7a449);
+    box-shadow: 0 0 18px rgba(240, 186, 98, 0.32);
+}
+
+.vc-presence-lab-cadence-thumb {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #f0ba62;
+    box-shadow: 0 0 22px rgba(240, 186, 98, 0.45);
+    transform: translate(-50%, -50%);
+}
+
+.vc-presence-lab-overview-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.vc-presence-lab-metric-grid,
+.vc-presence-lab-gauge-grid,
+.vc-presence-lab-insight-grid,
+.vc-presence-lab-field-grid,
+.vc-presence-lab-runtime-stat-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.vc-presence-lab-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vc-presence-lab-gauge-grid {
+    grid-template-columns: 1fr;
+}
+
+.vc-presence-lab-insight-grid {
+    grid-template-columns: 1fr;
+}
+
+.vc-presence-lab-metric-card,
+.vc-presence-lab-gauge-card,
+.vc-presence-lab-strip-card,
+.vc-presence-lab-pair-card,
+.vc-presence-lab-runtime-stat,
+.vc-presence-lab-identity-card,
+.vc-presence-lab-session-entry,
+.vc-presence-lab-empty-card {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%),
+        rgba(255, 255, 255, 0.02);
+}
+
+.vc-presence-lab-metric-card,
+.vc-presence-lab-strip-card,
+.vc-presence-lab-pair-card,
+.vc-presence-lab-gauge-card,
+.vc-presence-lab-empty-card {
+    padding: 18px;
+}
+
+.vc-presence-lab-metric-label,
+.vc-presence-lab-field-label,
+.vc-presence-lab-runtime-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vc-presence-lab-metric-value {
+    margin: 8px 0 4px;
+}
+
+.vc-presence-lab-metric-hint,
+.vc-presence-lab-section-copy,
+.vc-presence-lab-runtime-footnote,
+.vc-presence-lab-identity-details,
+.vc-presence-lab-session-context,
+.vc-presence-lab-session-notes,
+.vc-presence-lab-session-footnote,
+.vc-presence-lab-strip-copy,
+.vc-presence-lab-pair-subtitle,
+.vc-presence-lab-empty-inline-copy {
+    color: var(--text-muted);
+}
+
+.vc-presence-lab-gauge-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 118px;
+}
+
+.vc-presence-lab-gauge-ring {
+    position: relative;
+    flex-shrink: 0;
+    width: 76px;
+    height: 76px;
+    border-radius: 999px;
+    background:
+        conic-gradient(var(--presence-lab-gauge-accent) var(--presence-lab-gauge-value), rgba(255, 255, 255, 0.08) 0);
+    padding: 8px;
+}
+
+.vc-presence-lab-gauge-ring-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: transparent;
+}
+
+.vc-presence-lab-gauge-value {
+    color: var(--header-primary);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.vc-presence-lab-gauge-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vc-presence-lab-gauge-label,
+.vc-presence-lab-pair-title,
+.vc-presence-lab-strip-value,
+.vc-presence-lab-session-title {
+    color: var(--header-primary);
+}
+
+.vc-presence-lab-strip-card,
+.vc-presence-lab-pair-card {
+    min-height: 0;
+}
+
+.vc-presence-lab-strip-card {
+    padding-bottom: 14px;
+}
+
+.vc-presence-lab-strip-bars {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+    min-height: 150px;
+}
+
+.vc-presence-lab-strip-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-presence-lab-strip-track {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    min-height: 112px;
+    padding: 10px 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.vc-presence-lab-strip-fill {
+    width: 24px;
+    min-height: 10px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #8cb1ff, #4f72d6);
+    box-shadow: 0 10px 20px rgba(79, 114, 214, 0.28);
+}
+
+.vc-presence-lab-strip-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.vc-presence-lab-pair-list,
+.vc-presence-lab-identity-list,
+.vc-presence-lab-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.vc-presence-lab-pair-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.vc-presence-lab-runtime-card,
+.vc-presence-lab-panel-card,
+.vc-presence-lab-session-card,
+.vc-presence-lab-history-card {
+    padding: 20px;
+}
+
+.vc-presence-lab-runtime-card {
+    border-radius: 10px;
+}
+
+.vc-presence-lab-panel-title {
+    margin: 0;
+}
+
+.vc-presence-lab-runtime-stat-grid {
+    grid-template-columns: 1fr;
+    margin-top: 18px;
+}
+
+.vc-presence-lab-runtime-stat {
+    padding: 14px;
+    border-radius: 8px;
+}
+
+.vc-presence-lab-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 18px;
+}
+
+.vc-presence-lab-field-grid-three {
+    grid-template-columns: 1fr;
+}
+
+.vc-presence-lab-field-grid-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vc-presence-lab-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-presence-lab-field-full {
+    margin-top: 14px;
+}
+
+.vc-presence-lab-input,
+.vc-presence-lab-search-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-normal);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.vc-presence-lab-input {
+    padding: 11px 12px;
+}
+
+.vc-presence-lab-runtime-card .vc-presence-lab-input,
+.vc-presence-lab-runtime-card .vc-presence-lab-search-shell,
+.vc-presence-lab-runtime-card .vc-presence-lab-runtime-stat {
+    border-radius: 8px;
+}
+
+.vc-presence-lab-input:focus,
+.vc-presence-lab-search-input:focus {
+    border-color: rgba(226, 177, 90, 0.45);
+    box-shadow: 0 0 0 3px rgba(226, 177, 90, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.vc-presence-lab-input::placeholder,
+.vc-presence-lab-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.vc-presence-lab-toggle-row,
+.vc-presence-lab-runtime-footer {
+    margin-top: 18px;
+}
+
+.vc-presence-lab-inline-actions {
+    justify-content: flex-start;
+    margin-top: 16px;
+}
+
+.vc-presence-lab-section-action-button,
+.vc-presence-lab-primary-action-button {
+    align-self: flex-start;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.vc-presence-lab-section-action-button {
+    margin-top: 6px;
+}
+
+.vc-presence-lab-primary-action-button {
+    margin-top: 2px;
+}
+
+.vc-presence-lab-empty-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.vc-presence-lab-empty-inline-icon,
+.vc-presence-lab-empty-icon {
+    color: #f0c276;
+}
+
+.vc-presence-lab-identity-list {
+    max-height: 280px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.vc-presence-lab-identity-card {
+    padding: 12px 14px;
+}
+
+.vc-presence-lab-identity-row,
+.vc-presence-lab-identity-title-row,
+.vc-presence-lab-session-entry-route,
+.vc-presence-lab-session-entry-meta,
+.vc-presence-lab-identity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vc-presence-lab-identity-row {
+    justify-content: space-between;
+}
+
+.vc-presence-lab-identity-avatar,
+.vc-presence-lab-session-avatar {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.vc-presence-lab-identity-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.vc-presence-lab-history-toolbar {
+    margin-top: 18px;
+}
+
+.vc-presence-lab-search-shell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.vc-presence-lab-search-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.vc-presence-lab-search-input {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 12px 0;
+}
+
+.vc-presence-lab-session-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.vc-presence-lab-session-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.vc-presence-lab-session-entry {
+    padding: 16px;
+}
+
+.vc-presence-lab-session-entry-meta {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.vc-presence-lab-session-entry-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.vc-presence-lab-session-arrow {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.vc-presence-lab-session-title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.vc-presence-lab-session-badge {
+    color: var(--header-primary);
+}
+
+.vc-presence-lab-session-notes {
+    margin: 0;
+}
+
+.vc-presence-lab-session-entry-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vc-presence-lab-empty-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 28px;
+    text-align: center;
+}
+
+@media (max-width: 1260px) {
+    .vc-presence-lab-gauge-grid,
+    .vc-presence-lab-field-grid-four {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 1080px) {
+    .vc-presence-lab-dashboard-grid {
+        grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.95fr);
+        align-items: start;
+    }
+
+    .vc-presence-lab-gauge-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vc-presence-lab-insight-grid {
+        grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+    }
+
+    .vc-presence-lab-runtime-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vc-presence-lab-field-grid-three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .vc-presence-lab-metric-grid,
+    .vc-presence-lab-field-grid,
+    .vc-presence-lab-field-grid-four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1320px) {
+    .vc-presence-lab-dashboard-grid {
+        grid-template-columns: minmax(0, 1.7fr) minmax(360px, 1fr);
+    }
+
+    .vc-presence-lab-gauge-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .vc-presence-lab-runtime-stat-grid,
+    .vc-presence-lab-field-grid-three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .vc-presence-lab-shell {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 20px 0 0;
+        left: auto;
+        transform: none;
+    }
+
+    .vc-presence-lab-metric-grid,
+    .vc-presence-lab-gauge-grid,
+    .vc-presence-lab-insight-grid,
+    .vc-presence-lab-roster-grid,
+    .vc-presence-lab-field-grid,
+    .vc-presence-lab-field-grid-three,
+    .vc-presence-lab-field-grid-four,
+    .vc-presence-lab-runtime-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vc-presence-lab-cadence-strip-top,
+    .vc-presence-lab-cadence-strip-bottom,
+    .vc-presence-lab-section-head,
+    .vc-presence-lab-history-toolbar,
+    .vc-presence-lab-toggle-row,
+    .vc-presence-lab-runtime-footer,
+    .vc-presence-lab-session-entry-top,
+    .vc-presence-lab-session-entry-footer,
+    .vc-presence-lab-identity-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .vc-presence-lab-session-entry-meta,
+    .vc-presence-lab-identity-controls {
+        justify-content: flex-start;
+    }
+}

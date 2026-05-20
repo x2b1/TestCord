@@ -1,0 +1,1302 @@
+:root {
+    --vc-mutual-scanner-accent: #f4bd6a;
+    --vc-mutual-scanner-accent-soft: rgb(244 189 106 / 14%);
+    --vc-mutual-scanner-info-soft: rgb(114 137 218 / 14%);
+    --vc-mutual-scanner-success-soft: rgb(59 165 92 / 16%);
+    --vc-mutual-scanner-danger-soft: rgb(237 66 69 / 14%);
+    --vc-mutual-scanner-border: color-mix(in oklab, var(--border-subtle) 82%, #000 18%);
+    --vc-mutual-scanner-surface: color-mix(in oklab, var(--background-secondary) 92%, #000 8%);
+    --vc-mutual-scanner-surface-alt: color-mix(in oklab, var(--background-secondary) 82%, #0c1016 18%);
+    --vc-mutual-scanner-shell: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--background-secondary) 76%, #7d8798 24%),
+        color-mix(in oklab, var(--background-primary) 42%, var(--background-secondary) 58%)
+    );
+    --vc-mutual-scanner-shell-panel: color-mix(in oklab, var(--background-secondary) 86%, #9aa4b3 14%);
+    --vc-mutual-scanner-card-surface: color-mix(in oklab, var(--background-primary) 52%, var(--background-secondary) 48%);
+}
+
+.vc-mutual-scanner-shell {
+    --mutual-scanner-top-row-height: clamp(560px, 62vh, 760px);
+    --mutual-scanner-shell-width: min(1280px, calc(100vw - 220px), calc(100% + 320px));
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: var(--mutual-scanner-shell-width);
+    max-width: var(--mutual-scanner-shell-width);
+    min-width: 0;
+    box-sizing: border-box;
+    margin-top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    isolation: isolate;
+}
+
+.vc-mutual-scanner-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 18px;
+    background: radial-gradient(circle at center, rgba(226, 177, 90, 0.06), transparent 42%);
+    opacity: 0.22;
+    pointer-events: none;
+}
+
+.vc-mutual-scanner-shell > * {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.vc-mutual-scanner-shell > :first-child {
+    overflow: hidden;
+    border: 1px solid rgba(226, 177, 90, 0.14);
+    box-shadow: 0 26px 64px rgba(0, 0, 0, 0.28);
+}
+
+.vc-mutual-scanner-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 0;
+}
+
+.vc-mutual-scanner-main-column,
+.vc-mutual-scanner-side-column,
+.vc-mutual-scanner-history-match-list,
+.vc-mutual-scanner-live-results,
+.vc-mutual-scanner-history-list,
+.vc-mutual-scanner-guild-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vc-mutual-scanner-main-column,
+.vc-mutual-scanner-side-column {
+    gap: 20px;
+}
+
+.vc-mutual-scanner-hero-metrics,
+.vc-mutual-scanner-run-actions,
+.vc-mutual-scanner-run-actions-row,
+.vc-mutual-scanner-match-badges,
+.vc-mutual-scanner-run-stats,
+.vc-mutual-scanner-run-summary-grid,
+.vc-mutual-scanner-scan-status-tags,
+.vc-mutual-scanner-section-actions,
+.vc-mutual-scanner-scope-toolbar-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vc-mutual-scanner-hero-metrics {
+    margin-top: 1rem;
+}
+
+.vc-mutual-scanner-hero-tag,
+.vc-mutual-scanner-meta-tag,
+.vc-mutual-scanner-badge,
+.vc-mutual-scanner-section-chip,
+.vc-mutual-scanner-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 11px;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-surface-alt);
+    color: var(--header-primary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.vc-mutual-scanner-hero-tag {
+    gap: 8px;
+    background: rgb(255 255 255 / 7%);
+    border-color: rgb(255 255 255 / 14%);
+}
+
+.vc-mutual-scanner-hero-tag-icon {
+    display: inline-flex;
+    align-items: center;
+    color: rgb(255 255 255 / 82%);
+}
+
+.vc-mutual-scanner-hero-tag-value {
+    font-weight: 700;
+}
+
+.vc-mutual-scanner-hero-tag-label,
+.vc-mutual-scanner-muted-copy,
+.vc-mutual-scanner-field-label,
+.vc-mutual-scanner-scan-status-text,
+.vc-mutual-scanner-group-count {
+    color: var(--text-muted);
+}
+
+.vc-mutual-scanner-hero-tag-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vc-mutual-scanner-panel {
+    margin-top: 0;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-surface);
+}
+
+.vc-mutual-scanner-shell {
+    position: relative;
+    overflow: hidden;
+    background: var(--vc-mutual-scanner-shell);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%), 0 18px 40px rgb(0 0 0 / 16%);
+}
+
+.vc-mutual-scanner-filter-surface {
+    padding: 14px;
+    border: 1px solid rgb(255 255 255 / 5%);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-shell-panel);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.vc-mutual-scanner-live-results {
+    margin-top: 14px;
+}
+
+.vc-mutual-scanner-section-head,
+.vc-mutual-scanner-match-header,
+.vc-mutual-scanner-run-header,
+.vc-mutual-scanner-toggle-row,
+.vc-mutual-scanner-progress-copy,
+.vc-mutual-scanner-scan-status,
+.vc-mutual-scanner-scan-status-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.vc-mutual-scanner-section-head {
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.vc-mutual-scanner-section-head > :first-child {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.vc-mutual-scanner-section-actions,
+.vc-mutual-scanner-scope-toolbar-footer {
+    align-items: center;
+}
+
+.vc-mutual-scanner-section-title {
+    margin-bottom: 4px;
+}
+
+.vc-mutual-scanner-scope-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.vc-mutual-scanner-search-shell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 64%, var(--background-secondary) 36%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+    margin-bottom: 16px;
+}
+
+.vc-mutual-scanner-scope-search {
+    margin-bottom: 0;
+}
+
+.vc-mutual-scanner-scope-toolbar-action {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border-color: rgb(244 189 106 / 14%);
+    background:
+        linear-gradient(180deg, rgb(255 255 255 / 7%), rgb(255 255 255 / 4%)),
+        color-mix(in oklab, var(--background-primary) 42%, var(--background-secondary) 58%);
+    color: var(--vc-mutual-scanner-accent);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.vc-mutual-scanner-scope-toolbar-action:hover {
+    border-color: rgb(244 189 106 / 24%);
+    background:
+        linear-gradient(180deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 5%)),
+        color-mix(in oklab, var(--background-primary) 36%, var(--background-secondary) 64%);
+}
+
+.vc-mutual-scanner-scope-toolbar-action.vc-mutual-scanner-scope-toolbar-action-busy {
+    color: #f6d7a0;
+    border-color: rgb(244 189 106 / 34%);
+    background:
+        linear-gradient(180deg, rgb(244 189 106 / 18%), rgb(255 255 255 / 6%)),
+        color-mix(in oklab, var(--background-primary) 38%, #3a2d16 62%);
+}
+
+.vc-mutual-scanner-scope-toolbar-action-icon {
+    flex: 0 0 auto;
+}
+
+.vc-mutual-scanner-scope-toolbar-action-icon-spinning {
+    animation: vc-mutual-scanner-spin 0.95s linear infinite;
+}
+
+.vc-mutual-scanner-scope-toolbar-footer {
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+.vc-mutual-scanner-scope-toolbar-status {
+    flex: 1 1 260px;
+    margin: 0;
+}
+
+.vc-mutual-scanner-search-shell:focus-within {
+    border-color: color-mix(in oklab, var(--vc-mutual-scanner-accent) 34%, var(--vc-mutual-scanner-border) 66%);
+    background: color-mix(in oklab, var(--background-primary) 56%, var(--background-secondary) 44%);
+    box-shadow: 0 0 0 1px rgb(244 189 106 / 14%);
+}
+
+.vc-mutual-scanner-search-icon,
+.vc-mutual-scanner-empty-icon,
+.vc-mutual-scanner-empty-inline-icon {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+}
+
+.vc-mutual-scanner-search-input,
+.vc-mutual-scanner-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    -webkit-text-fill-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    caret-color: var(--text-normal, var(--header-primary, #f2f3f5)) !important;
+    font: inherit;
+    line-height: 1.4;
+    outline: none;
+}
+
+.vc-mutual-scanner-input {
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 58%, var(--background-secondary) 42%) !important;
+    background-color: color-mix(in oklab, var(--background-primary) 58%, var(--background-secondary) 42%) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.vc-mutual-scanner-input[type="number"]::-webkit-outer-spin-button,
+.vc-mutual-scanner-input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.vc-mutual-scanner-field {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    gap: 10px;
+}
+
+.vc-mutual-scanner-field-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.vc-mutual-scanner-config-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.vc-mutual-scanner-toggle-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.vc-mutual-scanner-toggle-row {
+    padding: 14px 16px;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-surface-alt);
+}
+
+.vc-mutual-scanner-run-actions-row {
+    margin-top: 16px;
+    margin-bottom: 6px;
+    align-items: center;
+}
+
+.vc-mutual-scanner-primary-action {
+    gap: 8px;
+    min-width: 118px;
+    min-height: 34px;
+    padding: 0 15px;
+    border-color: rgb(83 201 120 / 28%);
+    background:
+        linear-gradient(180deg, rgb(140 255 175 / 20%), rgb(88 201 121 / 10%)),
+        linear-gradient(180deg, #25553a, #1d412d);
+    color: #effcf1;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    box-shadow: 0 10px 24px rgb(7 18 11 / 24%), inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
+.vc-mutual-scanner-primary-action:hover {
+    border-color: rgb(83 201 120 / 38%);
+    background:
+        linear-gradient(180deg, rgb(140 255 175 / 28%), rgb(88 201 121 / 14%)),
+        linear-gradient(180deg, #2a6643, #215135);
+}
+
+.vc-mutual-scanner-primary-action svg {
+    flex: 0 0 auto;
+    color: #baf0c5;
+}
+
+.vc-mutual-scanner-live-chip {
+    padding-inline: 12px;
+    font-size: 0.78rem;
+}
+
+.vc-mutual-scanner-warmup-progress-region {
+    overflow: hidden;
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition:
+        max-height 260ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        margin-bottom 260ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        opacity 220ms ease,
+        transform 220ms ease;
+}
+
+.vc-mutual-scanner-warmup-progress-region-visible {
+    max-height: 360px;
+    margin-bottom: 14px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vc-mutual-scanner-warmup-progress-card {
+    border: 1px solid rgb(244 189 106 / 16%);
+    background:
+        linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 2%)),
+        color-mix(in oklab, var(--vc-mutual-scanner-card-surface) 78%, #151b24 22%);
+}
+
+.vc-mutual-scanner-warmup-progress-head {
+    margin-bottom: 12px;
+}
+
+.vc-mutual-scanner-warmup-progress-copy {
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.vc-mutual-scanner-warmup-progress-track {
+    margin-bottom: 12px;
+}
+
+.vc-mutual-scanner-warmup-progress-fill {
+    background: linear-gradient(90deg, #f4bd6a, #ffd998, #ffeecc);
+}
+
+.vc-mutual-scanner-warmup-summary-grid {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.vc-mutual-scanner-scan-status-region {
+    overflow: hidden;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition:
+        max-height 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        margin-top 280ms cubic-bezier(0.2, 0.9, 0.3, 1),
+        opacity 220ms ease,
+        transform 220ms ease;
+}
+
+.vc-mutual-scanner-scan-status-region-visible {
+    max-height: 220px;
+    margin-top: 12px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.vc-mutual-scanner-scan-status-region-mounted {
+    max-height: 220px;
+}
+
+.vc-mutual-scanner-scan-status-region-hidden {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.vc-mutual-scanner-scan-status {
+    padding: 16px 18px;
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-surface);
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-running {
+    border-color: rgb(244 189 106 / 28%);
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-success {
+    border-color: rgb(59 165 92 / 28%);
+    background: color-mix(in oklab, var(--vc-mutual-scanner-surface) 88%, #163620 12%);
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-cancelled {
+    border-color: rgb(244 189 106 / 28%);
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-failure {
+    border-color: rgb(237 66 69 / 28%);
+    background: color-mix(in oklab, var(--vc-mutual-scanner-surface) 90%, #2a0f12 10%);
+}
+
+.vc-mutual-scanner-scan-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-surface-alt);
+    flex: 0 0 42px;
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-success .vc-mutual-scanner-scan-status-icon {
+    background: var(--vc-mutual-scanner-success-soft);
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-failure .vc-mutual-scanner-scan-status-icon {
+    background: var(--vc-mutual-scanner-danger-soft);
+}
+
+.vc-mutual-scanner-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgb(255 255 255 / 14%);
+    border-top-color: var(--vc-mutual-scanner-accent);
+    border-radius: 999px;
+    animation: vc-mutual-scanner-spin 0.9s linear infinite;
+}
+
+.vc-mutual-scanner-checkmark {
+    color: var(--green-330);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    animation: vc-mutual-scanner-pop 220ms ease-out;
+}
+
+.vc-mutual-scanner-scan-status.vc-mutual-scanner-failure .vc-mutual-scanner-checkmark {
+    color: var(--status-danger, #ed4245);
+}
+
+.vc-mutual-scanner-scan-status-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-mutual-scanner-meta-tag.vc-mutual-scanner-quiet,
+.vc-mutual-scanner-badge.vc-mutual-scanner-quiet {
+    color: var(--text-muted);
+}
+
+.vc-mutual-scanner-meta-tag.vc-mutual-scanner-accent,
+.vc-mutual-scanner-badge.vc-mutual-scanner-warn {
+    background: var(--vc-mutual-scanner-accent-soft);
+    border-color: rgb(244 189 106 / 26%);
+}
+
+.vc-mutual-scanner-badge.vc-mutual-scanner-success {
+    background: var(--vc-mutual-scanner-success-soft);
+    border-color: rgb(59 165 92 / 24%);
+    color: #c8f1d1;
+}
+
+.vc-mutual-scanner-badge.vc-mutual-scanner-danger {
+    background: var(--vc-mutual-scanner-danger-soft);
+    border-color: rgb(237 66 69 / 24%);
+    color: #ffcbcf;
+}
+
+.vc-mutual-scanner-badge,
+.vc-mutual-scanner-meta-tag {
+    gap: 6px;
+}
+
+.vc-mutual-scanner-badge.vc-mutual-scanner-quiet,
+.vc-mutual-scanner-meta-tag.vc-mutual-scanner-quiet {
+    background: rgb(255 255 255 / 5%);
+}
+
+.vc-mutual-scanner-status-pill.vc-mutual-scanner-completed {
+    background: var(--vc-mutual-scanner-success-soft);
+    border-color: rgb(59 165 92 / 24%);
+}
+
+.vc-mutual-scanner-status-pill.vc-mutual-scanner-cancelled {
+    background: var(--vc-mutual-scanner-accent-soft);
+    border-color: rgb(244 189 106 / 24%);
+}
+
+.vc-mutual-scanner-status-pill.vc-mutual-scanner-running {
+    background: rgb(88 101 242 / 14%);
+    border-color: rgb(88 101 242 / 28%);
+    color: #cdd6ff;
+}
+
+.vc-mutual-scanner-status-pill.vc-mutual-scanner-failed {
+    background: var(--vc-mutual-scanner-danger-soft);
+    border-color: rgb(237 66 69 / 24%);
+}
+
+.vc-mutual-scanner-scan-progress-track,
+.vc-mutual-scanner-progress-track {
+    overflow: hidden;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 6%);
+}
+
+.vc-mutual-scanner-scan-progress-fill,
+.vc-mutual-scanner-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f4bd6a, #ffe1ad);
+    transition: width 180ms ease;
+}
+
+.vc-mutual-scanner-progress-shell {
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px solid rgb(255 255 255 / 6%);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 46%, var(--background-secondary) 54%);
+}
+
+.vc-mutual-scanner-progress-copy {
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.vc-mutual-scanner-guild-list {
+    max-height: 420px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
+.vc-mutual-scanner-history-list {
+    max-height: 520px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
+.vc-mutual-scanner-cache-list {
+    max-height: 360px;
+}
+
+.vc-mutual-scanner-guild-list,
+.vc-mutual-scanner-history-list,
+.vc-mutual-scanner-history-match-list,
+.vc-mutual-scanner-live-results {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(244, 189, 106, 0.45) rgba(255, 255, 255, 0.04);
+}
+
+.vc-mutual-scanner-guild-list::-webkit-scrollbar-corner,
+.vc-mutual-scanner-history-list::-webkit-scrollbar-corner,
+.vc-mutual-scanner-history-match-list::-webkit-scrollbar-corner,
+.vc-mutual-scanner-live-results::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.vc-mutual-scanner-guild-list::-webkit-scrollbar,
+.vc-mutual-scanner-history-list::-webkit-scrollbar,
+.vc-mutual-scanner-history-match-list::-webkit-scrollbar,
+.vc-mutual-scanner-live-results::-webkit-scrollbar {
+    width: 10px;
+}
+
+.vc-mutual-scanner-guild-list::-webkit-scrollbar-track,
+.vc-mutual-scanner-history-list::-webkit-scrollbar-track,
+.vc-mutual-scanner-history-match-list::-webkit-scrollbar-track,
+.vc-mutual-scanner-live-results::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 999px;
+}
+
+.vc-mutual-scanner-guild-list::-webkit-scrollbar-thumb,
+.vc-mutual-scanner-history-list::-webkit-scrollbar-thumb,
+.vc-mutual-scanner-history-match-list::-webkit-scrollbar-thumb,
+.vc-mutual-scanner-live-results::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(244, 189, 106, 0.72), rgba(168, 126, 62, 0.86));
+    border: 2px solid rgba(0, 0, 0, 0);
+    background-clip: padding-box;
+}
+
+.vc-mutual-scanner-guild-card,
+.vc-mutual-scanner-match-card,
+.vc-mutual-scanner-run-card,
+.vc-mutual-scanner-empty-card,
+.vc-mutual-scanner-empty-inline,
+.vc-mutual-scanner-skeleton-card {
+    border: 1px solid var(--vc-mutual-scanner-border);
+    border-radius: 8px;
+    background: var(--vc-mutual-scanner-card-surface);
+}
+
+.vc-mutual-scanner-guild-card,
+.vc-mutual-scanner-match-card {
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    padding: 14px;
+}
+
+.vc-mutual-scanner-guild-card {
+    align-items: center;
+    box-shadow: 0 10px 22px rgb(0 0 0 / 10%);
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vc-mutual-scanner-guild-card:hover,
+.vc-mutual-scanner-match-card:hover,
+.vc-mutual-scanner-run-card:hover {
+    border-color: color-mix(in oklab, var(--vc-mutual-scanner-border) 74%, #c8d0dd 26%);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgb(0 0 0 / 14%);
+}
+
+.vc-mutual-scanner-guild-copy,
+.vc-mutual-scanner-match-card {
+    min-width: 0;
+}
+
+.vc-mutual-scanner-guild-title-row,
+.vc-mutual-scanner-match-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.vc-mutual-scanner-match-profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vc-mutual-scanner-match-profile-trigger:hover .vc-mutual-scanner-match-label,
+.vc-mutual-scanner-match-profile-trigger:focus-visible .vc-mutual-scanner-match-label {
+    color: var(--vc-mutual-scanner-accent);
+}
+
+.vc-mutual-scanner-match-profile-trigger:focus-visible {
+    outline: 2px solid rgb(244 189 106 / 34%);
+    outline-offset: 3px;
+    border-radius: 10px;
+}
+
+.vc-mutual-scanner-guild-icon,
+.vc-mutual-scanner-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex: 0 0 40px;
+}
+
+.vc-mutual-scanner-guild-fallback-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--vc-mutual-scanner-info-soft);
+    color: var(--text-normal);
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex: 0 0 40px;
+}
+
+.vc-mutual-scanner-match-card,
+.vc-mutual-scanner-run-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 10px 22px rgb(0 0 0 / 10%);
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vc-mutual-scanner-match-context {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.vc-mutual-scanner-match-copy {
+    min-width: 0;
+}
+
+.vc-mutual-scanner-match-label,
+.vc-mutual-scanner-match-details,
+.vc-mutual-scanner-match-mutuals {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vc-mutual-scanner-match-card-compact {
+    padding: 8px 10px;
+    gap: 7px;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    flex-basis: 30px;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-identity {
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 8px;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-profile-trigger {
+    gap: 8px;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-badges {
+    flex-wrap: wrap;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-badge {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-context {
+    font-size: 0.74rem;
+    line-height: 1.25;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-muted-copy {
+    font-size: 0.73rem;
+    line-height: 1.2;
+}
+
+.vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-label {
+    font-size: 0.88rem;
+    line-height: 1.1;
+}
+
+.vc-mutual-scanner-run-card {
+    padding: 16px;
+}
+
+.vc-mutual-scanner-cache-card {
+    gap: 10px;
+}
+
+.vc-mutual-scanner-cache-card .vc-mutual-scanner-run-header {
+    flex-wrap: wrap;
+}
+
+.vc-mutual-scanner-cache-card .vc-mutual-scanner-badge,
+.vc-mutual-scanner-cache-card .vc-mutual-scanner-status-pill {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+}
+
+.vc-mutual-scanner-cache-stat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: start;
+    justify-content: flex-start;
+}
+
+.vc-mutual-scanner-cache-stat-pair {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.vc-mutual-scanner-panel-shell,
+.vc-mutual-scanner-scope-panel,
+.vc-mutual-scanner-live-panel,
+.vc-mutual-scanner-history-panel,
+.vc-mutual-scanner-cache-panel {
+    align-self: start;
+    height: fit-content;
+}
+
+.vc-mutual-scanner-empty-card,
+.vc-mutual-scanner-empty-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px;
+    text-align: center;
+}
+
+.vc-mutual-scanner-empty-card {
+    min-height: 120px;
+}
+
+.vc-mutual-scanner-empty-icon {
+    width: 34px;
+    height: 34px;
+    color: var(--vc-mutual-scanner-accent);
+}
+
+.vc-mutual-scanner-skeleton-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 88px;
+    overflow: hidden;
+    position: relative;
+}
+
+.vc-mutual-scanner-skeleton-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transform: translateX(-100%);
+    animation: vc-mutual-scanner-shimmer 1.35s ease-in-out infinite;
+}
+
+.vc-mutual-scanner-skeleton-card.vc-mutual-scanner-compact {
+    min-height: 72px;
+}
+
+.vc-mutual-scanner-skeleton-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    flex: 0 0 42px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.vc-mutual-scanner-skeleton-copy {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.vc-mutual-scanner-skeleton-line {
+    height: 10px;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.vc-mutual-scanner-skeleton-line.vc-mutual-scanner-short {
+    max-width: 42%;
+}
+
+.vc-mutual-scanner-skeleton-line.vc-mutual-scanner-medium {
+    max-width: 68%;
+}
+
+.vc-mutual-scanner-match-entry {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+    animation: vc-mutual-scanner-enter 260ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    animation-delay: var(--mutual-scanner-enter-delay, 0ms);
+}
+
+.vc-mutual-scanner-match-entry.vc-mutual-scanner-match-entry-exit {
+    animation: vc-mutual-scanner-exit 420ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.vc-mutual-scanner-inline-notice {
+    margin-top: 14px;
+}
+
+.vc-mutual-scanner-run-summary-grid {
+    margin-top: 16px;
+    padding-top: 2px;
+}
+
+.vc-mutual-scanner-run-diff-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgb(255 255 255 / 6%);
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--background-primary) 52%, var(--background-secondary) 48%);
+}
+
+.vc-mutual-scanner-run-diff-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.vc-mutual-scanner-run-diff-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+@keyframes vc-mutual-scanner-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes vc-mutual-scanner-pop {
+    from {
+        transform: scale(0.84);
+        opacity: 0.4;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes vc-mutual-scanner-enter {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes vc-mutual-scanner-exit {
+    to {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.985);
+    }
+}
+
+@keyframes vc-mutual-scanner-shimmer {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@media (min-width: 1080px) {
+    .vc-mutual-scanner-layout {
+        grid-template-columns: minmax(0, 1.72fr) minmax(344px, 0.94fr);
+        grid-template-areas:
+            "scope side"
+            "live live";
+        align-items: stretch;
+    }
+
+    .vc-mutual-scanner-main-column {
+        display: contents;
+    }
+
+    .vc-mutual-scanner-side-column {
+        grid-area: side;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: var(--mutual-scanner-top-row-height);
+        padding-left: 4px;
+    }
+
+    .vc-mutual-scanner-scope-panel {
+        grid-area: scope;
+        display: flex;
+        flex-direction: column;
+        min-height: var(--mutual-scanner-top-row-height);
+        max-height: var(--mutual-scanner-top-row-height);
+    }
+
+    .vc-mutual-scanner-live-panel {
+        grid-area: live;
+    }
+
+    .vc-mutual-scanner-history-panel,
+    .vc-mutual-scanner-cache-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .vc-mutual-scanner-history-panel {
+        flex: 0 0 auto;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-actions,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-badges {
+        flex-wrap: nowrap;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-stats {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-badge,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-meta-tag,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-status-pill {
+        min-height: 21px;
+        padding: 0 6px;
+        font-size: 0.68rem;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-actions,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-badges {
+        justify-content: flex-end;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-card {
+        padding: 11px;
+        gap: 8px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-header {
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-header > :first-child {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-run-header .vc-mutual-scanner-muted-copy {
+        font-size: 0.73rem;
+        line-height: 1.15;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-history-action-button {
+        font-size: 0.72rem;
+        line-height: 1;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card {
+        padding: 8px 9px;
+        gap: 8px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact {
+        padding: 7px 8px;
+        gap: 6px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-header {
+        align-items: flex-start;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-identity {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-badges {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        flex-basis: 24px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-profile-trigger,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-identity {
+        gap: 6px;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-label {
+        font-size: 0.8rem;
+        line-height: 1.05;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-match-context,
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-match-card-compact .vc-mutual-scanner-muted-copy {
+        font-size: 0.68rem;
+        line-height: 1.1;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-search-shell {
+        margin-right: 2px;
+    }
+
+    .vc-mutual-scanner-cache-panel {
+        flex: 1 1 0;
+        align-self: stretch;
+        height: auto;
+    }
+
+    .vc-mutual-scanner-live-panel .vc-mutual-scanner-filter-surface {
+        padding: 18px;
+    }
+
+    .vc-mutual-scanner-scope-panel .vc-mutual-scanner-guild-list {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow: auto;
+    }
+
+    .vc-mutual-scanner-history-panel .vc-mutual-scanner-history-list {
+        max-height: clamp(180px, 24vh, 320px);
+        overflow: auto;
+    }
+
+    .vc-mutual-scanner-live-panel .vc-mutual-scanner-config-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .vc-mutual-scanner-live-panel .vc-mutual-scanner-toggle-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .vc-mutual-scanner-live-panel .vc-mutual-scanner-toggle-row {
+        min-height: 108px;
+        align-items: flex-start;
+    }
+
+    .vc-mutual-scanner-cache-panel .vc-mutual-scanner-cache-list {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        overflow: auto;
+    }
+}
+
+@media (min-width: 1320px) {
+    .vc-mutual-scanner-layout {
+        grid-template-columns: minmax(0, 1.86fr) minmax(356px, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .vc-mutual-scanner-shell {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 20px 0 0;
+        left: auto;
+        transform: none;
+    }
+
+    .vc-mutual-scanner-section-head,
+    .vc-mutual-scanner-match-header,
+    .vc-mutual-scanner-run-header,
+    .vc-mutual-scanner-toggle-row,
+    .vc-mutual-scanner-progress-copy,
+    .vc-mutual-scanner-scan-status,
+    .vc-mutual-scanner-scan-status-title-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vc-mutual-scanner-run-actions-row,
+    .vc-mutual-scanner-section-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vc-mutual-scanner-scope-toolbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .vc-mutual-scanner-scope-toolbar-action {
+        width: 100%;
+    }
+}
