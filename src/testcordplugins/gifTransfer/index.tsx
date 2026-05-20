@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Vencord, a Discord client mod
  * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -8,8 +8,7 @@ import { definePluginSettings } from "@api/Settings";
 import { Link } from "@components/Link";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { showToast, Toasts, UserSettingsActionCreators, UserSettingsProtoStore } from "@webpack/common";
+import { showToast, Toasts } from "@webpack/common";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,70 +39,109 @@ const settings = definePluginSettings({
     delayBetweenImports: {
         type: OptionType.NUMBER,
         description: "Wait between each GIF when importing (ms). Prevents Discord rate-limits.",
-        default: 800,
-    },
-    autoIncreaseDelay: {
-        type: OptionType.BOOLEAN,
-        description: "Automatically increase delay when hitting rate limits. Prevents 429 errors.",
-        default: true,
+        default: 500,
     },
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Rate-limit tracking ─────────────────────────────────────────────────────
 
-const UserSettingsDelay = findByPropsLazy("INFREQUENT_USER_ACTION");
+let rateLimitUntil = 0; // timestamp ms — block imports until this time
+let lastStatusCode = 0; // last HTTP status seen on settings-proto/2
 
-function getFrecencyActions(): any | null {
-    try {
-        return UserSettingsActionCreators?.FrecencyUserSettingsActionCreators ?? null;
-    } catch {
-        return null;
-    }
+function patchFetch(): () => void {
+    const orig = window.fetch.bind(window);
+    (window as any).__gifTransferOrigFetch = orig;
+
+    window.fetch = async function (...args: Parameters<typeof fetch>) {
+        const req = args[0];
+        const url = typeof req === "string" ? req : (req as Request).url ?? "";
+
+        const res = await orig(...args);
+
+        if (url.includes("settings-proto")) {
+            lastStatusCode = res.status;
+            if (res.status === 429) {
+                // Retry-After header (in seconds), fallback 10s
+                const retryAfter = Number(res.headers.get("retry-after") ?? "10");
+                const waitMs = (retryAfter + 2) * 1000;
+                rateLimitUntil = Date.now() + waitMs;
+                console.warn(`[GifTransfer] 429 — waiting ${retryAfter + 2}s before next import`);
+            } else if (res.status === 400) {
+                // 50105 — too many favorites server-side, wait longer
+                rateLimitUntil = Date.now() + 15_000;
+                console.warn("[GifTransfer] 400 Bad Request on settings-proto — waiting 15s");
+            }
+        }
+
+        return res;
+    };
+
+    return () => {
+        window.fetch = orig;
+        delete (window as any).__gifTransferOrigFetch;
+    };
 }
 
-function getCurrentGifs(): Record<string, GifEntry> {
-    try {
-        const fromProto = UserSettingsProtoStore?.frecencyWithoutFetchingLatest?.favoriteGifs?.gifs;
-        if (fromProto) return fromProto;
-    } catch { }
-    try {
-        const fromActions = getFrecencyActions()?.getCurrentValue?.()?.favoriteGifs?.gifs;
-        if (fromActions) return fromActions;
-    } catch { }
-    return {};
+let unpatchFetch: (() => void) | null = null;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getFrecencyStore(): any {
+    const wreq = (window as any).Vencord?.Webpack?.wreq;
+    if (!wreq?.c) return null;
+    for (const key of Object.keys(wreq.c)) {
+        try {
+            const m = wreq.c[key].exports;
+            if (m?.bW && typeof m.bW === "object" && typeof m.bW.getCurrentValue === "function") {
+                return m.bW;
+            }
+        } catch { }
+    }
+    return null;
 }
 
 function getAddGifFn(): ((gif: any) => void) | null {
-    const actions = getFrecencyActions();
-    if (!actions || typeof actions.updateAsync !== "function") return null;
+    const wreq = (window as any).Vencord?.Webpack?.wreq;
+    if (!wreq?.c) return null;
+    for (const key of Object.keys(wreq.c)) {
+        try {
+            const m = wreq.c[key].exports;
+            for (const val of Object.values(m ?? {})) {
+                if (typeof val === "function") {
+                    const src = (val as Function).toString();
+                    if (src.includes("favoriteGifs") && src.includes("order") && src.includes("updateAsync")) {
+                        return val as (gif: any) => void;
+                    }
+                }
+            }
+        } catch { }
+    }
+    return null;
+}
 
-    return (gif: any) => {
-        const existing = getCurrentGifs();
-        const orders = Object.values(existing).map((g: any) => g?.order ?? 0);
-        const maxOrder = orders.length > 0 ? Math.max(...orders) : 0;
-        const newOrder = maxOrder + 1;
-
-        actions.updateAsync(
-            "favoriteGifs",
-            (favoriteGifs: any) => {
-                if (!favoriteGifs) return;
-                if (!favoriteGifs.gifs) favoriteGifs.gifs = {};
-                if (favoriteGifs.gifs[gif.url]) return;
-                favoriteGifs.gifs[gif.url] = {
-                    src: gif.src ?? gif.url,
-                    width: Number(gif.width) || 498,
-                    height: Number(gif.height) || 280,
-                    format: Number(gif.format) || 2,
-                    order: newOrder,
-                };
-            },
-            UserSettingsDelay?.INFREQUENT_USER_ACTION ?? 3
-        );
-    };
+function getCurrentGifs(): Record<string, GifEntry> {
+    const store = getFrecencyStore();
+    if (!store) return {};
+    try {
+        const state = store.getCurrentValue();
+        return state?.favoriteGifs?.gifs ?? {};
+    } catch {
+        return {};
+    }
 }
 
 function sleep(ms: number): Promise<void> {
     return new Promise(r => setTimeout(r, ms));
+}
+
+async function waitForRateLimit(): Promise<void> {
+    const now = Date.now();
+    if (rateLimitUntil > now) {
+        const wait = rateLimitUntil - now;
+        console.log(`[GifTransfer] Rate limited — waiting ${Math.ceil(wait / 1000)}s...`);
+        showToast(`Rate limited! Waiting ${Math.ceil(wait / 1000)}s...`, Toasts.Type.FAILURE);
+        await sleep(wait + 500); // extra 500ms buffer
+    }
 }
 
 // ─── Export ──────────────────────────────────────────────────────────────────
@@ -252,42 +290,63 @@ async function importGifs(file: File): Promise<void> {
 
     let ok = 0;
     let err = 0;
-    let delay = settings.store.delayBetweenImports ?? 800;
-    let rateLimitHits = 0;
+    let retries = 0;
+    const delay = settings.store.delayBetweenImports ?? 500;
+    const MAX_RETRIES_PER_GIF = 3;
 
-    for (const gif of toImport) {
-        try {
-            addGif({
-                url: gif.url,
-                src: gif.src ?? gif.url,
-                width: Number(gif.width) || 498,
-                height: Number(gif.height) || 280,
-                format: Number(gif.format) || 2,
-            });
-            ok++;
-        } catch (e: any) {
-            err++;
-            // Check if it's a rate limit error
-            const isRateLimit = e?.status === 429 || e?.text?.includes("rate limit") || e?.body?.retry_after;
-            if (isRateLimit && settings.store.autoIncreaseDelay) {
-                rateLimitHits++;
-                delay = Math.min(delay * 2, 5000); // Double delay, max 5s
-                console.log(`[GifTransfer] Rate limit hit! Increased delay to ${delay}ms`);
-                showToast(`Rate limited. Increased delay to ${delay}ms. Retrying...`, Toasts.Type.FAILURE);
-                // Wait extra to let Discord cool down
-                await sleep(delay * 2);
-                continue; // Retry this GIF with new delay
+    for (let i = 0; i < toImport.length; i++) {
+        const gif = toImport[i];
+
+        // Wait if we're rate limited before attempting
+        await waitForRateLimit();
+
+        let gifOk = false;
+        for (let attempt = 0; attempt < MAX_RETRIES_PER_GIF; attempt++) {
+            if (attempt > 0) {
+                // Before retrying, wait for rate limit again
+                await waitForRateLimit();
+                console.log(`[GifTransfer] Retrying GIF ${i + 1}/${toImport.length} (attempt ${attempt + 1})`);
+                retries++;
             }
-            console.warn("[GifTransfer] Failed to import GIF:", gif.url, e);
+
+            try {
+                addGif({
+                    url: gif.url,
+                    src: gif.src ?? gif.url,
+                    width: Number(gif.width) || 498,
+                    height: Number(gif.height) || 280,
+                    format: Number(gif.format) || 2,
+                });
+
+                // Small pause to let the fetch fire and our interceptor update rateLimitUntil
+                await sleep(150);
+
+                // If rate limit was just triggered by this gif, retry it
+                if (rateLimitUntil > Date.now()) {
+                    continue; // retry loop
+                }
+
+                gifOk = true;
+                ok++;
+                break;
+            } catch (e) {
+                console.warn("[GifTransfer] Failed to import GIF:", gif.url, e);
+                break; // don't retry on exception (not a rate limit)
+            }
+        }
+
+        if (!gifOk && rateLimitUntil <= Date.now()) {
+            // All retries exhausted and not rate limited — real error
+            err++;
         }
 
         await sleep(delay);
 
         if ((ok + err) % 50 === 0)
-            console.log(`[GifTransfer] Progress: ${ok + err}/${toImport.length} | OK: ${ok} | Errors: ${err} | Delay: ${delay}ms`);
+            console.log(`[GifTransfer] Progress: ${ok + err}/${toImport.length} | OK: ${ok} | Errors: ${err} | Retries: ${retries}`);
     }
 
-    console.log(`[GifTransfer] ✅ Done! Imported: ${ok} | Errors: ${err} | Skipped: ${skipped}`);
+    console.log(`[GifTransfer] ✅ Done! Imported: ${ok} | Errors: ${err} | Retries: ${retries} | Skipped: ${skipped}`);
     showToast(`Import complete! ${ok} GIFs added, ${skipped} duplicates skipped, ${err} errors.`, ok > 0 ? Toasts.Type.SUCCESS : Toasts.Type.FAILURE);
 }
 
@@ -382,7 +441,6 @@ function tryInject(): void {
             label.includes("selector") ||
             label.includes("picker")
         ) {
-            // Check if the currently selected tab is GIF (by text or by id)
             const activeTab = tl.querySelector('[role="tab"][aria-selected="true"]');
             const activeIsGif =
                 activeTab?.textContent?.trim().toUpperCase() === "GIF" ||
@@ -391,7 +449,6 @@ function tryInject(): void {
             if (activeIsGif) {
                 injectButtons(tl);
             } else {
-                // Remove buttons if not on GIF tab
                 tl.querySelector("#" + BUTTONS_ID)?.remove();
             }
             return;
@@ -417,27 +474,9 @@ function stopObserver(): void {
 
 export default definePlugin({
     name: "GifTransfer",
-    description: "Export and import all your favorite GIFs between accounts. Bypasses Discord's limit via patches.",
-    tags: ["Media", "Utility"],
-    authors: [TestcordDevs.nnenaza, TestcordDevs.x2b],
+    description: "Export and import all your favorite GIFs between accounts using a JSON file.",
+    authors: [TestcordDevs.nnenaza],
     settings,
-
-    patches: [
-        {
-            find: "toBinary(t).length>762880",
-            replacement: {
-                match: /\.toBinary\(t\)\.length>762880/,
-                replace: ".toBinary(t).length>Number.MAX_SAFE_INTEGER",
-            }
-        },
-        {
-            find: "toBinary(t).length>",
-            replacement: {
-                match: /\.toBinary\(t\)\.length>\d+/,
-                replace: ".toBinary(t).length>Number.MAX_SAFE_INTEGER",
-            }
-        },
-    ],
 
     settingsAboutComponent() {
         return (
@@ -449,15 +488,15 @@ export default definePlugin({
 
                 <p style={{ marginBottom: "4px", color: "var(--header-primary, #fff)" }}>📤 <b>Export</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— saves all your favorite GIFs to a .json file.</span></p>
                 <p style={{ marginBottom: "4px", color: "var(--header-primary, #fff)" }}>📥 <b>Import</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— loads GIFs from a .json file. Skips duplicates automatically.</span></p>
-                <p style={{ marginBottom: "16px", color: "var(--header-primary, #fff)" }}>🔍 <b>Verify</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— checks which GIFs from a file are missing from your favorites.</span></p>
+                <p style={{ marginBottom: "16px", color: "var(--header-primary, #fff)" }}>🔍 <b>Verify</b> <span style={{ color: "var(--header-secondary, #b9bbbe)", fontWeight: "normal" }}>— checks which GIFs from a file are missing from your favorites. Check the console for the full report.</span></p>
 
-                <p style={{ marginBottom: "6px", color: "#43b581", fontWeight: "700", fontSize: "13px" }}>
-                    ✅ Bypasses Discord's GIF Limit
+                <p style={{ marginBottom: "6px", color: "#faa61a", fontWeight: "700", fontSize: "13px" }}>
+                    ⚠️ Discord Rate Limits
                 </p>
                 <p style={{ marginBottom: "16px", color: "var(--header-secondary, #b9bbbe)" }}>
-                    Patches Discord's internal validation to remove the "Too many favorite GIFs" limit.
-                    Uses Discord's actual API so GIFs appear in your favorites properly.
-                    Includes automatic rate limit handling — slows down if Discord asks it to.
+                    The plugin now <b style={{ color: "var(--header-primary, #fff)" }}>auto-detects 429 and 400 errors</b> and
+                    pauses automatically until Discord allows more requests. No need to manually increase the delay —
+                    but you can still raise it if you want extra safety.
                 </p>
 
                 <Link href="https://github.com/Mixiruri" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -473,13 +512,13 @@ export default definePlugin({
     },
 
     start() {
-        try {
-            UserSettingsActionCreators?.FrecencyUserSettingsActionCreators?.loadIfNecessary?.();
-        } catch { }
+        unpatchFetch = patchFetch();
         startObserver();
     },
 
     stop() {
+        unpatchFetch?.();
+        unpatchFetch = null;
         stopObserver();
     },
 
