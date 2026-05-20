@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useSettings } from "@api/Settings";
 import { classNameFactory } from "@api/Styles";
 import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";

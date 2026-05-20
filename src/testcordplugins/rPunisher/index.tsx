@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";

@@ -207,7 +207,7 @@ export default function PluginSettings() {
 
     const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
 
-    const [searchValue, setSearchValue] = useState<{ value: string; tags: PluginTag[]; status: SearchStatus; author: string; }>({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL, author: "" });
+    const [searchValue, setSearchValue] = useState({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL, author: "" });
 
     const search = searchValue.value.toLowerCase();
     const onSearch = (query: string) => setSearchValue(prev => ({ ...prev, value: query }));
@@ -221,21 +221,21 @@ export default function PluginSettings() {
         return map;
     }, []);
     const authorOptions = useMemo(() => {
-        const authors = new Map<string, { category: "Testcord" | "Equicord" | "Vencord" | "Other"; github: string | undefined; }>();
+        const authors = new Map();
         for (const plugin of sortedPlugins) {
             const meta = PluginMeta[plugin.name];
             const folder = meta ? meta.folderName : "";
-            const category: "Testcord" | "Equicord" | "Vencord" | "Other" = folder.startsWith("src/testcordplugins/") ? "Testcord" : folder.startsWith("src/equicordplugins/") ? "Equicord" : folder.startsWith("src/plugins/") ? "Vencord" : "Other";
+            const category = folder.startsWith("src/testcordplugins/") ? "Testcord" : folder.startsWith("src/equicordplugins/") ? "Equicord" : folder.startsWith("src/plugins/") ? "Vencord" : "Other";
             for (const author of (plugin.authors || [])) {
                 if (!author || !author.name) continue;
                 if (!authors.has(author.name)) authors.set(author.name, { category, github: (author as any).github });
             }
         }
-        const grouped: Record<"Testcord" | "Equicord" | "Vencord" | "Other", string[]> = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
+        const grouped = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
         for (const [name, info] of authors.entries()) grouped[info.category].push(name);
-        const result: { label: string; value: string; github: string | undefined; }[] = [];
+        const result = [];
         for (const [cat, names] of Object.entries(grouped)) {
-            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info?.github || githubMap[name] }); }
+            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info.github || githubMap[name] }); }
         }
         return result;
     }, [sortedPlugins]);
@@ -273,7 +273,7 @@ export default function PluginSettings() {
                 const pluginMetaInfo = PluginMeta[plugin.name];
                 if (!pluginMetaInfo) return false;
                 return pluginMetaInfo.folderName?.startsWith("src/Betterdiscordplugins/") ||
-                    (plugin.tags as readonly string[] | undefined)?.includes("betterdiscord");
+                    plugin.tags?.includes("betterdiscord");
         }
 
         if (tags.length && tags.some(t => !plugin.tags?.includes(t))) return false;

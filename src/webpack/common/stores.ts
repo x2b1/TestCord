@@ -149,6 +149,6 @@ waitForStore("ApplicationStreamPreviewStore", m => ApplicationStreamPreviewStore
 waitForStore("ThemeStore", m => {
     ThemeStore = m;
     // Importing this directly can easily cause circular imports. For this reason, use a non import access here.
-    Vencord.Api.Themes.initQuickCssThemeStore(m);
+    Vencord.QuickCss?.initQuickCssThemeStore();
     // for some reason equicord removed quickcss from vencord.ts so i cant do shit abt it - x2b
 });

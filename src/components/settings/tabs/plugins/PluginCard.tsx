@@ -37,7 +37,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
     const isTestcordPlugin = pluginMeta.folderName?.startsWith("src/testcordplugins/") ?? false;
     const isUserPlugin = pluginMeta?.userPlugin ?? false;
     const isModifiedPlugin = plugin.isModified ?? false;
-    const isBDPlugin = pluginMeta.folderName?.startsWith("src/Betterdiscordplugins/") || (plugin.tags as readonly string[] | undefined)?.includes("betterdiscord");
+    const isBDPlugin = pluginMeta.folderName?.startsWith("src/Betterdiscordplugins/") || plugin.tags?.includes("betterdiscord");
 
     const isEnabled = () => isPluginEnabled(plugin.name);
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import ErrorBoundary from "@components/ErrorBoundary";
 import { openModal, ModalRoot, ModalSize, ModalHeader, ModalCloseButton, ModalContent, closeModal, closeAllModals } from "@utils/modal";
 import { Button, Forms, Parser, TextInput } from "@webpack/common";

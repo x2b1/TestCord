@@ -1,4 +1,3 @@
-// @ts-nocheck
 import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
 import { Menu, React, Toasts, TextInput, Forms, Button, Text } from "@webpack/common";
