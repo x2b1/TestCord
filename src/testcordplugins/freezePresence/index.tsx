@@ -47,21 +47,8 @@ function applyFakeOnline() {
     if (_fakeOnlineActive) return;
     FluxDispatcher.addInterceptor(fakeOnlineInterceptor);
     _fakeOnlineActive = true;
-    try {
-        const state = PresenceStore.getState?.();
-        const myId = UserStore.getCurrentUser()?.id;
-        const presences: any[] = [];
-        const statuses = state?.statuses ?? {};
-        for (const userId of Object.keys(statuses)) {
-            if (userId === myId) continue;
-            presences.push({ user: { id: userId }, status: "online", clientStatus: { desktop: "online" }, activities: [] });
-        }
-        if (presences.length > 0) {
-            FluxDispatcher.removeInterceptor(fakeOnlineInterceptor);
-            FluxDispatcher.dispatch({ type: "PRESENCES_REPLACE", presences });
-            FluxDispatcher.addInterceptor(fakeOnlineInterceptor);
-        }
-    } catch { /* ignore */ }
+    // Force re-render without sending a PRESENCES_REPLACE (which corrupts displayNameStyles)
+    FluxDispatcher.dispatch({ type: "PRESENCE_UPDATES", updates: [] });
 }
 
 function removeFakeOnline() {
@@ -95,17 +82,43 @@ export default definePlugin({
     patches: [
         {
             // Patch shouldComponentUpdate on the member list component
-            // Original: shouldComponentUpdate(e){return e.channel.id!==this.props.channel.id||e.version!==this.props.version||e.groups.length!==this.props.groups.length}
             find: "e.channel.id!==this.props.channel.id||e.version!==this.props.version",
             replacement: {
                 match: /shouldComponentUpdate\((\i)\)\{return \i\.channel\.id!==this\.props\.channel\.id\|\|\i\.version!==this\.props\.version\|\|\i\.groups\.length!==this\.props\.groups\.length\}/,
                 replace: "shouldComponentUpdate($1){if($self.isFrozen())return $1.channel.id!==this.props.channel.id||$1.rows!==this.props.rows;return $1.channel.id!==this.props.channel.id||$1.version!==this.props.version||$1.groups.length!==this.props.groups.length}"
+            }
+        },
+        {
+            // Patch getStatus to return "online" for everyone when fakeAllOnline is on
+            // This covers offline users not in the presence store
+            find: "isMobileOnline",
+            replacement: {
+                match: /return (E\[(\i)\])\?\?(\i);/,
+                replace: "return $self.fakeOnlineStatus($2) ?? $1 ?? $3;"
+            }
+        },
+        {
+            // Patch getClientStatus too so the dot color matches
+            find: "isMobileOnline",
+            replacement: {
+                match: /getClientStatus\((\i)\)\{return (\i)\[(\i)\]\}/,
+                replace: 'getClientStatus($1){if($self.fakeOnlineStatus($1))return{desktop:"online"};return $2[$3]}'
             }
         }
     ],
 
     isFrozen(): boolean {
         return _freezeActive;
+    },
+
+    isFakeOnline(): boolean {
+        return _fakeOnlineActive;
+    },
+
+    fakeOnlineStatus(userId: string): string | null {
+        if (!_fakeOnlineActive) return null;
+        if (userId === UserStore.getCurrentUser()?.id) return null;
+        return "online";
     },
 
     start() {
