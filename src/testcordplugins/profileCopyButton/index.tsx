@@ -92,6 +92,13 @@ interface RawProfileResponse {
         accent_color?: number | null;
         pronouns?: string;
         bio?: string;
+        guild_id?: string;
+    };
+    guild_member?: {
+        avatar?: string | null;
+        banner?: string | null;
+        bio?: string;
+        nick?: string;
     };
     widgets?: unknown[];
 }
@@ -276,9 +283,12 @@ function EmojiGuildPickerModal({ modalProps, missingEmojis, onConfirm }: {
 
 // ─── Core helpers ─────────────────────────────────────────────────────────────
 
-async function fetchRawProfile(targetId: string): Promise<RawProfileResponse | null> {
+async function fetchRawProfile(targetId: string, guildId?: string): Promise<RawProfileResponse | null> {
     try {
-        const res = await RestAPI.get({ url: `/users/${targetId}/profile?with_mutual_guilds=false` });
+        const qs = guildId
+            ? `with_mutual_guilds=false&guild_id=${guildId}`
+            : `with_mutual_guilds=false`;
+        const res = await RestAPI.get({ url: `/users/${targetId}/profile?${qs}` });
         return (res?.body ?? null) as RawProfileResponse | null;
     } catch (err) {
         logger.error("Failed to fetch raw profile", err);
@@ -340,6 +350,150 @@ function resolveTargetUserId(input: string): string | null {
     return matchId;
 }
 
+// ─── Guild auto-join ──────────────────────────────────────────────────────────
+
+async function tryAutoJoinGuild(guildId: string): Promise<void> {
+    // Already a member?
+    if (GuildStore.getGuild(guildId)) return;
+
+    let inviteCode: string | null = null;
+    let guildName = "the server";
+
+    // Try vanity URL first — works for most public servers
+    try {
+        const vanityRes = await RestAPI.get({ url: `/guilds/${guildId}/vanity-url` });
+        if (vanityRes?.body?.code) inviteCode = vanityRes.body.code;
+    } catch { /* no vanity */ }
+
+    // Try guild preview for discoverable servers
+    if (!inviteCode) {
+        try {
+            const previewRes = await RestAPI.get({ url: `/guilds/${guildId}/preview` });
+            if (previewRes?.body) {
+                guildName = previewRes.body.name ?? guildName;
+                if (previewRes.body.vanity_url_code) inviteCode = previewRes.body.vanity_url_code;
+            }
+        } catch { /* not discoverable */ }
+    }
+
+    if (!inviteCode) {
+        showToast("Server is private — can't auto-join.", Toasts.Type.MESSAGE);
+        return;
+    }
+
+    try {
+        const joinRes = await RestAPI.post({ url: `/invites/${inviteCode}`, body: {} });
+        guildName = joinRes?.body?.guild?.name ?? guildName;
+
+        // Set the guild as primary clan (shows the tag on profile)
+        try {
+            await RestAPI.patch({ url: "/users/@me", body: { primary_guild: guildId } });
+            showToast(`Joined ${guildName} and set clan tag!`, Toasts.Type.SUCCESS);
+        } catch {
+            showToast(`Joined ${guildName}! (Could not set clan tag automatically)`, Toasts.Type.SUCCESS);
+        }
+    } catch (err) {
+        logger.error("Failed to join guild", guildId, err);
+        showToast("Could not join the server (may be private).", Toasts.Type.MESSAGE);
+    }
+}
+
+// ─── Server profile copy logic ────────────────────────────────────────────────
+
+/** Returns true if the user has a meaningful server profile different from their global one. */
+function hasServerProfile(rawProfile: RawProfileResponse | null): boolean {
+    if (!rawProfile) return false;
+    const gm = rawProfile.guild_member;
+    if (!gm) return false;
+    // Has a guild-specific avatar, banner, bio or nick
+    return !!(gm.avatar || gm.banner || gm.bio || gm.nick);
+}
+
+async function copyServerProfile(
+    targetId: string,
+    rawProfile: RawProfileResponse,
+    guildId: string
+): Promise<void> {
+    const targetUser = UserStore.getUser(targetId);
+    if (!targetUser) {
+        showToast("Could not load that user.", Toasts.Type.FAILURE);
+        return;
+    }
+
+    const nitro = hasNitro();
+    const clear = settings.store.clearMissingFields;
+    let dispatched = 0;
+    const gm = rawProfile.guild_member;
+
+    // Nick → display name
+    const nick = gm?.nick ?? targetUser.globalName;
+    if (nick) {
+        setPendingChange({ pendingGlobalName: nick });
+        dispatched++;
+    } else if (clear) {
+        setPendingChange({ pendingGlobalName: "" });
+    }
+
+    // Bio
+    const rawBio = gm?.bio ?? rawProfile.user_profile?.bio ?? "";
+    if (rawBio) {
+        let bioToSet = nitro ? rawBio : rawBio.replace(CUSTOM_EMOJI_RE, "").replace(/[ \t]+\n/g, "\n").trim();
+        if (nitro) bioToSet = await resolveEmojisInBio(bioToSet);
+        setPendingChange({ pendingBio: bioToSet });
+        dispatched++;
+    } else if (clear) {
+        setPendingChange({ pendingBio: "" });
+    }
+
+    // Avatar (guild-specific or global fallback)
+    const guildAvatar = gm?.avatar;
+    if (guildAvatar) {
+        const url = `https://cdn.discordapp.com/guilds/${guildId}/users/${targetId}/avatars/${guildAvatar}.${guildAvatar.startsWith("a_") ? "gif" : "png"}?size=512`;
+        const dataUri = await urlToDataUri(url);
+        if (dataUri) {
+            setPendingChange({ pendingAvatar: { assetOrigin: "NEW_ASSET", imageUri: dataUri, description: `server-profile-copy-${targetId}` } });
+            dispatched++;
+        }
+    } else if (targetUser.avatar) {
+        const url = IconUtils.getUserAvatarURL(targetUser, nitro, 512);
+        const dataUri = url ? await urlToDataUri(url) : null;
+        if (dataUri) {
+            setPendingChange({ pendingAvatar: { assetOrigin: "NEW_ASSET", imageUri: dataUri, description: `profile-copy-${targetId}` } });
+            dispatched++;
+        }
+    }
+
+    // Banner (guild-specific or global fallback)
+    if (nitro) {
+        const guildBanner = gm?.banner;
+        if (guildBanner) {
+            const url = `https://cdn.discordapp.com/guilds/${guildId}/users/${targetId}/banners/${guildBanner}.${guildBanner.startsWith("a_") ? "gif" : "png"}?size=1024`;
+            const dataUri = await urlToDataUri(url);
+            if (dataUri) { setPendingChange({ pendingBanner: dataUri }); dispatched++; }
+        } else {
+            const profile = await fetchUserProfile(targetId, undefined, false).catch(() => null);
+            if (profile?.banner) {
+                const display = DisplayProfileUtils.getDisplayProfile(targetId);
+                const url = display?.getBannerURL({ canAnimate: true, size: 1024 })
+                    ?? IconUtils.getUserBannerURL({ id: targetUser.id, banner: profile.banner, canAnimate: true, size: 1024 });
+                const dataUri = url ? await urlToDataUri(url) : null;
+                if (dataUri) { setPendingChange({ pendingBanner: dataUri }); dispatched++; }
+            } else if (clear) {
+                setPendingChange({ pendingBanner: null });
+            }
+        }
+    }
+
+    // Auto-join guild
+    await tryAutoJoinGuild(guildId);
+
+    if (dispatched === 0) {
+        showToast("Nothing to copy from that server profile.", Toasts.Type.MESSAGE);
+        return;
+    }
+    showToast(`Copied server profile from ${targetUser.username}. Click Save to apply.`, Toasts.Type.SUCCESS);
+}
+
 async function copyGameWidgets(targetId: string, rawProfile: RawProfileResponse | null): Promise<boolean> {
     const display = DisplayProfileUtils.getDisplayProfile(targetId);
     const widgets = display?.widgets ?? rawProfile?.widgets;
@@ -355,7 +509,23 @@ async function copyGameWidgets(targetId: string, rawProfile: RawProfileResponse 
     }
 
     try {
-        await RestAPI.put({ url: endpoint, body: { widgets } });
+        // Discord's PUT /widgets API requires a specific format:
+        // - each widget keeps its id (any valid snowflake works)
+        // - games must be nested inside a "data" object with a "type" field
+        // - each game uses "game_id" instead of "applicationId"
+        const sanitized = (widgets as any[]).map((w: any) => ({
+            id: w.id,
+            type: w.type,
+            data: {
+                type: w.type,
+                games: (w.games ?? []).map((g: any) => ({
+                    game_id: g.applicationId ?? g.game_id,
+                    ...(g.comment != null && { comment: g.comment }),
+                    tags: g.tags ?? []
+                }))
+            }
+        }));
+        await RestAPI.put({ url: endpoint, body: { widgets: sanitized } });
         return true;
     } catch (err) {
         logger.error("Failed to copy game widgets", err);
@@ -365,13 +535,13 @@ async function copyGameWidgets(targetId: string, rawProfile: RawProfileResponse 
 
 // ─── Main copy logic ──────────────────────────────────────────────────────────
 
-export async function copyProfileFromId(targetId: string) {
+export async function copyProfileFromId(targetId: string, guildId?: string) {
     const [profile, rawProfile] = await Promise.all([
         fetchUserProfile(targetId, undefined, false).catch(err => {
             logger.error("Failed to fetch profile", err);
             return null;
         }),
-        fetchRawProfile(targetId)
+        fetchRawProfile(targetId, guildId)
     ]);
 
     const targetUser = UserStore.getUser(targetId);
@@ -500,6 +670,22 @@ export async function copyProfileFromId(targetId: string) {
         dispatched++;
     }
 
+    // Clan tag
+    const clan = rawProfile?.user?.clan ?? (rawProfile as any)?.user?.primary_guild;
+    const clanGuildId = (rawProfile as any)?.user?.clan?.identity_guild_id ?? clan?.identity_guild_id;
+    if (clanGuildId) {
+        try {
+            await tryAutoJoinGuild(clanGuildId);
+            // tryAutoJoinGuild already sets primary_guild on join.
+            // If already a member, just set the tag directly.
+            if (GuildStore.getGuild(clanGuildId)) {
+                await RestAPI.patch({ url: "/users/@me", body: { primary_guild: clanGuildId } });
+            }
+        } catch (err) {
+            logger.error("Failed to copy clan", err);
+        }
+    }
+
     // Game widgets
     let widgetsCopied = false;
     if (settings.store.copyGameCollection) {
@@ -530,24 +716,77 @@ async function copyProfileFromInput(input: string) {
 
 // ─── Context menu patch ───────────────────────────────────────────────────────
 
-const userContextMenuPatch: NavContextMenuPatchCallback = (children, { user }) => {
+const userContextMenuPatch: NavContextMenuPatchCallback = (children, { user, guildId }) => {
     if (!user || user.id === UserStore.getCurrentUser()?.id) return;
 
+    // We need the raw profile to know if the user has a server profile.
+    // We fetch it lazily when the submenu is opened to avoid spamming the API.
+    let cachedRaw: RawProfileResponse | null | undefined = undefined;
+
+    async function getRaw(): Promise<RawProfileResponse | null> {
+        if (cachedRaw !== undefined) return cachedRaw;
+        cachedRaw = await fetchRawProfile(user.id, guildId ?? undefined);
+        return cachedRaw;
+    }
+
+    const showSubmenu = !!guildId;
+
+    if (!showSubmenu) {
+        // No guild context — just show a single "Copy Profile" item
+        children.push(
+            <Menu.MenuSeparator />,
+            <Menu.MenuItem
+                id="copy-profile"
+                label="Copy Profile"
+                action={async () => {
+                    showToast(`Copying profile from ${user.username}...`, Toasts.Type.MESSAGE);
+                    try { await copyProfileFromId(user.id); }
+                    catch (err) {
+                        logger.error("Context menu copy failed", err);
+                        showToast("Failed to copy profile.", Toasts.Type.FAILURE);
+                    }
+                }}
+            />
+        );
+        return;
+    }
+
+    // Guild context — show submenu with Global and Server Profile options
     children.push(
         <Menu.MenuSeparator />,
-        <Menu.MenuItem
-            id="copy-profile"
-            label="Copy Profile"
-            action={async () => {
-                showToast(`Copying profile from ${user.username}...`, Toasts.Type.MESSAGE);
-                try {
-                    await copyProfileFromId(user.id);
-                } catch (err) {
-                    logger.error("Context menu copy failed", err);
-                    showToast("Failed to copy profile.", Toasts.Type.FAILURE);
-                }
-            }}
-        />
+        <Menu.MenuItem id="copy-profile" label="Copy Profile">
+            <Menu.MenuItem
+                id="copy-profile-global"
+                label="Copy Global Profile"
+                action={async () => {
+                    showToast(`Copying global profile from ${user.username}...`, Toasts.Type.MESSAGE);
+                    try { await copyProfileFromId(user.id); }
+                    catch (err) {
+                        logger.error("Context menu global copy failed", err);
+                        showToast("Failed to copy profile.", Toasts.Type.FAILURE);
+                    }
+                }}
+            />
+            <Menu.MenuItem
+                id="copy-profile-server"
+                label="Copy Server Profile"
+                action={async () => {
+                    showToast(`Fetching server profile from ${user.username}...`, Toasts.Type.MESSAGE);
+                    try {
+                        const raw = await getRaw();
+                        if (!raw || !hasServerProfile(raw)) {
+                            showToast(`${user.username} has no server profile here. Copying global profile instead.`, Toasts.Type.MESSAGE);
+                            await copyProfileFromId(user.id, guildId);
+                            return;
+                        }
+                        await copyServerProfile(user.id, raw, guildId);
+                    } catch (err) {
+                        logger.error("Context menu server copy failed", err);
+                        showToast("Failed to copy server profile.", Toasts.Type.FAILURE);
+                    }
+                }}
+            />
+        </Menu.MenuItem>
     );
 };
 
