@@ -340,6 +340,45 @@ function resolveTargetUserId(input: string): string | null {
     return matchId;
 }
 
+// ─── Guild auto-join ──────────────────────────────────────────────────────────
+
+async function tryAutoJoinGuild(guildId: string): Promise<void> {
+    if (GuildStore.getGuild(guildId)) return; // already a member
+
+    let inviteCode: string | null = null;
+    let guildName = "the server";
+
+    try {
+        const vanityRes = await RestAPI.get({ url: `/guilds/${guildId}/vanity-url` });
+        if (vanityRes?.body?.code) inviteCode = vanityRes.body.code;
+    } catch { /* no vanity */ }
+
+    if (!inviteCode) {
+        try {
+            const previewRes = await RestAPI.get({ url: `/guilds/${guildId}/preview` });
+            if (previewRes?.body) {
+                guildName = previewRes.body.name ?? guildName;
+                if (previewRes.body.vanity_url_code) inviteCode = previewRes.body.vanity_url_code;
+            }
+        } catch { /* not discoverable */ }
+    }
+
+    if (!inviteCode) {
+        showToast("Server is private — can't auto-join.", Toasts.Type.MESSAGE);
+        return;
+    }
+
+    try {
+        const joinRes = await RestAPI.post({ url: `/invites/${inviteCode}`, body: {} });
+        guildName = joinRes?.body?.guild?.name ?? guildName;
+        // Set as primary clan
+        await RestAPI.patch({ url: "/users/@me", body: { primary_guild: guildId } });
+        showToast(`Joined ${guildName} and set clan tag!`, Toasts.Type.SUCCESS);
+    } catch (err) {
+        showToast("Could not join the server (may be private).", Toasts.Type.MESSAGE);
+    }
+}
+
 async function copyGameWidgets(targetId: string, rawProfile: RawProfileResponse | null): Promise<boolean> {
     const display = DisplayProfileUtils.getDisplayProfile(targetId);
     const widgets = display?.widgets ?? rawProfile?.widgets;
@@ -355,7 +394,20 @@ async function copyGameWidgets(targetId: string, rawProfile: RawProfileResponse 
     }
 
     try {
-        await RestAPI.put({ url: endpoint, body: { widgets } });
+        // Discord requires widgets in format: { id, type, data: { type, games: [{ game_id, comment, tags }] } }
+        const sanitized = (widgets as any[]).map((w: any) => ({
+            id: w.id,
+            type: w.type,
+            data: {
+                type: w.type,
+                games: (w.games ?? []).map((g: any) => ({
+                    game_id: g.applicationId ?? g.game_id,
+                    ...(g.comment != null && { comment: g.comment }),
+                    tags: g.tags ?? []
+                }))
+            }
+        }));
+        await RestAPI.put({ url: endpoint, body: { widgets: sanitized } });
         return true;
     } catch (err) {
         logger.error("Failed to copy game widgets", err);
@@ -489,15 +541,73 @@ export async function copyProfileFromId(targetId: string) {
     const status = getCustomStatusActivity(targetId);
     if (status?.state || status?.emoji) {
         const { emoji } = status;
-        const useCustomEmoji = nitro && !!emoji?.id;
+        const isUnicodeEmoji = !!emoji && !emoji.id;
+        const isCustomEmoji = !!emoji?.id;
+
+        let finalEmojiId = "0";
+        let finalEmojiName = "";
+
+        if (isUnicodeEmoji) {
+            // Unicode emoji — always works, no upload needed
+            finalEmojiName = emoji!.name ?? "";
+        } else if (isCustomEmoji && emoji?.id) {
+            const ownedMap = getOwnedEmojiMap();
+            if (ownedMap.has(emoji.id)) {
+                // Already own it
+                finalEmojiId = emoji.id;
+                finalEmojiName = emoji.name ?? "";
+            } else if (nitro) {
+                // Don't own it — upload it to a server (same flow as bio emojis)
+                const parsedEmoji: ParsedEmoji = {
+                    animated: !!(emoji as any).animated,
+                    name: emoji.name ?? "status_emoji",
+                    id: emoji.id,
+                    full: `<${(emoji as any).animated ? "a" : ""}:${emoji.name}:${emoji.id}>`
+                };
+                const newId = await new Promise<string | null>(resolve => {
+                    openModal(props => (
+                        <EmojiGuildPickerModal
+                            modalProps={props}
+                            missingEmojis={[parsedEmoji]}
+                            onConfirm={async (guildId: string | null) => {
+                                if (!guildId) { resolve(null); return; }
+                                const uploadedId = await uploadEmojiToGuild(guildId, parsedEmoji);
+                                resolve(uploadedId);
+                            }}
+                        />
+                    ));
+                });
+                if (newId) {
+                    finalEmojiId = newId;
+                    finalEmojiName = emoji.name ?? "";
+                }
+            }
+        }
+
         CustomStatusSetting.updateSetting({
             text: status.state ?? "",
-            emojiId: useCustomEmoji && emoji?.id ? emoji.id : "0",
-            emojiName: emoji?.name ?? "",
+            emojiId: finalEmojiId,
+            emojiName: finalEmojiName,
             expiresAtMs: "0",
             createdAtMs: String(Date.now())
         });
         dispatched++;
+    }
+
+    // Clan tag + guild join
+    const clan = (rawProfile as any)?.user?.clan ?? (rawProfile as any)?.user?.primary_guild;
+    const clanGuildId = clan?.identity_guild_id;
+    if (clanGuildId) {
+        try {
+            if (GuildStore.getGuild(clanGuildId)) {
+                // Already a member — just set the tag
+                await RestAPI.patch({ url: "/users/@me", body: { primary_guild: clanGuildId } });
+            } else {
+                await tryAutoJoinGuild(clanGuildId);
+            }
+        } catch (err) {
+            logger.error("Failed to copy clan", err);
+        }
     }
 
     // Game widgets
