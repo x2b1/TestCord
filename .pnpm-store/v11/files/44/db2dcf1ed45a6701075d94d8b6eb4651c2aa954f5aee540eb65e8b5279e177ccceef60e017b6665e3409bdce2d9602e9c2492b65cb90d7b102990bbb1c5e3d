@@ -1,1 +1,0 @@
-module.exports = module.constructor.builtinModules || /* istanbul ignore next */ Object.keys(process.binding('natives')).filter(m => m.indexOf('internal') !== 0);
