@@ -7,73 +7,120 @@
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
+import { Button } from "@components/Button";
 import { Logger } from "@utils/Logger";
-import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, GuildStore, Menu, NavigationRouter, UserStore } from "@webpack/common"; // Added NavigationRouter
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
+import type { Message, User } from "@vencord/discord-types";
+import { ChannelStore, GuildStore, Menu, NavigationRouter, UserStore } from "@webpack/common";
 
-import { TestcordDevs } from "../../utils/constants";
+import * as activity from "./activity";
 import * as status from "./status";
 import * as voice from "./voice";
-import { initSharedTargets, addTarget as addSharedTarget, removeTarget as removeSharedTarget, isTarget, getTargets } from "./shared";
 
-// Define the interface for your native module manually
-export interface StalkerNative {
-    getStalkerDataDir(): Promise<string>;
-    readStalkerLog(): Promise<string>;
-    writeStalkerLog(contents: string): Promise<void>;
+export const logger = new Logger("Stalker");
+
+const Native = VencordNative.pluginHelpers.Stalker as PluginNative<typeof import("./native")>;
+
+if (!Native) {
+    logger.warn("Stalker native module not available");
 }
 
-// Access native module via global VencordNative
-const Native = (window as any).VencordNative.pluginHelpers.Stalker as StalkerNative;
+function OpenStalkingFolderButton() {
+    return (
+        <Button
+            disabled={!Native?.openStalkerDataDir}
+            onClick={() => void Native?.openStalkerDataDir?.()
+                .then(error => {
+                    if (error) logger.error("Failed to open Stalking folder:", error);
+                })
+                .catch(error => logger.error("Failed to open Stalking folder:", error))}
+        >
+            Open Stalking Folder
+        </Button>
+    );
+}
 
 export interface StalkerLogEntry {
     timestamp: string;
     userId: string;
     username: string;
-    action: "status_change" | "voice_join" | "voice_leave" | "message_send" | "typing_start" | "profile_update";
+    action: "activity_start" | "activity_stop" | "activity_update" | "client_status_change" | "custom_status_change" | "message_send" | "status_change" | "typing_start" | "voice_join" | "voice_leave" | "voice_update";
     details: string;
     channelName?: string;
     guildName?: string;
+    metadata?: Record<string, string | number | boolean | null>;
 }
 
-export const logger = new Logger("Stalker");
+interface UserLogCache {
+    logs: StalkerLogEntry[];
+    date: string;
+}
 
-// Cache logs in memory
-let cachedLogs: StalkerLogEntry[] = [];
+const cachedLogsPerUser = new Map<string, UserLogCache>();
+const writeLocks = new Map<string, Promise<void>>();
+const typingNotificationCooldowns = new Map<string, number>();
 
-async function loadLogsFromFile(): Promise<void> {
-    if (!Native || !Native.readStalkerLog) return;
+function getTodayDate(): string {
+    return new Date().toISOString().slice(0, 10);
+}
+
+async function getLogsFromFile(userId: string, username: string): Promise<StalkerLogEntry[]> {
+    if (!Native?.readStalkerLog) return [];
+
     try {
-        const fileContents = await Native.readStalkerLog();
-        if (fileContents) {
-            const logs = JSON.parse(fileContents);
-            cachedLogs = Array.isArray(logs) ? logs : [];
-        } else {
-            cachedLogs = [];
-        }
+        const fileContents = await Native.readStalkerLog(userId, username);
+        const parsed = JSON.parse(fileContents);
+        return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-        logger.error("Failed to read stalker logs:", error);
-        cachedLogs = [];
+        logger.error(`Failed to parse stalker log for user ${userId}, starting fresh:`, error);
+        return [];
     }
+}
+
+function getCacheForUser(userId: string): UserLogCache | undefined {
+    const cache = cachedLogsPerUser.get(userId);
+    if (cache && cache.date !== getTodayDate()) {
+        cachedLogsPerUser.delete(userId);
+        return undefined;
+    }
+    return cache;
 }
 
 export async function logStalkerEvent(entry: StalkerLogEntry) {
-    try {
-        if (!settings.store.enableLogging) return;
-        if (!Native || !Native.writeStalkerLog) return;
+    if (!settings.store.enableLogging) return;
+    if (!Native?.writeStalkerLog) return;
 
-        cachedLogs.push(entry);
-        await Native.writeStalkerLog(JSON.stringify(cachedLogs, null, 2));
-    } catch (error) {
-        logger.error("Failed to write stalker log:", error);
-    }
+    const previousLock = writeLocks.get(entry.userId) ?? Promise.resolve();
+
+    const newLock = previousLock.then(async () => {
+        try {
+            let cache = getCacheForUser(entry.userId);
+
+            if (!cache) {
+                const logs = await getLogsFromFile(entry.userId, entry.username);
+                cache = { logs, date: getTodayDate() };
+                cachedLogsPerUser.set(entry.userId, cache);
+            }
+
+            cache.logs.push(entry);
+
+            await Native.writeStalkerLog(JSON.stringify(cache.logs, null, 2), entry.userId, entry.username);
+        } catch (error) {
+            logger.error("Failed to write stalker log:", error);
+        }
+    });
+
+    writeLocks.set(entry.userId, newLock);
+    await newLock;
 }
 
 export let targets: string[] = [];
 
-const parseTargets = (value: string): string[] => {
-    targets = value.split(",").map(s => s.trim()).filter(Boolean);
-    return targets;
+const parseTargets = (parse: string): string[] => {
+    const regex = /\s*(,?)\s*([0-9]+)/g;
+    const matches = [...parse.matchAll(regex)].map(match => match.at(match.length - 1) as string);
+    targets = matches;
+    return matches;
 };
 
 export const settings = definePluginSettings({
@@ -86,7 +133,13 @@ export const settings = definePluginSettings({
     notifyCallJoin: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Send a notification when a user joins a call.",
+        description: "Send a notification when a user joins a voice channel.",
+    },
+
+    notifyCallLeave: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Send a notification when a user leaves a voice channel.",
     },
 
     notifyOffline: {
@@ -110,19 +163,13 @@ export const settings = definePluginSettings({
     notifyIdle: {
         type: OptionType.BOOLEAN,
         default: false,
-        description: "Send a notification when a user goes on idle.",
+        description: "Send a notification when a user goes idle.",
     },
 
     notifyGoOnline: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Send a notification when a user logs onto Discord or leaves invisible.",
-    },
-
-    notifyOnMessage: {
-        type: OptionType.BOOLEAN,
-        default: true, // Changed to true so you see it working immediately
-        description: "Send a notification when a user sends a message.",
+        description: "Send a notification when a user logs onto Discord or leaves invisible, regardless of the 4 above options."
     },
 
     enableLogging: {
@@ -131,41 +178,91 @@ export const settings = definePluginSettings({
         description: "Enable logging of stalker events to a local file."
     },
 
+    openStalkingFolder: {
+        type: OptionType.COMPONENT,
+        description: "Open the Stalking data folder.",
+        component: OpenStalkingFolderButton,
+    },
+
     logMessages: {
         type: OptionType.BOOLEAN,
-        default: true, // Defaulting to true for visibility
-        description: "Log when a user sends a message in any channel.",
+        default: true,
+        description: "Log when a user sends a message in any channel."
+    },
+
+    notifyOnMessage: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Send a notification when a stalked user sends a message."
     },
 
     logTyping: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Log when a user starts typing (Discord only sends this if you are in the channel/DM).",
+        description: "Log when a stalked user starts typing in a visible channel or DM."
     },
 
-    logProfileUpdates: {
+    notifyTyping: {
         type: OptionType.BOOLEAN,
         default: true,
-        description: "Log when a user updates their profile.",
+        description: "Send a notification when a stalked user starts typing in a visible channel or DM."
+    },
+
+    logMessagePreview: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Include message previews in local message logs."
+    },
+
+    logActivities: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Log when a user starts, stops, or changes an activity."
+    },
+
+    notifyActivities: {
+        type: OptionType.BOOLEAN,
+        default: false,
+        description: "Send a notification when a user starts an activity."
+    },
+
+    logCustomStatus: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Log custom status changes."
+    },
+
+    logClientStatus: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Log whether a user is online from desktop, mobile, or web."
+    },
+
+    logVoiceStateChanges: {
+        type: OptionType.BOOLEAN,
+        default: true,
+        description: "Log voice state changes like mute, deaf, video, and streaming."
     },
 
     targets: {
         type: OptionType.STRING,
-        placeholder: "1234567890, 0987654321",
+        placeholder: "1234,5678",
         description: "List of user IDs to stalk, separate with a comma.",
         default: "",
         onChange: parseTargets,
     },
 });
 
-const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { user: any; }) => {
-    if (!settings.store.stalkContext) return;
-    if (!user) return;
+interface UserContextProps {
+    user?: User;
+}
 
-    const stalked = isTarget(user.id);
+const patchUserContext: NavContextMenuPatchCallback = (children, { user }: UserContextProps) => {
+    if (!settings.store.stalkContext || !user) return;
+
+    const stalked = targets.includes(user.id);
     const group = findGroupChildrenByChildId("apps", children) ?? children;
-
-    let id = group.findIndex(child => child?.props?.id === "ignore");
+    let id = group.findLastIndex(child => child?.props?.id && child.props.id === "ignore");
     if (id < 0) id = group.length - 1;
 
     group.splice(id, 0,
@@ -173,11 +270,17 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
             id="vc-st-stalk"
             label={stalked ? "Unstalk" : "Stalk"}
             action={() => {
+                const currentTargets = new Set(parseTargets(settings.store.targets));
+
                 if (stalked) {
-                    removeSharedTarget(user.id);
+                    currentTargets.delete(user.id);
+                    cachedLogsPerUser.delete(user.id);
+                    writeLocks.delete(user.id);
                 } else {
-                    addSharedTarget(user.id);
+                    currentTargets.add(user.id);
                 }
+
+                settings.store.targets = [...currentTargets].join(",");
                 parseTargets(settings.store.targets);
             }}
         />
@@ -186,139 +289,141 @@ const patchUserContext: NavContextMenuPatchCallback = (children, { user }: { use
 
 export default definePlugin({
     name: "Stalker",
-    description: "Notifies you whenever a target user changes status, joins VC, or sends a message. (fixed by x2b)",
+    description: "Tracks selected users across status, voice, activity, client, custom status, and message events.",
     tags: ["Friends", "Utility"],
-    authors: [{ name: "Reycko", id: 1123725368004726794n }, TestcordDevs.x2b],
+    authors: [
+        { name: "Reycko", id: 1123725368004726794n },
+        { name: "irritably", id: 928787166916640838n }
+    ],
 
     contextMenus: {
         "user-context": patchUserContext,
     },
 
-    async start() {
-        initSharedTargets(settings.store);
+    start() {
         parseTargets(settings.store.targets);
-        if (settings.store.enableLogging) {
-            await loadLogsFromFile();
-        }
         status.init();
         voice.init();
-        logger.info("Stalker started. Monitoring targets:", targets);
+        activity.init();
     },
 
     stop() {
+        activity.deinit();
         status.deinit();
         voice.deinit();
+        cachedLogsPerUser.clear();
+        writeLocks.clear();
+        typingNotificationCooldowns.clear();
     },
 
     flux: {
-        // Removed 'async' from these functions to ensure Vencord Flux handles them correctly
-        MESSAGE_CREATE({ message, optimistic, type, channelId }: { message: any; optimistic: boolean; type: string; channelId: string; }) {
-            if (optimistic || type !== "MESSAGE_CREATE") return;
-            if (message.state === "SENDING") return;
-            if (!getTargets().includes(message.author.id)) return;
-
-            const user = UserStore.getUser(message.author.id) || message.author;
-            if (!user) return;
+        MESSAGE_CREATE({ message, optimistic, type }: { message: Message; optimistic?: boolean; type?: string; }) {
+            if (optimistic || type === "MESSAGE_CREATE" && message.state === "SENDING") return;
+            if (!targets.includes(message.author.id)) return;
 
             const channel = ChannelStore.getChannel(message.channel_id);
             const guild = channel?.guild_id ? GuildStore.getGuild(channel.guild_id) : null;
-            const channelName = channel
-                ? (guild ? `${guild.name} > #${channel.name}` : `DM > ${channel.name}`)
-                : "Unknown Channel";
+            const user = UserStore.getUser(message.author.id) ?? message.author;
+            const preview = settings.store.logMessagePreview
+                ? message.content.length > 100
+                    ? `${message.content.substring(0, 100)}...`
+                    : message.content
+                : null;
 
-            logger.info(`[Stalker] Message from ${user.username}: ${message.content}`);
-
-            // 1. Log to file
             if (settings.store.logMessages) {
                 logStalkerEvent({
                     timestamp: new Date().toISOString(),
-                    userId: user.id,
+                    userId: message.author.id,
                     username: user.username,
                     action: "message_send",
-                    details: `Sent message: ${message.content.substring(0, 100)}${message.content.length > 100 ? "..." : ""}`,
+                    details: preview ? `Sent message: ${preview}` : "Sent a message.",
                     channelName: channel?.name,
-                    guildName: guild?.name
+                    guildName: guild?.name,
+                    metadata: {
+                        channelId: message.channel_id,
+                        guildId: channel?.guild_id ?? null,
+                        messageId: message.id,
+                        hasContent: message.content.length > 0
+                    }
                 });
             }
 
-            // 2. Show Notification
             if (settings.store.notifyOnMessage) {
+                const channelName = channel
+                    ? guild
+                        ? `${guild.name} > #${channel.name}`
+                        : `DM > ${channel.name}`
+                    : "Unknown channel";
+                const body = `${user.username} sent a message in ${channelName}:\n${message.content.substring(0, 80) || "(message hidden)"}`;
+
                 showNotification({
                     title: "Stalker - New Message",
-                    body: `${user.username} sent a message in ${channelName}:\n${message.content.substring(0, 50)}...`,
+                    body,
                     icon: user.getAvatarURL(void 0, 128, true),
                     onClick: () => {
-                        if (channel) {
-                            const loc = channel.guild_id
-                                ? `/channels/${channel.guild_id}/${channel.id}`
-                                : `/channels/@me/${channel.id}`;
-                            NavigationRouter.transitionTo(loc);
-                        }
+                        if (!channel) return;
+
+                        const route = channel.guild_id
+                            ? `/channels/${channel.guild_id}/${channel.id}`
+                            : `/channels/@me/${channel.id}`;
+                        NavigationRouter.transitionTo(route);
                     }
                 });
             }
         },
 
-        TYPING_START({ userId, channelId }: { userId: string, channelId: string; }) {
-            if (!settings.store.logTyping) return;
-            if (!getTargets().includes(userId)) return;
+        TYPING_START({ userId, channelId }: { userId: string; channelId: string; }) {
+            if (!settings.store.logTyping && !settings.store.notifyTyping) return;
+            if (!targets.includes(userId)) return;
 
             const user = UserStore.getUser(userId);
             if (!user) return;
 
-            // Discord only sends TYPING_START for channels you are currently viewing or DMs.
-            logger.info(`[Stalker] ${user.username} is typing...`);
-
             const channel = ChannelStore.getChannel(channelId);
             const guild = channel?.guild_id ? GuildStore.getGuild(channel.guild_id) : null;
+            const channelName = channel
+                ? guild
+                    ? `${guild.name} > #${channel.name}`
+                    : `DM > ${channel.name}`
+                : "Unknown channel";
 
-            logStalkerEvent({
-                timestamp: new Date().toISOString(),
-                userId: user.id,
-                username: user.username,
-                action: "typing_start",
-                details: "Started typing",
-                channelName: channel?.name,
-                guildName: guild?.name
-            });
-        },
+            if (settings.store.logTyping) {
+                logStalkerEvent({
+                    timestamp: new Date().toISOString(),
+                    userId,
+                    username: user.username,
+                    action: "typing_start",
+                    details: `Started typing in ${channelName}.`,
+                    channelName: channel?.name,
+                    guildName: guild?.name,
+                    metadata: {
+                        channelId,
+                        guildId: channel?.guild_id ?? null
+                    }
+                });
+            }
 
-        // Covers avatar updates, nickname changes in guilds
-        GUILD_MEMBER_UPDATE({ member, guildId }: { member: any; guildId: string; }) {
-            if (!settings.store.logProfileUpdates) return;
-            if (!member || !member.user) return;
-            if (!getTargets().includes(member.user.id)) return;
+            if (!settings.store.notifyTyping) return;
 
-            const guild = GuildStore.getGuild(guildId);
-            const { user } = member;
+            const now = Date.now();
+            const cooldownKey = `${userId}:${channelId}`;
+            const nextAllowed = typingNotificationCooldowns.get(cooldownKey) ?? 0;
+            if (now < nextAllowed) return;
 
-            logger.info(`[Stalker] Profile Update for ${user.username} in ${guild?.name}`);
+            typingNotificationCooldowns.set(cooldownKey, now + 10_000);
 
-            logStalkerEvent({
-                timestamp: new Date().toISOString(),
-                userId: user.id,
-                username: user.username,
-                action: "profile_update",
-                details: `Guild Member Update in ${guild?.name}`,
-                guildName: guild?.name
-            });
-        },
+            showNotification({
+                title: "Stalker - Typing",
+                body: `${user.username} is typing in ${channelName}`,
+                icon: user.getAvatarURL(void 0, 128, true),
+                onClick: () => {
+                    if (!channel) return;
 
-        // Covers global profile updates (mostly for self/friends)
-        USER_UPDATE({ user }: { user: any; }) {
-            if (!settings.store.logProfileUpdates) return;
-            if (!getTargets().includes(user.id)) return;
-
-            const existingUser = UserStore.getUser(user.id);
-            // Only log if we actually have data to compare, or just log it anyway
-            logger.info(`[Stalker] User Update for ${user.username}`);
-
-            logStalkerEvent({
-                timestamp: new Date().toISOString(),
-                userId: user.id,
-                username: user.username,
-                action: "profile_update",
-                details: "User Updated"
+                    const route = channel.guild_id
+                        ? `/channels/${channel.guild_id}/${channel.id}`
+                        : `/channels/@me/${channel.id}`;
+                    NavigationRouter.transitionTo(route);
+                }
             });
         },
     },

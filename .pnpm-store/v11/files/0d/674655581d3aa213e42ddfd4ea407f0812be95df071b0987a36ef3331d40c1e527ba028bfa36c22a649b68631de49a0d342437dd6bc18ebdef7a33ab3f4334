@@ -1,0 +1,32 @@
+{
+  "name": "@ffmpeg/types",
+  "version": "0.12.2",
+  "description": "ffmpeg.wasm types",
+  "types": "types",
+  "files": [
+    "types"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ffmpegwasm/ffmpeg.wasm.git"
+  },
+  "keywords": [
+    "ffmpeg",
+    "WebAssembly",
+    "video",
+    "audio",
+    "transcode"
+  ],
+  "author": "Jerome Wu <jeromewus@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ffmpegwasm/ffmpeg.wasm/issues"
+  },
+  "engines": {
+    "node": ">=16.x"
+  },
+  "homepage": "https://github.com/ffmpegwasm/ffmpeg.wasm#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}

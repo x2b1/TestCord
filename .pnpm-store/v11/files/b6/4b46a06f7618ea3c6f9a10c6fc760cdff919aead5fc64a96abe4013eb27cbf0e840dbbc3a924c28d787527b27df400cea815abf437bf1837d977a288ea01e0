@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "name": "@intrnl/xxhash64",
+  "description": "xxHash64 implementation in JavaScript",
+  "version": "0.1.2",
+  "author": "intrnl",
+  "license": "MIT",
+  "repository": {
+    "url": "https://codeberg.org/intrnl/js-xxhash64"
+  },
+  "files": [
+    "src/"
+  ],
+  "main": "src/index.js"
+}

@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
 import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
+import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
+import { Menu } from "@webpack/common";
 
 interface DomainInfo {
     domain: string;
@@ -23,6 +25,24 @@ interface IPInfo {
     ip: string;
     [key: string]: any;
 }
+
+const OSINT_TOOLS = [
+    { id: "see-know", name: "See-Know", url: "https://see-know.eu/", description: "" },
+    { id: "epieos", name: "Epieos", url: "https://epieos.com/", description: "" },
+    { id: "osintx", name: "Osintx_", url: "https://www.osintx.io/", description: "" },
+    { id: "socialeye", name: "SocialEye", url: "https://socialeye.net/", description: "" },
+    { id: "cloudsint", name: "Cloudsint", url: "https://cloudsint.net/", description: "" },
+    { id: "proximity", name: "Proximity OSINT", url: "https://www.proximityosint.com/", description: "" },
+    { id: "deadeye", name: "DeadEye", url: "https://deadeye.cc/", description: "" },
+    { id: "indicia", name: "Indicia", url: "https://indicia.app/", description: "" },
+    { id: "tempemail", name: "Snapmail (Temp-Email)", url: "https://www.snapmail.in/", description: "" }
+];
+
+const OSINT_RESOURCES = [
+    { id: "pikaosint", name: "PikaOSINT", url: "https://pikaosint.pages.dev/", description: "OSINT tools collection" },
+    { id: "osintframework", name: "OSINT Framework", url: "https://osintframework.com/", description: "OSINT framework and tools" },
+    { id: "photo-osint", name: "Photo OSINT", url: "https://start.me/p/0PgzqO/photo-osint", description: "Photo investigation resources" }
+];
 
 const settings = definePluginSettings({
     enableLogging: {
@@ -53,7 +73,9 @@ const settings = definePluginSettings({
             "/domain google.com\n" +
             "/iplookup 1.1.1.1\n" +
             "/myip\n" +
-            "/usersearch johndoe",
+            "/usersearch johndoe\n" +
+            "\n" +
+            "Right-click on any message to access OSINT tools!",
         default: "OSINTToolkit command list"
     }
 });
@@ -77,7 +99,6 @@ function normalizeDomain(input: string): string {
 function isValidIPv4(ip: string): boolean {
     const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
     if (!ipRegex.test(ip)) return false;
-
     return ip.split(".").every(octet => {
         const num = Number(octet);
         return Number.isInteger(num) && num >= 0 && num <= 255;
@@ -88,14 +109,11 @@ function normalizeUsername(input: string): string {
     return input.trim().replace(/^@+/, "");
 }
 
+
 async function getDomainInfo(domain: string): Promise<DomainInfo | null> {
     try {
         const response = await fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`);
-
-        if (!response.ok) {
-            throw new Error(`RDAP lookup failed with status ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`RDAP lookup failed with status ${response.status}`);
         const data = await response.json();
 
         let registrar = "Unknown";
@@ -103,23 +121,18 @@ async function getDomainInfo(domain: string): Promise<DomainInfo | null> {
             const registrarEntity = data.entities.find((e: any) =>
                 Array.isArray(e.roles) && e.roles.includes("registrar")
             );
-
             if (registrarEntity?.vcardArray?.[1]) {
                 const fn = registrarEntity.vcardArray[1].find((p: any) => p[0] === "fn");
-                if (fn?.[3]) {
-                    registrar = fn[3];
-                }
+                if (fn?.[3]) registrar = fn[3];
             }
         }
 
         const registrationDate =
             data.events?.find((e: any) => e.eventAction === "registration")?.eventDate ??
             data.events?.find((e: any) => e.eventAction === "registered")?.eventDate;
-
         const expirationDate =
             data.events?.find((e: any) => e.eventAction === "expiration")?.eventDate ??
             data.events?.find((e: any) => e.eventAction === "expire")?.eventDate;
-
         const updatedAt =
             data.events?.find((e: any) => e.eventAction === "last changed")?.eventDate ??
             data.events?.find((e: any) => e.eventAction === "last update of RDAP database")?.eventDate;
@@ -231,25 +244,21 @@ function parseProviderResponse(data: any, ip?: string): IPInfo {
                 isProxy: data.is_proxy,
                 isVpn: data.is_vpn,
                 isAbuser: data.is_abuser,
-                // datacenter
                 datacenterName: data.datacenter?.datacenter,
                 datacenterDomain: data.datacenter?.domain,
                 datacenterNetwork: data.datacenter?.network,
                 datacenterRegion: data.datacenter?.region,
                 datacenterService: data.datacenter?.service,
-                // company
                 companyName: data.company?.name,
                 companyAbuserScore: data.company?.abuser_score,
                 companyDomain: data.company?.domain,
                 companyType: data.company?.type,
                 companyNetwork: data.company?.network,
                 companyNetname: data.company?.netname,
-                // abuse
                 abuseName: data.abuse?.name,
                 abuseAddress: data.abuse?.address,
                 abuseEmail: data.abuse?.email,
                 abusePhone: data.abuse?.phone,
-                // asn
                 asn: data.asn?.asn,
                 asnAbuserScore: data.asn?.abuser_score,
                 asnRoute: data.asn?.route,
@@ -263,7 +272,6 @@ function parseProviderResponse(data: any, ip?: string): IPInfo {
                 asnCreated: data.asn?.created,
                 asnUpdated: data.asn?.updated,
                 asnRir: data.asn?.rir,
-                // location
                 isEU: data.location?.is_eu_member,
                 callingCode: data.location?.calling_code,
                 currencyCode: data.location?.currency_code,
@@ -281,7 +289,6 @@ function parseProviderResponse(data: any, ip?: string): IPInfo {
                 isDst: data.location?.is_dst,
                 utcOffset: data.location?.utcoffset,
                 accuracy: data.location?.accuracy,
-                // vpn object
                 vpnService: data.vpn?.service,
                 vpnUrl: data.vpn?.url,
                 vpnType: data.vpn?.type,
@@ -314,6 +321,7 @@ function parseProviderResponse(data: any, ip?: string): IPInfo {
     }
 }
 
+
 async function getIPInfo(ip: string): Promise<IPInfo | null> {
     try {
         const response = await fetch(getProviderUrl(ip));
@@ -341,24 +349,17 @@ async function getMyIP(): Promise<IPInfo | null> {
 function calculateDomainAge(registrationDate: string): string {
     const now = new Date();
     const regDate = new Date(registrationDate);
-
-    if (Number.isNaN(regDate.getTime())) {
-        return "Unknown";
-    }
-
+    if (Number.isNaN(regDate.getTime())) return "Unknown";
     const diffTime = Math.abs(now.getTime() - regDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     const years = Math.floor(diffDays / 365);
     const months = Math.floor((diffDays % 365) / 30);
     const days = (diffDays % 365) % 30;
-
     return `${years}y ${months}m ${days}d`;
 }
 
 function createDomainMessage(info: DomainInfo) {
     const ageText = info.registrationDate ? calculateDomainAge(info.registrationDate) : "Unknown";
-
     return [
         "```txt",
         `[DOMAIN LOOKUP] ${info.domain}`,
@@ -376,17 +377,14 @@ function createDomainMessage(info: DomainInfo) {
 
 function createIPMessage(info: IPInfo) {
     const provider = settings.store.ipProvider;
-
     const fmt = (label: string, value: any): string | null => {
         if (value === undefined || value === null || value === "") return null;
         return `${label.padEnd(20)}: ${value}`;
     };
-
     const coords = typeof info.lat === "number" && typeof info.lon === "number"
         ? `${info.lat}, ${info.lon}` : undefined;
 
     let lines: (string | null)[];
-
     switch (provider) {
         case "ipapi-is":
             lines = [
@@ -555,16 +553,59 @@ function createIPMessage(info: IPInfo) {
             ];
             break;
     }
-
     return lines.filter(l => l !== null).join("\n");
 }
+
+function openUrl(url: string) {
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
+
+const messageContextMenuPatch: NavContextMenuPatchCallback = (children, { message }) => {
+    if (!message || !message.author) return;
+    const osintGroup = children.find((child: any) => child?.props?.id === "osint-tools");
+    if (osintGroup) return;
+
+    children.push(
+        <Menu.MenuGroup id="osint-tools">
+            <Menu.MenuItem id="osint-toolkit-main" label="OSINT Toolkit">
+                <Menu.MenuItem id="csint-tools" label="CSINT Tools">
+                    {OSINT_TOOLS.map(tool => (
+                        <Menu.MenuItem
+                            key={`csint-${tool.id}`}
+                            id={`csint-${tool.id}`}
+                            label={tool.name}
+                            hint={tool.description}
+                            action={() => openUrl(tool.url)}
+                        />
+                    ))}
+                </Menu.MenuItem>
+                <Menu.MenuItem id="osint-tools" label="OSINT Tools">
+                    {OSINT_RESOURCES.map(resource => (
+                        <Menu.MenuItem
+                            key={`osint-${resource.id}`}
+                            id={`osint-${resource.id}`}
+                            label={resource.name}
+                            hint={resource.description}
+                            action={() => openUrl(resource.url)}
+                        />
+                    ))}
+                </Menu.MenuItem>
+            </Menu.MenuItem>
+        </Menu.MenuGroup>
+    );
+};
 
 export default definePlugin({
     name: "OSINTToolkit",
     description: "OSINT - Domain age lookup, IP information, and username search",
     tags: ["Utility", "Developers"],
-    authors: [{ name: "Irritably", id: 928787166916640838n }],
+    authors: [{ name: "irritably", id: 928787166916640838n }],
     settings,
+
+    contextMenus: {
+        "message": messageContextMenuPatch
+    },
 
     commands: [
         {
@@ -572,41 +613,22 @@ export default definePlugin({
             description: "Get domain registration information and age",
             inputType: ApplicationCommandInputType.BUILT_IN,
             predicate: () => true,
-            options: [
-                {
-                    name: "domain",
-                    description: "The domain to lookup (e.g., google.com)",
-                    type: 3,
-                    required: true
-                }
-            ],
+            options: [{ name: "domain", description: "The domain to lookup (e.g., google.com)", type: 3, required: true }],
             execute: async (args: any[], ctx: any) => {
                 const channelId = ctx.channel.id;
                 const domainInput = args[0]?.value as string;
-
-                if (!domainInput) {
-                    sendBotMessage(channelId, { content: "Please provide a domain name!" });
-                    return;
-                }
-
+                if (!domainInput) { sendBotMessage(channelId, { content: "Please provide a domain name!" }); return; }
                 const domain = normalizeDomain(domainInput);
                 logDebug("Looking up domain:", domain);
-
                 try {
                     const info = await getDomainInfo(domain);
-
                     if (!info) {
-                        sendBotMessage(channelId, {
-                            content: `Failed to retrieve information for **${domain}**\nPossible reasons:\n• Domain doesn't exist\n• RDAP server unavailable\n• Invalid domain format`
-                        });
+                        sendBotMessage(channelId, { content: `Failed to retrieve information for **${domain}**\nPossible reasons:\n• Domain doesn't exist\n• RDAP server unavailable\n• Invalid domain format` });
                         return;
                     }
-
                     sendBotMessage(channelId, { content: createDomainMessage(info) });
                 } catch {
-                    sendBotMessage(channelId, {
-                        content: `An unexpected error occurred while looking up **${domain}**`
-                    });
+                    sendBotMessage(channelId, { content: `An unexpected error occurred while looking up **${domain}**` });
                 }
             }
         },
@@ -615,49 +637,26 @@ export default definePlugin({
             description: "Get geolocation and network information for an IP",
             inputType: ApplicationCommandInputType.BUILT_IN,
             predicate: () => true,
-            options: [
-                {
-                    name: "ip",
-                    description: "The IP address to lookup (IPv4)",
-                    type: 3,
-                    required: true
-                }
-            ],
+            options: [{ name: "ip", description: "The IP address to lookup (IPv4)", type: 3, required: true }],
             execute: async (args: any[], ctx: any) => {
                 const channelId = ctx.channel.id;
                 const ipInput = args[0]?.value as string;
-
-                if (!ipInput) {
-                    sendBotMessage(channelId, { content: "Please provide an IP address!" });
-                    return;
-                }
-
+                if (!ipInput) { sendBotMessage(channelId, { content: "Please provide an IP address!" }); return; }
                 const ip = ipInput.trim();
-
                 if (!isValidIPv4(ip)) {
-                    sendBotMessage(channelId, {
-                        content: "Invalid IP address format! Please use IPv4 format (e.g., 8.8.8.8)"
-                    });
+                    sendBotMessage(channelId, { content: "Invalid IP address format! Please use IPv4 format (e.g., 8.8.8.8)" });
                     return;
                 }
-
                 logDebug("Looking up IP:", ip);
-
                 try {
                     const info = await getIPInfo(ip);
-
                     if (!info) {
-                        sendBotMessage(channelId, {
-                            content: `Failed to retrieve information for **${ip}**\nPossible reasons:\n• Provider unavailable\n• Rate limit exceeded\n• Network error\n• Unsupported IP format`
-                        });
+                        sendBotMessage(channelId, { content: `Failed to retrieve information for **${ip}**\nPossible reasons:\n• Provider unavailable\n• Rate limit exceeded\n• Network error\n• Unsupported IP format` });
                         return;
                     }
-
                     sendBotMessage(channelId, { content: createIPMessage(info) });
                 } catch {
-                    sendBotMessage(channelId, {
-                        content: `An unexpected error occurred while looking up **${ip}**`
-                    });
+                    sendBotMessage(channelId, { content: `An unexpected error occurred while looking up **${ip}**` });
                 }
             }
         },
@@ -668,22 +667,15 @@ export default definePlugin({
             predicate: () => true,
             execute: async (_args: any[], ctx: any) => {
                 const channelId = ctx.channel.id;
-
                 try {
                     const info = await getMyIP();
-
                     if (!info) {
-                        sendBotMessage(channelId, {
-                            content: "Failed to retrieve your IP information.\nPossible reasons:\n• Provider unavailable\n• Rate limit exceeded\n• Network error"
-                        });
+                        sendBotMessage(channelId, { content: "Failed to retrieve your IP information.\nPossible reasons:\n• Provider unavailable\n• Rate limit exceeded\n• Network error" });
                         return;
                     }
-
                     sendBotMessage(channelId, { content: createIPMessage(info) });
                 } catch {
-                    sendBotMessage(channelId, {
-                        content: "An unexpected error occurred while retrieving your IP."
-                    });
+                    sendBotMessage(channelId, { content: "An unexpected error occurred while retrieving your IP." });
                 }
             }
         },
@@ -692,35 +684,16 @@ export default definePlugin({
             description: "Generate a usersearch.org link for a username",
             inputType: ApplicationCommandInputType.BUILT_IN,
             predicate: () => true,
-            options: [
-                {
-                    name: "username",
-                    description: "The username to search (e.g., johndoe)",
-                    type: 3,
-                    required: true
-                }
-            ],
+            options: [{ name: "username", description: "The username to search (e.g., johndoe)", type: 3, required: true }],
             execute: async (args: any[], ctx: any) => {
                 const channelId = ctx.channel.id;
                 const usernameInput = args[0]?.value as string;
-
-                if (!usernameInput) {
-                    sendBotMessage(channelId, { content: "Please provide a username!" });
-                    return;
-                }
-
+                if (!usernameInput) { sendBotMessage(channelId, { content: "Please provide a username!" }); return; }
                 const username = normalizeUsername(usernameInput);
-
-                if (!username) {
-                    sendBotMessage(channelId, { content: "Invalid username!" });
-                    return;
-                }
-
+                if (!username) { sendBotMessage(channelId, { content: "Invalid username!" }); return; }
                 const searchUrl = `https://usersearch.org/results.php?type=standard&URL_username=${encodeURIComponent(username)}`;
                 const whatsMyNameUrl = `https://whatsmyname.app/?q=${encodeURIComponent(username)}`;
-
                 logDebug("Generating usersearch link for:", username);
-
                 sendBotMessage(channelId, {
                     content: [
                         "```txt",

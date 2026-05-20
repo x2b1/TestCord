@@ -4,397 +4,602 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// @ts-ignore
 import { definePluginSettings } from "@api/Settings";
-// @ts-ignore
-import { TestcordDevs } from "@utils/constants";
-import definePlugin from "@utils/types";
-// @ts-ignore
-import { OptionType } from "@utils/types";
+import { Logger } from "@utils/Logger";
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
+import { showToast, Toasts } from "@webpack/common";
 
-// Plugin settings
+import type { DnsFamily, MullvadResolveResult, ResolveProtocol } from "./native";
+
+const Native = VencordNative.pluginHelpers.MullvadDNS as PluginNative<typeof import("./native")>;
+
+enum MullvadProfile {
+    DNS = "dns",
+    ADBLOCK = "adblock",
+    BASE = "base",
+    EXTENDED = "extended",
+    FAMILY = "family",
+    ALL = "all"
+}
+
+enum LogLevel {
+    VERBOSE = "verbose",
+    INFO = "info",
+    WARN = "warn",
+    ERROR = "error"
+}
+
+enum MullvadResolveMode {
+    AUTOMATIC = "automatic",
+    DOH = "doh",
+    PLAIN_DNS = "plain_dns"
+}
+
+const logger = new Logger("MullvadDNS", "#a6da95");
+
+const START_DELAY_MS = 2000;
+const MS_PER_MINUTE = 60_000;
+const DEFAULT_CACHE_MINUTES = 15;
+const DEFAULT_TIMEOUT_MS = 5000;
+
+const DEFAULT_DOMAINS = [
+    "discord.com",
+    "discordapp.com",
+    "discordapp.net",
+    "gateway.discord.gg",
+    "media.discordapp.net",
+    "cdn.discordapp.com",
+    "status.discord.com",
+    "ptb.discord.com",
+    "canary.discord.com"
+];
+
+const DEFAULT_EXCLUDED_PATTERNS = [
+    "/api/v9/oauth2",
+    "/api/oauth2",
+    "/oauth2/",
+    "/api/v9/auth",
+    "/api/v9/verify",
+    "/api/v9/users/@me/settings-proto",
+    "/api/v9/users/@me/applications-role-connection"
+];
+
+const MULLVAD_ENDPOINTS: Record<MullvadProfile, string> = {
+    [MullvadProfile.DNS]: "https://dns.mullvad.net/dns-query",
+    [MullvadProfile.ADBLOCK]: "https://adblock.dns.mullvad.net/dns-query",
+    [MullvadProfile.BASE]: "https://base.dns.mullvad.net/dns-query",
+    [MullvadProfile.EXTENDED]: "https://extended.dns.mullvad.net/dns-query",
+    [MullvadProfile.FAMILY]: "https://family.dns.mullvad.net/dns-query",
+    [MullvadProfile.ALL]: "https://all.dns.mullvad.net/dns-query"
+};
+
+const MULLVAD_DNS_SERVERS: Record<MullvadProfile, Record<DnsFamily, string>> = {
+    [MullvadProfile.DNS]: {
+        4: "194.242.2.2",
+        6: "2a07:e340::2"
+    },
+    [MullvadProfile.ADBLOCK]: {
+        4: "194.242.2.3",
+        6: "2a07:e340::3"
+    },
+    [MullvadProfile.BASE]: {
+        4: "194.242.2.4",
+        6: "2a07:e340::4"
+    },
+    [MullvadProfile.EXTENDED]: {
+        4: "194.242.2.5",
+        6: "2a07:e340::5"
+    },
+    [MullvadProfile.FAMILY]: {
+        4: "194.242.2.6",
+        6: "2a07:e340::6"
+    },
+    [MullvadProfile.ALL]: {
+        4: "194.242.2.9",
+        6: "2a07:e340::9"
+    }
+};
+
+const LOG_PRIORITY: Record<LogLevel, number> = {
+    [LogLevel.VERBOSE]: 0,
+    [LogLevel.INFO]: 1,
+    [LogLevel.WARN]: 2,
+    [LogLevel.ERROR]: 3
+};
+
+interface DnsStatistics {
+    totalRequests: number;
+    successfulResolutions: number;
+    failedResolutions: number;
+    cacheHits: number;
+    nativeCalls: number;
+}
+
+interface CacheEntry {
+    addresses: string[];
+    expiresAt: number;
+    family: DnsFamily;
+    hostname: string;
+    server: string;
+}
+
+interface CacheStats {
+    cacheSize: number;
+    cachedHostnames: string[];
+    cacheEntries: Record<string, string[]>;
+}
+
+interface MullvadDNSApi {
+    name: string;
+    version: string;
+    isActive(): boolean;
+    start(): Promise<void>;
+    stop(): void;
+    getDNSTable(): Promise<Record<string, string[]>>;
+    getCurrentEndpoint(): string;
+    getCacheStats(): CacheStats;
+    getStatistics(): DnsStatistics;
+    clearStatistics(): void;
+    clearCache(): number;
+}
+
+declare global {
+    interface Window {
+        MullvadDNS?: MullvadDNSApi;
+    }
+}
+
 const settings = definePluginSettings({
+    dnsProfile: {
+        type: OptionType.SELECT,
+        description: "Choose which Mullvad DNS profile to use.",
+        options: [
+            { label: "DNS", value: MullvadProfile.DNS },
+            { label: "Adblock", value: MullvadProfile.ADBLOCK },
+            { label: "Base", value: MullvadProfile.BASE, default: true },
+            { label: "Extended", value: MullvadProfile.EXTENDED },
+            { label: "Family", value: MullvadProfile.FAMILY },
+            { label: "All", value: MullvadProfile.ALL }
+        ]
+    },
+    resolverMode: {
+        type: OptionType.SELECT,
+        description: "Choose how Mullvad DNS should resolve hostnames.",
+        options: [
+            { label: "Automatic", value: MullvadResolveMode.AUTOMATIC, default: true },
+            { label: "DNS over HTTPS", value: MullvadResolveMode.DOH },
+            { label: "Plain DNS", value: MullvadResolveMode.PLAIN_DNS }
+        ]
+    },
+    trackedDomains: {
+        type: OptionType.STRING,
+        description: "Domains to resolve, one per line.",
+        default: DEFAULT_DOMAINS.join("\n"),
+        multiline: true
+    },
+    excludedPatterns: {
+        type: OptionType.STRING,
+        description: "URL fragments to leave untouched, one per line.",
+        default: DEFAULT_EXCLUDED_PATTERNS.join("\n"),
+        multiline: true
+    },
+    preferIPv6: {
+        type: OptionType.BOOLEAN,
+        description: "Prefer IPv6 answers when Mullvad returns them.",
+        default: false
+    },
+    rewriteFetch: {
+        type: OptionType.BOOLEAN,
+        description: "Rewrite fetch URLs to resolved IPs. This is experimental and can break HTTPS.",
+        default: false,
+        restartNeeded: true
+    },
+    preloadOnStart: {
+        type: OptionType.BOOLEAN,
+        description: "Preload DNS answers for tracked domains on startup.",
+        default: true
+    },
+    cacheMinutes: {
+        type: OptionType.SLIDER,
+        description: "How long DNS answers stay cached.",
+        markers: [1, 5, 15, 30, 60],
+        default: DEFAULT_CACHE_MINUTES,
+        stickToMarkers: true
+    },
+    requestTimeoutMs: {
+        type: OptionType.SLIDER,
+        description: "How long to wait before a DNS request times out.",
+        markers: [1500, 3000, 5000, 10000],
+        default: DEFAULT_TIMEOUT_MS,
+        stickToMarkers: true
+    },
     enableLogging: {
         type: OptionType.BOOLEAN,
-        description: "Enable detailed logging",
+        description: "Enable detailed logging.",
         default: true
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
-        description: "Show toast notifications for DNS resolutions",
-        default: true
+        description: "Show toast notifications for DNS status changes.",
+        default: false
     },
     autoStart: {
         type: OptionType.BOOLEAN,
-        description: "Auto-start plugin on load",
+        description: "Start the resolver when the plugin loads.",
         default: true
     },
     logLevel: {
         type: OptionType.SELECT,
-        description: "Logging level",
+        description: "Choose the logging level.",
         options: [
-            { label: "Verbose", value: "verbose" },
-            { label: "Info", value: "info" },
-            { label: "Warning", value: "warn" },
-            { label: "Error", value: "error" }
-        ],
-        default: "info"
+            { label: "Verbose", value: LogLevel.VERBOSE },
+            { label: "Info", value: LogLevel.INFO, default: true },
+            { label: "Warning", value: LogLevel.WARN },
+            { label: "Error", value: LogLevel.ERROR }
+        ]
     }
 });
 
-// @ts-ignore
+function shouldLog(level: LogLevel) {
+    return settings.store.enableLogging && LOG_PRIORITY[level] >= LOG_PRIORITY[settings.store.logLevel ?? LogLevel.INFO];
+}
+
+const log = {
+    verbose: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.VERBOSE)) logger.debug(...message);
+    },
+    info: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.INFO)) logger.info(...message);
+    },
+    warn: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.WARN)) logger.warn(...message);
+    },
+    error: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.ERROR)) logger.error(...message);
+    }
+};
+
+function showPluginToast(message: string, type = Toasts.Type.MESSAGE) {
+    if (settings.store.showNotifications) {
+        showToast(`[MullvadDNS] ${message}`, type);
+    }
+}
+
+function getErrorMessage(error: unknown) {
+    return error instanceof Error ? error.message : String(error);
+}
+
+function getConfiguredLines(value: string | undefined, fallback: string[]) {
+    const lines = (value ?? "")
+        .split("\n")
+        .map(line => line.trim().toLowerCase())
+        .filter(Boolean)
+        .map(line => line.startsWith("*.") ? line.slice(2) : line);
+
+    return lines.length ? lines : fallback;
+}
+
+function getTrackedDomains() {
+    return getConfiguredLines(settings.store.trackedDomains, DEFAULT_DOMAINS);
+}
+
+function getExcludedPatterns() {
+    return getConfiguredLines(settings.store.excludedPatterns, DEFAULT_EXCLUDED_PATTERNS);
+}
+
+function hostnameMatches(hostname: string) {
+    const normalizedHostname = hostname.toLowerCase();
+
+    return getTrackedDomains().some(domain =>
+        normalizedHostname === domain || normalizedHostname.endsWith(`.${domain}`)
+    );
+}
+
+function shouldExcludeURL(url: URL) {
+    const urlText = `${url.hostname}${url.pathname}${url.search}`.toLowerCase();
+    return getExcludedPatterns().some(pattern => urlText.includes(pattern));
+}
+
+function getEndpoint() {
+    return MULLVAD_ENDPOINTS[settings.store.dnsProfile ?? MullvadProfile.BASE];
+}
+
+function getPlainDnsServer(family = getLookupFamily()) {
+    return MULLVAD_DNS_SERVERS[settings.store.dnsProfile ?? MullvadProfile.BASE][family];
+}
+
+function getResolverMode(): ResolveProtocol {
+    return settings.store.resolverMode ?? MullvadResolveMode.AUTOMATIC;
+}
+
+function getLookupFamily(): DnsFamily {
+    return settings.store.preferIPv6 ? 6 : 4;
+}
+
+function getCacheDurationMs() {
+    return (settings.store.cacheMinutes ?? DEFAULT_CACHE_MINUTES) * MS_PER_MINUTE;
+}
+
+function getTimeoutMs() {
+    return settings.store.requestTimeoutMs ?? DEFAULT_TIMEOUT_MS;
+}
+
+function getCacheKey(hostname: string) {
+    return `${getResolverMode()}:${getEndpoint()}:${getLookupFamily()}:${hostname.toLowerCase()}`;
+}
+
+function createFetchInput(input: RequestInfo | URL, url: string): RequestInfo | URL {
+    if (!(input instanceof Request)) {
+        return url;
+    }
+
+    return new Request(url, {
+        method: input.method,
+        headers: input.headers,
+        body: input.body,
+        mode: input.mode,
+        credentials: input.credentials,
+        cache: input.cache,
+        redirect: input.redirect,
+        referrer: input.referrer,
+        referrerPolicy: input.referrerPolicy,
+        integrity: input.integrity,
+        keepalive: input.keepalive,
+        signal: input.signal
+    });
+}
+
+function rewriteUrl(url: URL, address: string) {
+    const rewrittenUrl = new URL(url.toString());
+    const { port } = rewrittenUrl;
+    const host = address.includes(":") ? `[${address}]` : address;
+
+    rewrittenUrl.host = port ? `${host}:${port}` : host;
+    return rewrittenUrl.toString();
+}
+
 export default definePlugin({
     name: "MullvadDNS",
-    description: "Force Discord to use Mullvad DNS servers for enhanced privacy",
-    tags: ["Utility", "Privacy"],
-    authors: [{ name: "Irritably", id: 928787166916640838n }, TestcordDevs.nnenaza],
+    description: "Resolve Discord hosts through Mullvad DNS over HTTPS.",
+    tags: ["Privacy", "Utility"],
+    authors: [{ name: "irritably", id: 928787166916640838n }],
     settings,
 
-    // Statistics tracking
-    statistics: {
-        totalRequests: 0,
-        successfulResolutions: 0,
-        failedResolutions: 0,
-        cacheHits: 0
-    },
-
     start() {
-        // Plugin configuration
         const PLUGIN_NAME = "MullvadDNS";
-        const VERSION = "1.3.0";
+        const VERSION = "2.1.0";
 
-        // Mullvad DNS records for Discord services
-        const MULLVAD_DNS_RECORDS = {
-            "discord.com": "162.159.137.233",
-            "gateway.discord.gg": "162.159.135.233",
-            "media.discordapp.net": "152.67.79.60",
-            "cdn.discordapp.com": "152.67.72.12",
-            "status.discord.com": "104.18.33.247",
-            "ptb.discord.com": "162.159.137.233",
-            "canary.discord.com": "162.159.137.233",
-            "discordapp.net": "152.67.79.60"
-        };
-
-        // State management
         const originalFetch = window.fetch;
+        let fetchPatched: typeof window.fetch | null = null;
         let isActive = false;
-        const dnsCache = new Map();
-        const statistics = {
+        let startTimer: number | undefined;
+        const dnsCache = new Map<string, CacheEntry>();
+        const statistics: DnsStatistics = {
             totalRequests: 0,
             successfulResolutions: 0,
             failedResolutions: 0,
-            cacheHits: 0
+            cacheHits: 0,
+            nativeCalls: 0
         };
 
-        // Advanced logger with colors and levels
-        const log = {
-            verbose: function (msg) {
-                if (settings.store.enableLogging && settings.store.logLevel === "verbose") {
-                    console.debug(
-                        `%c[${PLUGIN_NAME}] %cVERBOSE: ${msg}`,
-                        "color: #9E9E9E; font-weight: bold",
-                        "color: #9E9E9E"
-                    );
-                }
-            },
-            info: function (msg) {
-                if (settings.store.enableLogging && ["verbose", "info"].includes(settings.store.logLevel ?? "")) {
-                    console.log(
-                        `%c[${PLUGIN_NAME}] %cINFO: ${msg}`,
-                        "color: #4CAF50; font-weight: bold",
-                        "color: #4CAF50"
-                    );
-                }
-            },
-            warn: function (msg) {
-                if (settings.store.enableLogging && ["verbose", "info", "warn"].includes(settings.store.logLevel ?? "")) {
-                    console.warn(
-                        `%c[${PLUGIN_NAME}] %cWARN: ${msg}`,
-                        "color: #FF9800; font-weight: bold",
-                        "color: #FF9800"
-                    );
-                }
-            },
-            error: function (msg) {
-                if (settings.store.enableLogging) {
-                    console.error(
-                        `%c[${PLUGIN_NAME}] %cERROR: ${msg}`,
-                        "color: #F44336; font-weight: bold",
-                        "color: #F44336"
-                    );
-                }
-            }
-        };
-
-        // Domains to exclude from DNS interception (whitelist)
-        const EXCLUDED_DOMAINS = [
-            // OAuth and authentication services
-            "discord.com/api/v9/oauth2",
-            "discord.com/api/oauth2",
-            "discordapp.com/api/oauth2",
-            // Cloud sync services
-            "discord.com/api/v9/users/@me/settings-proto",
-            "discord.com/api/v9/users/@me/applications-role-connection",
-            // Critical API endpoints
-            "discord.com/api/v9/auth",
-            "discord.com/api/v9/verify",
-            // CDN for critical assets
-            "cdn.discordapp.com/attachments",
-            "media.discordapp.net/attachments"
-        ];
-
-        // Check if URL should be excluded from DNS modification
-        function shouldExcludeURL(url) {
-            const urlString = url.toString().toLowerCase();
-
-            // Check against excluded patterns
-            for (const pattern of EXCLUDED_DOMAINS) {
-                if (urlString.includes(pattern)) {
-                    log.verbose(`Excluding URL from DNS modification: ${url.hostname}${url.pathname}`);
-                    return true;
-                }
-            }
-
-            // Exclude OAuth endpoints specifically
-            if (url.pathname.includes("/oauth2/") || url.pathname.includes("/auth/")) {
-                log.verbose(`Excluding OAuth endpoint: ${url.hostname}${url.pathname}`);
-                return true;
-            }
-
-            return false;
+        function cacheResult(cacheKey: string, result: MullvadResolveResult) {
+            dnsCache.set(cacheKey, {
+                addresses: result.addresses,
+                expiresAt: Date.now() + getCacheDurationMs(),
+                family: result.family,
+                hostname: result.hostname,
+                server: result.endpoint
+            });
         }
 
-        // Enhanced DNS record lookup with caching
-        function getDNSRecord(hostname) {
-            // Check cache first
-            if (dnsCache.has(hostname)) {
+        async function resolveHostname(hostname: string): Promise<CacheEntry | null> {
+            const cacheKey = getCacheKey(hostname);
+            const cached = dnsCache.get(cacheKey);
+
+            if (cached && cached.expiresAt > Date.now()) {
                 statistics.cacheHits++;
-                log.verbose(`Cache hit for ${hostname}: ${dnsCache.get(hostname)}`);
-                return dnsCache.get(hostname);
+                log.verbose(`Cache hit for ${hostname}.`);
+                return cached;
             }
 
-            const record = MULLVAD_DNS_RECORDS[hostname] || null;
-            if (record) {
-                dnsCache.set(hostname, record);
-                log.verbose(`Cached new record: ${hostname} -> ${record}`);
+            dnsCache.delete(cacheKey);
+
+            if (!Native) {
+                log.error("Native resolver is not available.");
+                return null;
             }
-            return record;
+
+            statistics.nativeCalls++;
+            const result = await Native.resolveDNS(hostname, getEndpoint(), getLookupFamily(), getTimeoutMs(), getResolverMode(), getPlainDnsServer());
+
+            if (result.success && result.addresses.length) {
+                cacheResult(cacheKey, result);
+                log.info(`Resolved ${hostname} to ${result.addresses[0]} with Mullvad ${result.protocol}.`);
+                return dnsCache.get(cacheKey) ?? null;
+            }
+
+            if (settings.store.preferIPv6) {
+                statistics.nativeCalls++;
+                const fallback = await Native.resolveDNS(hostname, getEndpoint(), 4, getTimeoutMs(), getResolverMode(), getPlainDnsServer(4));
+
+                if (fallback.success && fallback.addresses.length) {
+                    cacheResult(cacheKey, fallback);
+                    log.info(`Resolved ${hostname} to ${fallback.addresses[0]} with Mullvad ${fallback.protocol}.`);
+                    return dnsCache.get(cacheKey) ?? null;
+                }
+
+                log.warn(`DNS lookup failed for ${hostname}: ${fallback.error ?? result.error ?? "No addresses returned."}`);
+                return null;
+            }
+
+            log.warn(`DNS lookup failed for ${hostname}: ${result.error ?? "No addresses returned."}`);
+            return null;
         }
 
-        // Enhanced fetch patch with statistics
+        async function preloadRecords() {
+            await Promise.all(getTrackedDomains().map(domain => resolveHostname(domain)));
+            log.info(`Preloaded ${dnsCache.size} DNS cache entries.`);
+        }
+
         function patchFetch() {
-            if (!originalFetch) {
-                log.error("Original fetch not found!");
-                return false;
-            }
+            if (fetchPatched) return true;
 
-            window.fetch = function (input, init) {
+            const patchedFetch: typeof window.fetch = async (input, init) => {
                 try {
-                    let urlStr = (input instanceof Request) ? input.url : String(input);
-                    const url = new URL(urlStr);
+                    const urlText = input instanceof Request ? input.url : String(input);
+                    const url = new URL(urlText);
 
-                    // Increment request counter
                     statistics.totalRequests++;
 
-                    // Check if this is a Discord-related hostname AND not excluded
-                    if (url.hostname.includes("discord") &&
-                        !url.hostname.includes("mullvad") &&
-                        !shouldExcludeURL(url)) {
-                        const ip = getDNSRecord(url.hostname);
-
-                        if (ip) {
-                            // Replace hostname with IP
-                            url.hostname = ip;
-                            urlStr = url.toString();
-
-                            statistics.successfulResolutions++;
-                            log.info(`🔄 Resolved ${url.hostname} -> ${ip} (Mullvad)`);
-
-                            // Show notification if enabled
-                            if (settings.store.showNotifications) {
-                                showNotification(`DNS resolved: ${url.hostname} -> ${ip}`, "success");
-                            }
-                        } else {
-                            statistics.failedResolutions++;
-                            log.warn(`No DNS record found for ${url.hostname}`);
-                        }
-                    } else {
-                        if (shouldExcludeURL(url)) {
-                            log.verbose(`Whitelisted URL skipped: ${url.hostname}${url.pathname}`);
-                        } else {
-                            log.verbose(`Skipping non-Discord host: ${url.hostname}`);
-                        }
+                    if (!hostnameMatches(url.hostname) || shouldExcludeURL(url)) {
+                        log.verbose(`Skipped ${url.hostname}${url.pathname}.`);
+                        return originalFetch.call(window, input, init);
                     }
 
-                    // Call original fetch with modified URL
-                    const request = (input instanceof Request)
-                        ? new Request(urlStr, input)
-                        : urlStr;
+                    const result = await resolveHostname(url.hostname);
+                    if (!result) {
+                        statistics.failedResolutions++;
+                        return originalFetch.call(window, input, init);
+                    }
 
-                    return originalFetch(request, init);
+                    const address = result.addresses[0];
+                    const rewrittenUrl = rewriteUrl(url, address);
+                    const rewrittenInput = createFetchInput(input, rewrittenUrl);
 
-                } catch (error: any) {
+                    statistics.successfulResolutions++;
+                    log.info(`Rewrote ${url.hostname} to ${address}.`);
+                    showPluginToast(`Resolved ${url.hostname} through Mullvad.`, Toasts.Type.SUCCESS);
+
+                    return originalFetch.call(window, rewrittenInput, init);
+                } catch (error) {
                     statistics.failedResolutions++;
-                    log.error(`Fetch patch error: ${error.message}`);
-                    return originalFetch(input, init);
+                    log.error(`Fetch patch error: ${getErrorMessage(error)}`);
+                    return originalFetch.call(window, input, init);
                 }
             };
 
-            log.info("✅ Fetch patched successfully");
+            window.fetch = patchedFetch;
+            fetchPatched = patchedFetch;
+            log.info("Fetch patch enabled.");
             return true;
         }
 
-        // Toast notification helper
-        function showNotification(message, type = "info") {
-            try {
-                const toastModule = (window as any).Vencord?.Plugins?.Plugins?.Toasts;
-                if (toastModule) {
-                    toastModule.show({
-                        message: `🔒 ${message}`,
-                        type: type === "success"
-                            ? toastModule.Type.SUCCESS
-                            : type === "error"
-                                ? toastModule.Type.FAILURE
-                                : toastModule.Type.MESSAGE,
-                        id: Date.now(),
-                        options: { position: toastModule.Position.BOTTOM }
-                    });
-                } else {
-                    log[type === "error" ? "error" : "info"](message);
-                }
-            } catch (e: any) {
-                log.verbose("Toast system not available, using console");
-                log[type === "error" ? "error" : "info"](message);
-            }
-        }
-
-        // Public API
-        const MullvadDNS = {
+        const MullvadDNS: MullvadDNSApi = {
             name: PLUGIN_NAME,
             version: VERSION,
             isActive: () => isActive,
-            statistics,
 
-            start: () => {
+            async start() {
                 if (isActive) {
-                    log.warn("Plugin is already active!");
+                    log.warn("Plugin is already active.");
                     return;
                 }
 
-                try {
-                    log.info(`🚀 Starting ${PLUGIN_NAME} v${VERSION}`);
-
-                    const fetchSuccess = patchFetch();
-
-                    if (fetchSuccess) {
-                        isActive = true;
-                        showNotification(`${PLUGIN_NAME} activated successfully`, "success");
-                        log.info(`✅ Plugin started successfully with ${Object.keys(MULLVAD_DNS_RECORDS).length} DNS records`);
-                    } else {
-                        throw new Error("Failed to patch network functions");
-                    }
-
-                } catch (error: any) {
-                    log.error(`❌ Failed to start plugin: ${error.message}`);
-                    showNotification(`${PLUGIN_NAME} failed to start`, "error");
+                if (!Native) {
+                    log.error("Native resolver is not available.");
+                    showPluginToast("Native resolver is not available.", Toasts.Type.FAILURE);
+                    return;
                 }
+
+                log.info(`Starting ${PLUGIN_NAME} ${VERSION} with ${getEndpoint()}.`);
+                log.info(`Resolver mode: ${getResolverMode()}.`);
+
+                if (settings.store.preloadOnStart) {
+                    await preloadRecords();
+                }
+
+                if (settings.store.rewriteFetch) {
+                    log.warn("Fetch URL rewriting is experimental and can break HTTPS requests.");
+
+                    if (!patchFetch()) {
+                        showPluginToast("Fetch patch failed.", Toasts.Type.FAILURE);
+                        return;
+                    }
+                } else {
+                    log.info("Fetch rewrite is disabled. DNS results are available through the debug API.");
+                }
+
+                isActive = true;
+                showPluginToast(`${PLUGIN_NAME} activated.`, Toasts.Type.SUCCESS);
             },
 
-            stop: () => {
+            stop() {
+                if (startTimer != null) {
+                    window.clearTimeout(startTimer);
+                    startTimer = undefined;
+                }
+
                 if (!isActive) {
-                    log.warn("Plugin is not active!");
+                    log.warn("Plugin is not active.");
                     return;
                 }
 
-                try {
-                    log.info(`🛑 Stopping ${PLUGIN_NAME}`);
-
-                    if (originalFetch) {
-                        window.fetch = originalFetch;
-                        log.info("🔄 Fetch restored to original");
-                    }
-
-                    // Clear cache
-                    dnsCache.clear();
-                    isActive = false;
-
-                    showNotification(`${PLUGIN_NAME} deactivated`, "info");
-                    log.info("✅ Plugin stopped successfully");
-
-                } catch (error: any) {
-                    log.error(`❌ Error stopping plugin: ${error.message}`);
+                if (fetchPatched && window.fetch === fetchPatched) {
+                    window.fetch = originalFetch;
+                    log.info("Fetch restored.");
+                } else if (fetchPatched) {
+                    log.warn("Fetch changed after MullvadDNS patched it, so it was left untouched.");
                 }
+
+                fetchPatched = null;
+                dnsCache.clear();
+                isActive = false;
+
+                showPluginToast(`${PLUGIN_NAME} deactivated.`);
+                log.info("Plugin stopped.");
             },
 
-            // Utility methods
-            getDNSTable: () => ({ ...MULLVAD_DNS_RECORDS }),
+            async getDNSTable() {
+                const results = await Promise.all(getTrackedDomains().map(async domain => {
+                    const result = await resolveHostname(domain);
+                    return [domain, result?.addresses ?? []] as const;
+                }));
+
+                return Object.fromEntries(results);
+            },
+
+            getCurrentEndpoint: () => getEndpoint(),
             getCacheStats: () => ({
                 cacheSize: dnsCache.size,
-                cachedHostnames: Array.from(dnsCache.keys()),
-                cacheEntries: Object.fromEntries(dnsCache)
+                cachedHostnames: Array.from(dnsCache.values()).map(entry => entry.hostname),
+                cacheEntries: Object.fromEntries(Array.from(dnsCache.values()).map(entry => [entry.hostname, entry.addresses]))
             }),
             getStatistics: () => ({ ...statistics }),
-            clearStatistics: () => {
+            clearStatistics() {
                 statistics.totalRequests = 0;
                 statistics.successfulResolutions = 0;
                 statistics.failedResolutions = 0;
                 statistics.cacheHits = 0;
-                log.info("📊 Statistics cleared");
+                statistics.nativeCalls = 0;
+                log.info("Statistics cleared.");
             },
-            clearCache: () => {
+            clearCache() {
                 const { size } = dnsCache;
                 dnsCache.clear();
-                log.info(`🧹 Cleared ${size} DNS cache entries`);
+                log.info(`Cleared ${size} DNS cache entries.`);
                 return size;
-            },
-            addCustomRecord: (hostname, ip) => {
-                if (typeof hostname === "string" && typeof ip === "string") {
-                    MULLVAD_DNS_RECORDS[hostname] = ip;
-                    log.info(`➕ Added custom DNS record: ${hostname} -> ${ip}`);
-                    return true;
-                }
-                return false;
-            },
-            removeCustomRecord: hostname => {
-                if (Object.prototype.hasOwnProperty.call(MULLVAD_DNS_RECORDS, hostname)) {
-                    delete MULLVAD_DNS_RECORDS[hostname];
-                    dnsCache.delete(hostname);
-                    log.info(`➖ Removed DNS record: ${hostname}`);
-                    return true;
-                }
-                return false;
             }
         };
 
-        // Auto-start based on settings
         if (settings.store.autoStart) {
-            setTimeout(() => {
-                MullvadDNS.start();
-            }, 2000);
+            startTimer = window.setTimeout(() => {
+                void MullvadDNS.start();
+            }, START_DELAY_MS);
         } else {
-            log.info("Auto-start disabled. Plugin ready but not active.");
-            showNotification(`${PLUGIN_NAME} loaded - start manually from settings`, "info");
+            log.info("Auto start is disabled.");
         }
 
-        // Expose API globally for debugging
-        // @ts-ignore
         window.MullvadDNS = MullvadDNS;
-
-        log.info(`📦 ${PLUGIN_NAME} v${VERSION} loaded and ready`);
-        log.info(`📊 Features: Logging=${settings.store.enableLogging}, Notifications=${settings.store.showNotifications}`);
+        log.info(`${PLUGIN_NAME} ${VERSION} loaded.`);
     },
 
     stop() {
-        // Clean shutdown
         try {
-            if (typeof (window as any).MullvadDNS?.stop === "function") {
-                (window as any).MullvadDNS.stop();
-            }
-            console.log("[MullvadDNS] Plugin stopped");
-        } catch (error: any) {
-            console.error("[MullvadDNS] Error during shutdown:", error);
+            window.MullvadDNS?.stop();
+            window.MullvadDNS = undefined;
+            log.info("Plugin unloaded.");
+        } catch (error) {
+            log.error(`Error during shutdown: ${getErrorMessage(error)}`);
         }
     }
 });
-
-

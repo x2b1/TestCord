@@ -1,0 +1,25 @@
+{
+  "name": "@vap/core",
+  "version": "0.0.12",
+  "author": "Vap0r1ze",
+  "description": "Generalized core library for random stuff",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Vap0r1ze/vapcord.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Vap0r1ze/vapcord/tree/main/packages/core",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json --listEmittedFiles",
+    "pkgjson": "../../node_modules/node-jq/bin/jq 'del(.private)' package.json > dist/package.json",
+    "release": "yarn pkgjson && mkdir -p dist && cd .. && npm publish ./core/dist/ --access public"
+  },
+  "dependencies": {
+    "eventemitter3": "^4.0.7"
+  },
+  "devDependencies": {
+    "node-jq": "^2.3.4",
+    "typescript": "4.8.4"
+  }
+}

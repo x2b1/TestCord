@@ -1,0 +1,55 @@
+{
+  "name": "idb",
+  "version": "8.0.3",
+  "description": "A small wrapper that makes IndexedDB usable",
+  "main": "./build/index.cjs",
+  "module": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "module": "./build/index.js",
+      "import": "./build/index.js",
+      "default": "./build/index.cjs"
+    },
+    "./build/*": "./build/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "build/**",
+    "with-*",
+    "CHANGELOG.md"
+  ],
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jakearchibald/idb.git"
+  },
+  "author": "Jake Archibald",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/chai": "^5.2.2",
+    "@types/estree": "^1.0.7",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.15.14",
+    "chai": "^5.2.0",
+    "conditional-type-checks": "^1.0.6",
+    "cross-env": "^7.0.3",
+    "del": "^8.0.0",
+    "filesize": "^10.1.6",
+    "glob": "^11.0.2",
+    "mocha": "^11.2.2",
+    "prettier": "^3.5.3",
+    "rollup": "^4.40.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "build": "cross-env PRODUCTION=1 rollup -c && node --experimental-modules lib/size-report.mjs",
+    "dev": "rollup -c --watch"
+  }
+}

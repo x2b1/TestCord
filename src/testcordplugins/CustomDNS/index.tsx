@@ -1,14 +1,17 @@
 /*
- * CustomDNS Plugin
- * Forces Discord to use custom DNS servers (DNS.SB or Quad9) for enhanced privacy
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// @ts-ignore
 import { definePluginSettings } from "@api/Settings";
-// @ts-ignore
-import definePlugin from "@utils/types";
-// @ts-ignore
-import { OptionType } from "@utils/types";
+import { Logger } from "@utils/Logger";
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
+import { showToast, Toasts } from "@webpack/common";
+
+import type { DnsFamily, DnsResolveResult } from "./native";
+
+const Native = VencordNative.pluginHelpers.CustomDNS as PluginNative<typeof import("./native")>;
 
 enum DnsProvider {
     DNS_SB = "dns_sb",
@@ -16,405 +19,587 @@ enum DnsProvider {
     CUSTOM = "custom"
 }
 
-// Plugin settings
+enum LogLevel {
+    VERBOSE = "verbose",
+    INFO = "info",
+    WARN = "warn",
+    ERROR = "error"
+}
+
+const logger = new Logger("CustomDNS", "#8aadf4");
+
+const START_DELAY_MS = 2000;
+const MS_PER_MINUTE = 60_000;
+const DEFAULT_CACHE_MINUTES = 15;
+const DEFAULT_TIMEOUT_MS = 5000;
+
+const DEFAULT_DOMAINS = [
+    "discord.com",
+    "discordapp.com",
+    "discordapp.net",
+    "gateway.discord.gg",
+    "media.discordapp.net",
+    "cdn.discordapp.com",
+    "status.discord.com",
+    "ptb.discord.com",
+    "canary.discord.com"
+];
+
+const DEFAULT_EXCLUDED_PATTERNS = [
+    "/api/v9/oauth2",
+    "/api/oauth2",
+    "/oauth2/",
+    "/api/v9/auth",
+    "/api/v9/verify",
+    "/api/v9/users/@me/settings-proto",
+    "/api/v9/users/@me/applications-role-connection"
+];
+
+const DNS_SERVERS: Record<DnsProvider.DNS_SB | DnsProvider.QUAD9, Record<DnsFamily, string[]>> = {
+    [DnsProvider.DNS_SB]: {
+        4: ["185.222.222.222", "45.11.45.11"],
+        6: ["2a09::", "2a11::"]
+    },
+    [DnsProvider.QUAD9]: {
+        4: ["9.9.9.9", "149.112.112.112"],
+        6: ["2620:fe::fe", "2620:fe::9"]
+    }
+};
+
+const LOG_PRIORITY: Record<LogLevel, number> = {
+    [LogLevel.VERBOSE]: 0,
+    [LogLevel.INFO]: 1,
+    [LogLevel.WARN]: 2,
+    [LogLevel.ERROR]: 3
+};
+
+const IPV4_ADDRESS = /^(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+const IPV6_ADDRESS = /^[0-9a-f:]+$/i;
+
+interface DnsStatistics {
+    totalRequests: number;
+    successfulResolutions: number;
+    failedResolutions: number;
+    cacheHits: number;
+    nativeCalls: number;
+}
+
+interface CacheEntry {
+    addresses: string[];
+    expiresAt: number;
+    family: DnsFamily;
+    hostname: string;
+    server: string;
+}
+
+interface CacheStats {
+    cacheSize: number;
+    cachedHostnames: string[];
+    cacheEntries: Record<string, string[]>;
+}
+
+interface CustomDNSApi {
+    name: string;
+    version: string;
+    isActive(): boolean;
+    start(): Promise<void>;
+    stop(): void;
+    getDNSTable(): Promise<Record<string, string[]>>;
+    getCurrentProvider(): string;
+    getCustomDNSConfig(): {
+        v4Primary: string;
+        v4Secondary: string;
+        v6Primary: string;
+        v6Secondary: string;
+    };
+    getCacheStats(): CacheStats;
+    getStatistics(): DnsStatistics;
+    clearStatistics(): void;
+    clearCache(): number;
+}
+
+declare global {
+    interface Window {
+        CustomDNS?: CustomDNSApi;
+    }
+}
+
+function isValidIpAddress(value: string, family: DnsFamily) {
+    const trimmed = value.trim();
+    if (!trimmed) return true;
+    if (family === 4) return IPV4_ADDRESS.test(trimmed);
+    return trimmed.includes(":") && IPV6_ADDRESS.test(trimmed);
+}
+
+function validateIpAddress(value: string, family: DnsFamily) {
+    return isValidIpAddress(value, family) || `Enter a valid IPv${family} address.`;
+}
+
 const settings = definePluginSettings({
     dnsProvider: {
         type: OptionType.SELECT,
-        description: "Choose which DNS provider to use",
+        description: "Choose which DNS provider to use.",
         options: [
-            { label: "DNS.SB", value: DnsProvider.DNS_SB },
+            { label: "DNS.SB", value: DnsProvider.DNS_SB, default: true },
             { label: "Quad9", value: DnsProvider.QUAD9 },
             { label: "Custom", value: DnsProvider.CUSTOM }
-        ],
-        default: DnsProvider.DNS_SB
+        ]
     },
     customDNSv4Primary: {
         type: OptionType.STRING,
-        description: "Custom IPv4 DNS Primary (e.g., 8.8.8.8)",
+        description: "Primary custom IPv4 resolver address.",
         default: "",
-        placeholder: "8.8.8.8"
+        placeholder: "8.8.8.8",
+        hidden() {
+            return settings.store.dnsProvider !== DnsProvider.CUSTOM;
+        },
+        isValid: (value: string) => validateIpAddress(value, 4)
     },
     customDNSv4Secondary: {
         type: OptionType.STRING,
-        description: "Custom IPv4 DNS Secondary (optional)",
+        description: "Secondary custom IPv4 resolver address.",
         default: "",
-        placeholder: "8.8.4.4"
+        placeholder: "8.8.4.4",
+        hidden() {
+            return settings.store.dnsProvider !== DnsProvider.CUSTOM;
+        },
+        isValid: (value: string) => validateIpAddress(value, 4)
     },
     customDNSv6Primary: {
         type: OptionType.STRING,
-        description: "Custom IPv6 DNS Primary (e.g., 2001:4860:4860::8888)",
+        description: "Primary custom IPv6 resolver address.",
         default: "",
-        placeholder: "2001:4860:4860::8888"
+        placeholder: "2001:4860:4860::8888",
+        hidden() {
+            return settings.store.dnsProvider !== DnsProvider.CUSTOM;
+        },
+        isValid: (value: string) => validateIpAddress(value, 6)
     },
     customDNSv6Secondary: {
         type: OptionType.STRING,
-        description: "Custom IPv6 DNS Secondary (optional)",
+        description: "Secondary custom IPv6 resolver address.",
         default: "",
-        placeholder: "2001:4860:4860::8844"
+        placeholder: "2001:4860:4860::8844",
+        hidden() {
+            return settings.store.dnsProvider !== DnsProvider.CUSTOM;
+        },
+        isValid: (value: string) => validateIpAddress(value, 6)
+    },
+    trackedDomains: {
+        type: OptionType.STRING,
+        description: "Domains to resolve, one per line.",
+        default: DEFAULT_DOMAINS.join("\n"),
+        multiline: true
+    },
+    excludedPatterns: {
+        type: OptionType.STRING,
+        description: "URL fragments to leave untouched, one per line.",
+        default: DEFAULT_EXCLUDED_PATTERNS.join("\n"),
+        multiline: true
+    },
+    preferIPv6: {
+        type: OptionType.BOOLEAN,
+        description: "Prefer IPv6 answers when the selected resolver supports them.",
+        default: false
+    },
+    rewriteFetch: {
+        type: OptionType.BOOLEAN,
+        description: "Rewrite fetch URLs to resolved IPs. This is experimental and can break HTTPS.",
+        default: false,
+        restartNeeded: true
+    },
+    preloadOnStart: {
+        type: OptionType.BOOLEAN,
+        description: "Preload DNS answers for tracked domains on startup.",
+        default: true
+    },
+    cacheMinutes: {
+        type: OptionType.SLIDER,
+        description: "How long DNS answers stay cached.",
+        markers: [1, 5, 15, 30, 60],
+        default: DEFAULT_CACHE_MINUTES,
+        stickToMarkers: true
+    },
+    requestTimeoutMs: {
+        type: OptionType.SLIDER,
+        description: "How long to wait before a DNS request times out.",
+        markers: [1500, 3000, 5000, 10000],
+        default: DEFAULT_TIMEOUT_MS,
+        stickToMarkers: true
     },
     enableLogging: {
         type: OptionType.BOOLEAN,
-        description: "Enable detailed logging",
+        description: "Enable detailed logging.",
         default: true
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
-        description: "Show toast notifications for DNS resolutions",
+        description: "Show toast notifications for DNS status changes.",
         default: true
     },
     autoStart: {
         type: OptionType.BOOLEAN,
-        description: "Auto-start plugin on load",
+        description: "Start the resolver when the plugin loads.",
         default: true
     },
     logLevel: {
         type: OptionType.SELECT,
-        description: "Logging level",
+        description: "Choose the logging level.",
         options: [
-            { label: "Verbose", value: "verbose" },
-            { label: "Info", value: "info" },
-            { label: "Warning", value: "warn" },
-            { label: "Error", value: "error" }
-        ],
-        default: "info"
+            { label: "Verbose", value: LogLevel.VERBOSE },
+            { label: "Info", value: LogLevel.INFO, default: true },
+            { label: "Warning", value: LogLevel.WARN },
+            { label: "Error", value: LogLevel.ERROR }
+        ]
     }
 });
 
-// @ts-ignore
+function shouldLog(level: LogLevel) {
+    return settings.store.enableLogging && LOG_PRIORITY[level] >= LOG_PRIORITY[settings.store.logLevel ?? LogLevel.INFO];
+}
+
+const log = {
+    verbose: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.VERBOSE)) logger.debug(...message);
+    },
+    info: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.INFO)) logger.info(...message);
+    },
+    warn: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.WARN)) logger.warn(...message);
+    },
+    error: (...message: unknown[]) => {
+        if (shouldLog(LogLevel.ERROR)) logger.error(...message);
+    }
+};
+
+function showPluginToast(message: string, type = Toasts.Type.MESSAGE) {
+    if (settings.store.showNotifications) {
+        showToast(`[CustomDNS] ${message}`, type);
+    }
+}
+
+function getErrorMessage(error: unknown) {
+    return error instanceof Error ? error.message : String(error);
+}
+
+function getConfiguredLines(value: string | undefined, fallback: string[]) {
+    const lines = (value ?? "")
+        .split("\n")
+        .map(line => line.trim().toLowerCase())
+        .filter(Boolean)
+        .map(line => line.startsWith("*.") ? line.slice(2) : line);
+
+    return lines.length ? lines : fallback;
+}
+
+function getTrackedDomains() {
+    return getConfiguredLines(settings.store.trackedDomains, DEFAULT_DOMAINS);
+}
+
+function getExcludedPatterns() {
+    return getConfiguredLines(settings.store.excludedPatterns, DEFAULT_EXCLUDED_PATTERNS);
+}
+
+function hostnameMatches(hostname: string) {
+    const normalizedHostname = hostname.toLowerCase();
+
+    return getTrackedDomains().some(domain =>
+        normalizedHostname === domain || normalizedHostname.endsWith(`.${domain}`)
+    );
+}
+
+function shouldExcludeURL(url: URL) {
+    const urlText = `${url.hostname}${url.pathname}${url.search}`.toLowerCase();
+    return getExcludedPatterns().some(pattern => urlText.includes(pattern));
+}
+
+function getCustomServers(family: DnsFamily) {
+    const servers = family === 4
+        ? [settings.store.customDNSv4Primary, settings.store.customDNSv4Secondary]
+        : [settings.store.customDNSv6Primary, settings.store.customDNSv6Secondary];
+
+    return servers
+        .map(server => server.trim())
+        .filter(Boolean);
+}
+
+function getResolverServers(family: DnsFamily) {
+    if (settings.store.dnsProvider === DnsProvider.CUSTOM) {
+        return getCustomServers(family);
+    }
+
+    return DNS_SERVERS[settings.store.dnsProvider][family];
+}
+
+function getLookupFamilies(): DnsFamily[] {
+    return settings.store.preferIPv6 ? [6, 4] : [4];
+}
+
+function getProviderName() {
+    if (settings.store.dnsProvider === DnsProvider.CUSTOM) {
+        const preferredServers = getResolverServers(settings.store.preferIPv6 ? 6 : 4);
+        const fallbackServers = getResolverServers(settings.store.preferIPv6 ? 4 : 6);
+        const servers = preferredServers.length ? preferredServers : fallbackServers;
+
+        return servers.length ? `Custom (${servers[0]})` : "Custom";
+    }
+
+    return settings.store.dnsProvider === DnsProvider.DNS_SB ? "DNS.SB" : "Quad9";
+}
+
+function getCacheDurationMs() {
+    return (settings.store.cacheMinutes ?? DEFAULT_CACHE_MINUTES) * MS_PER_MINUTE;
+}
+
+function getTimeoutMs() {
+    return settings.store.requestTimeoutMs ?? DEFAULT_TIMEOUT_MS;
+}
+
+function getCacheKey(hostname: string) {
+    const serverKey = getLookupFamilies()
+        .map(family => getResolverServers(family).join(","))
+        .join("|");
+
+    return `${serverKey}:${hostname.toLowerCase()}`;
+}
+
+function createFetchInput(input: RequestInfo | URL, url: string): RequestInfo | URL {
+    if (!(input instanceof Request)) {
+        return url;
+    }
+
+    return new Request(url, {
+        method: input.method,
+        headers: input.headers,
+        body: input.body,
+        mode: input.mode,
+        credentials: input.credentials,
+        cache: input.cache,
+        redirect: input.redirect,
+        referrer: input.referrer,
+        referrerPolicy: input.referrerPolicy,
+        integrity: input.integrity,
+        keepalive: input.keepalive,
+        signal: input.signal
+    });
+}
+
+function rewriteUrl(url: URL, address: string) {
+    const rewrittenUrl = new URL(url.toString());
+    const { port } = rewrittenUrl;
+    const host = address.includes(":") ? `[${address}]` : address;
+
+    rewrittenUrl.host = port ? `${host}:${port}` : host;
+    return rewrittenUrl.toString();
+}
+
 export default definePlugin({
     name: "CustomDNS",
-    description: "Force Discord to use custom DNS servers (DNS.SB or Quad9) for enhanced privacy (If Activated Remove MullvadDNS) ",
-    tags: ["Utility", "Privacy"],
-    authors: [{ name: "Irritably", id: 928787166916640838n }],
+    description: "Resolve Discord hosts through DNS.SB, Quad9, or custom DNS servers.",
+    tags: ["Privacy", "Utility"],
+    authors: [{ name: "irritably", id: 928787166916640838n }],
     settings,
 
-    // Statistics tracking
-    statistics: {
-        totalRequests: 0,
-        successfulResolutions: 0,
-        failedResolutions: 0,
-        cacheHits: 0
-    },
-
     start() {
-        // Plugin configuration
         const PLUGIN_NAME = "CustomDNS";
-        const VERSION = "1.0.0";
+        const VERSION = "1.1.0";
 
-        // DNS.SB DNS records for Discord services
-        const DNS_SB_RECORDS = {
-            "discord.com": "185.222.222.222",
-            "gateway.discord.gg": "185.222.222.222",
-            "media.discordapp.net": "185.222.222.222",
-            "cdn.discordapp.com": "185.222.222.222",
-            "status.discord.com": "185.222.222.222",
-            "ptb.discord.com": "185.222.222.222",
-            "canary.discord.com": "185.222.222.222",
-            "discordapp.net": "185.222.222.222"
-        };
-
-        // Quad9 DNS records for Discord services
-        const QUAD9_RECORDS = {
-            "discord.com": "9.9.9.9",
-            "gateway.discord.gg": "9.9.9.9",
-            "media.discordapp.net": "9.9.9.9",
-            "cdn.discordapp.com": "9.9.9.9",
-            "status.discord.com": "9.9.9.9",
-            "ptb.discord.com": "9.9.9.9",
-            "canary.discord.com": "9.9.9.9",
-            "discordapp.net": "9.9.9.9"
-        };
-
-        // State management
         const originalFetch = window.fetch;
+        let fetchPatched: typeof window.fetch | null = null;
         let isActive = false;
-        const dnsCache = new Map();
-        const statistics = {
+        let startTimer: number | undefined;
+        const dnsCache = new Map<string, CacheEntry>();
+        const statistics: DnsStatistics = {
             totalRequests: 0,
             successfulResolutions: 0,
             failedResolutions: 0,
-            cacheHits: 0
+            cacheHits: 0,
+            nativeCalls: 0
         };
 
-        // Get current DNS records based on selected provider
-        function getCurrentDNSRecords() {
-            if (settings.store.dnsProvider === DnsProvider.CUSTOM) {
-                const records: Record<string, string> = {};
-                // Use primary IPv4 or fallback to secondary
-                const customIP = settings.store.customDNSv4Primary || settings.store.customDNSv4Secondary;
-
-                if (customIP) {
-                    Object.keys(DNS_SB_RECORDS).forEach(hostname => {
-                        records[hostname] = customIP;
-                    });
-                }
-                return records;
-            }
-            return settings.store.dnsProvider === DnsProvider.DNS_SB ? DNS_SB_RECORDS : QUAD9_RECORDS;
+        function cacheResult(cacheKey: string, result: DnsResolveResult) {
+            dnsCache.set(cacheKey, {
+                addresses: result.addresses,
+                expiresAt: Date.now() + getCacheDurationMs(),
+                family: result.family,
+                hostname: result.hostname,
+                server: result.server
+            });
         }
 
-        // Get provider name for display
-        function getProviderName() {
-            if (settings.store.dnsProvider === DnsProvider.CUSTOM) {
-                const customIP = settings.store.customDNSv4Primary || settings.store.customDNSv4Secondary || "Not configured";
-                return `Custom (${customIP})`;
-            }
-            return settings.store.dnsProvider === DnsProvider.DNS_SB ? "DNS.SB" : "Quad9";
-        }
+        async function resolveHostname(hostname: string, shouldWarn = true): Promise<CacheEntry | null> {
+            const cacheKey = getCacheKey(hostname);
+            const cached = dnsCache.get(cacheKey);
 
-        // Advanced logger with colors and levels
-        const log = {
-            verbose: function (msg) {
-                if (settings.store.enableLogging && settings.store.logLevel === "verbose") {
-                    console.debug(
-                        `%c[${PLUGIN_NAME}] %cVERBOSE: ${msg}`,
-                        "color: #9E9E9E; font-weight: bold",
-                        "color: #9E9E9E"
-                    );
-                }
-            },
-            info: function (msg: string) {
-                if (settings.store.enableLogging && ["verbose", "info"].includes(settings.store.logLevel ?? "")) {
-                    console.log(
-                        `%c[${PLUGIN_NAME}] %cINFO: ${msg}`,
-                        "color: #4CAF50; font-weight: bold",
-                        "color: #4CAF50"
-                    );
-                }
-            },
-            warn: function (msg: string) {
-                if (settings.store.enableLogging && ["verbose", "info", "warn"].includes(settings.store.logLevel ?? "")) {
-                    console.warn(
-                        `%c[${PLUGIN_NAME}] %cWARN: ${msg}`,
-                        "color: #FF9800; font-weight: bold",
-                        "color: #FF9800"
-                    );
-                }
-            },
-            error: function (msg) {
-                if (settings.store.enableLogging) {
-                    console.error(
-                        `%c[${PLUGIN_NAME}] %cERROR: ${msg}`,
-                        "color: #F44336; font-weight: bold",
-                        "color: #F44336"
-                    );
-                }
-            }
-        };
-
-        // Domains to exclude from DNS modification (whitelist)
-        const EXCLUDED_DOMAINS = [
-            // OAuth and authentication services
-            "discord.com/api/v9/oauth2",
-            "discord.com/api/oauth2",
-            "discordapp.com/api/oauth2",
-            // Cloud sync services
-            "discord.com/api/v9/users/@me/settings-proto",
-            "discord.com/api/v9/users/@me/applications-role-connection",
-            // Critical API endpoints
-            "discord.com/api/v9/auth",
-            "discord.com/api/v9/verify",
-            // CDN for critical assets
-            "cdn.discordapp.com/attachments",
-            "media.discordapp.net/attachments"
-        ];
-
-        // Check if URL should be excluded from DNS modification
-        function shouldExcludeURL(url) {
-            const urlString = url.toString().toLowerCase();
-
-            // Check against excluded patterns
-            for (const pattern of EXCLUDED_DOMAINS) {
-                if (urlString.includes(pattern)) {
-                    log.verbose(`Excluding URL from DNS modification: ${url.hostname}${url.pathname}`);
-                    return true;
-                }
-            }
-
-            // Exclude OAuth endpoints specifically
-            if (url.pathname.includes("/oauth2/") || url.pathname.includes("/auth/")) {
-                log.verbose(`Excluding OAuth endpoint: ${url.hostname}${url.pathname}`);
-                return true;
-            }
-
-            return false;
-        }
-
-        // Enhanced DNS record lookup with caching
-        function getDNSRecord(hostname) {
-            // Check cache first
-            if (dnsCache.has(hostname)) {
+            if (cached && cached.expiresAt > Date.now()) {
                 statistics.cacheHits++;
-                log.verbose(`Cache hit for ${hostname}: ${dnsCache.get(hostname)}`);
-                return dnsCache.get(hostname);
+                log.verbose(`Cache hit for ${hostname}.`);
+                return cached;
             }
 
-            const records = getCurrentDNSRecords();
-            const record = records[hostname] || null;
-            if (record) {
-                dnsCache.set(hostname, record);
-                log.verbose(`Cached new record: ${hostname} -> ${record} (${getProviderName()})`);
+            dnsCache.delete(cacheKey);
+
+            if (!Native) {
+                log.error("Native resolver is not available.");
+                return null;
             }
-            return record;
+
+            const errors: string[] = [];
+
+            for (const family of getLookupFamilies()) {
+                const servers = getResolverServers(family);
+                if (!servers.length) continue;
+
+                statistics.nativeCalls++;
+                const result = await Native.resolveDNS(hostname, servers, family, getTimeoutMs());
+
+                if (result.success && result.addresses.length) {
+                    cacheResult(cacheKey, result);
+                    log.info(`Resolved ${hostname} to ${result.addresses[0]} with ${getProviderName()}.`);
+                    return dnsCache.get(cacheKey) ?? null;
+                }
+
+                errors.push(result.error ?? "No addresses returned.");
+            }
+
+            if (shouldWarn) {
+                log.warn(`DNS lookup failed for ${hostname}: ${errors.join(" ") || "No DNS servers configured."}`);
+            } else {
+                log.verbose(`Skipped preload for ${hostname}: ${errors.join(" ") || "No DNS servers configured."}`);
+            }
+
+            return null;
         }
 
-        // Enhanced fetch patch with statistics
+        async function preloadRecords() {
+            const domains = getTrackedDomains();
+            await Promise.all(domains.map(domain => resolveHostname(domain, false)));
+            log.info(`Preloaded ${dnsCache.size} DNS cache entries.`);
+        }
+
         function patchFetch() {
-            if (!originalFetch) {
-                log.error("Original fetch not found!");
-                return false;
-            }
+            if (fetchPatched) return true;
 
-            window.fetch = function (input, init) {
+            const patchedFetch: typeof window.fetch = async (input, init) => {
                 try {
-                    let urlStr = (input instanceof Request) ? input.url : String(input);
-                    const url = new URL(urlStr);
+                    const urlText = input instanceof Request ? input.url : String(input);
+                    const url = new URL(urlText);
 
-                    // Increment request counter
                     statistics.totalRequests++;
 
-                    // Check if this is a Discord-related hostname AND not excluded
-                    if (url.hostname.includes("discord") &&
-                        !shouldExcludeURL(url)) {
-                        const ip = getDNSRecord(url.hostname);
-
-                        if (ip) {
-                            // Replace hostname with IP
-                            url.hostname = ip;
-                            urlStr = url.toString();
-
-                            statistics.successfulResolutions++;
-                            log.info(`🔄 Resolved ${url.hostname} -> ${ip} (${getProviderName()})`);
-
-                            // Show notification if enabled
-                            if (settings.store.showNotifications) {
-                                showNotification(`DNS resolved: ${url.hostname} -> ${ip}`, "success");
-                            }
-                        } else {
-                            statistics.failedResolutions++;
-                            log.warn(`No DNS record found for ${url.hostname}`);
-                        }
-                    } else {
-                        if (shouldExcludeURL(url)) {
-                            log.verbose(`Whitelisted URL skipped: ${url.hostname}${url.pathname}`);
-                        } else {
-                            log.verbose(`Skipping non-Discord host: ${url.hostname}`);
-                        }
+                    if (!hostnameMatches(url.hostname) || shouldExcludeURL(url)) {
+                        log.verbose(`Skipped ${url.hostname}${url.pathname}.`);
+                        return originalFetch.call(window, input, init);
                     }
 
-                    // Call original fetch with modified URL
-                    const request = (input instanceof Request)
-                        ? new Request(urlStr, input)
-                        : urlStr;
+                    const result = await resolveHostname(url.hostname);
+                    if (!result) {
+                        statistics.failedResolutions++;
+                        return originalFetch.call(window, input, init);
+                    }
 
-                    return originalFetch(request, init);
+                    const address = result.addresses[0];
+                    const rewrittenUrl = rewriteUrl(url, address);
+                    const rewrittenInput = createFetchInput(input, rewrittenUrl);
 
-                } catch (error: any) {
+                    statistics.successfulResolutions++;
+                    log.info(`Rewrote ${url.hostname} to ${address}.`);
+                    showPluginToast(`Resolved ${url.hostname} through ${getProviderName()}.`, Toasts.Type.SUCCESS);
+
+                    return originalFetch.call(window, rewrittenInput, init);
+                } catch (error) {
                     statistics.failedResolutions++;
-                    log.error(`Fetch patch error: ${error.message}`);
-                    return originalFetch(input, init);
+                    log.error(`Fetch patch error: ${getErrorMessage(error)}`);
+                    return originalFetch.call(window, input, init);
                 }
             };
 
-            log.info("✅ Fetch patched successfully");
+            window.fetch = patchedFetch;
+            fetchPatched = patchedFetch;
+            log.info("Fetch patch enabled.");
             return true;
         }
 
-        // Toast notification helper
-        function showNotification(message, type = "info") {
-            try {
-                const toastModule = (window as any).Vencord?.Plugins?.Plugins?.Toasts;
-                if (toastModule) {
-                    toastModule.show({
-                        message: `🔒 ${message}`,
-                        type: type === "success"
-                            ? toastModule.Type.SUCCESS
-                            : type === "error"
-                                ? toastModule.Type.FAILURE
-                                : toastModule.Type.MESSAGE,
-                        id: Date.now(),
-                        options: { position: toastModule.Position.BOTTOM }
-                    });
-                } else {
-                    log[type === "error" ? "error" : "info"](message);
-                }
-            } catch (e) {
-                log.verbose("Toast system not available, using console");
-                log[type === "error" ? "error" : "info"](message);
-            }
-        }
-
-        // Public API
-        const CustomDNS = {
+        const CustomDNS: CustomDNSApi = {
             name: PLUGIN_NAME,
             version: VERSION,
             isActive: () => isActive,
-            statistics,
 
-            start: () => {
+            async start() {
                 if (isActive) {
-                    log.warn("Plugin is already active!");
+                    log.warn("Plugin is already active.");
                     return;
                 }
 
-                // Validate custom DNS configuration
-                if (settings.store.dnsProvider === DnsProvider.CUSTOM) {
-                    const hasCustomDNS = settings.store.customDNSv4Primary || settings.store.customDNSv4Secondary;
-                    if (!hasCustomDNS) {
-                        log.error("❌ Custom DNS selected but no DNS server configured!");
-                        showNotification("Please configure a custom DNS server in settings", "error");
+                if (!Native) {
+                    log.error("Native resolver is not available.");
+                    showPluginToast("Native resolver is not available.", Toasts.Type.FAILURE);
+                    return;
+                }
+
+                if (settings.store.dnsProvider === DnsProvider.CUSTOM && !getCustomServers(4).length && !getCustomServers(6).length) {
+                    log.error("Custom DNS is selected, but no resolver address is configured.");
+                    showPluginToast("Add a custom DNS resolver before starting.", Toasts.Type.FAILURE);
+                    return;
+                }
+
+                log.info(`Starting ${PLUGIN_NAME} ${VERSION} with ${getProviderName()}.`);
+
+                if (settings.store.preloadOnStart) {
+                    await preloadRecords();
+                }
+
+                if (settings.store.rewriteFetch) {
+                    log.warn("Fetch URL rewriting is experimental and can break HTTPS requests.");
+
+                    if (!patchFetch()) {
+                        showPluginToast("Fetch patch failed.", Toasts.Type.FAILURE);
                         return;
                     }
+                } else {
+                    log.info("Fetch rewrite is disabled. DNS results are available through the debug API.");
                 }
 
-                try {
-                    log.info(`🚀 Starting ${PLUGIN_NAME} v${VERSION}`);
-                    log.info(`Using DNS provider: ${getProviderName()}`);
-
-                    const fetchSuccess = patchFetch();
-
-                    if (fetchSuccess) {
-                        isActive = true;
-                        showNotification(`${PLUGIN_NAME} activated with ${getProviderName()}`, "success");
-                        log.info(`✅ Plugin started successfully with ${Object.keys(getCurrentDNSRecords()).length} DNS records`);
-                    } else {
-                        throw new Error("Failed to patch network functions");
-                    }
-
-                } catch (error: any) {
-                    log.error(`❌ Failed to start plugin: ${error.message}`);
-                    showNotification(`${PLUGIN_NAME} failed to start`, "error");
-                }
+                isActive = true;
+                showPluginToast(`${PLUGIN_NAME} activated with ${getProviderName()}.`, Toasts.Type.SUCCESS);
             },
 
-            stop: () => {
+            stop() {
+                if (startTimer != null) {
+                    window.clearTimeout(startTimer);
+                    startTimer = undefined;
+                }
+
                 if (!isActive) {
-                    log.warn("Plugin is not active!");
+                    log.warn("Plugin is not active.");
                     return;
                 }
 
-                try {
-                    log.info(`🛑 Stopping ${PLUGIN_NAME}`);
-
-                    if (originalFetch) {
-                        window.fetch = originalFetch;
-                        log.info("🔄 Fetch restored to original");
-                    }
-
-                    // Clear cache
-                    dnsCache.clear();
-                    isActive = false;
-
-                    showNotification(`${PLUGIN_NAME} deactivated`, "info");
-                    log.info("✅ Plugin stopped successfully");
-
-                } catch (error: any) {
-                    log.error(`❌ Error stopping plugin: ${error.message}`);
+                if (fetchPatched && window.fetch === fetchPatched) {
+                    window.fetch = originalFetch;
+                    log.info("Fetch restored.");
+                } else if (fetchPatched) {
+                    log.warn("Fetch changed after CustomDNS patched it, so it was left untouched.");
                 }
+
+                fetchPatched = null;
+                dnsCache.clear();
+                isActive = false;
+
+                showPluginToast(`${PLUGIN_NAME} deactivated.`);
+                log.info("Plugin stopped.");
             },
 
-            // Utility methods
-            getDNSTable: () => getCurrentDNSRecords(),
+            async getDNSTable() {
+                const results = await Promise.all(getTrackedDomains().map(async domain => {
+                    const result = await resolveHostname(domain, false);
+                    return [domain, result?.addresses ?? []] as const;
+                }));
+
+                return Object.fromEntries(results);
+            },
+
             getCurrentProvider: () => getProviderName(),
             getCustomDNSConfig: () => ({
                 v4Primary: settings.store.customDNSv4Primary,
@@ -424,71 +609,45 @@ export default definePlugin({
             }),
             getCacheStats: () => ({
                 cacheSize: dnsCache.size,
-                cachedHostnames: Array.from(dnsCache.keys()),
-                cacheEntries: Object.fromEntries(dnsCache)
+                cachedHostnames: Array.from(dnsCache.values()).map(entry => entry.hostname),
+                cacheEntries: Object.fromEntries(Array.from(dnsCache.values()).map(entry => [entry.hostname, entry.addresses]))
             }),
             getStatistics: () => ({ ...statistics }),
-            clearStatistics: () => {
+            clearStatistics() {
                 statistics.totalRequests = 0;
                 statistics.successfulResolutions = 0;
                 statistics.failedResolutions = 0;
                 statistics.cacheHits = 0;
-                log.info("📊 Statistics cleared");
+                statistics.nativeCalls = 0;
+                log.info("Statistics cleared.");
             },
-            clearCache: () => {
-                const size = dnsCache.size;
+            clearCache() {
+                const { size } = dnsCache;
                 dnsCache.clear();
-                log.info(`🧹 Cleared ${size} DNS cache entries`);
+                log.info(`Cleared ${size} DNS cache entries.`);
                 return size;
-            },
-            addCustomRecord: (hostname, ip) => {
-                if (typeof hostname === "string" && typeof ip === "string") {
-                    const records = getCurrentDNSRecords();
-                    records[hostname] = ip;
-                    log.info(`➕ Added custom DNS record: ${hostname} -> ${ip}`);
-                    return true;
-                }
-                return false;
-            },
-            removeCustomRecord: (hostname) => {
-                const records = getCurrentDNSRecords();
-                if (Object.prototype.hasOwnProperty.call(records, hostname)) {
-                    delete records[hostname];
-                    dnsCache.delete(hostname);
-                    log.info(`➖ Removed DNS record: ${hostname}`);
-                    return true;
-                }
-                return false;
             }
         };
 
-        // Auto-start based on settings
         if (settings.store.autoStart) {
-            setTimeout(() => {
-                CustomDNS.start();
-            }, 2000);
+            startTimer = window.setTimeout(() => {
+                void CustomDNS.start();
+            }, START_DELAY_MS);
         } else {
-            log.info("Auto-start disabled. Plugin ready but not active.");
-            showNotification(`${PLUGIN_NAME} loaded - start manually from settings`, "info");
+            log.info("Auto start is disabled.");
         }
 
-        // Expose API globally for debugging
-        // @ts-ignore
         window.CustomDNS = CustomDNS;
-
-        log.info(`📦 ${PLUGIN_NAME} v${VERSION} loaded and ready`);
-        log.info(`📊 Features: Provider=${getProviderName()}, Logging=${settings.store.enableLogging}, Notifications=${settings.store.showNotifications}`);
+        log.info(`${PLUGIN_NAME} ${VERSION} loaded.`);
     },
 
     stop() {
-        // Clean shutdown
         try {
-            if (typeof (window as any).CustomDNS?.stop === "function") {
-                (window as any).CustomDNS.stop();
-            }
-            console.log("[CustomDNS] Plugin stopped");
+            window.CustomDNS?.stop();
+            window.CustomDNS = undefined;
+            log.info("Plugin unloaded.");
         } catch (error) {
-            console.error("[CustomDNS] Error during shutdown:", error);
+            log.error(`Error during shutdown: ${getErrorMessage(error)}`);
         }
     }
 });

@@ -4,6 +4,7 @@ node_modules
 .vars
 .secrets
 .input
+.pnpm-store
 
 *.exe
 vencord_installer

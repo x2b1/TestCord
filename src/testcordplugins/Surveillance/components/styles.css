@@ -1,0 +1,320 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+.vc-surveillance-root {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vc-surveillance-header,
+.vc-surveillance-timeline-head,
+.vc-surveillance-target-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vc-surveillance-header {
+    justify-content: space-between;
+}
+
+.vc-surveillance-actions,
+.vc-surveillance-filters,
+.vc-surveillance-target-list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vc-surveillance-stats,
+.vc-surveillance-target-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.vc-surveillance-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vc-surveillance-target-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vc-surveillance-stat,
+.vc-surveillance-panel,
+.vc-surveillance-event-row {
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.vc-surveillance-stat {
+    padding: 12px;
+}
+
+.vc-surveillance-stat span {
+    display: block;
+    color: var(--text-normal);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.vc-surveillance-stat small,
+.vc-surveillance-event-head span,
+.vc-surveillance-event-location,
+.vc-surveillance-empty,
+.vc-surveillance-target-id,
+.vc-surveillance-timeline-footer span,
+.vc-surveillance-modal-meta {
+    color: var(--text-muted);
+}
+
+.vc-surveillance-panel {
+    padding: 14px;
+}
+
+.vc-surveillance-target-input,
+.vc-surveillance-server-select {
+    margin-top: 10px;
+}
+
+.vc-surveillance-target-input > div,
+.vc-surveillance-timeline-head > div,
+.vc-surveillance-server-select > div {
+    flex: 1;
+}
+
+.vc-surveillance-action,
+.vc-surveillance-filter,
+.vc-surveillance-target-pill {
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    background: var(--background-tertiary);
+    color: var(--text-normal);
+    cursor: pointer;
+    min-height: 32px;
+    padding: 0 12px;
+}
+
+.vc-surveillance-action:hover,
+.vc-surveillance-filter:hover,
+.vc-surveillance-target-pill:hover,
+.vc-surveillance-event-row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.vc-surveillance-danger {
+    color: var(--status-danger);
+}
+
+.vc-surveillance-target-list,
+.vc-surveillance-filters {
+    margin-top: 12px;
+}
+
+.vc-surveillance-target-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-surveillance-target-id {
+    font-size: 11px;
+}
+
+.vc-surveillance-filter-active {
+    border-color: var(--brand-500);
+    color: var(--brand-260);
+}
+
+.vc-surveillance-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.vc-surveillance-timeline-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.vc-surveillance-timeline-footer span {
+    font-size: 12px;
+}
+
+.vc-surveillance-event-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px;
+    color: var(--text-normal);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.vc-surveillance-event-badge {
+    align-self: start;
+    border-radius: 6px;
+    color: var(--white-500);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 8px;
+    text-align: center;
+}
+
+.vc-surveillance-event-message,
+.vc-surveillance-event-message_edit,
+.vc-surveillance-event-message_delete,
+.vc-surveillance-event-reaction_add,
+.vc-surveillance-event-reaction_remove,
+.vc-surveillance-event-reaction_remove_all {
+    background: var(--green-360);
+}
+
+.vc-surveillance-event-status,
+.vc-surveillance-event-typing {
+    background: var(--brand-500);
+}
+
+.vc-surveillance-event-voice_join,
+.vc-surveillance-event-voice_leave,
+.vc-surveillance-event-voice_move,
+.vc-surveillance-event-voice_update {
+    background: var(--orange-345);
+}
+
+.vc-surveillance-event-activity_start,
+.vc-surveillance-event-activity_stop,
+.vc-surveillance-event-activity_update {
+    background: #eb459e;
+}
+
+.vc-surveillance-event-channel_create,
+.vc-surveillance-event-channel_delete,
+.vc-surveillance-event-channel_update,
+.vc-surveillance-event-guild_member_add,
+.vc-surveillance-event-guild_member_remove,
+.vc-surveillance-event-guild_member_update,
+.vc-surveillance-event-guild_update,
+.vc-surveillance-event-role_create,
+.vc-surveillance-event-role_delete,
+.vc-surveillance-event-role_update,
+.vc-surveillance-event-thread_create,
+.vc-surveillance-event-thread_delete,
+.vc-surveillance-event-thread_update {
+    background: var(--red-400);
+}
+
+.vc-surveillance-event-main {
+    min-width: 0;
+}
+
+.vc-surveillance-event-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.vc-surveillance-event-details,
+.vc-surveillance-event-location,
+.vc-surveillance-event-diff {
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+.vc-surveillance-event-diff {
+    display: grid;
+    gap: 2px;
+    color: var(--text-normal);
+    font-size: 12px;
+}
+
+.vc-surveillance-empty {
+    padding: 8px 0;
+}
+
+.vc-surveillance-modal-title {
+    flex: 1;
+    color: var(--white-500, #fff);
+}
+
+.vc-surveillance-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: var(--white-500, #fff);
+}
+
+.vc-surveillance-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.vc-surveillance-modal-field {
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--background-tertiary);
+    color: var(--white-500, #fff);
+    padding: 10px;
+    min-width: 0;
+}
+
+.vc-surveillance-modal-field strong {
+    display: block;
+    color: var(--white-500, #fff);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.vc-surveillance-modal-field span,
+.vc-surveillance-modal-field pre {
+    color: var(--white-500, #fff);
+}
+
+.vc-surveillance-modal-field pre {
+    background: transparent;
+    font-family: var(--font-code);
+    margin: 0;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.vc-surveillance-modal-wide {
+    grid-column: 1 / -1;
+}
+
+.vc-surveillance-modal-meta {
+    color: var(--white-500, #fff);
+    font-size: 12px;
+}
+
+@media (max-width: 720px) {
+    .vc-surveillance-stats,
+    .vc-surveillance-target-grid,
+    .vc-surveillance-event-row,
+    .vc-surveillance-modal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vc-surveillance-header,
+    .vc-surveillance-timeline-head,
+    .vc-surveillance-timeline-footer,
+    .vc-surveillance-target-input {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

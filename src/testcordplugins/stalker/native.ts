@@ -4,46 +4,52 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { mkdir, writeFile, readFile } from "fs/promises";
-import path from "path";
 import { DATA_DIR } from "@main/utils/constants";
+import { shell } from "electron";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
 
-const LOG_DIR_NAME = "StalkerLogs";
+const STALKER_DATA_DIR = path.join(DATA_DIR, "Stalking");
 
-async function getLogDir(): Promise<string> {
-    return path.join(DATA_DIR, LOG_DIR_NAME);
+const sanitizeUsername = (username: string): string =>
+    username.replace(/[/\\?*|<>:"']/g, "_");
+
+const getTodayFileName = (): string =>
+    `stalker-log-${new Date().toISOString().slice(0, 10)}.json`;
+
+async function getUserStalkerDirPath(userId: string, username: string): Promise<string> {
+    const safeUsername = sanitizeUsername(username);
+    return path.join(STALKER_DATA_DIR, `@${safeUsername}_${userId}`);
 }
 
-export async function writeStalkerLog(_event: Electron.IpcMainInvokeEvent, contents: string) {
-    try {
-        const logsDir = await getLogDir();
-        await mkdir(logsDir, { recursive: true });
-
-        // Use a daily rotating filename
-        const fileName = `stalker-log-${new Date().toISOString().slice(0, 10)}.json`;
-        const filePath = path.join(logsDir, fileName);
-
-        await writeFile(filePath, contents, "utf8");
-    } catch (e) {
-        console.error("Stalker: Failed to write log", e);
-    }
+export async function getUserStalkerDir(_event: Electron.IpcMainInvokeEvent, userId: string, username: string): Promise<string> {
+    const userDir = await getUserStalkerDirPath(userId, username);
+    await mkdir(userDir, { recursive: true });
+    return userDir;
 }
 
-export async function readStalkerLog(_event: Electron.IpcMainInvokeEvent): Promise<string> {
+export async function writeStalkerLog(_event: Electron.IpcMainInvokeEvent, contents: string, userId: string, username: string): Promise<void> {
+    const userDir = await getUserStalkerDir(_event, userId, username);
+    const filePath = path.join(userDir, getTodayFileName());
+    await writeFile(filePath, contents, "utf8");
+}
+
+export async function readStalkerLog(_event: Electron.IpcMainInvokeEvent, userId: string, username: string): Promise<string> {
+    const userDir = await getUserStalkerDirPath(userId, username);
+    const filePath = path.join(userDir, getTodayFileName());
+
     try {
-        const logsDir = await getLogDir();
-        await mkdir(logsDir, { recursive: true });
-
-        const fileName = `stalker-log-${new Date().toISOString().slice(0, 10)}.json`;
-        const filePath = path.join(logsDir, fileName);
-
         return await readFile(filePath, "utf8");
-    } catch (e) {
-        // If file doesn't exist (ENOENT), return empty array string
+    } catch {
         return "[]";
     }
 }
 
 export async function getStalkerDataDir(_event: Electron.IpcMainInvokeEvent): Promise<string> {
-    return await getLogDir();
+    return STALKER_DATA_DIR;
+}
+
+export async function openStalkerDataDir(_event: Electron.IpcMainInvokeEvent): Promise<string> {
+    await mkdir(STALKER_DATA_DIR, { recursive: true });
+    return shell.openPath(STALKER_DATA_DIR);
 }
