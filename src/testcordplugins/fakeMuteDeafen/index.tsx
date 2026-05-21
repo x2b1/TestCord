@@ -262,7 +262,7 @@ export default definePlugin({
     authors: [TestcordDevs.x2b, TestcordDevs.dot, TestcordDevs.sirphantom89],
     settings,
 
-    start() {
+start() {
         const socket = wsModule?.getSocket?.();
         if (socket && !originalSend) {
             originalSend = socket.send;
@@ -278,7 +278,7 @@ export default definePlugin({
 
         if (settings.store.userAreaButton) {
             try {
-                Vencord.Api.UserArea.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
+                (window as any).Vencord?.Api?.UserArea?.addUserAreaButton("fake-mute-deafen", () => <FakeMuteDeafenButton />);
             } catch (e) {
                 console.warn("[FakeMuteDeafen] Failed to add user area button:", e);
             }
@@ -298,7 +298,7 @@ export default definePlugin({
         }
 
         try {
-            Vencord.Api.UserArea.removeUserAreaButton("fake-mute-deafen");
+            (window as any).Vencord?.Api?.UserArea?.removeUserAreaButton("fake-mute-deafen");
         } catch (e) { }
 
         document.removeEventListener("keydown", handleKeydown);
@@ -307,8 +307,8 @@ export default definePlugin({
         }
     },
 
-    contextMenus: {
-        "audio-device-context"(children, d) {
+contextMenus: {
+        "audio-device-context"(children: any[], d: any) {
             if (!settings.store.contextMenu) return;
 
             if (d.renderInputDevices) {
@@ -344,7 +344,7 @@ export default definePlugin({
                 );
             }
         },
-        "video-device-context"(children) {
+        "video-device-context"(children: any[]) {
             if (!settings.store.contextMenu) return;
 
             children.push(
@@ -360,5 +360,5 @@ export default definePlugin({
                 />
             );
         }
-    }
+    } 
 });
