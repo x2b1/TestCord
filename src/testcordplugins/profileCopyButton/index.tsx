@@ -616,7 +616,7 @@ export async function copyProfileFromId(targetId: string, guildId?: string) {
                 pendingDisplayNameStyles: {
                     ...(dns.font_id != null && { fontId: dns.font_id }),
                     ...(dns.effect_id != null && { effectId: dns.effect_id }),
-                    ...(dns.colors?.length && { colors: [...dns.colors] })
+                    colors: dns.colors ? [...dns.colors] : []
                 }
             });
             dispatched++;
