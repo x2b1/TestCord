@@ -259,7 +259,7 @@ export default definePlugin({
     name: "FakeMuteDeafen",
     description: "Fake mute and deafen yourself. You can continue speaking and being heard during this time. Toggle via user area button, context menu, or keybinds.",
     tags: ["Voice", "Privacy"],
-    authors: [TestcordDevs.x2b, TestcordDevs.dot, TestcordDevs.sirphantom89],
+    authors: [TestcordDevs.x2b, TestcordDevs.dot, TestcordDevs.sirphantom89, TestcordDevs.hyyven],
     settings,
 
 start() {
