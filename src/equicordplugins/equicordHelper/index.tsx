@@ -114,12 +114,6 @@ const settings = definePluginSettings({
         restartNeeded: true,
         default: false
     },
-    noModalAnimation: {
-        type: OptionType.BOOLEAN,
-        description: "Remove the 300ms long animation when opening or closing modals",
-        restartNeeded: true,
-        default: false
-    },
     disableAdoptTagPrompt: {
         type: OptionType.BOOLEAN,
         description: "Disable the prompt to adopt tags",
@@ -258,15 +252,6 @@ export default definePlugin({
             replacement: {
                 match: /300,/,
                 replace: "0,",
-            }
-        },
-        // Removes Modal Animation
-        {
-            find: 'backdropFilter:"blur(0px)"',
-            predicate: () => settings.store.noModalAnimation,
-            replacement: {
-                match: /\?0:200/,
-                replace: "?0:0",
             }
         },
         // Removes Modal Animation
