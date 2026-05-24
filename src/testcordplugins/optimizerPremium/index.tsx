@@ -112,6 +112,51 @@ const settings = definePluginSettings({
         description: "Apply optimizeSpeed text-rendering and reduce subpixel work on message content. Faster text layout on large channels.",
         default: true
     },
+    killBackdropBlur: {
+        type: OptionType.BOOLEAN,
+        description: "Strip backdrop-filter blur effects (popouts, modals, overlays). Massive GPU win on integrated graphics.",
+        default: false
+    },
+    forcePassiveListeners: {
+        type: OptionType.BOOLEAN,
+        description: "Force wheel, touchstart, touchmove and mousewheel listeners to passive mode. Reduces scroll input lag.",
+        default: true
+    },
+    suppressConsoleSpam: {
+        type: OptionType.BOOLEAN,
+        description: "Suppress Discord's noisy console.log/debug output. Console.error and console.warn still pass through.",
+        default: true
+    },
+    freezeGifsUntilHover: {
+        type: OptionType.BOOLEAN,
+        description: "Pause animated GIFs and stickers until you hover them. Cuts decode CPU dramatically in active channels.",
+        default: false
+    },
+    throttleResizeObservers: {
+        type: OptionType.BOOLEAN,
+        description: "Coalesce ResizeObserver callbacks via rAF. Prevents layout thrash during window resize and dynamic UI changes.",
+        default: true
+    },
+    reduceMotion: {
+        type: OptionType.BOOLEAN,
+        description: "Apply prefers-reduced-motion globally. Disables transitions, transforms and CSS animations across the client.",
+        default: false
+    },
+    killWillChange: {
+        type: OptionType.BOOLEAN,
+        description: "Strip will-change hints Discord scatters everywhere. Reduces GPU memory and layer explosions.",
+        default: true
+    },
+    lazyEmbedImages: {
+        type: OptionType.BOOLEAN,
+        description: "Force loading=lazy and decoding=async on every embed/attachment image. Faster scroll past media-heavy channels.",
+        default: true
+    },
+    disableTypingIndicator: {
+        type: OptionType.BOOLEAN,
+        description: "Hide the 'X is typing...' indicator. The animated dots cause continuous repaints.",
+        default: false
+    },
     verboseLogging: {
         type: OptionType.BOOLEAN,
         description: "Log optimization activity to the console. Disable for production.",
@@ -208,6 +253,12 @@ export default definePlugin({
     intersectionObserver: null as IntersectionObserver | null,
     pausedMedia: new WeakSet<HTMLMediaElement>(),
     optimizerStyleEl: null as HTMLStyleElement | null,
+    extraStyleEl: null as HTMLStyleElement | null,
+    originalAddEventListener: null as typeof EventTarget.prototype.addEventListener | null,
+    originalConsole: null as { log: typeof console.log; debug: typeof console.debug; info: typeof console.info; } | null,
+    originalResizeObserver: null as typeof ResizeObserver | null,
+    gifMutationObserver: null as MutationObserver | null,
+    lazyImageObserver: null as MutationObserver | null,
 
     start() {
         if (settings.store.verboseLogging) logger.info("Starting optimizer suite");
@@ -219,6 +270,12 @@ export default definePlugin({
         if (settings.store.memoryManagement) this.installMemoryManager();
         if (settings.store.pauseOffscreenMedia) this.installOffscreenMediaPause();
         if (settings.store.virtualizeMessages || settings.store.optimizeTextRendering) this.installCSSOptimizations();
+        if (settings.store.forcePassiveListeners) this.installPassiveListeners();
+        if (settings.store.suppressConsoleSpam) this.installConsoleSuppression();
+        if (settings.store.throttleResizeObservers) this.installResizeObserverThrottle();
+        if (settings.store.freezeGifsUntilHover) this.installGifFreezer();
+        if (settings.store.lazyEmbedImages) this.installLazyImages();
+        this.installExtraCSS();
 
         if (settings.store.verboseLogging) logger.info("Started");
     },
@@ -233,6 +290,12 @@ export default definePlugin({
         this.teardownMemoryManager();
         this.teardownOffscreenMediaPause();
         this.teardownCSSOptimizations();
+        this.restorePassiveListeners();
+        this.restoreConsoleSuppression();
+        this.restoreResizeObserverThrottle();
+        this.teardownGifFreezer();
+        this.teardownLazyImages();
+        this.teardownExtraCSS();
 
         this.networkCache.clear();
     },
@@ -422,7 +485,7 @@ export default definePlugin({
 
         this.intersectionObserver = new IntersectionObserver(entries => {
             for (const entry of entries) {
-                const target = entry.target;
+                const { target } = entry;
                 if (!(target instanceof HTMLMediaElement)) continue;
                 if (entry.isIntersecting) {
                     if (paused.has(target)) {
@@ -475,14 +538,14 @@ export default definePlugin({
 
         if (settings.store.virtualizeMessages) {
             rules.push(
-                `[class*="messageListItem_"] { contain: layout style; }`
+                "[class*=\"messageListItem_\"] { contain: layout style; }"
             );
         }
 
         if (settings.store.optimizeTextRendering) {
             rules.push(
-                `[class*="messageContent_"], [class*="markup_"] { text-rendering: optimizeSpeed; will-change: contents; }`,
-                `[class*="chatContent_"] { contain: style layout; }`
+                "[class*=\"messageContent_\"], [class*=\"markup_\"] { text-rendering: optimizeSpeed; will-change: contents; }",
+                "[class*=\"chatContent_\"] { contain: style layout; }"
             );
         }
 
@@ -498,6 +561,211 @@ export default definePlugin({
         if (this.optimizerStyleEl) {
             this.optimizerStyleEl.remove();
             this.optimizerStyleEl = null;
+        }
+    },
+
+    installPassiveListeners() {
+        const PASSIVE_EVENTS = new Set(["wheel", "mousewheel", "touchstart", "touchmove", "touchend"]);
+        const original = EventTarget.prototype.addEventListener;
+        this.originalAddEventListener = original;
+
+        EventTarget.prototype.addEventListener = function patched(
+            this: EventTarget,
+            type: string,
+            listener: EventListenerOrEventListenerObject | null,
+            options?: boolean | AddEventListenerOptions
+        ): void {
+            if (PASSIVE_EVENTS.has(type)) {
+                if (typeof options === "boolean" || options === undefined) {
+                    options = { capture: !!options, passive: true };
+                } else if (options.passive === undefined) {
+                    options = { ...options, passive: true };
+                }
+            }
+            return original.call(this, type, listener, options);
+        } as typeof EventTarget.prototype.addEventListener;
+    },
+
+    restorePassiveListeners() {
+        if (this.originalAddEventListener) {
+            EventTarget.prototype.addEventListener = this.originalAddEventListener;
+            this.originalAddEventListener = null;
+        }
+    },
+
+    installConsoleSuppression() {
+        this.originalConsole = {
+            log: console.log,
+            debug: console.debug,
+            info: console.info
+        };
+        const noop = () => undefined;
+        console.log = noop;
+        console.debug = noop;
+        console.info = noop;
+    },
+
+    restoreConsoleSuppression() {
+        if (this.originalConsole) {
+            console.log = this.originalConsole.log;
+            console.debug = this.originalConsole.debug;
+            console.info = this.originalConsole.info;
+            this.originalConsole = null;
+        }
+    },
+
+    installResizeObserverThrottle() {
+        if (typeof ResizeObserver === "undefined") return;
+        const Native = ResizeObserver;
+        this.originalResizeObserver = Native;
+
+        class ThrottledResizeObserver {
+            private _observer: ResizeObserver;
+            private _pendingEntries: ResizeObserverEntry[] = [];
+            private _rafId: number | null = null;
+            private _userCb: ResizeObserverCallback;
+
+            constructor(callback: ResizeObserverCallback) {
+                this._userCb = callback;
+                this._observer = new Native(entries => {
+                    this._pendingEntries.push(...entries);
+                    if (this._rafId !== null) return;
+                    this._rafId = requestAnimationFrame(() => {
+                        const flushed = this._pendingEntries;
+                        this._pendingEntries = [];
+                        this._rafId = null;
+                        try {
+                            this._userCb(flushed, this._observer);
+                        } catch (err) {
+                            if (settings.store.verboseLogging) logger.warn("ResizeObserver cb threw", err);
+                        }
+                    });
+                });
+            }
+
+            observe(target: Element, options?: ResizeObserverOptions) { this._observer.observe(target, options); }
+            unobserve(target: Element) { this._observer.unobserve(target); }
+            disconnect() {
+                if (this._rafId !== null) cancelAnimationFrame(this._rafId);
+                this._rafId = null;
+                this._pendingEntries = [];
+                this._observer.disconnect();
+            }
+        }
+
+        (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver = ThrottledResizeObserver as unknown as typeof ResizeObserver;
+    },
+
+    restoreResizeObserverThrottle() {
+        if (this.originalResizeObserver) {
+            (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver = this.originalResizeObserver;
+            this.originalResizeObserver = null;
+        }
+    },
+
+    installGifFreezer() {
+        const freeze = (img: HTMLImageElement) => {
+            if (!/\.gif/i.test(img.src) && !img.src.includes("a_")) return;
+            if (img.dataset.opFrozen === "1") return;
+            const realSrc = img.src;
+            img.dataset.opFrozen = "1";
+            img.dataset.opOriginal = realSrc;
+            const canvas = document.createElement("canvas");
+            const draw = () => {
+                if (!img.naturalWidth) return;
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return;
+                try {
+                    ctx.drawImage(img, 0, 0);
+                    img.src = canvas.toDataURL();
+                } catch {
+                    // CORS fallback: leave it
+                }
+            };
+            if (img.complete) draw(); else img.addEventListener("load", draw, { once: true });
+            img.addEventListener("mouseenter", () => { if (img.dataset.opOriginal) img.src = img.dataset.opOriginal; });
+            img.addEventListener("mouseleave", () => { draw(); });
+        };
+
+        document.querySelectorAll("img").forEach(i => freeze(i as HTMLImageElement));
+        this.gifMutationObserver = new MutationObserver(records => {
+            for (const r of records) {
+                for (const node of r.addedNodes) {
+                    if (node instanceof HTMLImageElement) freeze(node);
+                    else if (node instanceof Element) node.querySelectorAll("img").forEach(i => freeze(i as HTMLImageElement));
+                }
+            }
+        });
+        this.gifMutationObserver.observe(document.body, { childList: true, subtree: true });
+    },
+
+    teardownGifFreezer() {
+        if (this.gifMutationObserver) {
+            this.gifMutationObserver.disconnect();
+            this.gifMutationObserver = null;
+        }
+        document.querySelectorAll<HTMLImageElement>("img[data-op-frozen='1']").forEach(img => {
+            if (img.dataset.opOriginal) img.src = img.dataset.opOriginal;
+            delete img.dataset.opFrozen;
+            delete img.dataset.opOriginal;
+        });
+    },
+
+    installLazyImages() {
+        const apply = (img: HTMLImageElement) => {
+            if (img.dataset.opLazy === "1") return;
+            img.dataset.opLazy = "1";
+            if (!img.loading) img.loading = "lazy";
+            if (!img.decoding) img.decoding = "async";
+        };
+        document.querySelectorAll("img").forEach(i => apply(i as HTMLImageElement));
+        this.lazyImageObserver = new MutationObserver(records => {
+            for (const r of records) {
+                for (const node of r.addedNodes) {
+                    if (node instanceof HTMLImageElement) apply(node);
+                    else if (node instanceof Element) node.querySelectorAll("img").forEach(i => apply(i as HTMLImageElement));
+                }
+            }
+        });
+        this.lazyImageObserver.observe(document.body, { childList: true, subtree: true });
+    },
+
+    teardownLazyImages() {
+        if (this.lazyImageObserver) {
+            this.lazyImageObserver.disconnect();
+            this.lazyImageObserver = null;
+        }
+    },
+
+    installExtraCSS() {
+        const rules: string[] = [];
+
+        if (settings.store.killBackdropBlur) {
+            rules.push("* { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }");
+        }
+        if (settings.store.reduceMotion) {
+            rules.push("*, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; transition-delay: 0ms !important; }");
+        }
+        if (settings.store.killWillChange) {
+            rules.push("* { will-change: auto !important; }");
+        }
+        if (settings.store.disableTypingIndicator) {
+            rules.push("[class*=\"typing_\"], [class*=\"typingDots_\"] { display: none !important; }");
+        }
+
+        if (!rules.length) return;
+        this.extraStyleEl = document.createElement("style");
+        this.extraStyleEl.id = "op-extra-optimizations";
+        this.extraStyleEl.textContent = rules.join("\n");
+        document.head.appendChild(this.extraStyleEl);
+    },
+
+    teardownExtraCSS() {
+        if (this.extraStyleEl) {
+            this.extraStyleEl.remove();
+            this.extraStyleEl = null;
         }
     }
 });
