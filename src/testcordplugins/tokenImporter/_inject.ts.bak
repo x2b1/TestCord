@@ -1,0 +1,54 @@
+    async _injectIntoMultiAccountStore() {
+        try {
+            const saved: SavedAccount[] = (await DataStore.get(STORE_KEY)) ?? [];
+            if (saved.length === 0) { console.log("[TokenImporter] Aucun compte sauvegardé"); return; }
+
+            const FluxDispatcher = findByProps("dispatch", "subscribe", "register")
+                ?? findByProps("_dispatch", "dispatch");
+            if (!FluxDispatcher?.dispatch) { console.warn("[TokenImporter] FluxDispatcher introuvable"); return; }
+
+            const tokenMod = findByProps("getToken", "encryptAndStoreTokens");
+            const currentToken = tokenMod?.getToken();
+            const currentUser = findByProps("getCurrentUser")?.getCurrentUser?.();
+
+            const multiAccountStore = findByProps("getAccounts");
+            const currentAccounts: any[] = multiAccountStore?.getAccounts?.() ?? [];
+            const existingIds = new Set(currentAccounts.map((u: any) => u.id));
+            console.log("[TokenImporter] Comptes actuels:", currentAccounts.length, existingIds);
+
+            // Dispatch les tokens par lots de 5 avec 200ms de délai entre chaque lot
+            // pour éviter de freeze l'UI
+            const BATCH_SIZE = 5;
+            const BATCH_DELAY = 200;
+
+            const toDispatch = saved.filter(acc => !existingIds.has(acc.id));
+            for (let i = 0; i < toDispatch.length; i += BATCH_SIZE) {
+                const batch = toDispatch.slice(i, i + BATCH_SIZE);
+                for (const acc of batch) {
+                    FluxDispatcher.dispatch({
+                        type: "MULTI_ACCOUNT_VALIDATE_TOKEN_SUCCESS",
+                        userId: acc.id,
+                        token: acc.token,
+                        user: { id: acc.id, username: acc.username, discriminator: acc.discriminator, avatar: null }
+                    });
+                    console.log(`[TokenImporter] Dispatched MULTI_ACCOUNT_VALIDATE_TOKEN_SUCCESS pour ${acc.username}`);
+                }
+                // Pause entre chaque lot pour laisser respirer l'UI
+                if (i + BATCH_SIZE < toDispatch.length) {
+                    await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+                }
+            }
+
+            if (tokenMod && currentToken && currentUser?.id) {
+                // Délai supplémentaire avant encryptAndStoreTokens
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const tokensMap: Record<string, string> = { [currentUser.id]: currentToken };
+                for (const acc of saved) tokensMap[acc.id] = acc.token;
+                tokenMod.encryptAndStoreTokens(tokensMap);
+                console.log(`[TokenImporter] ${saved.length} token(s) persisté(s) via encryptAndStoreTokens`);
+            }
+
+        } catch (e) {
+            console.error("[TokenImporter] _injectIntoMultiAccountStore error:", e);
+        }
+    },

@@ -248,3 +248,60 @@ export function _addHeaderBarButtons() {
 export function _addChannelToolbarButtons(toolbar: ReactNode[]) {
     toolbar.push(<ChannelToolbarButtons key="vc-channel-toolbar-buttons" />);
 }
+
+
+
+// ══════════════════════════════════════════════════════════════════
+// STEALTH MODE (Nightcord compat) — exposed for plugins that hide UI
+// ══════════════════════════════════════════════════════════════════
+
+let _stealthActive = false;
+try { _stealthActive = localStorage.getItem("Nightcord_stealthMode") === "1"; } catch { }
+
+const stealthListeners = new Set<() => void>();
+
+export function isStealthModeEnabled(): boolean {
+    return _stealthActive;
+}
+
+function persistStealth(v: boolean) {
+    try { v ? localStorage.setItem("Nightcord_stealthMode", "1") : localStorage.removeItem("Nightcord_stealthMode"); } catch { }
+}
+
+const NON_REACT_SELECTORS = [
+    "#nightcord-titlebar-btn",
+    "#nightcord-titlebar-link-style",
+    ".nai-nav-item",
+];
+
+function hideNonReactElements(hide: boolean) {
+    for (const sel of NON_REACT_SELECTORS) {
+        try {
+            document.querySelectorAll(sel).forEach(el => {
+                (el as HTMLElement).style.display = hide ? "none" : "";
+            });
+        } catch { }
+    }
+}
+
+export function syncStealthBodyClass() {
+    try { if (_stealthActive) document.body?.classList.add("nightcord-stealth"); else document.body?.classList.remove("nightcord-stealth"); } catch { }
+    hideNonReactElements(_stealthActive);
+}
+
+export function _notifyStealthChange() {
+    stealthListeners.forEach(fn => fn());
+    try { window.dispatchEvent(new Event("nightcord-stealth-change")); } catch { }
+}
+
+export function toggleStealthMode() {
+    _stealthActive = !_stealthActive;
+    persistStealth(_stealthActive);
+    hideNonReactElements(_stealthActive);
+    _notifyStealthChange();
+    try { if (_stealthActive) document.body?.classList.add("nightcord-stealth"); else document.body?.classList.remove("nightcord-stealth"); } catch { }
+    return _stealthActive;
+}
+
+export function addStealthListener(fn: () => void) { stealthListeners.add(fn); }
+export function removeStealthListener(fn: () => void) { stealthListeners.delete(fn); }

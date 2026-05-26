@@ -1,0 +1,133 @@
+/* Design Premium pour Wordbomb Overlay */
+
+.nc-wb-overlay {
+    position: fixed;
+    top: 100px;
+    left: 100px;
+    width: 350px;
+    background: rgba(15, 14, 23, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 999999;
+    will-change: top, left; /* Optimisation pour le mouvement */
+    color: #f1f5f9;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    transition: backdrop-filter 0.2s, background 0.2s;
+}
+
+.nc-wb-overlay.dragging {
+    backdrop-filter: none !important;
+    background: rgba(15, 14, 23, 0.95) !important;
+    border-color: rgba(124, 58, 237, 0.6) !important;
+}
+
+.nc-wb-header {
+    background: #7c3aed;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: move;
+}
+
+.nc-wb-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.nc-wb-close {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.nc-wb-close:hover {
+    opacity: 1;
+}
+
+.nc-wb-content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.nc-wb-alphabet {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 4px;
+    text-align: center;
+}
+
+.nc-wb-letter {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 0;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #64748b;
+}
+
+.nc-wb-letter.active {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a78bfa;
+}
+
+.nc-wb-input-container {
+    position: relative;
+}
+
+.nc-wb-input {
+    width: 100%;
+    background: #1a1b26;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.nc-wb-input:focus {
+    border-color: #7c3aed;
+}
+
+.nc-wb-status {
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.nc-wb-footer {
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nc-wb-settings-btn {
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.6;
+}
+
+.nc-wb-settings-btn:hover {
+    opacity: 1;
+}
+
+.nc-wb-word-preview {
+    font-weight: 700;
+    color: #34d399;
+}

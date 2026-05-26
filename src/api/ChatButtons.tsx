@@ -95,6 +95,14 @@ export type ChatBarButtonData = {
 export const ChatBarButtonMap = new Map<string, ChatBarButtonData>();
 const logger = new Logger("ChatButtons");
 
+/**
+ * Set of button IDs hidden by the Backpack plugin (Nightcord compat).
+ * Buttons in this set should be rendered inside the Backpack popout instead of the main bar.
+ */
+export const BackpackedButtons = new Set<string>();
+export const backpackListeners = new Set<() => void>();
+export function notifyBackpackChange() { backpackListeners.forEach(l => l()); }
+
 function VencordChatBarButtons(props: ChatBarProps) {
     const { chatBarButtons } = useSettings(["uiElements.chatBarButtons.*"]).uiElements;
 

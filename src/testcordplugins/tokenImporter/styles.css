@@ -1,0 +1,447 @@
+/* ── TokenImporter ── */
+
+.ti-content {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Onglets */
+.ti-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 8px;
+}
+
+.ti-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0;
+    margin-bottom: 4px;
+}
+
+.ti-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 7px 12px 9px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.5) !important;
+    transition: color .1s, border-color .1s;
+    font-family: inherit;
+    margin-bottom: -1px;
+}
+
+.ti-tab:hover {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ti-tab--active {
+    color: #ffffff !important;
+    border-bottom-color: var(--brand-500, #5865f2);
+    font-weight: 600;
+}
+
+.ti-tab-count {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6) !important;
+    border-radius: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Barre titre + bouton vérifier */
+.ti-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.ti-search-wrap {
+    flex: 1;
+    position: relative;
+}
+
+.ti-search-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #fff;
+    padding: 6px 30px 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+    box-sizing: border-box;
+}
+
+.ti-search-input:focus {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ti-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.ti-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ti-search-clear:hover {
+    color: #fff;
+}
+
+.ti-verify-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    border-radius: 6px;
+    color: #ffffff !important;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .1s;
+}
+
+.ti-verify-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ti-verify-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+/* Empty */
+.ti-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 13px;
+    padding: 24px 0;
+}
+
+/* Liste */
+.ti-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 340px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.ti-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ti-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+}
+
+.ti-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1.5px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    transition: background .1s;
+}
+
+.ti-row:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.ti-row--valid {
+    border-color: rgba(59, 165, 92, 0.35);
+}
+
+.ti-row--invalid {
+    opacity: .55;
+    border-color: rgba(237, 66, 69, 0.2);
+}
+
+.ti-row--warn {
+    border-color: rgba(250, 166, 26, 0.3);
+}
+
+.ti-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.ti-avatar--ph {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(88, 101, 242, .3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.ti-row-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ti-username {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Token masqué en points */
+.ti-token-hidden {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45) !important;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.ti-st {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.ti-st--ok {
+    background: rgba(59, 165, 92, .2);
+    color: #3ba55c;
+}
+
+.ti-st--bad {
+    background: rgba(237, 66, 69, .2);
+    color: #ed4245;
+}
+
+.ti-st--loading {
+    background: rgba(255, 255, 255, .06);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.ti-row-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.ti-switch-btn {
+    background: var(--brand-500, #5865f2);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .1s;
+}
+
+.ti-switch-btn:hover {
+    opacity: .85;
+}
+
+.ti-del-btn {
+    background: rgba(237, 66, 69, .1);
+    border: none;
+    border-radius: 6px;
+    color: #ed4245;
+    padding: 5px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ti-del-btn:hover {
+    background: rgba(237, 66, 69, .25);
+}
+
+/* Badge status */
+.ti-badge {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ti-badge--valid {
+    background: rgba(59, 165, 92, .2);
+    color: #3ba55c;
+}
+
+.ti-badge--invalid {
+    background: rgba(237, 66, 69, .2);
+    color: #ed4245;
+}
+
+.ti-badge--warn {
+    background: rgba(250, 166, 26, .2);
+    color: #faa61a;
+    font-size: 9px;
+}
+
+.ti-badge--checking,
+.ti-badge--pending {
+    background: rgba(255, 255, 255, .06);
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/* Tab Ajouter */
+.ti-add-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ti-textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #ffffff !important;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    resize: none;
+    height: 110px;
+    transition: border-color .15s;
+    box-sizing: border-box;
+}
+
+.ti-textarea:focus {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.ti-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.ti-add-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ti-detected {
+    flex: 1;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.ti-file-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    border-radius: 6px;
+    color: #ffffff !important;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .1s;
+}
+
+.ti-file-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ti-submit-btn {
+    background: var(--brand-500, #5865f2);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .1s;
+    white-space: nowrap;
+}
+
+.ti-submit-btn:hover:not(:disabled) {
+    opacity: .85;
+}
+
+.ti-submit-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.ti-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ti-results-summary {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    padding: 0 2px;
+    align-items: center;
+}

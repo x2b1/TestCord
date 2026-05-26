@@ -1,0 +1,116 @@
+/* ── BulkFriendRemove ── */
+
+.bfr-content {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bfr-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.25);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 8px 12px;
+    transition: border-color .15s;
+}
+.bfr-search-bar:focus-within { border-color: rgba(255,255,255,0.22); }
+
+.bfr-search-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #fff; font-size: 13px; font-family: inherit;
+}
+.bfr-search-input::placeholder { color: rgba(255,255,255,0.35); }
+
+.bfr-search-clear {
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    cursor: pointer; font-size: 12px; padding: 0 2px; transition: color .1s; line-height: 1;
+}
+.bfr-search-clear:hover { color: rgba(255,255,255,0.8); }
+
+.bfr-search-sep {
+    width: 1px; height: 16px; background: rgba(255,255,255,0.1); flex-shrink: 0;
+}
+
+.bfr-select-all {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    padding: 0 2px; white-space: nowrap; transition: color .1s; font-family: inherit;
+    display: flex; align-items: center; gap: 5px;
+}
+.bfr-select-all:hover { color: #fff; }
+.bfr-select-all span { color: inherit; }
+
+.bfr-selected-count { color: var(--brand-500, #5865f2); font-weight: 700; }
+
+@keyframes bfr-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.bfr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 310px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.bfr-list::-webkit-scrollbar { width: 4px; }
+.bfr-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+.bfr-empty {
+    text-align: center; color: rgba(255,255,255,0.45) !important; font-size: 13px; padding: 20px 0;
+}
+
+.bfr-content h5,
+.bfr-content .bfr-count {
+    color: #ffffff !important;
+}
+
+.bfr-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: rgba(255,255,255,0.04);
+    transition: background .1s, border-color .1s;
+    user-select: none;
+}
+.bfr-row:hover { background: rgba(255,255,255,0.07); }
+.bfr-row--selected { border-color: var(--brand-500, #5865f2); background: rgba(88,101,242,0.1); }
+.bfr-row--selected:hover { background: rgba(88,101,242,0.15); }
+
+.bfr-checkbox { font-size: 14px; flex-shrink: 0; }
+
+.bfr-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+.bfr-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.bfr-name { font-size: 14px; font-weight: 600; color: #ffffff !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bfr-tag  { font-size: 12px; color: rgba(255,255,255,0.55) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.bfr-progress-wrap {
+    display: flex; align-items: center; gap: 10px;
+}
+.bfr-progress-bar {
+    flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden;
+}
+.bfr-progress-fill { height: 100%; background: var(--brand-500, #5865f2); border-radius: 99px; transition: width .3s ease; }
+.bfr-progress-label { font-size: 12px; color: var(--header-secondary, rgba(255,255,255,0.5)); flex-shrink: 0; min-width: 36px; text-align: right; }
+
+/* Footer buttons */
+.bfr-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border: none; border-radius: 6px; padding: 9px 16px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: opacity .15s, background .15s; color: #fff; font-family: inherit;
+}
+.bfr-btn:disabled { opacity: .4; cursor: not-allowed; }
+.bfr-btn-secondary { background: rgba(255,255,255,0.08); flex-shrink: 0; }
+.bfr-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+.bfr-btn-danger { background: #ed4245; }
+.bfr-btn-danger:hover:not(:disabled) { background: #c23b3e; }

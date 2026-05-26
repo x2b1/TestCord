@@ -1,0 +1,16 @@
+/* Stealth Mode - hide Nightcord plugin UI (but NOT settings access) */
+
+/* Plugin buttons: header bar, channel toolbar, chat bar, user area */
+body.nightcord-stealth .vc-header-bar-btns,
+body.nightcord-stealth .vc-channel-toolbar-btns,
+body.nightcord-stealth .vc-chat-bar-btns,
+body.nightcord-stealth .vc-user-area-btns,
+
+/* Titlebar injected elements */
+body.nightcord-stealth #nightcord-titlebar-btn,
+body.nightcord-stealth #nightcord-titlebar-link-style,
+
+/* NightcordAI nav button */
+body.nightcord-stealth .nai-nav-item {
+    display: none !important;
+}

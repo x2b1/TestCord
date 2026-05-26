@@ -1,0 +1,8 @@
+/* Styles for NoDMWhileStreaming plugin */
+
+/* Hide the entire row container of DM/Group items when streaming is active */
+.no-dm-while-streaming-active [class*="privateChannels_"] [class*="channel_"]:has(a[href^="/channels/@me/"]:not([href="/channels/@me"]):not([href="/channels/@me/message-requests"]):not([href="/channels/@me/store"]):not([href^="/channels/@me/ai"])),
+.no-dm-while-streaming-active [class*="privateChannels_"] [class*="interactive_"]:has(a[href^="/channels/@me/"]:not([href="/channels/@me"]):not([href="/channels/@me/message-requests"]):not([href="/channels/@me/store"]):not([href^="/channels/@me/ai"])),
+.no-dm-while-streaming-active [class*="privateChannels_"] a[href^="/channels/@me/"]:not([href="/channels/@me"]):not([href="/channels/@me/message-requests"]):not([href="/channels/@me/store"]):not([href^="/channels/@me/ai"]) {
+    display: none !important;
+}

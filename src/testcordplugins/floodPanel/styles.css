@@ -1,0 +1,70 @@
+/* FloodPanel */
+
+.vc-flood-modal-header {
+    place-content: center space-between;
+}
+
+.vc-flood-modal-title {
+    margin: 0;
+}
+
+.vc-flood-modal-content {
+    padding: 1em;
+}
+
+.vc-flood-file-info {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vc-flood-file-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* Status */
+.vc-flood-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.vc-flood-status-idle {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.vc-flood-status-active {
+    font-size: 13px;
+    color: var(--text-positive);
+    font-weight: 500;
+}
+
+/* Spinner */
+@keyframes vc-flood-spin { to { transform: rotate(360deg); } }
+
+.vc-flood-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--background-modifier-accent);
+    border-top-color: var(--brand-experiment);
+    border-radius: 50%;
+    animation: vc-flood-spin .65s linear infinite;
+    flex-shrink: 0;
+}
+
+/* Footer */
+.vc-flood-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}

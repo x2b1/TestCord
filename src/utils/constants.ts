@@ -1420,6 +1420,34 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
     }
 } satisfies Record<string, Dev>);
 
+// Nightcord plugin authors / placeholders for nightcord-fork-only devs
+export const NightcordDevs = /* #__PURE__*/ Object.freeze({
+    Nightcord: {
+        name: "Nightcord",
+        id: 0n
+    },
+    coll: {
+        name: "coll",
+        id: 0n
+    },
+    viciouscal: {
+        name: "viciouscal",
+        id: 0n
+    },
+    Unknown: {
+        name: "Unknown",
+        id: 0n
+    },
+    mushzi: {
+        name: "mushzi",
+        id: 449282863582412850n
+    },
+    Trigger: {
+        name: "Trigger",
+        id: 0n
+    }
+} satisfies Record<string, Dev>);
+
 // iife so #__PURE__ works correctly
 export const VencordDevsById = /* #__PURE__*/ (() =>
     Object.freeze(Object.fromEntries(
@@ -1440,6 +1468,14 @@ export const EquicordDevsById = /* #__PURE__*/ (() =>
 export const TestcordDevsById = /* #__PURE__*/ (() =>
     Object.freeze(Object.fromEntries(
         Object.entries(TestcordDevs)
+            .filter(d => d[1].id !== 0n)
+            .map(([_, v]) => [v.id, v] as const)
+    ))
+)() as Record<string, Dev>;
+
+export const NightcordDevsById = /* #__PURE__*/ (() =>
+    Object.freeze(Object.fromEntries(
+        Object.entries(NightcordDevs)
             .filter(d => d[1].id !== 0n)
             .map(([_, v]) => [v.id, v] as const)
     ))

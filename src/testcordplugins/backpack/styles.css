@@ -1,0 +1,130 @@
+.backpack-popout {
+    background: var(--background-floating, #2b2d31) !important;
+    border-radius: 8px;
+    box-shadow: var(--elevation-high);
+    padding: 8px;
+    min-width: 200px;
+    max-width: 400px;
+    z-index: 1000;
+    color: var(--text-normal, #dbdee1) !important;
+}
+
+.backpack-popout * {
+    color: inherit;
+}
+
+.backpack-popout svg {
+    color: var(--interactive-normal, #b5bac1) !important;
+}
+
+.backpack-popout svg:hover {
+    color: var(--interactive-hover, #dbdee1) !important;
+}
+
+.backpack-popout-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px 8px;
+    border-bottom: 1px solid var(--background-modifier-accent, #3f4147);
+    margin-bottom: 6px;
+    color: var(--header-secondary, #b5bac1) !important;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.backpack-popout-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 2px;
+    align-items: center;
+}
+
+/* Override les styles des ChatBarButton à l'intérieur du popout */
+.backpack-popout-grid .expression-picker-chat-input-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.backpack-popout-grid svg {
+    color: var(--interactive-normal);
+}
+
+.backpack-popout-grid svg:hover {
+    color: var(--interactive-hover);
+}
+
+.backpack-popout-empty {
+    padding: 12px 8px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.backpack-popout-item-tooltip {
+    font-size: 12px;
+}
+
+.backpack-popout-horizontal {
+    display: flex !important;
+    align-items: center !important;
+    background: var(--background-floating) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 12px !important;
+    padding: 4px 8px !important;
+    gap: 6px !important;
+    box-shadow: var(--elevation-high) !important;
+    flex-direction: row !important;
+}
+
+.backpack-item-horizontal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    transition: background 0.15s ease !important;
+    cursor: pointer !important;
+}
+
+.backpack-item-horizontal:hover {
+    background: var(--background-modifier-hover) !important;
+}
+
+.backpack-item-horizontal button {
+    background: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+}
+
+.backpack-popout-horizontal-empty {
+    background: var(--background-floating) !important;
+    padding: 8px 16px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+.backpack-badge {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    background: var(--status-danger);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 8px;
+    line-height: 1;
+    pointer-events: none;
+    box-shadow: 0 0 0 2px var(--background-floating);
+}
