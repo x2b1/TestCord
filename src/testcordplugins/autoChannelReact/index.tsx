@@ -25,16 +25,34 @@ const settings = definePluginSettings({
     },
 });
 
+// Cached parsed rules — avoids JSON.parse on every MESSAGE_CREATE.
+// Invalidated whenever saveRules() runs or settings.store.rules changes externally.
+let rulesCache: ChannelReactRule[] | null = null;
+let rulesCacheKey: string | null = null;
+
 function parseRules(): ChannelReactRule[] {
+    const raw = settings.store.rules;
+    if (rulesCache && rulesCacheKey === raw) return rulesCache;
     try {
-        const parsed = JSON.parse(settings.store.rules);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
+        const parsed = JSON.parse(raw);
+        rulesCache = Array.isArray(parsed) ? parsed : [];
+    } catch {
+        rulesCache = [];
+    }
+    rulesCacheKey = raw;
+    return rulesCache;
 }
 
 function saveRules(rules: ChannelReactRule[]) {
-    settings.store.rules = JSON.stringify(rules);
+    const serialized = JSON.stringify(rules);
+    settings.store.rules = serialized;
+    rulesCache = rules;
+    rulesCacheKey = serialized;
 }
+
+// Tracks in-flight reaction-delay timeouts so stop() can cancel them.
+const pendingTimeouts = new Set<ReturnType<typeof setTimeout>>();
+let stopped = false;
 
 function emojiToString(emoji: { name: string; id: string | null; animated: boolean; }): string {
     if (emoji.id) return `<${emoji.animated ? "a" : ""}:${emoji.name}:${emoji.id}>`;
@@ -43,8 +61,16 @@ function emojiToString(emoji: { name: string; id: string | null; animated: boole
 
 async function addReactions(channelId: string, messageId: string, reactions: ChannelReactRule["reactions"]) {
     for (const emoji of reactions) {
+        if (stopped) return;
         try {
-            await new Promise(r => setTimeout(r, Math.floor(Math.random() * 2000) + 1));
+            await new Promise<void>(resolve => {
+                const t = setTimeout(() => {
+                    pendingTimeouts.delete(t);
+                    resolve();
+                }, Math.floor(Math.random() * 2000) + 1);
+                pendingTimeouts.add(t);
+            });
+            if (stopped) return;
             const emojiStr = emoji.id
                 ? `${emoji.animated ? "a:" : ""}${emoji.name}:${emoji.id}`
                 : encodeURIComponent(emoji.name);
@@ -208,10 +234,16 @@ export default definePlugin({
     },
 
     start() {
+        stopped = false;
         FluxDispatcher.subscribe("MESSAGE_CREATE", handleMessageCreate);
     },
 
     stop() {
+        stopped = true;
         FluxDispatcher.unsubscribe("MESSAGE_CREATE", handleMessageCreate);
+        for (const t of pendingTimeouts) clearTimeout(t);
+        pendingTimeouts.clear();
+        rulesCache = null;
+        rulesCacheKey = null;
     }
 });

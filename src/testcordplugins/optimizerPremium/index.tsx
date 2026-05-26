@@ -17,7 +17,7 @@ const THROTTLED_CLASS_TOKENS = ["activity", "subText", "botText", "clanTag"] as 
 const settings = definePluginSettings({
     domThrottle: {
         type: OptionType.BOOLEAN,
-        description: "Throttle non-critical DOM insertions for activity, subText, botText and clan tags. Reduces main-thread blocking from frequent profile and member-list updates.",
+        description: "Defer non-critical visual updates (activity, subText, botText, clan tags) via MutationObserver. Safe — does not patch appendChild.",
         default: true
     },
     domThrottleDelay: {
@@ -40,7 +40,7 @@ const settings = definePluginSettings({
     },
     networkCache: {
         type: OptionType.BOOLEAN,
-        description: "Cache static image responses (png, jpg, webp, gif) in memory to cut redundant fetches.",
+        description: "Cache static image responses (png, jpg, webp, gif) in memory to cut redundant fetches. Bounded by entry count and TTL.",
         default: true
     },
     networkCacheMinutes: {
@@ -48,6 +48,13 @@ const settings = definePluginSettings({
         description: "How long, in minutes, the network cache keeps entries before evicting them.",
         markers: [1, 5, 10, 15, 30, 60],
         default: 5,
+        stickToMarkers: false
+    },
+    networkCacheMaxEntries: {
+        type: OptionType.SLIDER,
+        description: "Hard cap on cached image entries. Oldest entries are evicted first when exceeded.",
+        markers: [50, 100, 200, 500, 1000],
+        default: 200,
         stickToMarkers: false
     },
     forceLowImageQuality: {
@@ -62,7 +69,7 @@ const settings = definePluginSettings({
     },
     memoryManagement: {
         type: OptionType.BOOLEAN,
-        description: "Periodically check JS heap pressure and request a GC pass when usage is high.",
+        description: "Periodically check JS heap pressure and trim caches when usage is high. Requires Chromium performance.memory.",
         default: true
     },
     memoryCheckSeconds: {
@@ -104,12 +111,12 @@ const settings = definePluginSettings({
     },
     virtualizeMessages: {
         type: OptionType.BOOLEAN,
-        description: "Apply content-visibility:auto to messages so the browser skips rendering offscreen ones. Saves CPU/RAM without breaking scroll.",
+        description: "Apply CSS containment to messages so the browser skips work on offscreen rows.",
         default: true
     },
     optimizeTextRendering: {
         type: OptionType.BOOLEAN,
-        description: "Apply optimizeSpeed text-rendering and reduce subpixel work on message content. Faster text layout on large channels.",
+        description: "Apply optimizeSpeed text-rendering on message content. Faster text layout on large channels.",
         default: true
     },
     killBackdropBlur: {
@@ -129,27 +136,28 @@ const settings = definePluginSettings({
     },
     freezeGifsUntilHover: {
         type: OptionType.BOOLEAN,
-        description: "Pause animated GIFs and stickers until you hover them. Cuts decode CPU dramatically in active channels.",
+        description: "Pause animated GIFs and stickers until you hover them. Cuts decode CPU dramatically in active channels. Memory-bounded.",
         default: false
     },
     throttleResizeObservers: {
         type: OptionType.BOOLEAN,
         description: "Coalesce ResizeObserver callbacks via rAF. Prevents layout thrash during window resize and dynamic UI changes.",
-        default: true
+        default: true,
+        restartNeeded: true
     },
     reduceMotion: {
         type: OptionType.BOOLEAN,
-        description: "Apply prefers-reduced-motion globally. Disables transitions, transforms and CSS animations across the client.",
+        description: "Apply prefers-reduced-motion globally. Disables transitions and CSS animations.",
         default: false
     },
     killWillChange: {
         type: OptionType.BOOLEAN,
-        description: "Strip will-change hints Discord scatters everywhere. Reduces GPU memory and layer explosions.",
+        description: "Strip will-change hints Discord scatters around. Reduces GPU memory and layer explosions.",
         default: true
     },
     lazyEmbedImages: {
         type: OptionType.BOOLEAN,
-        description: "Force loading=lazy and decoding=async on every embed/attachment image. Faster scroll past media-heavy channels.",
+        description: "Force loading=lazy and decoding=async on every embed/attachment image.",
         default: true
     },
     disableTypingIndicator: {
@@ -164,8 +172,6 @@ const settings = definePluginSettings({
     }
 });
 
-type AnyFn = (...args: unknown[]) => unknown;
-
 interface CacheEntry {
     response: Response;
     timestamp: number;
@@ -178,7 +184,7 @@ interface SpringMod {
 
 export default definePlugin({
     name: "optimizerPremium",
-    description: "Combined performance suite. Bundles OpenOptimizer DOM throttling, perf module patches, react-spring skip, image and network caching, GC pressure handling and a few extras.",
+    description: "Combined performance suite: tooltip/emoji/spinner/confetti/gateway patches, bounded image cache, react-spring skip, offscreen media pause, safe DOM throttling, lazy images.",
     tags: ["Utility", "Developers"],
     authors: [TestcordDevs.x2b],
     settings,
@@ -240,25 +246,32 @@ export default definePlugin({
         }
     ],
 
+    // ---- Runtime state (cleaned up in stop()) ----
     originals: {} as {
-        appendChild?: typeof Element.prototype.appendChild;
-        removeChild?: typeof Element.prototype.removeChild;
         rAF?: typeof window.requestAnimationFrame;
+        cAF?: typeof window.cancelAnimationFrame;
         fetch?: typeof window.fetch;
+        addEventListener?: typeof EventTarget.prototype.addEventListener;
+        resizeObserver?: typeof ResizeObserver;
+        console?: { log: typeof console.log; debug: typeof console.debug; info: typeof console.info; };
     },
     springs: [] as SpringMod[],
     networkCache: new Map<string, CacheEntry>(),
+    networkCacheOrder: [] as string[],
     cacheCleanupTimer: null as ReturnType<typeof setInterval> | null,
     memoryTimer: null as ReturnType<typeof setInterval> | null,
     intersectionObserver: null as IntersectionObserver | null,
+    mediaMutationObserver: null as MutationObserver | null,
     pausedMedia: new WeakSet<HTMLMediaElement>(),
     optimizerStyleEl: null as HTMLStyleElement | null,
     extraStyleEl: null as HTMLStyleElement | null,
-    originalAddEventListener: null as typeof EventTarget.prototype.addEventListener | null,
-    originalConsole: null as { log: typeof console.log; debug: typeof console.debug; info: typeof console.info; } | null,
-    originalResizeObserver: null as typeof ResizeObserver | null,
+    domThrottleObserver: null as MutationObserver | null,
+    domThrottleTimers: new Set<ReturnType<typeof setTimeout>>(),
     gifMutationObserver: null as MutationObserver | null,
+    gifManagedImages: new WeakSet<HTMLImageElement>(),
     lazyImageObserver: null as MutationObserver | null,
+    rafFakeHandles: new Map<number, ReturnType<typeof setTimeout>>(),
+    rafFakeCounter: 1 << 30,
 
     start() {
         if (settings.store.verboseLogging) logger.info("Starting optimizer suite");
@@ -283,7 +296,7 @@ export default definePlugin({
     stop() {
         if (settings.store.verboseLogging) logger.info("Stopping, restoring originals");
 
-        this.restoreDomThrottle();
+        this.teardownDomThrottle();
         this.restoreRafReduction();
         this.restoreNetworkLayer();
         this.restoreSpringSkip();
@@ -298,56 +311,88 @@ export default definePlugin({
         this.teardownExtraCSS();
 
         this.networkCache.clear();
+        this.networkCacheOrder.length = 0;
     },
 
+    // ---------------------------------------------------------------------
+    // DOM throttle — observer-based, doesn't touch appendChild
+    // ---------------------------------------------------------------------
     installDomThrottle() {
         const delay = settings.store.domThrottleDelay;
-        const wrap = (orig: AnyFn) => {
-            return function patched(this: Element, ...args: unknown[]) {
-                const node = args[0] as { className?: unknown; } | undefined;
-                if (node && typeof node.className === "string") {
-                    const cn = node.className;
-                    for (const tok of THROTTLED_CLASS_TOKENS) {
-                        if (cn.indexOf(tok) !== -1) {
-                            return setTimeout(() => orig.apply(this, args), delay + Math.random() * delay * 0.5);
-                        }
-                    }
-                }
-                return orig.apply(this, args);
-            };
+        const matches = (el: Element): boolean => {
+            const cn = typeof (el as HTMLElement).className === "string" ? (el as HTMLElement).className : "";
+            if (!cn) return false;
+            for (const tok of THROTTLED_CLASS_TOKENS) if (cn.indexOf(tok) !== -1) return true;
+            return false;
         };
 
-        this.originals.appendChild = Element.prototype.appendChild;
-        this.originals.removeChild = Element.prototype.removeChild;
-        Element.prototype.appendChild = wrap(Element.prototype.appendChild as unknown as AnyFn) as typeof Element.prototype.appendChild;
-        Element.prototype.removeChild = wrap(Element.prototype.removeChild as unknown as AnyFn) as typeof Element.prototype.removeChild;
+        const apply = (el: HTMLElement) => {
+            // Hide briefly, then reveal. Cheap and reversible; no DOM-API patching.
+            const prevVis = el.style.visibility;
+            el.style.visibility = "hidden";
+            const t = setTimeout(() => {
+                el.style.visibility = prevVis;
+                this.domThrottleTimers.delete(t);
+            }, delay + Math.random() * delay * 0.5);
+            this.domThrottleTimers.add(t);
+        };
+
+        this.domThrottleObserver = new MutationObserver(records => {
+            for (const r of records) {
+                for (const node of r.addedNodes) {
+                    if (!(node instanceof HTMLElement)) continue;
+                    if (matches(node)) apply(node);
+                }
+            }
+        });
+        this.domThrottleObserver.observe(document.body, { childList: true, subtree: true });
     },
 
-    restoreDomThrottle() {
-        if (this.originals.appendChild) {
-            Element.prototype.appendChild = this.originals.appendChild;
-            this.originals.appendChild = undefined;
+    teardownDomThrottle() {
+        if (this.domThrottleObserver) {
+            this.domThrottleObserver.disconnect();
+            this.domThrottleObserver = null;
         }
-        if (this.originals.removeChild) {
-            Element.prototype.removeChild = this.originals.removeChild;
-            this.originals.removeChild = undefined;
-        }
+        for (const t of this.domThrottleTimers) clearTimeout(t);
+        this.domThrottleTimers.clear();
     },
 
+    // ---------------------------------------------------------------------
+    // rAF reduction with proper cancelAnimationFrame support
+    // ---------------------------------------------------------------------
     installRafReduction() {
         const original = window.requestAnimationFrame.bind(window);
+        const originalCancel = window.cancelAnimationFrame.bind(window);
         this.originals.rAF = window.requestAnimationFrame;
+        this.originals.cAF = window.cancelAnimationFrame;
 
         const reduction = Math.min(100, Math.max(0, settings.store.animationFrameReduction)) / 100;
         const skipEvery = Math.ceil(1 + reduction * 3);
+        const fakeHandles = this.rafFakeHandles;
         let frame = 0;
 
-        window.requestAnimationFrame = function patched(cb: FrameRequestCallback): number {
+        window.requestAnimationFrame = (cb: FrameRequestCallback): number => {
             frame++;
             if (reduction > 0 && frame % skipEvery !== 0) {
-                return setTimeout(() => cb(performance.now()), 16 * (1 + reduction)) as unknown as number;
+                const id = this.rafFakeCounter++;
+                const t = setTimeout(() => {
+                    fakeHandles.delete(id);
+                    cb(performance.now());
+                }, 16 * (1 + reduction));
+                fakeHandles.set(id, t);
+                return id;
             }
             return original(cb);
+        };
+
+        window.cancelAnimationFrame = (handle: number) => {
+            const fake = fakeHandles.get(handle);
+            if (fake !== undefined) {
+                clearTimeout(fake);
+                fakeHandles.delete(handle);
+                return;
+            }
+            originalCancel(handle);
         };
     },
 
@@ -356,17 +401,28 @@ export default definePlugin({
             window.requestAnimationFrame = this.originals.rAF;
             this.originals.rAF = undefined;
         }
+        if (this.originals.cAF) {
+            window.cancelAnimationFrame = this.originals.cAF;
+            this.originals.cAF = undefined;
+        }
+        for (const t of this.rafFakeHandles.values()) clearTimeout(t);
+        this.rafFakeHandles.clear();
     },
 
+    // ---------------------------------------------------------------------
+    // Network layer with LRU cap
+    // ---------------------------------------------------------------------
     installNetworkLayer() {
         const originalFetch = window.fetch.bind(window);
         this.originals.fetch = window.fetch;
 
         const cacheMs = settings.store.networkCacheMinutes * 60 * 1000;
         const cacheEnabled = settings.store.networkCache;
+        const maxEntries = Math.max(10, settings.store.networkCacheMaxEntries | 0);
         const lowQuality = settings.store.forceLowImageQuality;
         const cache = this.networkCache;
-        const isImage = (url: string) => /\.(png|jpe?g|gif|webp)/i.test(url);
+        const order = this.networkCacheOrder;
+        const isImage = (url: string) => /\.(png|jpe?g|gif|webp)(?:$|[?#])/i.test(url);
         const isDiscordCdn = (url: string) => /(?:cdn|media)\.discord(?:app)?\.(?:com|net)/.test(url);
 
         const rewriteSize = (url: string): string => {
@@ -376,23 +432,40 @@ export default definePlugin({
                 const size = u.searchParams.get("size");
                 if (size && Number(size) > 96) u.searchParams.set("size", "96");
                 if (!size && /avatars|emojis|icons|banners/.test(u.pathname)) u.searchParams.set("size", "96");
-                u.searchParams.delete("quality");
-                u.searchParams.set("quality", "lossless");
                 return u.toString();
             } catch {
                 return url;
             }
         };
 
+        const touch = (key: string) => {
+            const idx = order.indexOf(key);
+            if (idx !== -1) order.splice(idx, 1);
+            order.push(key);
+        };
+        const evict = () => {
+            while (order.length > maxEntries) {
+                const k = order.shift();
+                if (k) cache.delete(k);
+            }
+        };
+
         window.fetch = function patched(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
             const rawUrl = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
             const finalUrl = rewriteSize(rawUrl);
-            const useCache = cacheEnabled && isImage(finalUrl) && (!init || init.method === undefined || init.method.toUpperCase() === "GET");
+            const method = init?.method?.toUpperCase() ?? (input instanceof Request ? input.method.toUpperCase() : "GET");
+            const useCache = cacheEnabled && isImage(finalUrl) && method === "GET";
 
             if (useCache) {
                 const hit = cache.get(finalUrl);
                 if (hit && Date.now() - hit.timestamp < cacheMs) {
+                    touch(finalUrl);
                     return Promise.resolve(hit.response.clone());
+                }
+                if (hit) {
+                    cache.delete(finalUrl);
+                    const idx = order.indexOf(finalUrl);
+                    if (idx !== -1) order.splice(idx, 1);
                 }
             }
 
@@ -403,6 +476,8 @@ export default definePlugin({
             return originalFetch(target, init).then(res => {
                 if (useCache && res.ok) {
                     cache.set(finalUrl, { response: res.clone(), timestamp: Date.now() });
+                    touch(finalUrl);
+                    evict();
                 }
                 return res;
             });
@@ -412,7 +487,11 @@ export default definePlugin({
             this.cacheCleanupTimer = setInterval(() => {
                 const now = Date.now();
                 for (const [k, v] of cache) {
-                    if (now - v.timestamp > cacheMs) cache.delete(k);
+                    if (now - v.timestamp > cacheMs) {
+                        cache.delete(k);
+                        const idx = order.indexOf(k);
+                        if (idx !== -1) order.splice(idx, 1);
+                    }
                 }
             }, Math.max(60_000, cacheMs / 2));
         }
@@ -429,14 +508,18 @@ export default definePlugin({
         }
     },
 
+    // ---------------------------------------------------------------------
+    // Spring skip — cache findAll result
+    // ---------------------------------------------------------------------
     installSpringSkip() {
-        const mods = findAll(mod => {
-            const m = mod as SpringMod;
-            return typeof m.Globals === "object" && typeof m.Springs === "object";
-        }) as SpringMod[];
-
-        this.springs = mods;
-        for (const spring of mods) {
+        if (this.springs.length === 0) {
+            const mods = findAll(mod => {
+                const m = mod as SpringMod;
+                return typeof m?.Globals === "object" && typeof m?.Springs === "object";
+            }) as SpringMod[];
+            this.springs = mods;
+        }
+        for (const spring of this.springs) {
             spring.Globals?.assign?.({ skipAnimation: true });
         }
     },
@@ -445,25 +528,40 @@ export default definePlugin({
         for (const spring of this.springs) {
             spring.Globals?.assign?.({ skipAnimation: false });
         }
-        this.springs = [];
+        // Keep `springs` cached for next start()
     },
 
+    // ---------------------------------------------------------------------
+    // Memory manager — guarded, no fake gc() spam
+    // ---------------------------------------------------------------------
     installMemoryManager() {
         const intervalMs = settings.store.memoryCheckSeconds * 1000;
+        const perf = performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number; }; };
+        if (!perf.memory) {
+            if (settings.store.verboseLogging) logger.info("performance.memory unavailable; memory manager idle");
+            return;
+        }
+
         this.memoryTimer = setInterval(() => {
             try {
-                const perf = performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number; }; };
-                if (!perf.memory) return;
-                const ratio = perf.memory.usedJSHeapSize / perf.memory.jsHeapSizeLimit;
+                const m = perf.memory;
+                if (!m) return;
+                const ratio = m.usedJSHeapSize / m.jsHeapSizeLimit;
                 if (ratio > 0.75) {
+                    // Trim network cache to half
+                    if (this.networkCache.size > 50) {
+                        const half = Math.floor(this.networkCacheOrder.length / 2);
+                        for (let i = 0; i < half; i++) {
+                            const k = this.networkCacheOrder.shift();
+                            if (k) this.networkCache.delete(k);
+                        }
+                    }
                     const win = window as Window & { gc?: () => void; };
                     if (typeof win.gc === "function") {
                         win.gc();
                         if (settings.store.verboseLogging) logger.info(`GC triggered at heap ratio ${(ratio * 100).toFixed(1)}%`);
-                    }
-                    if (this.networkCache.size > 50) {
-                        const sorted = [...this.networkCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
-                        for (const [k] of sorted.slice(0, Math.floor(sorted.length / 2))) this.networkCache.delete(k);
+                    } else if (settings.store.verboseLogging) {
+                        logger.info(`Heap ratio ${(ratio * 100).toFixed(1)}% — trimmed caches (gc unavailable)`);
                     }
                 }
             } catch (err) {
@@ -479,6 +577,9 @@ export default definePlugin({
         }
     },
 
+    // ---------------------------------------------------------------------
+    // Offscreen media pause
+    // ---------------------------------------------------------------------
     installOffscreenMediaPause() {
         if (typeof IntersectionObserver === "undefined") return;
         const paused = this.pausedMedia;
@@ -506,7 +607,7 @@ export default definePlugin({
 
         watch(document.body);
 
-        const observer = new MutationObserver(records => {
+        this.mediaMutationObserver = new MutationObserver(records => {
             for (const r of records) {
                 for (const node of r.addedNodes) {
                     if (node instanceof HTMLMediaElement) {
@@ -517,8 +618,7 @@ export default definePlugin({
                 }
             }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
-        (this as { _mediaMutationObserver?: MutationObserver; })._mediaMutationObserver = observer;
+        this.mediaMutationObserver.observe(document.body, { childList: true, subtree: true });
     },
 
     teardownOffscreenMediaPause() {
@@ -526,29 +626,26 @@ export default definePlugin({
             this.intersectionObserver.disconnect();
             this.intersectionObserver = null;
         }
-        const self = this as { _mediaMutationObserver?: MutationObserver; };
-        if (self._mediaMutationObserver) {
-            self._mediaMutationObserver.disconnect();
-            self._mediaMutationObserver = undefined;
+        if (this.mediaMutationObserver) {
+            this.mediaMutationObserver.disconnect();
+            this.mediaMutationObserver = null;
         }
     },
 
+    // ---------------------------------------------------------------------
+    // CSS optimizations — scoped selectors only
+    // ---------------------------------------------------------------------
     installCSSOptimizations() {
         const rules: string[] = [];
-
         if (settings.store.virtualizeMessages) {
-            rules.push(
-                "[class*=\"messageListItem_\"] { contain: layout style; }"
-            );
+            rules.push("[class*=\"messageListItem_\"] { contain: layout style; }");
         }
-
         if (settings.store.optimizeTextRendering) {
             rules.push(
-                "[class*=\"messageContent_\"], [class*=\"markup_\"] { text-rendering: optimizeSpeed; will-change: contents; }",
+                "[class*=\"messageContent_\"], [class*=\"markup_\"] { text-rendering: optimizeSpeed; }",
                 "[class*=\"chatContent_\"] { contain: style layout; }"
             );
         }
-
         if (rules.length) {
             this.optimizerStyleEl = document.createElement("style");
             this.optimizerStyleEl.id = "op-css-optimizations";
@@ -564,37 +661,47 @@ export default definePlugin({
         }
     },
 
+    // ---------------------------------------------------------------------
+    // Passive listeners — preserve removeEventListener compatibility
+    // ---------------------------------------------------------------------
     installPassiveListeners() {
         const PASSIVE_EVENTS = new Set(["wheel", "mousewheel", "touchstart", "touchmove", "touchend"]);
-        const original = EventTarget.prototype.addEventListener;
-        this.originalAddEventListener = original;
+        const originalAdd = EventTarget.prototype.addEventListener;
+        this.originals.addEventListener = originalAdd;
 
+        // We only patch addEventListener — listener identity is preserved (we only
+        // inject `passive: true` into the options bag). removeEventListener matches
+        // on (type, listener, capture); passive is irrelevant to matching, so the
+        // native remove keeps working unmodified.
         EventTarget.prototype.addEventListener = function patched(
             this: EventTarget,
             type: string,
             listener: EventListenerOrEventListenerObject | null,
             options?: boolean | AddEventListenerOptions
         ): void {
-            if (PASSIVE_EVENTS.has(type)) {
+            if (PASSIVE_EVENTS.has(type) && listener != null) {
                 if (typeof options === "boolean" || options === undefined) {
                     options = { capture: !!options, passive: true };
                 } else if (options.passive === undefined) {
                     options = { ...options, passive: true };
                 }
             }
-            return original.call(this, type, listener, options);
+            return originalAdd.call(this, type, listener, options);
         } as typeof EventTarget.prototype.addEventListener;
     },
 
     restorePassiveListeners() {
-        if (this.originalAddEventListener) {
-            EventTarget.prototype.addEventListener = this.originalAddEventListener;
-            this.originalAddEventListener = null;
+        if (this.originals.addEventListener) {
+            EventTarget.prototype.addEventListener = this.originals.addEventListener;
+            this.originals.addEventListener = undefined;
         }
     },
 
+    // ---------------------------------------------------------------------
+    // Console suppression
+    // ---------------------------------------------------------------------
     installConsoleSuppression() {
-        this.originalConsole = {
+        this.originals.console = {
             log: console.log,
             debug: console.debug,
             info: console.info
@@ -606,18 +713,21 @@ export default definePlugin({
     },
 
     restoreConsoleSuppression() {
-        if (this.originalConsole) {
-            console.log = this.originalConsole.log;
-            console.debug = this.originalConsole.debug;
-            console.info = this.originalConsole.info;
-            this.originalConsole = null;
+        if (this.originals.console) {
+            console.log = this.originals.console.log;
+            console.debug = this.originals.console.debug;
+            console.info = this.originals.console.info;
+            this.originals.console = undefined;
         }
     },
 
+    // ---------------------------------------------------------------------
+    // ResizeObserver throttle — preserve instanceof via prototype chain
+    // ---------------------------------------------------------------------
     installResizeObserverThrottle() {
         if (typeof ResizeObserver === "undefined") return;
         const Native = ResizeObserver;
-        this.originalResizeObserver = Native;
+        this.originals.resizeObserver = Native;
 
         class ThrottledResizeObserver {
             private _observer: ResizeObserver;
@@ -651,50 +761,91 @@ export default definePlugin({
                 this._pendingEntries = [];
                 this._observer.disconnect();
             }
+
+            static [Symbol.hasInstance](inst: unknown) {
+                return inst instanceof Native || (inst != null && (inst as any)._observer instanceof Native);
+            }
         }
 
-        (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver = ThrottledResizeObserver as unknown as typeof ResizeObserver;
+        (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver =
+            ThrottledResizeObserver as unknown as typeof ResizeObserver;
     },
 
     restoreResizeObserverThrottle() {
-        if (this.originalResizeObserver) {
-            (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver = this.originalResizeObserver;
-            this.originalResizeObserver = null;
+        if (this.originals.resizeObserver) {
+            (window as unknown as { ResizeObserver: typeof ResizeObserver; }).ResizeObserver = this.originals.resizeObserver;
+            this.originals.resizeObserver = undefined;
         }
     },
 
+    // ---------------------------------------------------------------------
+    // GIF freezer — memory-bounded. Uses one shared canvas, no per-image data URLs.
+    // ---------------------------------------------------------------------
     installGifFreezer() {
+        const sharedCanvas = document.createElement("canvas");
+        const ctx = sharedCanvas.getContext("2d");
+
+        const isAnimated = (img: HTMLImageElement) => /\.gif(?:$|[?#])/i.test(img.src);
+
         const freeze = (img: HTMLImageElement) => {
-            if (!/\.gif/i.test(img.src) && !img.src.includes("a_")) return;
-            if (img.dataset.opFrozen === "1") return;
-            const realSrc = img.src;
-            img.dataset.opFrozen = "1";
-            img.dataset.opOriginal = realSrc;
-            const canvas = document.createElement("canvas");
-            const draw = () => {
-                if (!img.naturalWidth) return;
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext("2d");
-                if (!ctx) return;
+            if (!ctx) return;
+            if (!isAnimated(img)) return;
+            if (this.gifManagedImages.has(img)) return;
+            this.gifManagedImages.add(img);
+
+            const originalSrc = img.currentSrc || img.src;
+            let frozenUrl: string | null = null;
+
+            const buildFrozen = () => {
+                if (frozenUrl) return frozenUrl;
+                if (!img.naturalWidth || !img.naturalHeight) return null;
                 try {
+                    sharedCanvas.width = img.naturalWidth;
+                    sharedCanvas.height = img.naturalHeight;
+                    ctx.clearRect(0, 0, sharedCanvas.width, sharedCanvas.height);
                     ctx.drawImage(img, 0, 0);
-                    img.src = canvas.toDataURL();
+                    sharedCanvas.toBlob(b => {
+                        if (!b) return;
+                        if (frozenUrl) URL.revokeObjectURL(frozenUrl);
+                        frozenUrl = URL.createObjectURL(b);
+                        if (img.dataset.opGifState !== "playing") img.src = frozenUrl;
+                    }, "image/png");
+                    return null;
                 } catch {
-                    // CORS fallback: leave it
+                    return null;
                 }
             };
-            if (img.complete) draw(); else img.addEventListener("load", draw, { once: true });
-            img.addEventListener("mouseenter", () => { if (img.dataset.opOriginal) img.src = img.dataset.opOriginal; });
-            img.addEventListener("mouseleave", () => { draw(); });
+
+            const onLoad = () => buildFrozen();
+            if (img.complete) buildFrozen(); else img.addEventListener("load", onLoad, { once: true });
+
+            img.dataset.opGifState = "frozen";
+            const onEnter = () => {
+                img.dataset.opGifState = "playing";
+                img.src = originalSrc;
+            };
+            const onLeave = () => {
+                img.dataset.opGifState = "frozen";
+                if (frozenUrl) img.src = frozenUrl;
+            };
+            img.addEventListener("mouseenter", onEnter);
+            img.addEventListener("mouseleave", onLeave);
+
+            (img as any).__opCleanup = () => {
+                img.removeEventListener("mouseenter", onEnter);
+                img.removeEventListener("mouseleave", onLeave);
+                img.removeEventListener("load", onLoad);
+                if (frozenUrl) URL.revokeObjectURL(frozenUrl);
+                frozenUrl = null;
+            };
         };
 
-        document.querySelectorAll("img").forEach(i => freeze(i as HTMLImageElement));
+        document.querySelectorAll<HTMLImageElement>("img").forEach(freeze);
         this.gifMutationObserver = new MutationObserver(records => {
             for (const r of records) {
                 for (const node of r.addedNodes) {
                     if (node instanceof HTMLImageElement) freeze(node);
-                    else if (node instanceof Element) node.querySelectorAll("img").forEach(i => freeze(i as HTMLImageElement));
+                    else if (node instanceof Element) node.querySelectorAll<HTMLImageElement>("img").forEach(freeze);
                 }
             }
         });
@@ -706,13 +857,19 @@ export default definePlugin({
             this.gifMutationObserver.disconnect();
             this.gifMutationObserver = null;
         }
-        document.querySelectorAll<HTMLImageElement>("img[data-op-frozen='1']").forEach(img => {
-            if (img.dataset.opOriginal) img.src = img.dataset.opOriginal;
-            delete img.dataset.opFrozen;
-            delete img.dataset.opOriginal;
+        document.querySelectorAll<HTMLImageElement>("img").forEach(img => {
+            const cleanup = (img as any).__opCleanup;
+            if (typeof cleanup === "function") {
+                cleanup();
+                delete (img as any).__opCleanup;
+            }
+            delete img.dataset.opGifState;
         });
     },
 
+    // ---------------------------------------------------------------------
+    // Lazy images
+    // ---------------------------------------------------------------------
     installLazyImages() {
         const apply = (img: HTMLImageElement) => {
             if (img.dataset.opLazy === "1") return;
@@ -720,12 +877,12 @@ export default definePlugin({
             if (!img.loading) img.loading = "lazy";
             if (!img.decoding) img.decoding = "async";
         };
-        document.querySelectorAll("img").forEach(i => apply(i as HTMLImageElement));
+        document.querySelectorAll<HTMLImageElement>("img").forEach(apply);
         this.lazyImageObserver = new MutationObserver(records => {
             for (const r of records) {
                 for (const node of r.addedNodes) {
                     if (node instanceof HTMLImageElement) apply(node);
-                    else if (node instanceof Element) node.querySelectorAll("img").forEach(i => apply(i as HTMLImageElement));
+                    else if (node instanceof Element) node.querySelectorAll<HTMLImageElement>("img").forEach(apply);
                 }
             }
         });
@@ -739,17 +896,29 @@ export default definePlugin({
         }
     },
 
+    // ---------------------------------------------------------------------
+    // Extra CSS — kept narrow to avoid universal-selector cost
+    // ---------------------------------------------------------------------
     installExtraCSS() {
         const rules: string[] = [];
 
         if (settings.store.killBackdropBlur) {
-            rules.push("* { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }");
+            // Scope to common Discord blur containers instead of universal selector
+            rules.push(
+                "[class*=\"backdrop_\"], [class*=\"layer_\"], [class*=\"popout_\"], [class*=\"modal_\"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }"
+            );
         }
         if (settings.store.reduceMotion) {
-            rules.push("*, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; transition-delay: 0ms !important; }");
+            // This one genuinely needs universal scope to be effective
+            rules.push(
+                "*, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; transition-delay: 0ms !important; }"
+            );
         }
         if (settings.store.killWillChange) {
-            rules.push("* { will-change: auto !important; }");
+            // Target elements likely to have will-change rather than the universe
+            rules.push(
+                "[style*=\"will-change\"], [class*=\"scroller_\"], [class*=\"messageListItem_\"] { will-change: auto !important; }"
+            );
         }
         if (settings.store.disableTypingIndicator) {
             rules.push("[class*=\"typing_\"], [class*=\"typingDots_\"] { display: none !important; }");
