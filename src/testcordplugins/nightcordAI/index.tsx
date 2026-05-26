@@ -440,8 +440,8 @@ function NightcordAIChat({ rootProps, panelMode, initialMessage }: { rootProps?:
                 // Send message
                 lowerText.includes("envoie") || lowerText.includes("envoyer") ||
                 lowerText.includes("env ") || lowerText.includes("msg") ||
-                lowerText.includes("message à") || lowerText.includes("message a ") ||
-                lowerText.includes("dis à") || lowerText.includes("dis a ") ||
+                lowerText.includes("message to") || lowerText.includes("message a ") ||
+                lowerText.includes("tell ") || lowerText.includes("dis a ") ||
                 lowerText.includes("dm") ||
                 // Call
                 lowerText.includes("appel") || lowerText.includes("call") ||

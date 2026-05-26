@@ -105,7 +105,7 @@ const updateListeners = new Set<() => void>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleFlush() {
     if (flushTimer !== null) return;
-    // FIX CRASH DM SCROLL: debounce increased from 50ms → 500ms
+    // FIX DM SCROLL CRASH: debounce increased from 50ms → 500ms
     // A flush at 50ms during DM scroll triggered a globalVersion++ on each
     // LOAD_MESSAGES_SUCCESS batch, forcing a React re-render in the middle of
     // Discord's DOM virtualization → removeChild crash (node not a child of this node).

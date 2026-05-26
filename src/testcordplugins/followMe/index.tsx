@@ -15,7 +15,7 @@ const VoiceStateStore = findStoreLazy("VoiceStateStore");
 
 const DS_KEY = "followme-target-v1";
 
-// ── Etat global ──────────────────────────────────────────────────────────────
+// ── Global state ──────────────────────────────────────────────────────────────
 let targetId: string | null = null;
 let targetName: string = "";
 
@@ -85,7 +85,7 @@ function unfollowMe() {
     Toasts.show({ message: `Stopped forcing ${name} to follow`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
 }
 
-// ── Icone ──
+// ── Icon ──
 function FollowMeIcon({ filled = false }: { filled?: boolean; }) {
     return (
         <svg width="20" height="20" viewBox="0 0 24 24">

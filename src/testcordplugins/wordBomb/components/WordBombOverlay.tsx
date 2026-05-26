@@ -363,7 +363,7 @@ export function WordBombOverlay() {
                         max_tokens: 150,
                         messages: [{
                             role: "user",
-                            content: `Donne une très courte définition (1 phrase simple) pour le mot suivant, en expliquant ce que c'est concrètement, sans donner sa nature grammaticale. Fais-le obligatoirement en français. Mot: "${word}"`
+                            content: `Give a very short definition (1 simple sentence) for the following word, explaining what it concretely is, without stating its grammatical type. Answer in English. Word: "${word}"`
                         }]
                     }),
                 })

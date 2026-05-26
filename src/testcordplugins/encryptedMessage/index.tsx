@@ -282,10 +282,10 @@ const messageContextPatch = (children: any, { message }: { message: any; }) => {
                             } else {
                                 Toasts.show({ message: `🔓 ${found.text}`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
                             }
-                            Toasts.show({ message: `Technique détectée: ${found.technique}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+                            Toasts.show({ message: `Technique detected: ${found.technique}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
                         } else {
                             Toasts.show({
-                                message: "❌ Impossible de déchiffrer — aucune technique ne fonctionne",
+                                message: "❌ Unable to decrypt — no technique worked",
                                 type: Toasts.Type.FAILURE,
                                 id: Toasts.genId(),
                             });
@@ -338,7 +338,7 @@ export default definePlugin({
         const encrypted = encrypt(messageObj.content, currentTechnique);
         if (encrypted.length > 2000) {
             Toasts.show({
-                message: `❌ Message trop long pour être chiffré (${encrypted.length}/2000)`,
+                message: `❌ Message too long to encrypt (${encrypted.length}/2000)`,
                 type: Toasts.Type.FAILURE,
                 id: Toasts.genId(),
             });

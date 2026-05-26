@@ -81,7 +81,7 @@ export default definePlugin({
         // Ensure UI displays it
         const style = document.createElement("style");
         style.textContent = `
-            [aria-label*="Krisp"], [aria-label*="Noise"], [aria-label*="Bruit"], [aria-label*="Réduction"],
+            [aria-label*="Krisp"], [aria-label*="Noise"], [aria-label*="Noise"], [aria-label*="Reduction"],
             button[class*="noiseCancellation"], div[class*="noiseCancellation"] {
                 display: flex !important;
                 visibility: visible !important;

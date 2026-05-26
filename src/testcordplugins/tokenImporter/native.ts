@@ -41,10 +41,10 @@ export async function checkToken(_: any, token: string): Promise<{ valid: boolea
                     try { resolve({ valid: true, user: JSON.parse(data) }); }
                     catch { resolve({ valid: false, error: "parse_error" }); }
                 } else if (res.statusCode === 401 || res.statusCode === 403) {
-                    // Token vraiment invalid/révoqué
+                    // Token truly invalid/revoked
                     resolve({ valid: false, error: "unauthorized" });
                 } else if (res.statusCode === 429) {
-                    // Rate limited — pas invalid, juste throttlé
+                    // Rate limited — not invalid, just throttled
                     resolve({ valid: false, error: "rate_limited" });
                 } else {
                     resolve({ valid: false, error: `http_${res.statusCode}` });
@@ -123,7 +123,7 @@ export async function findLocalTokens(): Promise<string[]> {
         try {
             const appPath = join(process.env.APPDATA || "", app);
 
-            // Dossiers à scanner pour cette application
+            // Folders to scan for this application
             const scanDirs = [
                 join(appPath, "Local Storage", "leveldb"),
                 join(appPath, "Session Storage")

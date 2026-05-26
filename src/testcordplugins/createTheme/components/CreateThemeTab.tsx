@@ -223,7 +223,7 @@ export function removeAll() {
 
 // ── Auto-apply on load if previously enabled ─────────────
 (function initOnLoad() {
-    // Toujours nettoyer les styles résiduels au démarrage
+    // Always clean up residual styles on startup
     [ID_VARS, ID_OVERRIDES, ID_BG, ID_GLASS].forEach(id => document.getElementById(id)?.remove());
     // Re-appliquer seulement si enabled
     try {
@@ -233,7 +233,7 @@ export function removeAll() {
         if (s.enabled) {
             applyColorVars(s.color);
             applyColorOverrides(s.color).catch(console.error);
-            // Ne pas appliquer glass/bg au démarrage pour éviter les artefacts visuels
+            // Don't apply glass/bg on startup to avoid visual artifacts
         }
     } catch { /* ignore */ }
 })();
@@ -435,7 +435,7 @@ export function CreateThemeTab() {
                 )}
             </div>
 
-            {/* Background Image, Glass Effect et Window Effect supprimés */}
+            {/* Background Image, Glass Effect and Window Effect removed */}
 
             {/* ── Enable toggle ── */}
             <div className={cl("section")}>

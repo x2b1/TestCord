@@ -1,6 +1,6 @@
 /*
- * LoginWithToken — bouton "Se connecter avec un token" sur la page login
- * Utilise le même système de connexion que TokenImporter
+ * LoginWithToken — "Login with token" button on the login page
+ * Uses the same login system as TokenImporter
  */
 
 import { EquicordDevs } from "@utils/constants";
@@ -9,7 +9,7 @@ import definePlugin from "@utils/types";
 import { findByProps } from "@webpack";
 import { Forms, React, useState } from "@webpack/common";
 
-// Identique à TokenImporter — même logique de connexion
+// Identical to TokenImporter — same login logic
 function switchToAccount(token: string) {
     try { window.localStorage.setItem("token", `"${token}"`); location.reload(); } catch {
         const iframe = document.createElement("iframe"); iframe.style.display = "none"; document.body.appendChild(iframe);
@@ -126,7 +126,7 @@ function tryInject() {
     for (let i = 0; i < 15 && container; i++) {
         const forgotLink = container.querySelector("a[href*='forgot'], button[class*='forgot'], [class*='forgotPassword']");
         if (forgotLink) {
-            // Insère après le lien mot de passe oublié
+            // Insert after the forgot password link
             const mount = document.createElement("div");
             mount.id = MOUNT_ID;
             mount.style.cssText = "margin-top:8px;text-align:center";
@@ -152,14 +152,14 @@ function tryInject() {
         container = container?.parentElement ?? null;
     }
 
-    // Fallback : ajouter à la fin du formulaire
+    // Fallback: append at the end of the form
     const form = emailInput.closest("form") as HTMLElement | null;
     if (!form) return;
     const mount = document.createElement("div");
     mount.id = MOUNT_ID;
     mount.style.cssText = "margin-top:8px;text-align:center";
     const btn = document.createElement("button");
-    btn.textContent = "Se connecter avec un token";
+    btn.textContent = "Login with token";
     btn.style.cssText = "background:none;border:none;color:var(--text-link,#00b0f4);cursor:pointer;font-size:14px;font-ffriendly:inherit;padding:0;text-decoration:underline";
     btn.addEventListener("click", e => { e.preventDefault(); openLoginModal(); });
     mount.appendChild(btn);

@@ -140,7 +140,7 @@ export default definePlugin({
                     // If we have an anchored channel and get disconnected by "another location",
                     // give a helpful hint instead of the generic error.
                     if (anchorState && typeof res === "string" &&
-                        (res.toLowerCase().includes("disconnected") || res.toLowerCase().includes("location") || res.includes("déconnecté")) &&
+                        (res.toLowerCase().includes("disconnected") || res.toLowerCase().includes("location") || res.includes("disconnected")) &&
                         (res.includes("autre") || res.includes("location") || res.includes("another"))) {
                         return "Channel anchored. To stay in 2 channels, join a second channel!";
                     }

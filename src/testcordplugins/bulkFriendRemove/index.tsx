@@ -141,7 +141,7 @@ function BulkFriendRemoveModal({ rootProps }: { rootProps: any; }) {
                 <ModalCloseButton onClick={rootProps.onClose} />
             </ModalHeader>
             <ModalContent className="bfr-content">
-                {/* Barre recherche + tout sélectionner */}
+                {/* Search bar + select all */}
                 <div className="bfr-search-bar">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.4, flexShrink: 0 }}>
                         <path d="M21.71 20.29l-5.01-5.01A7.94 7.94 0 0 0 18 10a8 8 0 1 0-8 8 7.94 7.94 0 0 0 5.28-1.3l5.01 5.01a1 1 0 0 0 1.42-1.42ZM4 10a6 6 0 1 1 6 6 6 6 0 0 1-6-6Z" />
