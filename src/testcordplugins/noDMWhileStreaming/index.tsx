@@ -65,7 +65,7 @@ function isStreaming(): boolean {
 export default definePlugin({
     name: "NoDMWhileStreaming",
     description: "Hides DM and Group DM notifications and sidebar items while you are streaming",
-    authors: [NightcordDevs.Unknown],
+    authors: [{ name: "Unknown", id: 0n }],
     enabledByDefault: false,
     settings,
     patches: [

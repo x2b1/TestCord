@@ -75,7 +75,7 @@ function stopFreeze() {
 export default definePlugin({
     name: "FreezePresence",
     description: "Stops the member list from jumping around when people change status, and optionally makes everyone appear online.",
-    tags: ["Utility", "MemberList"] as any as any[],
+    tags: ["Utility", "MemberList"],
     authors: [TestcordDevs.nnenaza],
     settings,
 

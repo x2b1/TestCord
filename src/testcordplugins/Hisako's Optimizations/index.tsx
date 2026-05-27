@@ -73,7 +73,7 @@ export default definePlugin({
     name: "Hisako's Optimizations",
     description: "Comprehensive client optimization suite for lag-free Discord experience",
     authors: [{ name: "irritably", id: 928787166916640838n }],
-    tags: ["performance", "optimization", "lag-free", "client"] as any,
+    tags: ["Performance", "Utility"],
 
     settings,
 

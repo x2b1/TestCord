@@ -5,7 +5,6 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { NightcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Forms } from "@webpack/common";
 
@@ -196,7 +195,7 @@ function removeCSS() {
 export default definePlugin({
     name: "SmoothType",
     description: "The plugin allows you to fully customize the cursor caret's visual settings, including adjustable transition delays and custom CSS animation effects.",
-    authors: [NightcordDevs.coll, NightcordDevs.viciouscal],
+    authors: [{ name: "coll", id: 0n }, { name: "viciouscal", id: 0n }],
     settings,
 
     start() {
