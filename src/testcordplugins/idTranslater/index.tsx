@@ -84,7 +84,7 @@ function isRoleId(id: string, channelId?: string): boolean {
     if (!guild) return false;
 
     // Check if the role exists in the server
-    return guild.roles?.[id] !== undefined;
+    return (guild as any).roles?.[id] !== undefined;
   } catch {
     return false;
   }

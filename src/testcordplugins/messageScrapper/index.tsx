@@ -481,7 +481,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
         currentProgressRef = progressRef;
 
         // Open progress modal
-        const progressModalKey = openModal((props: ModalProps) => (
+        const progressModalKey = openModal((props: any) => (
             <ProgressModal
                 modalProps={props}
                 progressRef={progressRef}
@@ -490,7 +490,7 @@ function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
                     if (!isProcessRunning) {
                         if (progressModalKey) closeModal(progressModalKey);
                         setIsRunning(false);
-                        modalProps.onClose();
+                        props.onClose();
                     }
                 }}
             />
@@ -938,7 +938,7 @@ async function openMessageScrapperModal() {
     if (IS_DISCORD_DESKTOP) {
         try {
             const { ipcRenderer } = await import("electron");
-            await ipcRenderer.invoke(IpcEvents.OPEN_MESSAGE_SCRAPPER_WINDOW);
+            await (ipcRenderer as any).invoke("OPEN_MESSAGE_SCRAPPER_WINDOW");
             return; // Don't open modal in main window
         } catch (e) {
             console.error("Failed to open message scrapper window:", e);
@@ -947,7 +947,7 @@ async function openMessageScrapperModal() {
     }
 
     // Open new modal (web or fallback)
-    currentModalKey = openModal((props: ModalProps) => (
+    currentModalKey = openModal((props: any) => (
         <WhitelistModal
             modalProps={{
                 ...props,
@@ -992,7 +992,7 @@ export default definePlugin({
     stop() {
         window.removeEventListener("vencord:openMessageScrapper", handleOpenMessageScrapper);
     },
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }) => {
         if (!isMainChat) return null;
         return (
             <ChatBarButton
@@ -1017,5 +1017,5 @@ export default definePlugin({
                 </svg>
             </ChatBarButton>
         );
-    }
+    }) as any
 });

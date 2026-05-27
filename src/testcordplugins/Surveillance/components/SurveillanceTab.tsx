@@ -137,7 +137,7 @@ const EventDetailsModal = ErrorBoundary.wrap(function EventDetailsModal({ event,
     };
 
     return (
-        <ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
+        <ModalRoot {...modalProps} title="" size={ModalSize.MEDIUM}>
             <ModalHeader>
                 <HeadingPrimary className={cl("modal-title")}>Event Details</HeadingPrimary>
                 <ModalCloseButton onClick={modalProps.onClose} />
@@ -177,7 +177,7 @@ const EventDetailsModal = ErrorBoundary.wrap(function EventDetailsModal({ event,
 }, { noop: true });
 
 const openEventModal = (event: SurveillanceEvent) => {
-    openModal(modalProps => <EventDetailsModal event={event} modalProps={modalProps} />);
+    openModal((modalProps: any) => <EventDetailsModal event={event} modalProps={modalProps} />);
 };
 
 function TargetPill({ userId }: { userId: string; }) {

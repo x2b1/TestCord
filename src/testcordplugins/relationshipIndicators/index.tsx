@@ -45,7 +45,7 @@ const indicatorLocations = {
     }
 };
 
-const badge: ProfileBadge = {
+const badge: any = {
     getBadges,
     position: BadgePosition.START
 };

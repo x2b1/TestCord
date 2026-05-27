@@ -31,7 +31,7 @@ export function SendCustomScreenSharePreviewImageButton() {
     }, []);
 
     const openScreenSharePreviewImageModal = useCallback(() => {
-        const key = openModal(modalProps => (
+        const key = openModal((modalProps: any) => (
             <ScreenSharePreviewImageModal
                 modalProps={modalProps}
                 close={() => closeModal(key)}

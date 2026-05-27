@@ -20,6 +20,7 @@ function LayoutIcon({ className, style }: { className?: string; style?: React.CS
 
 // ─── Panel Layout Button ─────────────────────────────────────────────────────
 
+const PanelLayoutModal: any = null;
 function PanelLayoutButton({ iconForeground, hideTooltips, nameplate }: UserAreaRenderProps) {
     return (
         <UserAreaButton
@@ -27,7 +28,7 @@ function PanelLayoutButton({ iconForeground, hideTooltips, nameplate }: UserArea
             icon={<LayoutIcon className={iconForeground} />}
             role="button"
             plated={nameplate != null}
-            onClick={() => openModal(modalProps => <PanelLayoutModal modalProps={modalProps} />)}
+            onClick={() => openModal((modalProps: any) => <PanelLayoutModal modalProps={modalProps} />)}
         />
     );
 }

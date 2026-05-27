@@ -312,10 +312,10 @@ function FakeUserSwitcherButton({ iconForeground, hideTooltips, nameplate }: Use
             role="button"
             plated={nameplate != null}
             redGlow={active}
-            onClick={() => openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps} />)}
+            onClick={() => openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps as any} />)}
             onContextMenu={() => {
                 if (!target) {
-                    openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps} />);
+                    openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps as any} />);
                     return;
                 }
                 setEnabled(!settings.store.spoofActive);

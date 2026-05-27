@@ -6,7 +6,7 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { Devs, TestcordDevs } from "@utils/constants";
-import definePlugin, { IPluginOptionComponentProps, OptionType } from "@utils/types";
+import definePlugin, { PluginSettingComponentProps, OptionType } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
 import { Button, Toasts, useEffect, useState } from "@webpack/common";
 // two lines because formatting removes the two spaces at the end of the line
@@ -51,7 +51,7 @@ function KeybindRecorder({ onBind }: {
     }, [onBind]);
     return <></>;
 }
-function KeymapElement(props: IPluginOptionComponentProps) {
+function KeymapElement(props: PluginSettingComponentProps) {
     const [keybind, setKeybind] = useState<KeyBind>(settings.store.keymap ?? {});
     const [recording, setRecording] = useState(false);
     // there has to be a better way to do this
@@ -68,11 +68,11 @@ function KeymapElement(props: IPluginOptionComponentProps) {
             color: "var(--header-primary)"
         }}>Record Your Keymap</div>
         <Button onClick={() => {
-            props.setError(!recording);
+            (props as any).setError(!recording);
             setRecording(!recording);
         }}>{recording ? "Stop Recording" : "Start Recording"}</Button>
         {recording && <KeybindRecorder onBind={kb => {
-            props.setError(false);
+            (props as any).setError(false);
             setRecording(!recording);
             setKeybind(kb);
             props.setValue(kb);

@@ -17,7 +17,8 @@
 */
 
 import EventEmitter from "events";
-import TypedEmitter from "typed-emitter";
+// @ts-ignore
+import type TypedEmitter from "typed-emitter";
 
 export type TypedEmitterEvents<J extends TypedEmitter<any>> = J extends TypedEmitter<
     infer N

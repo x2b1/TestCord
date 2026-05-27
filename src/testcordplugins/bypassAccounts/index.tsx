@@ -93,7 +93,7 @@ class PasswordGenerator {
     }
 }
 
-function PasswordConfigModal(modalProps: ModalProps & { onGenerate: (password: string) => void; }) {
+function PasswordConfigModal(modalProps: any & { onGenerate: (password: string) => void; }) {
     const [config, setConfig] = React.useState<PasswordGeneratorConfig>({ ...DEFAULT_PASSWORD_CONFIG });
     const [generatedPassword, setGeneratedPassword] = React.useState("");
     const [isGenerating, setIsGenerating] = React.useState(false);
@@ -227,7 +227,7 @@ class FileTokenEncryption {
         const encoder = new TextEncoder();
         const keyMaterial = await crypto.subtle.importKey(
             "raw",
-            encoder.encode(passphrase),
+            encoder.encode(passphrase) as any,
             { name: "PBKDF2" },
             false,
             ["deriveKey"]
@@ -236,14 +236,14 @@ class FileTokenEncryption {
         return crypto.subtle.deriveKey(
             {
                 name: "PBKDF2",
-                salt: salt,
+                salt: salt as any,
                 iterations: 100000,
                 hash: "SHA-256"
-            },
+            } as any,
             keyMaterial,
-            { name: this.ALGORITHM, length: this.KEY_LENGTH },
+            { name: this.ALGORITHM, length: this.KEY_LENGTH } as any,
             false,
-            ["encrypt", "decrypt"]
+            ["encrypt", "decrypt"] as any
         );
     }
 
@@ -402,7 +402,7 @@ function loginWithToken(token: string) {
     }, 2500);
 }
 
-function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => void; }) {
+function LoadAccountsModal(modalProps: any & { onAccountsLoaded: () => void; }) {
     const [passphrase, setPassphrase] = React.useState("");
     const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -480,7 +480,7 @@ function LoadAccountsModal(modalProps: ModalProps & { onAccountsLoaded: () => vo
     );
 }
 
-function AddAccountModal(modalProps: ModalProps & { onAccountAdded: () => void; }) {
+function AddAccountModal(modalProps: any & { onAccountAdded: () => void; }) {
     const [username, setUsername] = React.useState("");
     const [token, setToken] = React.useState("");
 
@@ -513,7 +513,7 @@ function AddAccountModal(modalProps: ModalProps & { onAccountAdded: () => void; 
                         <Forms.FormTitle tag="h6">Discord Token</Forms.FormTitle>
                         <TextInput placeholder="Enter token..." value={token} onChange={setToken} type="password" />
                     </div>
-                    <Forms.FormText type={Forms.FormText.Types.WARNING}>⚠️ Save your file after adding tokens!</Forms.FormText>
+                    <Forms.FormText {...{ type: (Forms.FormText as any).Types?.WARNING } as any}>⚠️ Save your file after adding tokens!</Forms.FormText>
                 </Flex>
             </ModalContent>
             <ModalFooter>
@@ -524,7 +524,7 @@ function AddAccountModal(modalProps: ModalProps & { onAccountAdded: () => void; 
     );
 }
 
-function CreateAccountsFileModal(modalProps: ModalProps & { onFileCreated: () => void; }) {
+function CreateAccountsFileModal(modalProps: any & { onFileCreated: () => void; }) {
     const [passphrase, setPassphrase] = React.useState("");
     const [confirmPassphrase, setConfirmPassphrase] = React.useState("");
     const [fileName, setFileName] = React.useState(`discord_accounts_${Date.now()}.dct`);
@@ -614,7 +614,7 @@ function CreateAccountsFileModal(modalProps: ModalProps & { onFileCreated: () =>
                         <TextInput placeholder="Re-enter passphrase..." value={confirmPassphrase} onChange={setConfirmPassphrase} type="password" />
                     </div>
 
-                    <Forms.FormText type={Forms.FormText.Types.WARNING}>🔒 Remember this passphrase!</Forms.FormText>
+                    <Forms.FormText {...{ type: (Forms.FormText as any).Types?.WARNING } as any}>🔒 Remember this passphrase!</Forms.FormText>
                 </Flex>
             </ModalContent>
             <ModalFooter>
@@ -627,7 +627,7 @@ function CreateAccountsFileModal(modalProps: ModalProps & { onFileCreated: () =>
     );
 }
 
-function AccountSwitcherModal(modalProps: ModalProps) {
+function AccountSwitcherModal(modalProps: any) {
     const [accounts, setAccounts] = React.useState<Array<{ id: string; username: string; token: string; isActive: boolean; }>>([]);
     const [isLoading, setIsLoading] = React.useState(false);
     const currentUser = UserStore.getCurrentUser();
@@ -715,7 +715,7 @@ function AccountSwitcherModal(modalProps: ModalProps) {
         <ModalRoot {...modalProps} size={ModalSize.LARGE}>
             <ModalHeader>
                 <Forms.FormTitle tag="h4">Account Switcher</Forms.FormTitle>
-                <Forms.FormText type={Forms.FormText.Types.DESCRIPTION}>
+                <Forms.FormText {...{ type: (Forms.FormText as any).Types?.DESCRIPTION } as any}>
                     {FileAccountManager.hasAccountsLoaded()
                         ? `Loaded: ${FileAccountManager.getCurrentFilePath() || "accounts file"} (${FileAccountManager.getAccounts().length} accounts)`
                         : "No accounts file loaded"
@@ -727,7 +727,7 @@ function AccountSwitcherModal(modalProps: ModalProps) {
                     {!FileAccountManager.hasAccountsLoaded() ? (
                         <Flex style={{ justifyContent: "center", padding: "20px", flexDirection: "column", alignItems: "center" }}>
                             <Forms.FormText>No accounts loaded</Forms.FormText>
-                            <Forms.FormText type={Forms.FormText.Types.DESCRIPTION}>
+                            <Forms.FormText {...{ type: (Forms.FormText as any).Types?.DESCRIPTION } as any}>
                                 Load an existing file or create a new one to get started
                             </Forms.FormText>
                         </Flex>
@@ -763,7 +763,7 @@ function AccountSwitcherModal(modalProps: ModalProps) {
                                         <Forms.FormTitle tag="h6" style={{ margin: 0 }}>
                                             {account.username}
                                         </Forms.FormTitle>
-                                        <Forms.FormText type={account.isActive ? Forms.FormText.Types.SUCCESS : Forms.FormText.Types.DESCRIPTION}>
+                                        <Forms.FormText {...{ type: account.isActive ? (Forms.FormText as any).Types?.SUCCESS : (Forms.FormText as any).Types?.DESCRIPTION } as any}>
                                             {account.isActive ? "Active Account" : "Ready to switch"}
                                         </Forms.FormText>
                                     </Flex>

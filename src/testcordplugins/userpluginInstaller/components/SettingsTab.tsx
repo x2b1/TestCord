@@ -59,7 +59,7 @@ function UserPluginsTab() {
     }, []);
 
     return (
-        <STab title={`UserPlugins${pluginsLoaded ? ` (${plugins.length}, ${plugins.filter(p => Vencord.Settings.plugins[p.name].enabled).length} enabled)` : ""}`}>
+        <STab {...{ title: `UserPlugins${pluginsLoaded ? ` (${plugins.length}, ${plugins.filter(p => (Vencord as any).Settings.plugins[p.name].enabled).length} enabled)` : ""}` } as any as React.PropsWithChildren<{ title: string }>}>
             <div className={cl("update-check-container")}>
                 {
                     isObjectEmpty(pluginsWithUpdates) ? (!updatesLoaded && <BaseText>Checking for updates...</BaseText>) : <Card className={classes(cl("info-card"), "vc-warning-card")}>
@@ -83,9 +83,9 @@ function UserPluginsTab() {
                 <HeadingTertiary className={cl("install-title")}>Install Plugin</HeadingTertiary>
                 <Paragraph className={cl("install-desc")}>You can install a plugin from GitHub, GitLab, Codeberg, git.nin0.dev, or plugins.nin0.dev by pasting its clone URL here.</Paragraph>
                 <div className={cl("install-field")}>
-                    <CheckedTextInput
-                        onChange={t => setUrl(t)}
-                        validate={t => {
+                    <CheckedTextInput {...{
+                        onChange: t => setUrl(t),
+                        validate: t => {
                             const match = t.match(CLONE_LINK_REGEX);
                             if (match) {
                                 const idpl = match.includes("plugins.nin0.dev") ? 1 : 0;
@@ -101,9 +101,9 @@ function UserPluginsTab() {
                                 setValid(false);
                                 return "Invalid URL, read the notice above";
                             }
-                        }}
-                        value={url}
-                    />
+                        },
+                        value: url
+                    } as any} />
                 </div>
                 <div className={cl("button-container")}>
                     <Button disabled={!valid} className={cl("install-button")} onClick={async () => {

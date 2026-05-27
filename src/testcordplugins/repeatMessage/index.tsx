@@ -104,7 +104,8 @@ export default definePlugin({
         "message": messageCtxPatch
     },
     start() {
-        addMessagePopoverButton("vc-repeat", message => {
+        // @ts-ignore
+        addMessagePopoverButton("vc-repeat", (message: any) => {
             if (!message.content && message.stickerItems.length === 0) return null;
 
             return {

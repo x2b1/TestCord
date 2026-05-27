@@ -219,7 +219,7 @@ function toggleGroupLock(channelId: string) {
 // Group context menu patch
 const GroupContextMenuPatch: NavContextMenuPatchCallback = (
     children,
-    { channel }: { channel: Channel; }
+    { channel }: { channel: any; }
 ) => {
     if (!channel || channel.type !== 3) return; // 3 = GROUP_DM
 

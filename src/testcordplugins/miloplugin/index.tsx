@@ -208,5 +208,5 @@ export default definePlugin({
     stop() {
         removeMessagePreSendListener(handleMessageSend);
     },
-    renderChatBarButton: SillyKittenButton
+    renderChatBarButton: SillyKittenButton as any
 });

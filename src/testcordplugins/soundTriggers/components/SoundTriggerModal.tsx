@@ -24,7 +24,7 @@ interface OpenTriggerModalOptions {
 }
 
 export const openTriggerModal = (opts: OpenTriggerModalOptions) => (
-    openModal(modalProps => (
+    openModal((modalProps: any) => (
         <SoundTriggerModal
             {...modalProps}
             mode={opts.mode}
@@ -89,12 +89,11 @@ export function SoundTriggerModal(props: SoundTriggerModalProps) {
                             ))}
                         </Card>)
                         : <EmptyState text="No text patterns defined." />}
-                    <Switch
-                        value={trigger.caseSensitive}
-                        onChange={() => setTrigger({ ...trigger, caseSensitive: !trigger.caseSensitive })}
-                    >
-                        Case Sensitive
-                    </Switch>
+                    {(Switch as any)({
+                        value: trigger.caseSensitive,
+                        onChange: () => setTrigger({ ...trigger, caseSensitive: !trigger.caseSensitive }),
+                        children: "Case Sensitive"
+                    })}
                     <div>
                         <Forms.FormTitle tag="h5">Sound URL</Forms.FormTitle>
                         <TextInput
@@ -147,7 +146,7 @@ export function SoundTriggerModal(props: SoundTriggerModalProps) {
                     }}>
                     {props.mode === "create" ? "Create" : "Save"}
                 </Button>
-                <Button look={Button.Looks.OUTLINED} onClick={props.onClose}>
+                <Button look={"OUTLINED" as any} onClick={props.onClose}>
                     Cancel
                 </Button>
             </ModalFooter>

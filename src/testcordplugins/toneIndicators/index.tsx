@@ -9,7 +9,7 @@ import "./tooltip.css";
 import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Tooltip } from "@webpack/common";
-import { React } from "webpack/common/react";
+import { React } from "@webpack/common";
 
 const test = (data, output) => {
     return <span>{output(data.content)} skiibid</span>;
@@ -139,7 +139,7 @@ export default definePlugin({
 
             react: ({ text, tag }: ReactProps) => {
                 return (<Tooltip text={tag.long} tooltipClassName="toneIndicator">
-                    {props => <span
+                    {(props: any) => <span
                         {...props}
                         className="inChatText"
                     >

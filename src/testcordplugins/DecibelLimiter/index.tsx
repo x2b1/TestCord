@@ -94,7 +94,7 @@ function log(message: string) {
     console.log(`[DecibelLimiter] ${message}`);
 }
 
-function toast(message: string, type: number = Toasts.Type.MESSAGE) {
+function toast(message: string, type: any = Toasts.Type.MESSAGE) {
     if (!settings.store.showToasts) return;
     showToast(message, type);
 }

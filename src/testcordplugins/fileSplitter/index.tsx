@@ -247,7 +247,7 @@ pause`;
                                 <Button
                                     onClick={generateRejoinScript}
                                     color={Button.Colors.PRIMARY}
-                                    look={Button.Looks.OUTLINED}
+                                    look={(Button as any).Looks.OUTLINED}
                                 >
                                     🔧 Rejoin script
                                 </Button>
@@ -299,7 +299,7 @@ pause`;
                     <Button
                         onClick={modalProps.onClose}
                         color={Button.Colors.PRIMARY}
-                        look={Button.Looks.OUTLINED}
+                        look={(Button as any).Looks.OUTLINED}
                     >
                         Close
                     </Button>
@@ -319,7 +319,7 @@ export default definePlugin({
 
     toolboxActions: {
         "File Splitter": () => {
-            openModal(modalProps => <FileSplitterModal modalProps={modalProps} />);
+            openModal(modalProps => <FileSplitterModal modalProps={modalProps as any} />);
         },
     },
 });

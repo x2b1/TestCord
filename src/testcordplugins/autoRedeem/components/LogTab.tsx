@@ -41,7 +41,7 @@ function AutoRedeemTab() {
     );
 
     return (
-        <SettingsTab title="AutoRedeem Logs">
+        <SettingsTab>
             <div style={{ display: "flex", gap: "12px", marginBottom: "16px", alignItems: "center" }}>
                 <div style={{ width: "160px" }}>
                     <Select

@@ -167,7 +167,7 @@ export default definePlugin({
         currentChannelId = null;
     },
 
-    renderChatBarButton: FetchTimeButton,
+    renderChatBarButton: FetchTimeButton as any,
 });
 
 

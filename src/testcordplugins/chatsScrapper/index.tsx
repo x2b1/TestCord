@@ -72,7 +72,7 @@ function DmUserTag({ id, onRemove }: { id: string; onRemove: (id: string) => voi
     );
 }
 
-function WhitelistModal({ modalProps }: { modalProps: ModalProps; }) {
+function WhitelistModal({ modalProps }: { modalProps: any; }) {
     const [wl, setWl] = React.useState<string[]>(getWhitelist());
     const [query, setQuery] = React.useState("");
 
@@ -272,16 +272,16 @@ export default definePlugin({
     tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }: any) => {
         if (!isMainChat) return null;
         return (
             <ChatBarButton
                 tooltip="Chats Scrapper"
-                onClick={() => openModal(props => <WhitelistModal modalProps={props} />)}
-                onContextMenu={e =>
+                onClick={() => openModal((props: any) => <WhitelistModal modalProps={props} />)}
+                onContextMenu={(e: any) =>
                     ContextMenuApi.openContextMenu(e, () => (
                         <Menu.Menu navId="pc-chats-scrapper-menu" onClose={ContextMenuApi.closeContextMenu} aria-label="Chats Scrapper">
-                            <Menu.MenuItem id="pc-chats-scrapper-open" label="Open Chats Scrapper" action={() => openModal(props => <WhitelistModal modalProps={props} />)} />
+                            <Menu.MenuItem id="pc-chats-scrapper-open" label="Open Chats Scrapper" action={() => openModal((props: any) => <WhitelistModal modalProps={props} />)} />
                         </Menu.Menu>
                     ))
                 }
@@ -291,7 +291,7 @@ export default definePlugin({
                 </svg>
             </ChatBarButton>
         );
-    }
+    }) as any
 });
 
 

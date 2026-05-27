@@ -316,7 +316,7 @@ async function runDelete(ctx: any, mode: DeleteMode) {
                 msgs = await searchMessages(
                     channelId,
                     mode === "mine" ? UserStore.getCurrentUser().id : undefined,
-                    guildId,
+                    guildId as any,
                     offset
                 );
             } catch (e: any) {

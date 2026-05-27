@@ -90,13 +90,13 @@ async function sendProgress(channelId: string, promise: Promise<{
 }>) {
     if (!settings.store.showProgress) {
         sendBotMessage(channelId, {
-            components: CancelButton
+            components: CancelButton as any
         });
         return await promise;
     }
     const clydeMessage = sendBotMessage(channelId, {
         content: "Downloading video...",
-        components: CancelButton
+        components: CancelButton as any
     });
     const updateMessage = (stdout: string, append?: string) => {
         const text = stdout.toString();
@@ -130,7 +130,7 @@ function sendFfmpegWarning(channelId: string) {
 
 // Mostly taken from viewRaw and betterSessions plugins.
 async function openDependencyModal() {
-    const key = openModal(props => (
+    const key = openModal((props: any) => (
         <ErrorBoundary>
             <DependencyModal props={props} options={{
                 key,
@@ -334,7 +334,7 @@ async function download(channel: Channel, {
 
     const { buffer, title } = data;
     UploadManager.clearAll(channel.id, DraftType.SlashCommand);
-    const file = new File([buffer], title, { type: mimetype(title.split(".")[1]) });
+    const file = new File([buffer as any], title, { type: mimetype(title.split(".")[1] ?? "") });
     // See petpet
     setTimeout(() => UploadHandler.promptToUpload([file], channel, DraftType.ChannelMessage), 10);
 }

@@ -143,7 +143,7 @@ export default definePlugin({
             }
         })();
 
-        upload.filename = newFilename;
+        upload.filename = newFilename!;
     },
 
     commands: [

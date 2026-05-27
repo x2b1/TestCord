@@ -87,7 +87,7 @@ export default definePlugin({
         "textarea-context": ContextMenuPatch
     },
 
-    start: () => addChatBarButton("ComposeMode", ComposeModeToggleButton),
+    start: () => addChatBarButton("ComposeMode", ComposeModeToggleButton as any, null as unknown as any),
     stop: () => removeChatBarButton("ComposeMode"),
 });
 

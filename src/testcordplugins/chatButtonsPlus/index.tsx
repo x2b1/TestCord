@@ -271,7 +271,7 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }) => {
         if (!isMainChat) return null;
 
         return (
@@ -289,7 +289,7 @@ export default definePlugin({
                 ))}
             </>
         );
-    },
+    }) as any,
 
     async start() {
         const storedEntries = await DataStore.get(BUTTON_ENTRIES_KEY) ?? [];

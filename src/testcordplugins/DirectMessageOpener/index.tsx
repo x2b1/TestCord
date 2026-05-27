@@ -12,6 +12,7 @@ import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, op
 import definePlugin from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
 import { Button, Forms, NavigationRouter, React, RestAPI, TextInput, Tooltip } from "@webpack/common";
+const FormText = Forms.FormText as any;
 
 const UserIcon = findComponentByCodeLazy("M14.99 11a1 1 0");
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_TOP:", '.iconBadge,"top"');
@@ -69,7 +70,7 @@ function DirectMessageModal(props: any) {
     };
 
     return (
-        <ModalRoot {...props}>
+        <ModalRoot {...props} title="">
             <ModalHeader>
                 <Forms.FormTitle tag="h4">Open Direct Message</Forms.FormTitle>
                 <ModalCloseButton onClick={props.onClose} />
@@ -79,9 +80,9 @@ function DirectMessageModal(props: any) {
                 <Forms.FormTitle tag="h5" style={{ marginTop: "10px" }}>
                     User ID
                 </Forms.FormTitle>
-                <Forms.FormText type="description" style={{ marginBottom: "10px" }}>
+                <FormText type={"description" as any} style={{ marginBottom: "10px" }}>
                     Enter the Discord User ID of the person you want to message
-                </Forms.FormText>
+                </FormText>
                 <TextInput
                     placeholder="123456789012345678"
                     value={userId}
@@ -89,9 +90,9 @@ function DirectMessageModal(props: any) {
                     disabled={loading}
                 />
                 {error && (
-                    <Forms.FormText type="description" style={{ color: "var(--text-danger)", marginTop: "10px" }}>
+                    <FormText type={"description" as any} style={{ color: "var(--text-danger)", marginTop: "10px" }}>
                         {error}
-                    </Forms.FormText>
+                    </FormText>
                 )}
             </ModalContent>
 

@@ -54,22 +54,22 @@ export default definePlugin({
         // with the patched versions
         RTCPeerConnection.prototype.setRemoteDescription = function (desc, ...rest) {
             // call the original setRemoteDescription function with the patched desc
-            return orig.SRD.call(this, patchSDPDesc(desc), ...rest);
+            return (orig as any).SRD.call(this, patchSDPDesc(desc), ...rest);
         };
 
         RTCPeerConnection.prototype.setLocalDescription = function (desc, ...rest) {
             // setLocalDescription() may be called with no args
             // if it is defined, call the original setLocalDescription function with
             // the patched desc
-            return orig.SLD.call(this, patchSDPDesc(desc), ...rest);
+            return (orig as any).SLD.call(this, patchSDPDesc(desc), ...rest);
         };
     },
 
     async stop() {
         // reset the setRemoteDescription and setLocalDescription functions
         // to their original values which were stored in this.orig
-        RTCPeerConnection.prototype.setRemoteDescription = orig.SRD;
-        RTCPeerConnection.prototype.setLocalDescription = orig.SLD;
+        RTCPeerConnection.prototype.setRemoteDescription = (orig as any).SRD;
+        RTCPeerConnection.prototype.setLocalDescription = (orig as any).SLD;
     },
 
 });

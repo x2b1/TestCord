@@ -182,7 +182,7 @@ export default definePlugin({
             if (settings.store.enableProfileEffects || settings.store.enableProfileThemes) {
                 let mergeData: Partial<UserProfile> = {};
                 const userData = useUsersProfileStore.getState().get(user.userId);
-                const colors = decode(user.bio);
+                const colors = decode((user as any).bio);
                 const profileEffect = userData?.profileEffectId
                     ? useUsersProfileStore.getState().profileEffects.get(userData.profileEffectId)
                     : null;

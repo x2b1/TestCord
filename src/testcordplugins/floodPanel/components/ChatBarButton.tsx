@@ -21,7 +21,7 @@ export const FloodPanelButton: ChatBarButtonFactory = ({ isMainChat, channel }) 
         openModal(props => (
             <FloodModal
                 channel={channel}
-                rootProps={props}
+                rootProps={props as any}
                 onRunningChange={setIsRunning}
             />
         ));

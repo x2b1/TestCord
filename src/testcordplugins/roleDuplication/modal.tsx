@@ -42,17 +42,16 @@ function CloneModal({ role, icon }: { role: Role; icon?: string | null; }) {
     return (
         <>
             <Forms.FormTitle className={Margins.top20}>Custom Name</Forms.FormTitle>
-            <CheckedTextInput
-                value={name}
-                onChange={v => {
+            {React.createElement(CheckedTextInput as any, {
+                value: name,
+                onChange: (v: any) => {
                     role.name = v;
                     setName(v);
-                }}
-                validate={v =>
+                },
+                validate: (v: any) =>
                     (v.length > 1 && v.length < 100)
                     || "Name must be between 1 and 100 characters"
-                }
-            />
+            })}
             <p
                 style={{ display: warningText ? "block" : "none" }}
                 className="vc-rd-role-icon-warning-text"
@@ -101,13 +100,13 @@ function CloneModal({ role, icon }: { role: Role; icon?: string | null; }) {
                                             width: "100%",
                                             height: "100%",
                                         }}
-                                        src={g.getIconURL(512, true)}
+                                        src={(g as any).getIconURL(512, true)}
                                         alt={g.name}
                                     />
                                 ) : (
                                     <Forms.FormText
                                         style={{
-                                            fontSize: getFontSize(g.acronym),
+                                            fontSize: getFontSize((g as any).acronym),
                                             width: "100%",
                                             overflow: "hidden",
                                             whiteSpace: "nowrap",
@@ -115,7 +114,7 @@ function CloneModal({ role, icon }: { role: Role; icon?: string | null; }) {
                                             cursor: isCloning ? "not-allowed" : "pointer",
                                         }}
                                     >
-                                        {g.acronym}
+                                        {(g as any).acronym}
                                     </Forms.FormText>
                                 )}
                             </div>

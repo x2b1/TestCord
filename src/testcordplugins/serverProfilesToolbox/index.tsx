@@ -116,9 +116,9 @@ export default definePlugin({
             savedProfile.bio = profile?.bio ?? null;
             savedProfile.themeColors = profile?.themeColors;
             savedProfile.banner = profile?.banner === null ? undefined : profile?.banner;
-            savedProfile.avatar = selfMember.avatar;
+            savedProfile.avatar = (selfMember as any).avatar ?? undefined;
             savedProfile.profileEffectId = profile?.profileEffectId;
-            savedProfile.avatarDecoration = selfMember.avatarDecoration;
+            savedProfile.avatarDecoration = (selfMember as any).avatarDecoration ?? undefined;
         };
 
         const paste = () => {

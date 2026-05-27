@@ -9,8 +9,8 @@ import { ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal, ModalSize
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 let isCurrentlyVcOwner = false;
-let currentVcChannel = null;
-let currentVcGuild = null;
+let currentVcChannel: string | null = null;
+let currentVcGuild: string | null = null;
 
 const settings = definePluginSettings({
     users: {
@@ -117,7 +117,7 @@ function isVoiceChannelOwner(guildId: string, channelId: string): boolean {
         const member = GuildMemberStore.getMember(guildId, currentUserId);
         if (member?.roles) {
             for (const roleId of member.roles) {
-                const role = guild?.roles?.[roleId];
+                const role = (guild as any)?.roles?.[roleId];
                 if (role?.permissions) {
                     const rolePerms = toBigIntSafe(role.permissions);
                     if ((rolePerms & 0x8n) === 0x8n) return true;
@@ -139,7 +139,7 @@ function forceCheckVcOwnership(guildId?: string, channelId?: string): boolean {
         const currentVoiceState = VoiceStateStore.getVoiceStateForUser(currentUserId);
         if (currentVoiceState?.channelId) {
             channelId = currentVoiceState.channelId;
-            const channel = ChannelStore.getChannel(channelId);
+            const channel = ChannelStore.getChannel(channelId!);
             guildId = channel?.guild_id;
         }
     }
@@ -343,15 +343,15 @@ function MenuItem(id: string) {
 
 function banninguser(id) {
     const currentUserId = UserStore.getCurrentUser().id;
-    let channelId = null;
-    let guildId = null;
+    let channelId: string | null = null;
+    let guildId: string | null = null;
 
     // Find current VC
     const currentVoiceState = VoiceStateStore.getVoiceStateForUser(currentUserId);
     if (currentVoiceState?.channelId) {
         channelId = currentVoiceState.channelId;
-        const channel = ChannelStore.getChannel(channelId);
-        guildId = channel?.guild_id;
+        const channel = ChannelStore.getChannel(channelId!);
+        guildId = channel?.guild_id ?? null;
     }
 
     // Fallback to global tracking
@@ -370,7 +370,7 @@ function banninguser(id) {
     }
 
     // Check ownership
-    const isOwner = forceCheckVcOwnership(guildId, channelId);
+    const isOwner = forceCheckVcOwnership(guildId!, channelId!);
 
     if (!isOwner) {
         Toasts.show({

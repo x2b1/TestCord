@@ -2405,7 +2405,7 @@ export async function uploadFileBuffer(
                     nativeLog.info(`[BigFileUpload] ✅ Background retry succeeded with ${backgroundWinner.uploader}!`);
                     let finalUrl = backgroundWinner.url;
                     if (uploaderSettings.useEmbedsVideo === "Yes") {
-						finalUrl = "https://embeds.video/" + uploadResult;
+						finalUrl = "https://embeds.video/" + backgroundWinner.url;
 					}
                     if (uploaderSettings.autoFormat === "Yes") {
                         finalUrl = `[${fileName}](${finalUrl})`;
@@ -2548,7 +2548,7 @@ export async function uploadFileBuffer(
                         nativeLog.info(`[BigFileUpload] ✅ Background retry saved the day with ${finalCheck.uploader}!`);
                         let finalUrl = finalCheck.url;
                         if (uploaderSettings.useEmbedsVideo === "Yes") {
-						    finalUrl = "https://embeds.video/" + uploadResult;
+						    finalUrl = "https://embeds.video/" + finalCheck.url;
 					    }
                         if (uploaderSettings.autoFormat === "Yes") {
                             finalUrl = `[${fileName}](${finalUrl})`;

@@ -58,7 +58,7 @@ export function ScreenSharePreviewImageModal({ modalProps, close }: { modalProps
     }, []);
 
     return (
-        <ModalRoot {...modalProps} size={ModalSize.SMALL}>
+        <ModalRoot {...modalProps} title="" size={ModalSize.SMALL}>
             <ModalHeader>
                 <Text variant="heading-lg/semibold" style={{ flexGrow: 1 }}>Screen Share Preview</Text>
                 <ModalCloseButton onClick={close}/>
@@ -98,7 +98,7 @@ export function ScreenSharePreviewImageModal({ modalProps, close }: { modalProps
 
                 {previewImage && (
                     <>
-                        <Forms.FormDivider style={{ marginTop: "1rem", marginBottom: "1rem" }}/>
+                        <Forms.FormDivider style={{ marginTop: "1rem", marginBottom: "1rem" } as any}/>
 
                         <img
                             src={previewImage}

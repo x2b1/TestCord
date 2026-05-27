@@ -274,7 +274,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
     if (onMessageClick) addMessageClickListener(onMessageClick);
 
     if (chatBarButton) addChatBarButton(name, chatBarButton.render, chatBarButton.icon);
-    if (renderChatBarButton) addChatBarButton(name, renderChatBarButton, () => null);
+    if (renderChatBarButton) addChatBarButton(name, renderChatBarButton as any, () => null);
     if (renderMemberListDecorator) addMemberListDecorator(name, renderMemberListDecorator);
     if (renderMessageDecoration) addMessageDecoration(name, renderMessageDecoration);
     if (renderMessageAccessory) addMessageAccessory(name, renderMessageAccessory);

@@ -106,7 +106,7 @@ function checkvcownerlol(guildId: string, channelId?: string) {
                     }
 
                     // Priority: server nickname > global display name > username
-                    ownerName = (memberInfo?.nick) || user.globalName || user.displayName || user.username || "Unknown User";
+                    ownerName = ((memberInfo as any)?.nick) || user.globalName || (user as any).displayName || user.username || "Unknown User";
 
                     const cleanId = id.toString().replace(/[^0-9]/g, "");
                     veryimportantmap.add(cleanId);
@@ -178,7 +178,7 @@ function ChannelMakeContextMenuPatch(): NavContextMenuPatchCallback {
 
 function Kbind(e: KeyboardEvent) {
     if (e.altKey && e.key.toLowerCase() === 'v') {
-        openModal(modalProps => <EncModals modalProps={modalProps} />);
+        openModal((modalProps: any) => <EncModals modalProps={modalProps} />);
     }
 }
 
@@ -350,7 +350,7 @@ interface guildidetectionslol {
     permrequirements: string;
 }
 
-function EncModals({ modalProps }: { modalProps: ModalProps; }) {
+function EncModals({ modalProps }: { modalProps: any; }) {
     const [guildidetectionslol, setguildidetectionslol] = React.useState<guildidetectionslol[]>(
         isValidJson(settings.store.guildidetectionslol)
     );

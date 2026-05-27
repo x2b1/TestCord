@@ -3,8 +3,10 @@ import definePlugin, { OptionType } from "@utils/types";
 import { TestcordDevs } from "@utils/constants";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { RestAPI, Toasts, UserStore } from "@webpack/common";
+// @ts-ignore
 import { VoiceState as WebpackVoiceState } from "@webpack/types";
-import { User } from "discord-types/general";
+// @ts-ignore
+import type { User } from "discord-types/general";
 
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");

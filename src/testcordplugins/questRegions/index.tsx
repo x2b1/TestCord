@@ -448,7 +448,8 @@ async function fetchDiscordIdQuestApi(signal: AbortSignal): Promise<QuestEntry[]
 
     if (native && proxies.length > 0) {
         const healthyProxies = await findHealthyProxiesFast(proxies, "API", undefined, 2).catch(() => proxies.slice(0, 5));
-        for (const { proxy } of healthyProxies) {
+        for (const item of (healthyProxies as any)) {
+            const { proxy } = item;
             const result = await (native as typeof native & {
                 fetchUrlViaProxy?: (url: string, proxy: string) => Promise<{ status: number; body: string; error?: string; }>;
             }).fetchUrlViaProxy?.(DISCORD_ID_QUESTS_API_URL.toString(), proxy.raw);
@@ -1151,7 +1152,7 @@ async function batchFilterGenericProxiesForCountry(
 
     for (let offset = 0; offset < hosts.length; offset += BATCH_PROXY_CHECK_CHUNK_SIZE) {
         const chunk = hosts.slice(offset, offset + BATCH_PROXY_CHECK_CHUNK_SIZE);
-        const checked = await native.batchCheckProxyIps(settings.store.proxyCheckService, chunk);
+        const checked = await native.batchCheckProxyIps!(settings.store.proxyCheckService as any, chunk);
         for (const entry of checked) {
             if (entry.countryCode !== country) continue;
             if (!entry.proxy && !entry.hosting) continue;

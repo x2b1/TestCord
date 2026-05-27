@@ -68,14 +68,15 @@ const CancelButton = [{
         customId: "yt-downloader-stop-download",
         emoji: {
             name: "⚪",
-            animated: "yt-downloader-stop-download"
+            animated: "yt-downloader-stop-download",
+            id: undefined
         },
         label: "Cancel download",
         id: "0,0",
         style: 4,
         type: 2,
     }], id: "0", type: 1
-}];
+}] as any;
 
 async function sendProgress(channelId: string, promise: Promise<{
     buffer: Buffer;
@@ -127,9 +128,9 @@ function sendFfmpegWarning(channelId: string) {
 }
 
 async function openDependencyModal() {
-    const key = openModal(props => (
+    const key = openModal((props: any) => (
         <ErrorBoundary>
-            <DependencyModal props={props} options={{
+            <DependencyModal props={props as any} options={{
                 key,
                 checkytdlp: Native.checkytdlp,
                 checkdeno: Native.checkdeno,
@@ -277,7 +278,7 @@ async function download(channel: Channel, {
     }
 
     const { buffer, title } = data;
-    UploadManager.clearAll(channel.id, DraftType.SlashCommand);
-    const file = new File([buffer.buffer], title, { type: mimetype(title.split(".")[1]) });
+    (UploadManager as any).clearAll(channel.id, DraftType.SlashCommand);
+    const file = new File([(buffer as any).buffer], title, { type: mimetype(title.split(".")[1]) }) as any;
     setTimeout(() => UploadHandler.promptToUpload([file], channel, DraftType.ChannelMessage), 10);
 }

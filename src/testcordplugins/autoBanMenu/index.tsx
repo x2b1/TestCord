@@ -34,7 +34,7 @@ let autoSyncInterval: NodeJS.Timeout | null = null;
 let autoSyncEnabled = false;
 
 export function openGuildInfoModal() {
-    openModal(modalProps => <UserList modalProps={modalProps} />);
+    (openModal as any)((modalProps: any) => <UserList modalProps={modalProps} />);
 }
 
 const SearchIcon = () => (
@@ -141,14 +141,14 @@ function isFriend(userId) {
 
 // Remove friends from ban list
 function removeFriendsFromBanList(pluginName, usersKey, reasonsKey) {
-    const plugin = Vencord.Plugins.plugins[pluginName];
+    const plugin = Vencord.Plugins.plugins[pluginName] as any;
     if (!plugin?.settings?.store) return { removed: 0, usernames: [] };
 
     const userString = plugin.settings.store[usersKey] || "";
     const userList = userString.split("/").filter(Boolean);
 
-    const friendsToRemove = [];
-    const friendUsernames = [];
+    const friendsToRemove: string[] = [];
+    const friendUsernames: string[] = [];
 
     userList.forEach(id => {
         if (isFriend(id)) {
@@ -249,7 +249,7 @@ async function syncUpload(): Promise<{ success: boolean; message: string; }> {
 
     // Get single server ban data using exact export logic
     const singlePlugin = Vencord.Plugins.plugins.autoBan;
-    let singleData = null;
+    let singleData: any = null;
     if (singlePlugin?.settings?.store) {
         const userString = singlePlugin.settings.store.users || "";
         const userList = userString.split("/").filter(Boolean);
@@ -402,7 +402,7 @@ async function fetchUser(id: string) {
 
 // Export ban list to JSON
 function exportBanList(pluginName: string, usersKey: string, reasonsKey?: string) {
-    const plugin = Vencord.Plugins.plugins[pluginName];
+    const plugin = Vencord.Plugins.plugins[pluginName] as any;
     if (!plugin?.settings?.store) return;
 
     // Get users
@@ -469,7 +469,7 @@ function importBanList(
                     return;
                 }
 
-                const plugin = Vencord.Plugins.plugins[pluginName];
+    const plugin = Vencord.Plugins.plugins[pluginName] as any;
                 if (!plugin?.settings?.store) return;
 
                 // Get existing data
@@ -536,7 +536,7 @@ function clearBanList(
     const confirmed = confirm("Are you sure you want to clear the entire ban list? This action cannot be undone!");
     if (!confirmed) return;
 
-    const plugin = Vencord.Plugins.plugins[pluginName];
+    const plugin = Vencord.Plugins.plugins[pluginName] as any;
     if (!plugin?.settings?.store) return;
 
     plugin.settings.store[usersKey] = "";
@@ -569,7 +569,7 @@ function BanList({
     const [searchTerm, setSearchTerm] = useState("");
     const [updateTrigger, setUpdateTrigger] = useState(0);
 
-    const plugin = Vencord.Plugins.plugins[pluginName];
+    const plugin = Vencord.Plugins.plugins[pluginName] as any;
 
     const triggerUpdate = () => {
         setUpdateTrigger(prev => prev + 1);
@@ -881,8 +881,8 @@ function BanList({
                                         border: "3px solid var(--brand-experiment)",
                                         transition: "transform 0.2s ease"
                                     }}
-                                    onMouseEnter={e => e.target.style.transform = "scale(1.1)"}
-                                    onMouseLeave={e => e.target.style.transform = "scale(1)"}
+                                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "scale(1.1)"}
+                                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "scale(1)"}
                                 />
 
                                 {/* User info */}
@@ -961,12 +961,12 @@ function BanList({
                                                     transition: "all 0.2s ease"
                                                 }}
                                                 onMouseEnter={e => {
-                                                    e.target.style.backgroundColor = "var(--brand-experiment)";
-                                                    e.target.style.color = "white";
+                                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--brand-experiment)";
+                                                    (e.currentTarget as HTMLElement).style.color = "white";
                                                 }}
                                                 onMouseLeave={e => {
-                                                    e.target.style.backgroundColor = "var(--background-secondary)";
-                                                    e.target.style.color = "var(--text-normal)";
+                                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--background-secondary)";
+                                                    (e.currentTarget as HTMLElement).style.color = "var(--text-normal)";
                                                 }}
                                             >
                                                 <EditIcon />
@@ -999,7 +999,7 @@ function BanList({
 }
 
 // Main modal component
-function UserList({ modalProps }: { modalProps: ModalProps; }) {
+function UserList({ modalProps }: { modalProps: any; }) {
     const [activeTab, setActiveTab] = useState<"single" | "multi">("single");
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -1139,14 +1139,14 @@ function UserList({ modalProps }: { modalProps: ModalProps; }) {
                             onClick={() => setActiveTab("single")}
                             onMouseEnter={e => {
                                 if (activeTab !== "single") {
-                                    e.target.style.backgroundColor = "var(--background-modifier-hover)";
-                                    e.target.style.transform = "translateY(-1px)";
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--background-modifier-hover)";
+                                    (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
                                 }
                             }}
                             onMouseLeave={e => {
                                 if (activeTab !== "single") {
-                                    e.target.style.backgroundColor = "var(--background-secondary)";
-                                    e.target.style.transform = "none";
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--background-secondary)";
+                                    (e.currentTarget as HTMLElement).style.transform = "none";
                                 }
                             }}
                         >
@@ -1169,14 +1169,14 @@ function UserList({ modalProps }: { modalProps: ModalProps; }) {
                             onClick={() => setActiveTab("multi")}
                             onMouseEnter={e => {
                                 if (activeTab !== "multi") {
-                                    e.target.style.backgroundColor = "var(--background-modifier-hover)";
-                                    e.target.style.transform = "translateY(-1px)";
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--background-modifier-hover)";
+                                    (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
                                 }
                             }}
                             onMouseLeave={e => {
                                 if (activeTab !== "multi") {
-                                    e.target.style.backgroundColor = "var(--background-secondary)";
-                                    e.target.style.transform = "none";
+                                    (e.currentTarget as HTMLElement).style.backgroundColor = "var(--background-secondary)";
+                                    (e.currentTarget as HTMLElement).style.transform = "none";
                                 }
                             }}
                         >
@@ -1279,7 +1279,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("[AutoBan] Sync command error:", error);
                     return {
-                        content: `[SYNC ERROR] Failed to sync ban lists. Error: ${error.message || "Unknown error"}`
+                        content: `[SYNC ERROR] Failed to sync ban lists. Error: ${(error as any).message || "Unknown error"}`
                     };
                 }
             }
@@ -1300,7 +1300,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("[AutoBan] Upload command error:", error);
                     return {
-                        content: `[UPLOAD ERROR] Failed to upload ban lists. Error: ${error.message || "Unknown error"}`
+                        content: `[UPLOAD ERROR] Failed to upload ban lists. Error: ${(error as any).message || "Unknown error"}`
                     };
                 }
             }
@@ -1316,8 +1316,8 @@ export default definePlugin({
                     type: ApplicationCommandOptionType.STRING,
                     required: true,
                     choices: [
-                        { name: "on", value: "on" },
-                        { name: "off", value: "off" }
+                        { label: "on", value: "on", name: "on" },
+                        { label: "off", value: "off", name: "off" }
                     ]
                 }
             ],
@@ -1344,7 +1344,7 @@ export default definePlugin({
                 } catch (error) {
                     console.error("[AutoSync] Command error:", error);
                     return {
-                        content: `[AUTOSYNC ERROR] Failed to toggle auto-sync. Error: ${error.message || "Unknown error"}`
+                        content: `[AUTOSYNC ERROR] Failed to toggle auto-sync. Error: ${(error as any).message || "Unknown error"}`
                     };
                 }
             }

@@ -17,7 +17,8 @@
 */
 
 import { Framerate, Resolution } from "../../../../philsPluginLibrary/types";
-import TypedEmitter from "typed-emitter";
+// @ts-ignore
+import type TypedEmitter from "typed-emitter";
 
 import { Conn, FramerateReducer, VideoQualityManager } from "./";
 

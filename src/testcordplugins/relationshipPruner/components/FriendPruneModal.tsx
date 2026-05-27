@@ -24,9 +24,9 @@ function UserInfoComponent(props) {
 
     const userPicture = user.getAvatarURL();
 
-    const dmChannel = ChannelStore.getChannel(ChannelStore.getDMFromUserId(user?.id));
+    const dmChannel = user?.id ? ChannelStore.getChannel(ChannelStore.getDMFromUserId(user.id!)!) : null;
 
-    const lastMessage = dmChannel ? MessageStore.getMessage(dmChannel?.id, dmChannel?.lastMessageId) : null;
+    const lastMessage = dmChannel ? MessageStore.getMessage(dmChannel.id, (dmChannel as any).lastMessageId as string) : null;
 
     const lastMessageTime = moment(lastMessage?.timestamp).format("MMM D, YYYY");
 

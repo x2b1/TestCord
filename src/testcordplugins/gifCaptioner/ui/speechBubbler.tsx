@@ -6,7 +6,7 @@
 
 import { React, useEffect,useRef, useState } from "@webpack/common";
 
-import type { OnSubmit } from "../render/gifRenderer";
+import type { OnSubmit } from "../types";
 import { renderSpeechbubble } from "../render/speechbubble";
 
 export default function SpeechBubbler({ width, height, element, onSubmit }:
@@ -30,7 +30,7 @@ export default function SpeechBubbler({ width, height, element, onSubmit }:
 			tipX, tipY,
 			tipBase: tipBase / 100,
 			enabled,
-		}));
+		} as any));
 	}, [tipX, tipY, tipBase, enabled]);
 
 	const render = () => {

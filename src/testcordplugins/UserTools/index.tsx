@@ -411,8 +411,8 @@ async function openUserToolsModal() {
     // If desktop, open in separate window instead of modal
     if (IS_DISCORD_DESKTOP) {
         try {
-            const { ipcRenderer } = await import("electron");
-            await ipcRenderer.invoke(IpcEvents.OPEN_USER_TOOLS_WINDOW);
+            const { ipcRenderer }: any = await import("electron");
+            await ipcRenderer.invoke("OPEN_USER_TOOLS_WINDOW");
             return; // Don't open modal in main window
         } catch (e) {
             console.error("Failed to open user tools window:", e);
@@ -421,7 +421,7 @@ async function openUserToolsModal() {
     }
 
     // Open new modal (web or fallback)
-    currentModalKey = openModal((props: ModalProps) => (
+    currentModalKey = openModal((props: any) => (
         <ActiveUsersModal
             modalProps={{
                 ...props,

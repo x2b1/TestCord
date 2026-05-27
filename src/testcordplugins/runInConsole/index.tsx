@@ -110,7 +110,7 @@ function RunIcon({ className, text }: { className?: string; text: string; }) {
                     if (shift) {
                         const key = openModal(props => (
                             <EditCodeModal
-                                rootProps={props}
+                                rootProps={props as any as any}
                                 close={() => closeModal(key)}
                                 value={text}
                             />

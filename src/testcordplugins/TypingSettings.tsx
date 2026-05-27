@@ -47,7 +47,7 @@ const settings = definePluginSettings({
         component: () => (
             <ColorPicker
                 color={settings.store.caretColor}
-                onChange={color => {
+                onChange={(color: any) => {
                     settings.store.caretColor = color;
                     applySettings();
                 }}

@@ -34,7 +34,7 @@ async function openViewBoosters(guild: string) {
                     <UserList guildId={guild} boosters={boosters} />
                 </ModalContent >
                 <ModalFooter>
-                    <Flex cellSpacing={10}>
+                    <Flex style={{ gap: 10 }}>
                     </Flex>
                 </ModalFooter>
             </ModalRoot >

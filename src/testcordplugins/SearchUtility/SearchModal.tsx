@@ -895,12 +895,12 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                         >
                             <div className={cl("result-content-wrapper")} style={{ display: "flex", flexDirection: "row", gap: 14, alignItems: "flex-start" }}>
                                 <div className={cl("result-avatar")} style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", width: 40 }}>
-                                    <Avatar
-                                        src={getAvatarURL(user, channel) || undefined}
-                                        size="SIZE_40"
-                                        className={cl("avatar")}
-                                        style={{ borderRadius: "50%", width: 40, height: 40 }}
-                                    />
+                                    {React.createElement(Avatar as any, {
+                                        src: getAvatarURL(user, channel) || undefined,
+                                        size: "SIZE_40",
+                                        className: cl("avatar"),
+                                        style: { borderRadius: "50%", width: 40, height: 40 }
+                                    })}
                                 </div>
                                 <div className={cl("result-main")} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
                                     <div className={cl("result-header")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>

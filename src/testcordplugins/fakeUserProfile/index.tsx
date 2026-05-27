@@ -324,10 +324,10 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
             role="button"
             plated={nameplate != null}
             redGlow={active}
-            onClick={() => openModal(modalProps => <FakeUserProfileModal modalProps={modalProps} />)}
+            onClick={() => openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />)}
             onContextMenu={() => {
                 if (!target) {
-                    openModal(modalProps => <FakeUserProfileModal modalProps={modalProps} />);
+                    openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />);
                     return;
                 }
                 setEnabled(!settings.store.spoofActive);

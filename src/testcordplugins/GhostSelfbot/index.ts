@@ -146,7 +146,7 @@ export default definePlugin({
     name: "GhostSelfbot",
     description: "Launch Ghost Selfbot (exe or source code) with optional auto-token fill from your current Discord session",
     authors: [{ name: "irritably", id: 928787166916640838n }],
-    tags: ["Utility", "Customisation", "Utils"],
+    tags: ["Utility", "Customisation", "Utils"] as any,
     enabledByDefault: false,
     settings,
 
@@ -183,7 +183,7 @@ export default definePlugin({
                     content: "📦 Installing Ghost Python requirements... This may take a moment."
                 });
 
-                if (Native.installRequirements(pythonPath)) {
+                if (await (Native as any).installRequirements(pythonPath)) {
                     sendBotMessage(ctx.channel.id, {
                         content: "✅ **Requirements installed successfully!** You can now launch Ghost from source code."
                     });
@@ -200,23 +200,23 @@ export default definePlugin({
             inputType: ApplicationCommandInputType.BUILT_IN,
             execute: async (_args: any[], ctx: any) => {
                 const pythonPath = settings.store.pythonPath || "python";
-                const status = Native.checkGhostSetup(pythonPath);
+                const status = await (Native as any).checkGhostSetup(pythonPath);
 
                 let statusMessage = "🔍 **Ghost Selfbot Setup Check:**\n\n";
 
-                statusMessage += status.ghostExeFound
+                statusMessage += (status as any).ghostExeFound
                     ? "✅ **Ghost.exe:** Found\n"
                     : "❌ **Ghost.exe:** Not found\n";
 
-                statusMessage += status.ghostSourceFound
+                statusMessage += (status as any).ghostSourceFound
                     ? "✅ **Source Code:** Found\n"
                     : "❌ **Source Code:** Not found\n";
 
-                statusMessage += status.pythonFound
+                statusMessage += (status as any).pythonFound
                     ? `✅ **Python:** Found (${pythonPath})\n`
                     : `❌ **Python:** Not found at \`${pythonPath}\`\n`;
 
-                statusMessage += status.requirementsFound
+                statusMessage += (status as any).requirementsFound
                     ? "✅ **requirements.txt:** Found\n"
                     : "❌ **requirements.txt:** Not found\n";
 

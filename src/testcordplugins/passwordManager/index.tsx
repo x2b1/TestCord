@@ -226,7 +226,7 @@ const AddPasswordModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                 <div className="password-modal-separator" />
                 <div className="password-modal-section">
                     <Text variant="heading-sm/medium" style={{ marginBottom: "8px" }}>Login Details</Text>
-                    <Flex direction={Flex.Direction.VERTICAL} gap={10}>
+                    <Flex direction={Flex.Direction.VERTICAL as any} gap={10} {...({} as any)}>
                         <TextInput
                             placeholder="Username or Email"
                             value={username}
@@ -251,7 +251,7 @@ const AddPasswordModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="password-modal-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex justify={Flex.Justify.END as any} gap={10} {...({} as any)}>
                     <Button
                         color={Button.Colors.BRAND}
                         disabled={!title || !username || !password}
@@ -295,7 +295,7 @@ const SetMasterPasswordModal = ({ manager, onSuccess, ...props }: Modal.ModalPro
             </Modal.ModalHeader>
             <Modal.ModalContent className="password-modal-content">
                 <div className="password-modal-section">
-                    <Flex direction={Flex.Direction.VERTICAL} gap={10}>
+                    <Flex direction={Flex.Direction.VERTICAL as any} gap={10} {...({} as any)}>
                         <TextInput
                             placeholder="Master Password"
                             value={password}
@@ -313,7 +313,7 @@ const SetMasterPasswordModal = ({ manager, onSuccess, ...props }: Modal.ModalPro
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="password-modal-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex justify={Flex.Justify.END as any} gap={10} {...({} as any)}>
                     <Button
                         color={Button.Colors.BRAND}
                         disabled={!password || !confirmPassword}
@@ -375,7 +375,7 @@ const DeletePasswordModal = ({
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="password-modal-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex justify={Flex.Justify.END as any} gap={10} {...({} as any)}>
                     <Button
                         color={Button.Colors.RED}
                         disabled={!masterPassword}
@@ -443,7 +443,7 @@ const ViewPasswordModal = ({
                             {error && <Text color="danger">{error}</Text>}
                         </>
                     ) : (
-                        <Flex direction={Flex.Direction.VERTICAL} gap={10}>
+                        <Flex direction={Flex.Direction.VERTICAL as any} gap={10} {...({} as any)}>
                             <div className="password-view-section">
                                 <Text variant="heading-sm/medium">Username</Text>
                                 <Text>{entry.username}</Text>
@@ -463,7 +463,7 @@ const ViewPasswordModal = ({
                 </div>
             </Modal.ModalContent>
             <Modal.ModalFooter className="password-modal-footer">
-                <Flex justify={Flex.Justify.END} gap={10}>
+                <Flex justify={Flex.Justify.END as any} gap={10} {...({} as any)}>
                     {!showPassword ? (
                         <Button
                             color={Button.Colors.BRAND}
@@ -535,13 +535,13 @@ const PasswordEntryComponent = ({ entry, manager, onDelete }: {
                     size={Button.Sizes.SMALL}
                     color={Button.Colors.BRAND}
                     onClick={() => {
-                        Modal.openModal(props => (
+                        Modal.openModal((props: any) => (
                             <ViewPasswordModal
                                 {...props}
                                 manager={manager}
                                 entry={entry}
                             />
-                        ));
+                        ) as any);
                     }}
                 >
                     View
@@ -564,7 +564,7 @@ const PasswordEntryComponent = ({ entry, manager, onDelete }: {
                     size={Button.Sizes.SMALL}
                     color={Button.Colors.RED}
                     onClick={() => {
-                        Modal.openModal(props => (
+                        Modal.openModal((props: any) => (
                             <DeletePasswordModal
                                 {...props}
                                 manager={manager}
@@ -572,7 +572,7 @@ const PasswordEntryComponent = ({ entry, manager, onDelete }: {
                                 passwordTitle={entry.title}
                                 onSuccess={onDelete}
                             />
-                        ));
+                        ) as any);
                     }}
                 >
                     Delete
@@ -600,12 +600,12 @@ class PasswordManagerUI {
         if (!this.hasMasterPassword) {
             return (
                 <div className="password-manager-container">
-                    <Flex direction={Flex.Direction.VERTICAL} gap={10}>
+                    <Flex direction={Flex.Direction.VERTICAL as any} gap={10} {...({} as any)}>
                         <Text variant="heading-lg/semibold">Password Manager Setup</Text>
                         <Text>Please set a master password to start using the password manager.</Text>
                         <Button
                             onClick={() => {
-                                Modal.openModal(props => (
+                                Modal.openModal((props: any) => (
                                     <SetMasterPasswordModal
                                         {...props}
                                         manager={this.manager}
@@ -614,7 +614,7 @@ class PasswordManagerUI {
                                             this.forceUpdate();
                                         }}
                                     />
-                                ));
+                                ) as any);
                             }}
                         >
                             Set Master Password
@@ -626,11 +626,11 @@ class PasswordManagerUI {
 
         return (
             <div className="password-manager-container">
-                <Flex justify={Flex.Justify.BETWEEN} align={Flex.Align.CENTER}>
+                <Flex {...({ justify: Flex.Justify.BETWEEN as any, align: Flex.Align.CENTER as any } as any)}>
                     <Text variant="heading-lg/semibold">Password Manager</Text>
                     <Button
                         onClick={() => {
-                            Modal.openModal(props => (
+                            Modal.openModal((props: any) => (
                                 <AddPasswordModal
                                     {...props}
                                     manager={this.manager}
@@ -639,7 +639,7 @@ class PasswordManagerUI {
                                         this.forceUpdate();
                                     }}
                                 />
-                            ));
+                            ) as any);
                         }}
                     >
                         Add Password

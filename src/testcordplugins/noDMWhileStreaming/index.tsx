@@ -206,7 +206,7 @@ export default definePlugin({
                 };
                 // Copy properties to maintain compatibility
                 window.Notification.prototype = originalNotification.prototype;
-                window.Notification.permission = originalNotification.permission;
+                (window.Notification as any).permission = originalNotification.permission;
                 window.Notification.requestPermission = originalNotification.requestPermission;
             } catch (e) {
                 console.error("[NoDMWhileStreaming] Failed to patch window.Notification:", e);

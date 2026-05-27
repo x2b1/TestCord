@@ -356,7 +356,7 @@ function showCaptioner(media: CaptionMedia, onConfirm: (transform: GifTransform)
         media.release();
     };
 
-    openModal(modalProps => (
+    openModal((modalProps: any) => (
         <Modal
             {...modalProps}
             media={media}

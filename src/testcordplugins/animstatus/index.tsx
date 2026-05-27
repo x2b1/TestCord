@@ -112,7 +112,7 @@ export default definePlugin({
     async setStatus(step: StatusStep): Promise<boolean> {
         if (!CustomStatus) return false;
         try {
-            await CustomStatus.updateSetting({ text: step.text ?? "", emojiName: step.emojiName ?? "", emojiId: step.emojiId ?? "0", createdAtMs: Date.now().toString(), expiresAtMs: "0" });
+            await (CustomStatus.updateSetting as any)({ text: step.text ?? "", emojiName: step.emojiName ?? "", emojiId: step.emojiId ?? "0", createdAtMs: Date.now().toString(), expiresAtMs: "0" });
             if (step.status && StatusSetting) await StatusSetting.updateSetting(step.status);
             return true;
         } catch { return false; }
@@ -315,7 +315,7 @@ function StatusesTab({ statuses, filteredStatuses, presetNames, presets, filterP
             {filterPreset && (
                 <div className={cl("filter-indicator")}>
                     <Text variant="text-sm/normal">Filtered by preset: <strong>{filterPreset}</strong></Text>
-                    <Button onClick={() => { onFilterChange(null); if (running) onStop(); }} size={Button.Sizes.SMALL} color={Button.Colors.SECONDARY} look={Button.Looks.OUTLINED}>Clear Filter</Button>
+                    <Button onClick={() => { onFilterChange(null); if (running) onStop(); }} size={Button.Sizes.SMALL} color={(Button.Colors as any).SECONDARY} look={(Button.Looks as any).OUTLINED}>Clear Filter</Button>
                 </div>
             )}
             <Forms.FormSection className={cl("section")}>
@@ -349,7 +349,7 @@ function StatusesTab({ statuses, filteredStatuses, presetNames, presets, filterP
                                             </div>
                                             <div className={cl("edit-actions")}>
                                                 <Button onClick={() => onEditSave(actualIndex)} color={Button.Colors.GREEN} size={Button.Sizes.SMALL}><I.Check />Save</Button>
-                                                <Button onClick={onEditCancel} color={Button.Colors.SECONDARY} size={Button.Sizes.SMALL}>Cancel</Button>
+                                                <Button onClick={onEditCancel} color={(Button.Colors as any).SECONDARY} size={Button.Sizes.SMALL}>Cancel</Button>
                                             </div>
                                         </div>
                                     ) : (
@@ -361,7 +361,7 @@ function StatusesTab({ statuses, filteredStatuses, presetNames, presets, filterP
                                             <div className={cl("status-info")}>
                                                 <div className={cl("status-preview-row")}>
                                                     {status.emojiId ? <img src={getEmojiUrl(status.emojiId, status.animated!)} alt="" className={cl("status-emoji-sm")} /> : status.emojiName ? <span className={cl("status-emoji-text-sm")}>{status.emojiName}</span> : null}
-                                                    <Text className={cl("status-text")} variant="text-md/medium" lineClamp={1}>{status.text || <em>No text</em>}</Text>
+                                                    <Text className={cl("status-text")} variant="text-md/medium" {...{ lineClamp: 1 } as any}>{status.text || <em>No text</em>}</Text>
                                                 </div>
                                                 {status.preset && (
                                                     <div className={cl("status-meta")}><span className={cl("meta-tag")}>{status.preset}</span></div>
@@ -489,7 +489,7 @@ function PresetsTab({ statuses, setStatuses, presetNames, running, runningPreset
                                                 {isEditing ? (
                                                     <>
                                                         <Button onClick={() => savePresetEdit(preset.id)} size={Button.Sizes.SMALL} color={Button.Colors.GREEN}><I.Check /></Button>
-                                                        <Button onClick={cancelPresetEdit} size={Button.Sizes.SMALL} color={Button.Colors.SECONDARY}>Cancel</Button>
+                                                        <Button onClick={cancelPresetEdit} size={Button.Sizes.SMALL} color={(Button.Colors as any).SECONDARY}>Cancel</Button>
                                                     </>
                                                 ) : (
                                                     <>
@@ -511,7 +511,7 @@ function PresetsTab({ statuses, setStatuses, presetNames, running, runningPreset
                                                             {status.emojiId ? <img src={getEmojiUrl(status.emojiId, status.animated!)} alt="" className={cl("emoji-img")} /> : status.emojiName ? <span className={cl("emoji-text")}>{status.emojiName}</span> : <img src={getAvatarUrl(UserStore.getCurrentUser()?.id ?? "", UserStore.getCurrentUser()?.avatar ?? null)} alt="" className={cl("emoji-img")} />}
                                                             <StatusIndicator type={status.status || "online"} />
                                                         </div>
-                                                        <Text className={cl("preset-status-text")} variant="text-sm/normal" lineClamp={1}>{status.text || <em>No text</em>}</Text>
+                                                        <Text className={cl("preset-status-text")} variant="text-sm/normal" {...{ lineClamp: 1 } as any}>{status.text || <em>No text</em>}</Text>
                                                         <IconButton onClick={() => { const updated = statuses.filter((_, i) => i !== actualIndex); setStatuses(updated); settings.store.statuses = JSON.stringify(updated); }} className="danger"><I.Trash /></IconButton>
                                                     </div>
                                                 );
@@ -553,7 +553,7 @@ function SettingsTab({ statuses, interval, randomize, autoStart, onIntervalChang
                 <div className={cl("setting-row")}>
                     <div className={cl("setting-info")}>
                         <Text className={cl("setting-label")} variant="text-sm/semibold">Cycle Interval</Text>
-                        <Text className={cl("setting-desc")} variant="text/sm/normal">How long to wait before changing to the next status (5s - 5min, default 10s)</Text>
+                        <Text className={cl("setting-desc")} variant="text-sm/normal">How long to wait before changing to the next status (5s - 5min, default 10s)</Text>
                     </div>
                     <div className={cl("interval-input-wrapper")}>
                         <TextInput value={intervalText} onChange={v => { setIntervalText(v); if (!v || /[sm]/i.test(v)) onIntervalChange(parseInterval(v)); }} onBlur={() => { const current = parseInterval(intervalText); if (current < MIN_INTERVAL) { setIntervalText(formatInterval(MIN_INTERVAL)); onIntervalChange(MIN_INTERVAL); } }} placeholder="10s or 1m 30s" className={cl("interval-input")} />

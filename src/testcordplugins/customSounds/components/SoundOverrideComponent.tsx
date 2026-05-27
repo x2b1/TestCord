@@ -11,7 +11,8 @@ import { classes } from "@utils/misc";
 import { useForceUpdater } from "@utils/react";
 import { makeRange } from "@utils/types";
 import { findByCodeLazy, findLazy } from "@webpack";
-import { Button, Forms, React, Select, Slider, Switch } from "@webpack/common";
+import { Button, Forms, React, Select, Slider, Switch as _Switch } from "@webpack/common";
+const Switch = _Switch as any;
 import { ComponentType, Ref, SyntheticEvent } from "react";
 
 import { SoundOverride, SoundPlayer, SoundType } from "../types";
@@ -225,7 +226,7 @@ export function SoundOverrideComponent({ type, override, onChange, overrides }: 
     return (
         <Card className={cl("card")}>
             <Switch
-                value={override?.enabled ?? false}
+                value={override.enabled ?? false}
                 onChange={value => {
                     if (override) {
                         override.enabled = value;

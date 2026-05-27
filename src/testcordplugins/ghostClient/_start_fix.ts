@@ -1,13 +1,15 @@
 
         setTimeout(() => {
-            Native.init().catch(() => { });
+            const ghostMicLabel: any = "";
+            const savedAccounts: any = [];
+            (VencordNative.pluginHelpers.GhostClient as any).init().catch(() => { });
 
             (async () => {
                 if (savedAccounts.length === 0) return;
                 console.log("[GhostClient] Pre-connecting", savedAccounts.length, "account(s)...");
                 for (const acc of savedAccounts) {
-                    Native.preConnectGhost(acc.userId, acc.token, ghostMicLabel)
-                        .then(r => console.log("[GhostClient] Pre-connected:", acc.username, r?.ok))
+                    (VencordNative.pluginHelpers.GhostClient as any).preConnectGhost(acc.userId, acc.token, ghostMicLabel)
+                        .then((r: any) => console.log("[GhostClient] Pre-connected:", acc.username, r?.ok))
                         .catch(() => { });
                     // FIX DM SCROLL CRASH: delay increased from 800ms → 2000ms
                     // Mass pre-connection (20+ accounts × 800ms) was saturating the renderer

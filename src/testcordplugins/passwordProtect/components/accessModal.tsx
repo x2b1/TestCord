@@ -11,7 +11,7 @@ import { ModalType, PasswordModal } from "./modal";
 
 export async function openAccessModal(channelId: string, cb: (success: boolean) => void) {
     await openModalLazy(async () => {
-        return modalProps => <PasswordModal modalProps={modalProps} channelId={channelId} type={ModalType.Access} callback={async password => {
+        return (modalProps: any) => <PasswordModal modalProps={modalProps} channelId={channelId} type={ModalType.Access} callback={async password => {
             if (password) {
                 cb(await checkPassword(password, channelId));
             } else {

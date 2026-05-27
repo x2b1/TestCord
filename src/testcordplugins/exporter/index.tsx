@@ -156,7 +156,7 @@ export default definePlugin({
     tags: ["Utility", "Developers"],
     authors: [TestcordDevs.x2b],
     settings,
-    renderChatBarButton: ({ channel, isMainChat }) => {
+    renderChatBarButton: (({ channel, isMainChat }) => {
         if (!isMainChat || !channel?.id) return null;
         return (
             <ChatBarButton
@@ -182,7 +182,7 @@ export default definePlugin({
                 </svg>
             </ChatBarButton>
         );
-    }
+    }) as any
 });
 
 

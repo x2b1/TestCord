@@ -207,7 +207,7 @@ export default function PluginSettings() {
 
     const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
 
-    const [searchValue, setSearchValue] = useState({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL, author: "" });
+    const [searchValue, setSearchValue] = useState<{ value: string; tags: PluginTag[]; status: number; author: string; }>({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL, author: "" });
 
     const search = searchValue.value.toLowerCase();
     const onSearch = (query: string) => setSearchValue(prev => ({ ...prev, value: query }));
@@ -221,7 +221,7 @@ export default function PluginSettings() {
         return map;
     }, []);
     const authorOptions = useMemo(() => {
-        const authors = new Map();
+        const authors = new Map<string, { category: string; github: any; }>();
         for (const plugin of sortedPlugins) {
             const meta = PluginMeta[plugin.name];
             const folder = meta ? meta.folderName : "";
@@ -231,11 +231,11 @@ export default function PluginSettings() {
                 if (!authors.has(author.name)) authors.set(author.name, { category, github: (author as any).github });
             }
         }
-        const grouped = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
+        const grouped: Record<string, string[]> = { Testcord: [], Equicord: [], Vencord: [], Other: [] };
         for (const [name, info] of authors.entries()) grouped[info.category].push(name);
-        const result = [];
+        const result: Array<{ label: string; value: string; github: string; }> = [];
         for (const [cat, names] of Object.entries(grouped)) {
-            for (const name of names.sort()) { const info = authors.get(name); result.push({ label: name + " (" + cat + ")", value: name, github: info.github || githubMap[name] }); }
+            for (const name of names.sort()) { const info = authors.get(name)!; result.push({ label: name + " (" + cat + ")", value: name, github: info.github || githubMap[name] }); }
         }
         return result;
     }, [sortedPlugins]);

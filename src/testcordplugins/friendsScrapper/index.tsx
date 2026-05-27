@@ -283,16 +283,16 @@ export default definePlugin({
     tags: ["Friends", "Utility"],
     authors: [TestcordDevs.x2b],
     settings,
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }) => {
         if (!isMainChat) return null;
         return (
             <ChatBarButton
                 tooltip="Friends Scrapper"
-                onClick={() => openModal(props => <WhitelistModal modalProps={props} />)}
+                onClick={() => openModal((props: any) => <WhitelistModal modalProps={props} /> as any)}
                 onContextMenu={e =>
                     ContextMenuApi.openContextMenu(e, () => (
                         <Menu.Menu navId="pc-friends-scrapper-menu" onClose={ContextMenuApi.closeContextMenu} aria-label="Friends Scrapper">
-                            <Menu.MenuItem id="pc-friends-scrapper-open" label="Open Friends Scrapper" action={() => openModal(props => <WhitelistModal modalProps={props} />)} />
+                            <Menu.MenuItem id="pc-friends-scrapper-open" label="Open Friends Scrapper" action={() => openModal((props: any) => <WhitelistModal modalProps={props} /> as any)} />
                         </Menu.Menu>
                     ))
                 }
@@ -303,5 +303,5 @@ export default definePlugin({
                 </svg>
             </ChatBarButton>
         );
-    }
+    }) as any
 });

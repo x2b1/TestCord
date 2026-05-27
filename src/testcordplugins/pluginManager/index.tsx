@@ -57,11 +57,11 @@ function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLe
                         </Text>
                     )}
                 </div>
-                <Switch
-                    value={isEnabled}
-                    onChange={togglePlugin}
-                    disabled={disabled}
-                />
+                {React.createElement(Switch as any, {
+                    value: isEnabled,
+                    onChange: togglePlugin,
+                    disabled
+                })}
             </div>
         </div>
     );
@@ -202,10 +202,10 @@ export function PluginListModal({ modalProps }: { modalProps: ModalProps; }) {
                 />
                 <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
-                        <Switch
-                            value={showEnabledOnly}
-                            onChange={setShowEnabledOnly}
-                        />
+                        {React.createElement(Switch as any, {
+                            value: showEnabledOnly,
+                            onChange: setShowEnabledOnly
+                        })}
                         <Text>Show enabled only</Text>
                     </div>
                     <div style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
@@ -218,7 +218,7 @@ export function PluginListModal({ modalProps }: { modalProps: ModalProps; }) {
                         </Button>
                         <Button
                             size={Button.Sizes.SMALL}
-                            color={Button.Colors.SECONDARY}
+                            color={(Button.Colors as any).SECONDARY}
                             onClick={handleDisableAll}
                         >
                             Disable All
@@ -229,12 +229,12 @@ export function PluginListModal({ modalProps }: { modalProps: ModalProps; }) {
             <div className={cl("grid")} style={{ maxHeight: "400px", overflowY: "auto" }}>
                 {filteredPlugins.length > 0 ? (
                     filteredPlugins.map(plugin => {
-                        const isRequired = plugin.required || depMap[plugin.name]?.some(d => settings.plugins[d].enabled);
+                        const isRequired = plugin.required || depMap[plugin.name]?.some(d => settings.plugins[d]?.enabled);
 
                         if (isRequired) {
-                            const tooltipText = plugin.required
-                                ? "This plugin is required for the client to function."
-                                : makeDependencyList(depMap[plugin.name]?.filter(d => settings.plugins[d].enabled));
+                                const tooltipText = plugin.required
+                                    ? "This plugin is required for the client to function."
+                                    : makeDependencyList(depMap[plugin.name]?.filter(d => settings.plugins[d]?.enabled));
 
                             return (
                                 <Tooltip text={tooltipText} key={plugin.name}>
@@ -250,14 +250,12 @@ export function PluginListModal({ modalProps }: { modalProps: ModalProps; }) {
                                 </Tooltip>
                             );
                         } else {
-                            return (
-                                <PluginCard
-                                    key={plugin.name}
-                                    onRestartNeeded={name => changes.handleChange(name)}
-                                    disabled={false}
-                                    plugin={plugin}
-                                />
-                            );
+                            return React.createElement(PluginCard as any, {
+                                key: plugin.name,
+                                onRestartNeeded: (name: any) => changes.handleChange(name),
+                                disabled: false,
+                                plugin
+                            });
                         }
                     })
                 ) : (
@@ -285,7 +283,7 @@ function makeDependencyList(deps: string[]) {
 }
 
 export function openPluginList() {
-    openModal(modalProps => <PluginListModal modalProps={modalProps} />);
+    openModal(modalProps => React.createElement(PluginListModal, { modalProps: modalProps as any }));
 }
 
 function keybind(e: KeyboardEvent) {

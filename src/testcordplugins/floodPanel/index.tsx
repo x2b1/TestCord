@@ -43,9 +43,7 @@ export default definePlugin({
     authors: [EquicordDevs.nobody],
     settings,
 
-    chatBarButton: {
-        render: FloodPanelButton
-    },
+    chatBarButton: { render: FloodPanelButton } as any,
 
     start() {
         if (settings.store.showOnTopBar) {

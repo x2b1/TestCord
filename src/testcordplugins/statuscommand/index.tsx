@@ -52,7 +52,7 @@ async function saveRevertData(revertAt: number, originalStatus: string) {
 }
 
 async function loadRevertData(): Promise<RevertData | null> {
-    return await DataStore.get("statuscommand-revert");
+    return await DataStore.get("statuscommand-revert") as RevertData | null;
 }
 
 async function deleteRevertData() {

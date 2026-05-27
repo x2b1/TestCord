@@ -39,7 +39,7 @@ export function SoundTriggerSettings() {
                 <Flex flexDirection="row">
                     <Button
                         disabled={!settingsExist}
-                        onClick={() => openModal(modalProps => <ImportModal {...modalProps} />)}
+                        onClick={() => openModal((modalProps: any) => <ImportModal {...modalProps} />)}
                     >
                         Import
                     </Button>

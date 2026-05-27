@@ -103,7 +103,7 @@ export function NotesDataModal({ modalProps, close }: {
     const targetRef = useRef(null);
 
     return (
-        <ModalRoot className={cl("root")} {...modalProps}>
+        <ModalRoot className={cl("root")} {...modalProps as any}>
             <ModalHeader className={cl("header")}>
                 <Text className={cl("header-text")} variant="heading-lg/semibold">Notes Data</Text>
                 <TextInput className={cl("header-input")} value={searchValue.query} onChange={onSearch} placeholder="Filter Notes (ID/Notes and Global/Username if cached)" />
@@ -156,7 +156,7 @@ export function NotesDataModal({ modalProps, close }: {
                                     <Button
                                         className={cl("cache-cache-missing")}
                                         size={Button.Sizes.NONE}
-                                        color={Button.Colors.YELLOW}
+                                        color={(Button.Colors as Record<string, string>).YELLOW}
                                         disabled={isRunning || cacheStatus === 0 || cacheStatus === usersNotesMap.size}
                                         onClick={() => cacheUsers(true)}
                                     >
@@ -491,7 +491,7 @@ const CacheSpinner = LazyComponent(() => React.memo(() => {
 }));
 
 export const openNotesDataModal = async () => {
-    const key = openModal(modalProps => (
+    const key = openModal((modalProps: any) => (
         <NotesDataModal
             modalProps={modalProps}
             close={() => closeModal(key)}

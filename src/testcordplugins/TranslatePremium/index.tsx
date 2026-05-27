@@ -137,7 +137,7 @@ async function translateAndReplace(message: Message) {
     if (!stored) return;
 
     stored.content = result.text;
-    stored.__translateOriginal = message.content;
+    (stored as any).__translateOriginal = message.content;
     MessageStore.emitChange();
 }
 

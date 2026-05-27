@@ -26,7 +26,7 @@ export function UserNotesModal({ modalProps, close, user, userNotes, saveCallbac
     const [value, setValue] = useState(userNotes);
 
     return (
-        <ModalRoot className={cl("root")} {...modalProps}>
+        <ModalRoot className={cl("root")} {...modalProps as any}>
             <ModalHeader className={cl("header")}>
                 <Text variant="heading-lg/semibold" style={{ flexGrow: 1 }}>Notes: {typeof user === "string" ? user : user.username}</Text>
                 <ModalCloseButton onClick={close} />
@@ -57,7 +57,7 @@ export function UserNotesModal({ modalProps, close, user, userNotes, saveCallbac
 }
 
 export const openUserNotesModal = async (user: User | string, saveCallback?: () => void) => {
-    const key = openModal(modalProps => (
+    const key = openModal((modalProps: any) => (
         <UserNotesModal
             modalProps={modalProps}
             close={() => closeModal(key)}

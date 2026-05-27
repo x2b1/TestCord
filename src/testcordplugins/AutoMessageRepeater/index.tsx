@@ -362,7 +362,7 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }) => {
         if (!isMainChat) return null;
 
         // Local state to track if the repeater is visually running
@@ -392,7 +392,7 @@ export default definePlugin({
                 {isRunning ? <StopRepeaterIcon /> : <StartRepeaterIcon />}
             </ChatBarButton>
         );
-    },
+    }) as any,
 
     async start() {
         const storedEntries = await DataStore.get(MESSAGE_ENTRIES_KEY) ?? [];

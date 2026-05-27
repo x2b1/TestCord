@@ -95,7 +95,7 @@ function injectMacOsButtons() {
     document.body.appendChild(container);
     container.style.zIndex = "2147483647";
     container.style.pointerEvents = "all";
-    container.style.webkitAppRegion = "no-drag";
+    (container.style as any).webkitAppRegion = "no-drag";
 
     const sep = document.createElement("div");
     sep.className = "macos-sep";

@@ -35,9 +35,9 @@ export const Forms = {
     FormTitle: Heading,
     FormText: Paragraph,
     /** @deprecated don't use this */
-    FormSection: "section" as never, // Backwards compat since Vesktop uses this
+    FormSection: "section" as any, // Backwards compat since Vesktop uses this
     /** @deprecated use `@components/Divider` */
-    FormDivider: Divider as never, // Backwards compat since Vesktop uses this
+    FormDivider: Divider as any, // Backwards compat since Vesktop uses this
 };
 
 // Stub for plugins that use Forms.FormText.Types

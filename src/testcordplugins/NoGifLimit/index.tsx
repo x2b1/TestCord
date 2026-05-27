@@ -1032,7 +1032,7 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
 
 var HeartGifsButton: ChatBarButtonFactory = function () {
     return (
-        <ChatBarButton onClick={() => openModal((props: ModalProps) => <NoGifLimitModal modalProps={props} />)} tooltip="HeartGifs">
+        <ChatBarButton onClick={() => openModal((props: any) => <NoGifLimitModal modalProps={props} />)} tooltip="HeartGifs">
             <HeartIcon />
         </ChatBarButton>
     );
@@ -1080,7 +1080,7 @@ function CaptionGifButton({ item }: { item: FavItem; }) {
                 width: metadata.width
             };
 
-            openModal(modalProps => (
+            openModal((modalProps: any) => (
                 <GifCaptionerModal
                     {...modalProps}
                     media={captionMedia}

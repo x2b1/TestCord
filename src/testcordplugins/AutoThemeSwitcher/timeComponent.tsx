@@ -7,7 +7,7 @@
 import { Settings } from "@api/Settings";
 import { resolveError, SettingsSection } from "@components/settings/tabs/plugins/components/Common";
 import { TextSetting } from "@components/settings/tabs/plugins/components/TextSetting";
-import { IPluginOptionComponentProps, OptionType } from "@utils/types";
+import { PluginSettingComponentProps, OptionType } from "@utils/types";
 import { React } from "@webpack/common";
 
 /**
@@ -20,7 +20,7 @@ import { React } from "@webpack/common";
  * @param description A description of the text input
  * @returns JSX representing the input for time
  */
-export function timeComponent({ setValue }: IPluginOptionComponentProps, id: string, placeholder: string, description: string) {
+export function timeComponent({ setValue }: PluginSettingComponentProps, id: string, placeholder: string, description: string) {
     const pluginSettings = Settings.plugins.AutoThemeSwitcher;
     // TextSetting handles state, not needed here
     const [, setState] = React.useState(pluginSettings?.[id] ?? null);
@@ -53,12 +53,14 @@ export function timeComponent({ setValue }: IPluginOptionComponentProps, id: str
     return (
         <SettingsSection error={error} name={""} description={""}>
         <TextSetting
-            option={{
+            setting={{
                 type: OptionType.STRING,
                 // Determine if we autofill the field with the default, or with what the user entered
                 default: (pluginSettings?.[id] != null || pluginSettings?.[id]) ? pluginSettings?.[id] : placeholder,
                 description: description
-            }}
+            } as any}
+            definedSettings={undefined as any}
+            closePluginSettings={undefined as any}
             onChange={handleChange}
             pluginSettings={pluginSettings}
             id={id}

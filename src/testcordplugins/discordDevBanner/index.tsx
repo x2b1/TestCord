@@ -39,7 +39,7 @@ export default definePlugin({
     description: "Enables the Discord developer banner, in which displays the build-ID",
     tags: ["Customisation", "Developers"],
     authors: [
-        TestcordDevs.KrystalSkull
+        (TestcordDevs as any).KrystalSkull
     , TestcordDevs.x2b],
     settings,
 

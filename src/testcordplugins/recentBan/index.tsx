@@ -5,7 +5,7 @@ import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy, findByPropsLazy } from "@webpack";
 import { Menu, RestAPI, React, ChannelStore, ContextMenuApi, PermissionStore, Forms, GuildChannelStore } from "@webpack/common";
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
-import { amiownerlol } from "../vcOwnerDetector";
+// @ts-ignore
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 const vc = findByPropsLazy("getVoiceChannelId");
 const trackedmfs: string[] = [];
@@ -20,7 +20,7 @@ const settings = definePluginSettings({
 
 function keybind2(e) {
     if (settings.store.enablenormalkeybinds == false) return;
-    if (!Vencord.Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
+    if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
             message: `you're not the vc owner  also u gotta be in a vc to do this`,
             id: "cutelittlemessage",
@@ -72,7 +72,7 @@ function keybind2(e) {
 
 function keybind(e) {
     if (settings.store.enablenormalkeybinds == false) return;
-    if (!Vencord.Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
+    if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
             message: `you're not the vc owner`,
             id: "cutelittlemessage",
@@ -134,7 +134,7 @@ const cb = async (e) => {
 
 const good = async (e) => {
     if (settings.store.enablenormalkeybinds == true) return;
-    if (!Vencord.Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
+    if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
             message: `you're not the vc owner `,
             id: "cutelittlemessage",

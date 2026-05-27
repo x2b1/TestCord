@@ -83,12 +83,12 @@ function TokenManager() {
 
     return (
         <>
-            <Forms.FormDivider />
+            <Forms.FormDivider as any />
             <Forms.FormTitle tag="h4">VC Raper - Connected Slaves: {getConnectionCount()}</Forms.FormTitle>
             <Text variant={"heading-md/normal"}>Enter Token</Text>
             <TextInput value={currentInput} onChange={setCurrentInput} placeholder="Paste a token here" />
             <Button onClick={addToken} style={{ marginTop: "8px" }}>Add</Button>
-            <Forms.FormDivider />
+            <Forms.FormDivider as any />
             <Text variant={"heading-md/normal"}>Slave list</Text>
             <ul style={{ paddingLeft: "0", listStyleType: "none", marginTop: "8px" }}>
                 {tokenEntries.map(token => (

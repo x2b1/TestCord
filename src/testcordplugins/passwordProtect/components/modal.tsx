@@ -79,7 +79,7 @@ export function PasswordModal({ channelId, type, callback, modalProps }: Props) 
                             />
                         </Forms.FormSection>
                     )}
-                    <Forms.FormDivider />
+                    <Forms.FormDivider {...({} as any)} />
                     {error && <Text color="text-danger">{error}</Text>}
                 </ModalContent>
                 <ModalFooter>

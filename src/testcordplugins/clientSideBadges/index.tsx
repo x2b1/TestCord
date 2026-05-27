@@ -11,8 +11,8 @@ import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Forms, Toasts, UserStore } from "@webpack/common";
 
-function isCurrentUser(userId: string) {
-    const u = UserStore.getCurrentUser().id;
+function isCurrentUser(userId: string): boolean {
+    const u = UserStore.getCurrentUser()?.id;
     return u === userId;
 }
 
@@ -31,82 +31,102 @@ export default definePlugin({
     </>,
     settings: definePluginSettings({
         discordStaff: {
+            description: "Show Discord Staff badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         partneredServerOwner: {
+            description: "Show Partnered Server Owner badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         earlySupporter: {
+            description: "Show Early Supporter badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         activeDeveloper: {
+            description: "Show Active Developer badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         earlyVerifiedBotDeveloper: {
+            description: "Show Early Verified Bot Developer badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         moderatorProgramsAlumni: {
+            description: "Show Moderator Programs Alumni badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         bugHunter: {
+            description: "Show Bug Hunter badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         goldenBugHunter: {
+            description: "Show Golden Bug Hunter badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         hypesquadEvents: {
+            description: "Show HypeSquad Events badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         houseOfBravery: {
+            description: "Show HypeSquad Bravery badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         houseOfBrilliance: {
+            description: "Show HypeSquad Brilliance badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         houseOfBalance: {
+            description: "Show HypeSquad Balance badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         discordQuests: {
+            description: "Show Discord Quests badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         nitro: {
+            description: "Show Nitro badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         serverBooster: {
+            description: "Show Server Booster badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         legacyUsername: {
+            description: "Show Legacy Username badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         supportsCommands: {
+            description: "Show Supports Commands badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         premiumApp: {
+            description: "Show Premium App badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         usesAutomod: {
+            description: "Show Uses AutoMod badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
         aClownForATime: {
+            description: "Show A Clown For A Time badge",
             type: OptionType.BOOLEAN,
             restartNeeded: true,
         },
@@ -116,151 +136,170 @@ export default definePlugin({
 
         const NativeBadges: ProfileBadge[] = [
             {
+                id: "discordStaff",
                 description: "Discord Staff",
-                image: "https://cdn.discordapp.com/badge-icons/5e74e9b61934fc1f67c65515d1f7e60d.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/5e74e9b61934fc1f67c65515d1f7e60d.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.discordStaff,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.discordStaff) as any,
                 link: "https://discord.com/company"
             },
             {
+                id: "partneredServerOwner",
                 description: "Partnered Server Owner",
-                image: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.partneredServerOwner,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.partneredServerOwner) as any,
                 link: "https://discord.com/partners"
             },
             {
+                id: "earlySupporter",
                 description: "Early Supporter",
-                image: "https://cdn.discordapp.com/badge-icons/7060786766c9c840eb3019e725d2b358.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/7060786766c9c840eb3019e725d2b358.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.earlySupporter,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.earlySupporter) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "activeDeveloper",
                 description: "Active Developer",
-                image: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.activeDeveloper,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.activeDeveloper) as any,
                 link: "https://support-dev.discord.com/hc/en-us/articles/10113997751447"
             },
             {
+                id: "earlyVerifiedBotDeveloper",
                 description: "Early Verified Bot Developer",
-                image: "https://cdn.discordapp.com/badge-icons/6df5892e0f35b051f8b61eace34f4967.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/6df5892e0f35b051f8b61eace34f4967.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.earlyVerifiedBotDeveloper,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.earlyVerifiedBotDeveloper) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "moderatorProgramsAlumni",
                 description: "Moderator Programs Alumni",
-                image: "https://cdn.discordapp.com/badge-icons/fee1624003e2fee35cb398e125dc479b.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/fee1624003e2fee35cb398e125dc479b.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.moderatorProgramsAlumni,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.moderatorProgramsAlumni) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "bugHunter",
                 description: "Discord Bug Hunter",
-                image: "https://cdn.discordapp.com/badge-icons/2717692c7dca7289b35297368a940dd0.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/2717692c7dca7289b35297368a940dd0.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.bugHunter,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.bugHunter) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "goldenBugHunter",
                 description: "Golden Discord Bug Hunter",
-                image: "https://cdn.discordapp.com/badge-icons/848f79194d4be5ff5f81505cbd0ce1e6.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/848f79194d4be5ff5f81505cbd0ce1e6.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.goldenBugHunter,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.goldenBugHunter) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "hypesquadEvents",
                 description: "HypeSquad Events",
-                image: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.hypesquadEvents,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.hypesquadEvents) as any,
                 link: "https://support.discord.com/hc/en-us/articles/360035962891-Profile-Badges-101#h_01GM67K5EJ16ZHYZQ5MPRW3JT3"
             },
             {
+                id: "houseOfBravery",
                 description: "HypeSquad Bravery",
-                image: "https://cdn.discordapp.com/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.houseOfBravery,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.houseOfBravery) as any,
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "houseOfBrilliance",
                 description: "HypeSquad Brilliance",
-                image: "https://cdn.discordapp.com/badge-icons/011940fd013da3f7fb926e4a1cd2e618.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/011940fd013da3f7fb926e4a1cd2e618.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.houseOfBrilliance,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.houseOfBrilliance) as any,
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "houseOfBalance",
                 description: "HypeSquad Balance",
-                image: "https://cdn.discordapp.com/badge-icons/3aa41de486fa12454c3761e8e223442e.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/3aa41de486fa12454c3761e8e223442e.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.houseOfBalance,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.houseOfBalance) as any,
                 link: "https://discord.com/settings/hypesquad-online"
             },
             {
+                id: "discordQuests",
                 description: "Discord Quests",
-                image: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.discordQuests,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.discordQuests) as any,
                 link: "https://discord.com/discovery/quests"
             },
             {
+                id: "nitro",
                 description: "Discord Nitro",
-                image: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.nitro,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.nitro) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "serverBooster",
                 description: "Server Booster",
-                image: "https://cdn.discordapp.com/badge-icons/ec92202290b48d0879b7413d2dde3bab.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/ec92202290b48d0879b7413d2dde3bab.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.serverBooster,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.serverBooster) as any,
                 link: "https://discord.com/settings/premium"
             },
             {
+                id: "supportsCommands",
                 description: "Supports Commands",
-                image: "https://cdn.discordapp.com/badge-icons/6f9e37f9029ff57aef81db857890005e.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/6f9e37f9029ff57aef81db857890005e.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.supportsCommands,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.supportsCommands) as any,
                 link: "https://discord.com/blog/welcome-to-the-new-era-of-discord-apps?ref=badge"
             },
             {
+                id: "premiumApp",
                 description: "Premium App",
-                image: "https://cdn.discordapp.com/badge-icons/d2010c413a8da2208b7e4f35bd8cd4ac.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/d2010c413a8da2208b7e4f35bd8cd4ac.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.premiumApp,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.premiumApp) as any,
                 link: ""
             },
             {
+                id: "usesAutomod",
                 description: "Uses Automod",
-                image: "https://cdn.discordapp.com/badge-icons/f2459b691ac7453ed6039bbcfaccbfcd.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/f2459b691ac7453ed6039bbcfaccbfcd.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.usesAutomod,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.usesAutomod) as any,
                 link: ""
             },
             {
+                id: "legacyUsername",
                 description: "Legacy Username",
-                image: "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png",
+                iconSrc: "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.legacyUsername,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.legacyUsername) as any,
                 link: ""
             },
             {
-                description: "A clown, for a limited time",
-                image: "https://discord.com/assets/971cfe4aa5c0582000ea.svg",
                 id: "aClownForATime",
+                description: "A clown, for a limited time",
+                iconSrc: "https://discord.com/assets/971cfe4aa5c0582000ea.svg",
                 position: Badges.BadgePosition.END,
-                shouldShow: ({ userId }) => isCurrentUser(userId) && this.settings.store.aClownForATime,
+                shouldShow: (({ userId }: any) => isCurrentUser(userId) && this.settings.store.aClownForATime) as any,
                 link: "https://youtu.be/cc2-4ci4G84"
             }
         ];
         NativeBadges.forEach(b => {
-            const id = b.id || b.description.toLowerCase().replace(/[^a-z0-9]/g, "");
-            if (!Badges.getBadge(id)) {
-                Badges.addBadge({ ...b, id });
+            const id = b.id || b.description!.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (!(Badges as any).getBadge?.(id)) {
+                (Badges as any).addBadge?.({ ...b, id });
                 this.addedBadges.add(id);
             }
         });
@@ -268,7 +307,7 @@ export default definePlugin({
 
     async stop() {
         if (this.addedBadges) {
-            this.addedBadges.forEach(id => Badges.removeBadge(id));
+            this.addedBadges.forEach(id => (Badges as any).removeBadge?.(id));
             this.addedBadges.clear();
         }
         Toasts.show({

@@ -465,7 +465,7 @@ function openExternalSearch(url: string) {
 }
 
 function openSearchModal() {
-    openModal(modalProps => React.createElement(SearchModal, { modalProps }));
+    openModal(modalProps => React.createElement(SearchModal, { modalProps: modalProps as any }));
 }
 
 function isAdvancedSearchButton(button: HTMLButtonElement) {
@@ -921,7 +921,7 @@ const QuickSearchResultsModal = ErrorBoundary.wrap(({
 function openQuickSearchResults(options: QuickSearchModalOptions) {
     openModal(modalProps => React.createElement(QuickSearchResultsModal, {
         ...options,
-        modalProps
+        modalProps: modalProps as any
     }));
 }
 

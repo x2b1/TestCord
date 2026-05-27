@@ -39,12 +39,12 @@ const checkUser = (user: User, indType: string) => {
     return null;
 };
 
-const badge: ProfileBadge = {
-    component: u => checkUser(UserStore.getUser(u.userId), "badges"),
+const badge = {
+    component: (u: any) => checkUser(UserStore.getUser(u.userId), "badges"),
     position: BadgePosition.START,
-    shouldShow: _ => true,
+    shouldShow: (_: any) => true,
     key: "newuser-indicator"
-};
+} as any;
 
 
 const settings = definePluginSettings({

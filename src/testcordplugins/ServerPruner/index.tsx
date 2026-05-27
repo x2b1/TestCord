@@ -122,7 +122,7 @@ export default definePlugin({
         Devs.Samwich
         , TestcordDevs.x2b],
     onContextMenu() {
-        openModal(props => <PruneModal {...props} />);
+        openModal(props => <PruneModal {...(props as any)} />);
     },
     patches: [
         {

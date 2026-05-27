@@ -53,7 +53,7 @@ function applyFakeOnline() {
 
 function removeFakeOnline() {
     if (!_fakeOnlineActive) return;
-    FluxDispatcher.removeInterceptor(fakeOnlineInterceptor);
+    (FluxDispatcher as any).removeInterceptor(fakeOnlineInterceptor);
     _fakeOnlineActive = false;
     FluxDispatcher.dispatch({ type: "PRESENCE_UPDATES", updates: [] });
 }
@@ -75,7 +75,7 @@ function stopFreeze() {
 export default definePlugin({
     name: "FreezePresence",
     description: "Stops the member list from jumping around when people change status, and optionally makes everyone appear online.",
-    tags: ["Utility", "MemberList"],
+    tags: ["Utility", "MemberList"] as any as any[],
     authors: [TestcordDevs.nnenaza],
     settings,
 

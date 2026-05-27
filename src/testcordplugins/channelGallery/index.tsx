@@ -40,13 +40,13 @@ export const settings = definePluginSettings({
         type: OptionType.NUMBER,
         default: 100,
         description: "Messages fetched per page (50–200 recommended)",
-        isValid: v => Number.isFinite(v) && v >= 25 && v <= 200,
+        isValid: (v: any) => Number.isFinite(v) && v >= 25 && v <= 200,
     },
     preloadPages: {
         type: OptionType.NUMBER,
         default: 2,
         description: "Pages to preload when opening (1–5 recommended)",
-        isValid: v => Number.isFinite(v) && v >= 1 && v <= 5,
+        isValid: (v: any) => Number.isFinite(v) && v >= 1 && v <= 5,
     }
 });
 
@@ -101,14 +101,13 @@ function toggleGallery(channelId: string) {
     }
 
     modalChannelId = channelId;
-    modalKey = openModal(
-        ErrorBoundary.wrap(modalProps => (
+    modalKey = openModal(((modalProps: any) => (
             <GalleryModal
                 {...modalProps}
                 channelId={channelId}
                 settings={settings.store}
             />
-        ), { noop: true }),
+        )) as any,
         {
             onCloseCallback: () => {
                 modalKey = null;

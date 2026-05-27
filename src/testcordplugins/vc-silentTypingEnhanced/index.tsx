@@ -48,7 +48,7 @@ const settings = definePluginSettings({
     },
 });
 
-const SilentTypingToggle: ChatBarButton = ({ isMainChat, channel }) => {
+const SilentTypingToggle: any = ({ isMainChat, channel }: any) => {
     const { isEnabled, showIcon, specificChats, disabledFor } = settings.use(["isEnabled", "showIcon", "specificChats", "disabledFor"]);
     const id = channel.guild_id ?? channel.id;
 
@@ -173,7 +173,7 @@ export default definePlugin({
         FluxDispatcher.dispatch({ type: "TYPING_START_LOCAL", channelId });
     },
 
-    start: () => addChatBarButton("SilentTyping", SilentTypingToggle),
+    start: () => addChatBarButton("SilentTyping", SilentTypingToggle as any, 0 as any),
     stop: () => removeChatBarButton("SilentTyping"),
 });
 

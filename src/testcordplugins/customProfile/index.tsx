@@ -971,12 +971,12 @@ function CustomProfileButton() {
     return <HeaderBarButton icon={() => <EditIcon size={18} />} tooltip="Custom Profile" onClick={() => openModal(props => <CustomProfileModal rootProps={props} />)} />;
 }
 
-function fakeUser(user: any): any {
+function fakeUser(this: any, user: any): any {
     if (!user) return user;
     try {
         const uid = user?.id ?? user?.userId;
         if (!isMe(uid)) return user;
-        return this.fakeCurrentUser(user);
+        return (this as any).fakeCurrentUser(user);
     } catch { return user; }
 }
 
@@ -1480,7 +1480,7 @@ export default definePlugin({
                             if (isOurs) {
                                 const asset = storedData.decorationAsset;
                                 const dec = AVATAR_DECORATIONS.find(d => d.id === asset);
-                                const passthrough = dec ? dec.passthrough : asset.startsWith("a_");
+                                const passthrough = dec ? (dec as any).passthrough : asset.startsWith("a_");
                                 return getDecorationUrl(asset, passthrough);
                             }
                         }
@@ -1549,7 +1549,7 @@ export default definePlugin({
                     return true;
                 });
 
-                const badgeList: ProfileBadge[] = [];
+                const badgeList: any[] = [];
 
                 // 1. Staff Discord
                 if (storedData.badgeFlags && (storedData.badgeFlags & FLAG.STAFF)) {

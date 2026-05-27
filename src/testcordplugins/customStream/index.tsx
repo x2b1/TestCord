@@ -57,10 +57,12 @@ let activeProfileId: string = DEFAULT_PROFILE_ID;
 let cachedImages: Blob[] = [];
 let cachedDataUris: string[] = [];
 let currentSlideIndex = 0;
-// Time of last slide change (timestamp)
-// Is stream active now
-// Flag for manual image change via modal
-// Actual image CURRENTLY on stream (updated only by Discord)
+let lastSlideChangeTime = 0;
+let isStreamActive = false;
+let manualSlideChange = false;
+let setImageSizes: any;
+let imageSizes: any;
+let actualStreamImageUri: string | null = null;
 
 // Get active profile
 function getActiveProfile(): Profile {

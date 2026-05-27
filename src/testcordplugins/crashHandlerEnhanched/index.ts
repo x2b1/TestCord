@@ -395,7 +395,7 @@ function logCrash(errorState: any, recoveryAttempted: boolean, recoverySuccessfu
             stack: settings.store.includeStackTrace ? errorState.error?.stack : undefined,
             componentStack: settings.store.includeStackTrace ? errorState.info?.componentStack : undefined,
             channelId: SelectedChannelStore?.getChannelId(),
-            guildId: SelectedChannelStore?.getGuildId?.(),
+            guildId: (SelectedChannelStore as any)?.getGuildId?.(),
             userId: UserStore?.getCurrentUser()?.id,
             memoryUsage: settings.store.includeSystemInfo ? getMemoryUsage() : undefined,
             userAgent: settings.store.includeSystemInfo ? navigator.userAgent : undefined,

@@ -14,9 +14,7 @@ import { LazyComponent } from "@utils/lazyReact";
 import { closeModal, Modals, openModalLazy } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
 
-import { TestcordDevs } from "@utils/constants";
-
-export const ModalRootdiv = LazyComponent(() => Modals.ModalRoot);
+export const ModalRootdiv = LazyComponent(() => (Modals as any).ModalRoot);
 export const settings = definePluginSettings({
     BackgroundColor: {
         type: OptionType.STRING,

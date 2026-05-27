@@ -97,7 +97,7 @@ export function SoundTriggerEntry(props: SoundTriggerEntryProps) {
             </Flex>
             <Flex flexDirection="row">
                 <Button
-                    look={Button.Looks.BLANK}
+                    look={"BLANK" as any}
                     className={classFactory("rounded-button", "more-button")}
                     onClick={e =>
                         ContextMenuApi.openContextMenu(e, () =>

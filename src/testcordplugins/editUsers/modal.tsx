@@ -15,6 +15,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { emptyOverride, hasFlag, OverrideFlags, settings, UserOverride } from "./data";
 
 const cl = classNameFactory("vc-editUsers-");
+const Sw = Switch as any;
 
 interface OverrideProps {
     override: UserOverride;
@@ -48,21 +49,21 @@ function SettingsRow(props: SettingsRowProps) {
                 placeholder={placeholder}
                 autoFocus
             />
-            <Switch
+            <Sw
                 value={hasFlag(flags, flagDisable)}
                 onChange={v => setOverride(o => ({ ...o, flags: toggleFlag(v, flagDisable) }))}
                 note={`Will use the user's global ${name} (or your EditUser configured ${name}) over server specific ${namePlural}`}
             >
                 Disable server specific {namePlural}
-            </Switch>
-            <Switch
+            </Sw>
+            <Sw
                 value={hasFlag(flags, flagPrefer)}
                 onChange={v => setOverride(o => ({ ...o, flags: toggleFlag(v, flagPrefer) }))}
                 note={`Will use server specific ${namePlural} over the EditUser configured ${name}`}
                 hideBorder
             >
                 Prefer server specific {namePlural}
-            </Switch>
+            </Sw>
         </>
     );
 }
@@ -166,7 +167,7 @@ function EditModal({ user, modalProps }: { user: User; modalProps: ModalProps; }
 }
 
 export function openUserEditModal(user: User) {
-    openModal(props => <EditModal user={user} modalProps={props} />);
+    openModal(props => <EditModal user={user} modalProps={props as any} />);
 }
 
 

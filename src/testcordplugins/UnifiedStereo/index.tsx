@@ -41,18 +41,22 @@ const settings = definePluginSettings({
     },
     disableFEC: {
         type: OptionType.BOOLEAN,
+        description: "Disable forward error correction",
         default: true
     },
     enablePriorityDucking: {
         type: OptionType.BOOLEAN,
+        description: "Enable priority ducking",
         default: false
     },
     enableToasts: {
         type: OptionType.BOOLEAN,
+        description: "Show toast notifications",
         default: true
     },
     enableScreenshareFix: {
         type: OptionType.BOOLEAN,
+        description: "Enable screenshare stereo fix",
         default: true
     }
 });

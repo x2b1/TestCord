@@ -6,7 +6,7 @@
 
 import { Settings } from "@api/Settings";
 import { resolveError,SettingsSection } from "@components/settings/tabs/plugins/components/Common";
-import { IPluginOptionComponentProps } from "@utils/types";
+import { PluginSettingComponentProps } from "@utils/types";
 import { React, TextArea } from "@webpack/common";
 
 /**
@@ -16,7 +16,7 @@ import { React, TextArea } from "@webpack/common";
  * @param description A description of the input text box
  * @returns Input text box JSX for theme links
  */
-export function ThemeLinksComponent({ setValue }: IPluginOptionComponentProps, id: string, description: string) {
+export function ThemeLinksComponent({ setValue }: PluginSettingComponentProps, id: string, description: string) {
     // Get the current state of the specific setting referenced by id, as well as the method to change it
     const [state, setState] = React.useState(Settings.plugins.AutoThemeSwitcher?.[id] ?? null);
     const [error, setError] = React.useState<string | null>(null);

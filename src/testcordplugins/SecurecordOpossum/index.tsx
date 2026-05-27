@@ -301,7 +301,7 @@ type IconProps = {
     className?: string;
 };
 
-const EncryptionEnabledIcon: IconComponent = ({ height = 20, width = 20, className }: { height?: number; width?: number; className?: string }) => {
+const EncryptionEnabledIcon: any = ({ height = 20, width = 20, className }: any) => {
     return (
         <svg
             width={width}
@@ -314,7 +314,7 @@ const EncryptionEnabledIcon: IconComponent = ({ height = 20, width = 20, classNa
     );
 };
 
-const EncryptionDisabledIcon: IconComponent = ({ height = 20, width = 20, className }: { height?: number; width?: number; className?: string }) => {
+const EncryptionDisabledIcon: any = ({ height = 20, width = 20, className }: any) => {
     return (
         <svg
             width={width}

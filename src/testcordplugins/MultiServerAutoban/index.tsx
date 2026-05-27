@@ -84,7 +84,7 @@ const debugChannelStructure = (guildId: string) => {
     }
 
     try {
-        const allChannels = ChannelStore.getAllChannels?.();
+        const allChannels = (ChannelStore as any).getAllChannels?.();
         const guildChannels = Object.values(allChannels || {}).filter((c: any) => c.guild_id === guildId);
         console.log("Channels from getAllChannels():", guildChannels.length);
         console.log("Sample channel:", guildChannels[0]);
@@ -95,12 +95,12 @@ const debugChannelStructure = (guildId: string) => {
 
 // Server Configuration Manager Component with Dropdowns
 function ServerConfigManager() {
-    const [configs, setConfigs] = React.useState([]);
+    const [configs, setConfigs] = React.useState<any[]>([]);
     const [selectedGuildId, setSelectedGuildId] = React.useState("");
     const [selectedChannelId, setSelectedChannelId] = React.useState("");
     const [newCommand, setNewCommand] = React.useState("!voice-ban");
-    const [availableServers, setAvailableServers] = React.useState([]);
-    const [availableChannels, setAvailableChannels] = React.useState([]);
+    const [availableServers, setAvailableServers] = React.useState<any[]>([]);
+    const [availableChannels, setAvailableChannels] = React.useState<any[]>([]);
     const [loadingChannels, setLoadingChannels] = React.useState(false);
 
     // Load configurations and available servers on mount
@@ -160,8 +160,8 @@ function ServerConfigManager() {
         try {
             console.log(`[Multi-Ban] Aggressively scanning channels for guild: ${guildId}`);
 
-            const channelList = [];
-            const foundChannels = new Set(); // Track found channel IDs to avoid duplicates
+            const channelList: any[] = [];
+            const foundChannels = new Set<any>(); // Track found channel IDs to avoid duplicates
 
             // Method 1: GuildChannelStore with all possible structure variations
             try {
@@ -220,7 +220,7 @@ function ServerConfigManager() {
             // Method 2: Brute force through ALL Discord channels
             try {
                 console.log("[Multi-Ban] Brute force scanning all Discord channels...");
-                const allChannels = ChannelStore.getAllChannels?.() || {};
+                const allChannels = (ChannelStore as any).getAllChannels?.() || {};
                 let totalScanned = 0;
                 let guildMatches = 0;
 
@@ -361,7 +361,7 @@ function ServerConfigManager() {
             console.error("[Multi-Ban] Error during aggressive channel scan:", e);
             setAvailableChannels([]);
             Toasts.show({
-                message: `Channel scanning error: ${e.message}`,
+                message: `Channel scanning error: ${(e as any).message}`,
                 type: Toasts.Type.FAILURE,
                 options: { position: Toasts.Position.BOTTOM }
             });
@@ -941,7 +941,7 @@ function handleKeyDown(event: KeyboardEvent) {
     // Alt + B to open settings
     if (event.altKey && event.code === "KeyB") {
         event.preventDefault();
-        openModal(props => <SettingsModal {...props} />);
+        openModal((props: any) => <SettingsModal {...props} />);
     }
 }
 

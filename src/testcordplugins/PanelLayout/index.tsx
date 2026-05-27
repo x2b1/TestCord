@@ -520,7 +520,7 @@ function Btn({ iconForeground, hideTooltips, nameplate }: UserAreaRenderProps) {
             icon={<Icon className={iconForeground} />}
             role="button"
             plated={nameplate != null}
-            onClick={() => openModal(modalProps => <Modal modalProps={modalProps} />)}
+            onClick={() => openModal((modalProps: any) => <Modal modalProps={modalProps} />)}
         />
     );
 }

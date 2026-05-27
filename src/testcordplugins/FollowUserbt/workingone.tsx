@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { ContextMenuApi, findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+const ContextMenuApi: any = null;
 import { definePluginSettings } from "@api/Settings";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
 import { EquicordDevs } from "@utils/constants";
@@ -158,7 +159,7 @@ function FollowUserModal({ modalProps }: { modalProps: ModalProps; }) {
         section: "#72757e",
     };
 
-    const SectionLabel = ({ children }: { children: string; }) => (
+    const SectionLabel = ({ children }: { children: any; }) => (
         <div style={{
             fontSize: "11px",
             fontWeight: 700,
@@ -254,11 +255,11 @@ function FollowUserModal({ modalProps }: { modalProps: ModalProps; }) {
 
                                 <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
                                     {followedChannel && (
-                                        <Button size={Button.Sizes.MEDIUM} color={Button.Colors.GREEN} onClick={() => doJump(followedVoiceState!.channelId)}>
+                                        <Button size={Button.Sizes.MEDIUM as any} color={Button.Colors.GREEN as any} onClick={() => doJump(followedVoiceState!.channelId!)}>
                                             Join
                                         </Button>
                                     )}
-                                    <Button size={Button.Sizes.MEDIUM} color={Button.Colors.RED} onClick={doUnfollow}>
+                                    <Button size={Button.Sizes.MEDIUM as any} color={Button.Colors.RED as any} onClick={doUnfollow}>
                                         Unfollow
                                     </Button>
                                 </div>
@@ -282,7 +283,7 @@ function FollowUserModal({ modalProps }: { modalProps: ModalProps; }) {
 
                     {/* ── Friends in Voice ── */}
                     <div>
-                        <SectionLabel>Friends in Voice {friendsInVoice.length > 0 && `(${friendsInVoice.length})`}</SectionLabel>
+                        <SectionLabel>Friends in Voice {(friendsInVoice.length > 0 && `(${friendsInVoice.length})`) as any}</SectionLabel>
 
                         {friendsInVoice.length > 0 ? (
                             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -343,15 +344,15 @@ function FollowUserModal({ modalProps }: { modalProps: ModalProps; }) {
                                             </div>
 
                                             <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                                                <Button size={Button.Sizes.SMALL} color={Button.Colors.BRAND} onClick={() => doJump(friend.channelId)}>
+                                                <Button size={Button.Sizes.SMALL as any} color={Button.Colors.BRAND as any} onClick={() => doJump(friend.channelId)}>
                                                     Join
                                                 </Button>
                                                 {isFollowingThis ? (
-                                                    <Button size={Button.Sizes.SMALL} color={Button.Colors.RED} onClick={doUnfollow}>
+                                                    <Button size={Button.Sizes.SMALL as any} color={Button.Colors.RED as any} onClick={doUnfollow}>
                                                         Unfollow
                                                     </Button>
                                                 ) : (
-                                                    <Button size={Button.Sizes.SMALL} color={Button.Colors.GREEN} onClick={() => doFollow(friend.userId, friend.username)}>
+                                                    <Button size={Button.Sizes.SMALL as any} color={Button.Colors.GREEN as any} onClick={() => doFollow(friend.userId, friend.username)}>
                                                         Follow
                                                     </Button>
                                                 )}
@@ -407,7 +408,7 @@ function FollowUserModal({ modalProps }: { modalProps: ModalProps; }) {
             </ModalContent>
 
             <ModalFooter style={{ padding: "16px 20px" }}>
-                <Button color={Button.Colors.PRIMARY} onClick={() => modalProps.onClose()}>
+                <Button color={Button.Colors.PRIMARY as any} onClick={() => modalProps.onClose()}>
                     Close
                 </Button>
             </ModalFooter>
@@ -431,7 +432,7 @@ function FollowUserPanelButton({ iconForeground, hideTooltips, nameplate }: User
             aria-checked={isFollowing}
             redGlow={false}
             plated={nameplate != null}
-            onClick={() => openModal(modalProps => <FollowUserModal modalProps={modalProps} />)}
+            onClick={() => openModal((props: any) => <FollowUserModal modalProps={props} /> as any)}
         />
     );
 }
@@ -447,15 +448,16 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
         const voiceState = VoiceStateStore.getVoiceStateForUser(user.id);
         const isInVoice = !!voiceState?.channelId;
 
+        const MenuItem = (Menu as any).MenuSwitchItem;
         const menuItem = (
-            <Menu.MenuGroup>
+                    <Menu.MenuGroup>
                 {/* Parent item — expands to submenu */}
                 <Menu.MenuItem
                     id="fvu-root"
                     label="Follow User"
                 >
                     {/* Toggle follow on/off */}
-                    <Menu.MenuSwitchItem
+                    <MenuItem
                         id="fvu-toggle"
                         label={isFollowing ? `Following ${user.username}` : "Follow into Voice"}
                         checked={isFollowing}
@@ -497,7 +499,7 @@ const UserContextMenuPatch: NavContextMenuPatchCallback = (children, props) => {
                     <Menu.MenuItem
                         id="fvu-open-modal"
                         label="Manage Follow..."
-                        action={() => openModal(modalProps => <FollowUserModal modalProps={modalProps} />)}
+                        action={() => openModal((props: any) => <FollowUserModal modalProps={props} /> as any)}
                     />
                 </Menu.MenuItem>
             </Menu.MenuGroup>

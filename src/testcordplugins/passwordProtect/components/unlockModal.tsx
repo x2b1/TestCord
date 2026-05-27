@@ -12,7 +12,7 @@ import { ModalType, PasswordModal } from "./modal";
 
 export async function openUnlockModal(channelId: string) {
     await openModalLazy(async () => {
-        return modalProps => <PasswordModal modalProps={modalProps} channelId={channelId} type={ModalType.Unlock} callback={async password => {
+        return (modalProps: any) => <PasswordModal modalProps={modalProps} channelId={channelId} type={ModalType.Unlock} callback={async password => {
             if (password) {
                 if (await checkPassword(password, channelId)) {
                     removePassword(channelId);

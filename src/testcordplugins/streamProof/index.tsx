@@ -186,7 +186,7 @@ export default definePlugin({
     settings,
 
     chatBarButton: {
-        icon: EyeSlashIcon,
+        icon: EyeSlashIcon as any,
         render: StreamProofButton,
     },
 

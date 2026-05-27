@@ -100,7 +100,7 @@ function Modal(props: ModalProps) {
 
 export function buildModal(): any {
     try {
-        openModal(props => <Modal {...props} />);
+        openModal((props: any) => <Modal {...props} />);
     } catch {
         return;
     }

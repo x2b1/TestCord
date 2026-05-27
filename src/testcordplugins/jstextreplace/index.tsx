@@ -29,9 +29,9 @@ export const settings = definePluginSettings({
         default: false
     },
     rules: {
-        type: OptionType.CUSTOM,
+        type: OptionType.CUSTOM as any,
         default: makeEmptyRuleArray()
-    },
+    } as any,
     rc: {
         type: OptionType.COMPONENT,
         component: () => {

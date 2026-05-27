@@ -73,7 +73,7 @@ export default definePlugin({
     name: "Hisako's Optimizations",
     description: "Comprehensive client optimization suite for lag-free Discord experience",
     authors: [{ name: "irritably", id: 928787166916640838n }],
-    tags: ["performance", "optimization", "lag-free", "client"],
+    tags: ["performance", "optimization", "lag-free", "client"] as any,
 
     settings,
 
@@ -176,7 +176,7 @@ export default definePlugin({
         const reductionFactor = settings.store.animationReduction / 100;
         let frameCount = 0;
 
-        return function (callback: FrameRequestCallback) {
+        return function (this: any, callback: FrameRequestCallback) {
             frameCount++;
 
             // Skip frames based on reduction setting
@@ -185,7 +185,7 @@ export default definePlugin({
                 return setTimeout(() => callback(performance.now()), 16 * (1 + reductionFactor));
             }
 
-            return originalRAF.call(this, callback);
+            return originalRAF.call(this as any, callback);
         };
     },
 
@@ -253,7 +253,7 @@ export default definePlugin({
             const reductionFactor = settings.store.animationReduction / 100;
             let frameCount = 0;
 
-            window.requestAnimationFrame = function (callback) {
+            window.requestAnimationFrame = function (this: any, callback: any) {
                 frameCount++;
 
                 // Skip frames based on reduction setting
@@ -262,8 +262,8 @@ export default definePlugin({
                     return setTimeout(() => callback(performance.now()), 16 * (1 + reductionFactor));
                 }
 
-                return originalRAF.call(this, callback);
-            };
+            return originalRAF.call(this as any, callback);
+            } as any;
 
             this.originalMethods.rAF = originalRAF;
 
@@ -490,7 +490,7 @@ export default definePlugin({
 
         this.messageElementsPool = [];
         this.renderedMessages.clear();
-        this.virtualScrollState = null;
+        (this as any).virtualScrollState = null;
     },
 
     cleanupExpiredCache() {

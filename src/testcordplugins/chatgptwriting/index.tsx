@@ -223,7 +223,7 @@ export default definePlugin({
         removeMessagePreSendListener(getPresend());
     },
 
-    renderChatBarButton: ({ isMainChat }) => {
+    renderChatBarButton: (({ isMainChat }) => {
         if (!isMainChat) return null;
 
         return (
@@ -253,5 +253,6 @@ export default definePlugin({
                 </svg>
             </ChatBarButton>
         );
-    }
+    }) as any
 });
+

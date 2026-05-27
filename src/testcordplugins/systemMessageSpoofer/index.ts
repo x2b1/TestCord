@@ -439,7 +439,7 @@ export default definePlugin({
                     const channelId = args.find(x => x.name === "channel")?.value ?? ctx.channel.id;
                     const userId = args.find(x => x.name === "user")?.value as string;
                     const action = args.find(x => x.name === "action")?.value as string;
-                    const callDuration = args.find(x => x.name === "duration")?.value as number;
+                    const callDuration = Number(args.find(x => x.name === "duration")?.value) || 0;
 
                     const user = UserStore.getUser(userId);
                     const username = user ? `<@${user.id}>` : "Someone";

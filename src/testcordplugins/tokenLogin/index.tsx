@@ -60,10 +60,7 @@ class TokenLoginManager {
     }
 }
 
-const AddAccountModal = ({ manager, onClose, ...props }: Modal.ModalProps & {
-    manager: TokenLoginManager;
-    onClose: () => void;
-}) => {
+const AddAccountModal = ({ manager, onClose, ...props }: { manager: TokenLoginManager; onClose: () => void; [key: string]: any; }) => {
     const [username, setUsername] = React.useState("");
     const [token, setToken] = React.useState("");
 
@@ -175,7 +172,7 @@ class TokenLoginManagerUI {
                     <Text variant="heading-lg/semibold">Token Login Manager</Text>
                     <Button
                         onClick={() => {
-                            Modal.openModal(props => (
+                            Modal.openModal((props: any) => (
                                 <AddAccountModal
                                     {...props}
                                     manager={this.manager}

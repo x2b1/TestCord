@@ -47,7 +47,7 @@ export const TranslateChatBarIcon: ChatBarButtonFactory = ({ isMainChat }) => {
             tooltip="Open NativeTranslate Modal"
             onClick={e => {
                 if (e.shiftKey) return toggle();
-                openModal(props => <TranslateModal rootProps={props} />);
+                openModal((props: any) => <TranslateModal rootProps={props} />);
             }}
             onContextMenu={toggle}
             buttonProps={{ "aria-haspopup": "dialog" }}

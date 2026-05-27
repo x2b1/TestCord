@@ -628,7 +628,7 @@ function PanelLayoutButton({ iconForeground, hideTooltips, nameplate }: UserArea
             icon={<LayoutIcon className={iconForeground} />}
             role="button"
             plated={nameplate != null}
-            onClick={() => openModal(modalProps => <PanelLayoutModal modalProps={modalProps} />)}
+            onClick={() => openModal((modalProps: any) => <PanelLayoutModal modalProps={modalProps} />)}
         />
     );
 }

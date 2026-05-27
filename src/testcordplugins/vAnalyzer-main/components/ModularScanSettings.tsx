@@ -227,7 +227,7 @@ export default function ModularScanSettings() {
                 <HeadingSecondary>Modular Scan Configurations</HeadingSecondary>
                 <Button onClick={() => setEditing({})}>+ Add Module</Button>
             </Flex>
-            <Paragraph className={Margins.top8} color="header-secondary">
+            <Paragraph className={Margins.top8} color={"header-secondary" as "text-muted"}>
                 Define your own custom endpoints to analyze files or URLs. Use placeholders like <code>{"{{fileUrl}}"}</code> or <code>{"{{url}}"}</code> in your templates.
             </Paragraph>
 

@@ -79,7 +79,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 			return await Promise.race([
 				(async () => {
 					const hello = await this.createConnection(url);
-					this.emit("Hello", hello);
+					(this as any).emit("Hello", hello);
 					return this.identify(hello, password, identificationParams);
 				})(),
 				// Choose the best promise for connection error/close
@@ -253,7 +253,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 		await this.message(WebSocketOpCode.Identify, data);
 		const identified = await identifiedPromise;
 		this._identified = true;
-		this.emit("Identified", identified);
+		(this as any).emit("Identified", identified);
 
 		return {
 			rpcVersion,
@@ -282,7 +282,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 			op,
 			d,
 		} as OutgoingMessage);
-		this.socket.send(encoded);
+		(this.socket! as any).send(encoded);
 	}
 
 	/**
@@ -295,7 +295,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 	 */
 	protected async internalEventPromise<ReturnVal = unknown>(event: string): Promise<ReturnVal> {
 		return new Promise(resolve => {
-			this.internalListeners.once(event, resolve);
+			this.internalListeners.once(event, resolve as any);
 		});
 	}
 
@@ -306,7 +306,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 	 * @param e Event
 	 */
 	protected onOpen(e: Event) {
-		this.emit("ConnectionOpened");
+		(this as any).emit("ConnectionOpened");
 		this.internalListeners.emit("ConnectionOpened", e);
 	}
 
@@ -357,7 +357,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 		logger.error("socket.error: %o", e);
 		const error = new OBSWebSocketError(-1, e.message);
 
-		this.emit("ConnectionError", error);
+		(this as any).emit("ConnectionError", error);
 		this.internalListeners.emit("ConnectionError", error);
 	}
 
@@ -370,7 +370,7 @@ export abstract class BaseOBSWebSocket extends EventEmitter<MapValueToArgsArray<
 	protected onClose(e: CloseEvent) {
 		const error = new OBSWebSocketError(e.code, e.reason);
 
-		this.emit("ConnectionClosed", error);
+		(this as any).emit("ConnectionClosed", error);
 		this.internalListeners.emit("ConnectionClosed", error);
 		this.cleanup();
 	}

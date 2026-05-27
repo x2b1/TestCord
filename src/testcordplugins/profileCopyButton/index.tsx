@@ -182,7 +182,7 @@ function resolveEmojisInBio(bio: string): Promise<string> {
 
         openModal(props => (
             <EmojiGuildPickerModal
-                modalProps={props}
+                modalProps={props as any}
                 missingEmojis={missing}
                 onConfirm={async (guildId: string | null) => {
                     if (!guildId) {
@@ -671,7 +671,7 @@ export async function copyProfileFromId(targetId: string, guildId?: string) {
     }
 
     // Clan tag
-    const clan = rawProfile?.user?.clan ?? (rawProfile as any)?.user?.primary_guild;
+    const clan = (rawProfile as any)?.user?.clan ?? (rawProfile as any)?.user?.primary_guild;
     const clanGuildId = (rawProfile as any)?.user?.clan?.identity_guild_id ?? clan?.identity_guild_id;
     if (clanGuildId) {
         try {
@@ -843,7 +843,7 @@ function CopySection() {
         <CustomizationSection title="Profile Copy" hasBackground={true} hideDivider={false}>
             <Flex>
                 <Button
-                    onClick={() => openModal(props => <PromptModal modalProps={props} />)}
+                    onClick={() => openModal(props => <PromptModal modalProps={props as any} />)}
                     size={Button.Sizes.MEDIUM}
                 >
                     Copy from User

@@ -68,7 +68,10 @@ export const PluginTags = [
     "Servers",
     "Shortcuts",
     "Utility",
-    "Voice"
+    "Voice",
+    "betterdiscord",
+    "bd",
+    "loader"
 ] as const;
 
 export type PluginTag = typeof PluginTags[number];
@@ -225,7 +228,7 @@ export interface PluginDef {
     renderMessageDecoration?: MessageDecorationFactory;
 
     renderMemberListDecorator?: MemberListDecoratorFactory;
-    renderChatBarButton?: ChatBarButtonWrapper;
+    renderChatBarButton?: ChatBarButtonWrapperData;
 
     /*
     * Custom apis added by Equicord and were placed here for quicker identification rather then mixing them in

@@ -366,5 +366,5 @@ export default definePlugin({
         removeMessagePreSendListener(handleMessageSend);
     },
 
-    renderChatBarButton: AntiFilterButton
+    renderChatBarButton: AntiFilterButton as any
 });

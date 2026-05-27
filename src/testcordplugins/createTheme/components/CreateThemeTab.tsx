@@ -297,8 +297,8 @@ export function CreateThemeTab() {
             await VencordNative.settings.set(s as any);
         } catch (e) { console.error("[CreateTheme] save windowMaterial failed", e); }
         // Apply immediately to current window via IPC
-        if (VencordNative.window?.setBackgroundMaterial) {
-            VencordNative.window.setBackgroundMaterial(material).catch(console.error);
+        if ((VencordNative as any).window?.setBackgroundMaterial) {
+            (VencordNative as any).window.setBackgroundMaterial(material).catch(console.error);
         }
     }
 

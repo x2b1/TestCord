@@ -9,7 +9,7 @@ import { closeModal, ModalCloseButton, ModalContent, ModalHeader, ModalProps, Mo
 import { Button, useEffect, useState } from "@webpack/common";
 
 export function DependencyModal({ props, options: { key, checkytdlp, checkdeno } }: {
-    props: ModalProps;
+    props: any;
     options: {
         key: string;
         checkytdlp: () => Promise<boolean>;

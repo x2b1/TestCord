@@ -1091,7 +1091,7 @@ function stopMessageLoop() {
 }
 
 function addCurrentChannel() {
-    const currentChannel = ChannelStore.getChannel(ChannelStore.getChannelId());
+    const currentChannel = ChannelStore.getChannel((ChannelStore as any).getChannelId());
 
     if (!currentChannel) {
         showToast("No channel selected!", Toasts.Type.FAILURE);

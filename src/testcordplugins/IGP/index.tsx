@@ -679,7 +679,7 @@ export default definePlugin({
     authors: [{ name: "irritably", id: 928787166916640838n }], 
     settings,
 
-    renderChatBarButton: ChatBarIcon,
+    renderChatBarButton: ChatBarIcon as any,
     decryptMessageIcon: () => <DecryptMessageIcon />,
 
     GPG_REGEX: /-----BEGIN PGP MESSAGE-----[A-Za-z0-9+/=\r\n]+?-----END PGP MESSAGE-----/g,
@@ -723,8 +723,8 @@ export default definePlugin({
                     { name: "email", description: "Your email", type: 3, required: true },
                     { name: "passphrase", description: "Passphrase for private key", type: 3, required: true },
                     { name: "type", description: "Key type", type: 3, choices: [
-                        { name: "ECC (recommended)", value: "ecc" },
-                        { name: "RSA 4096", value: "rsa" }
+                        { name: "ECC (recommended)", label: "ECC (recommended)", value: "ecc" as any },
+                        { name: "RSA 4096", label: "RSA 4096", value: "rsa" as any }
                     ]}
                 ]},
                 { name: "import", description: "Import a contact's public key", type: 1, options: [

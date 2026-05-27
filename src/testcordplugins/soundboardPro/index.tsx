@@ -657,8 +657,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
                             style={{ display: "none" }}
                         />
 
-                        <Flex direction={Flex.Direction.VERTICAL} style={{ gap: "8px" }}>
-                            {/* Button to select an MP3 file */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                             <Button
                                 onClick={openFileSelector}
                                 color={Button.Colors.BRAND}
@@ -712,21 +711,19 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
                             >
                                 Add via URL
                             </Button>
-                        </Flex>
+                        </div>
                     </div>
                 )}
             </ModalContent>
 
             <ModalFooter>
-                <Flex direction={Flex.Direction.HORIZONTAL_REVERSE}>
-                    <Button
-                        onClick={modalProps.onClose}
-                        color={Button.Colors.PRIMARY}
-                        look={Button.Looks.FILLED}
-                    >
-                        Close
-                    </Button>
-                </Flex>
+                {React.createElement(Flex as any, { flexDirection: "row-reverse" },
+                    React.createElement(Button as any, {
+                        onClick: modalProps.onClose,
+                        color: Button.Colors.PRIMARY,
+                        look: Button.Looks.FILLED
+                    }, "Close")
+                )}
             </ModalFooter>
         </ModalRoot>
     );
@@ -736,9 +733,7 @@ function SoundboardModal({ modalProps }: { modalProps: ModalProps; }) {
 export function openSoundboardPro() {
     console.log("🔊 SoundboardPro: openSoundboardPro called");
     try {
-        const modalKey = openModal(modalProps => (
-            <SoundboardModal modalProps={modalProps} />
-        ));
+        const modalKey = openModal(modalProps => React.createElement(SoundboardModal as any, { modalProps }));
         console.log("🔊 SoundboardPro: Modal opened with key:", modalKey);
     } catch (error) {
         console.error("🔊 SoundboardPro: Error opening modal:", error);

@@ -57,9 +57,9 @@ const ImportMultiTokensComponent = () => {
 
             if (settings.store.importToTokenLogin) {
                 const tokenLoginPlugin = Vencord.Plugins.plugins.TokenLoginManager;
-                if (tokenLoginPlugin?.tokenLoginManager) {
+                if ((tokenLoginPlugin as any)?.tokenLoginManager) {
                     for (const { userId, token } of tokens) {
-                        tokenLoginPlugin.tokenLoginManager.addAccount({
+                        (tokenLoginPlugin as any).tokenLoginManager.addAccount({
                             username: `User ${userId}`,
                             token
                         });

@@ -156,7 +156,7 @@ export default definePlugin({
                     voiceState.userId === myId &&
                     voiceState.channelId !== myLastChannelId
                 ) {
-                    myLastChannelId = voiceState.channelId;
+                    myLastChannelId = (voiceState as any).channelId;
 
                     // If we have a hooked user and we join a voice channel
                     if (voiceState.channelId && leashedUserInfo.userId) {

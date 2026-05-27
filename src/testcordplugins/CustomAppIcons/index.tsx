@@ -85,7 +85,7 @@ export default definePlugin({
         return (
             <>
                 <Button color={Button.Colors.BRAND} size={Button.Sizes.MEDIUM} className={editorFooter} onClick={() => {
-                    openModal(props => <AppIconModal {...props} />);
+                    openModal(props => <AppIconModal {...props as any} />);
                 }}>
                     Add Custom App Icon
                 </Button>

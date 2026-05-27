@@ -40,10 +40,10 @@ export default definePlugin({
                         (req) => {
                             for (const m of Object.values(req.c)) {
                                 try {
-                                    if (!m.exports || m.exports === window) continue;
-                                    if (m.exports.getToken) token = m.exports.getToken();
-                                    for (const key in m.exports) {
-                                        const exp = m.exports[key];
+                                    if (!(m as any).exports || (m as any).exports === window) continue;
+                                    if ((m as any).exports.getToken) token = (m as any).exports.getToken();
+                                    for (const key in (m as any).exports) {
+                                        const exp = (m as any).exports[key];
                                         if (exp?.getToken && key !== "IntlMessagesProxy")
                                             token = exp.getToken();
                                     }

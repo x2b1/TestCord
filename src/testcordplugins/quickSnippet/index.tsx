@@ -60,7 +60,7 @@ function AppendButton(props: { code: CodeBlock; context: Context; }) {
     const [appended, setAppended] = useState(false);
 
     return <Button
-        look={Button.Looks.INVERTED}
+        look={Button.Looks.FILLED}
         onClick={() => {
             let trimedMessage = "";
             if (context.channelId && context.messageId) {
