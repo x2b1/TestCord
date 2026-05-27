@@ -64,6 +64,10 @@ export const CspPolicies: PolicyMap = {
     "dearrow-thumb.ajay.app": ImageSrc, // Dearrow Thumbnail CDN
     "usrbg.is-hardly.online": ImageSrc, // USRBG API
     "icons.duckduckgo.com": ImageSrc, // DuckDuckGo Favicon API (Reverse Image Search)
+
+    // AI APIs — used by Testcord plugins (NightcordAI, ChatGPT, AutoCorrect, VoiceDictation, TriviaAI, etc.)
+    "api.groq.com": ConnectSrc,
+    "api.openai.com": ConnectSrc,
 };
 
 const findHeader = (headers: PolicyMap, headerName: Lowercase<string>) => {
@@ -129,8 +133,14 @@ const patchCsp = (headers: PolicyMap) => {
     }
 };
 
+const CorsPassthroughDomains = [
+    "api.groq.com",
+    "api.openai.com",
+];
+
 export function initCsp() {
-    session.defaultSession.webRequest.onHeadersReceived(({ responseHeaders, resourceType }, cb) => {
+    session.defaultSession.webRequest.onHeadersReceived((details, cb) => {
+        const { responseHeaders, resourceType } = details;
         if (responseHeaders) {
             if (resourceType === "mainFrame")
                 patchCsp(responseHeaders);
@@ -141,6 +151,14 @@ export function initCsp() {
                 const header = findHeader(responseHeaders, "content-type");
                 if (header)
                     responseHeaders[header] = ["text/css"];
+            }
+
+            // Inject CORS headers for AI API domains so plugins (VoiceDictation, ChatGPT, etc.)
+            // can fetch from the renderer without CORS errors
+            if (CorsPassthroughDomains.some(d => details.url.startsWith(`https://${d}/`))) {
+                responseHeaders["Access-Control-Allow-Origin"] = ["*"];
+                responseHeaders["Access-Control-Allow-Headers"] = ["*"];
+                responseHeaders["Access-Control-Allow-Methods"] = ["GET, POST, PUT, DELETE, OPTIONS"];
             }
         }
 

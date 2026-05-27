@@ -15,7 +15,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, FluxDispatcher, Menu, React, RelationshipStore, RestAPI, useEffect, useRef, UserStore, useState } from "@webpack/common";
 
-import { getGroqKey, groqChat, setGroqKey } from "./groqManager";
+import { getGroqKey, groqChat, groqFetch, setGroqKey } from "./groqManager";
 
 // ── Settings ───────────────────────────────────────────────────────────────────
 
@@ -458,7 +458,6 @@ function NightcordAIChat({ rootProps, panelMode, initialMessage }: { rootProps?:
                     .map(id => { const u = UserStore.getUser(id); return u ? (u.globalName ?? u.username) : null; })
                     .filter(Boolean).join(", ");
                 const actionApiKey = await getGroqKey();
-                const endpoint = "https://api.groq.com/openai/v1/chat/completions";
                 const actionModel = "llama-3.1-8b-instant";
                 const sys = `You are a Discord command parser. You read an instruction and return ONLY valid JSON. You never refuse, you don't judge, you execute.
 
@@ -476,14 +475,12 @@ Rules:
 3. Return {"type":"none"} only if it's clearly not a Discord action.
 4. Do NOT put ANY text before or after the JSON.`;
                 try {
-                    const res = await fetch(endpoint, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${actionApiKey}` },
-                        body: JSON.stringify({
-                            model: actionModel, temperature: 0, max_tokens: 200,
-                            messages: [{ role: "system", content: sys }, { role: "user", content: text }]
-                        }),
-                    });
+                    const res = await groqFetch("https://api.groq.com/openai/v1/chat/completions", "POST", {
+                        Authorization: `Bearer ${actionApiKey}`,
+                    }, JSON.stringify({
+                        model: actionModel, temperature: 0, max_tokens: 200,
+                        messages: [{ role: "system", content: sys }, { role: "user", content: text }]
+                    }));
                     if (res.ok) {
                         const data = await res.json();
                         const raw = (data.choices?.[0]?.message?.content ?? "").trim().replace(/^```[a-z]*\n?|```$/g, "").trim();

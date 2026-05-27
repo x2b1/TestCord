@@ -16,6 +16,37 @@
  */
 
 import { DataStore } from "@api/index";
+import type { NativeGroqResponse } from "./native";
+
+// ── Native IPC fetch (bypasses CORS in Electron) ─────────────────────────────
+
+let _nativeGroqFetch: ((url: string, method: string, headers: Record<string, string>, body?: string) => Promise<NativeGroqResponse>) | null = null;
+
+function getNativeFetch() {
+    if (_nativeGroqFetch) return _nativeGroqFetch;
+    try {
+        const vn = (globalThis as any).VencordNative;
+        if (vn?.pluginHelpers?.TestcordAI?.groqFetch) {
+            _nativeGroqFetch = vn.pluginHelpers.TestcordAI.groqFetch;
+            return _nativeGroqFetch;
+        }
+    } catch { /* renderer-only mode */ }
+    return null;
+}
+
+export async function groqFetch(url: string, method: string, headers: Record<string, string>, body?: string): Promise<Response> {
+    const native = getNativeFetch();
+    if (native) {
+        const res = await native(url, method, headers, body);
+        if (res.error) throw new Error(res.error);
+        return new Response(res.body, {
+            status: res.status,
+            headers: res.headers ?? {},
+        });
+    }
+    // Fallback to direct fetch (web mode, may hit CORS)
+    return fetch(url, { method, headers, body });
+}
 
 // ── DataStore Keys ─────────────────────────────────────────────────────────────
 
@@ -136,19 +167,14 @@ async function _groqChat(opts: GroqCallOptions, attempt = 0): Promise<string> {
 
     const model = forceModel ?? getAvailableModel();
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model,
-            temperature,
-            max_tokens: maxTokens,
-            messages,
-        }),
-    });
+    const res = await groqFetch("https://api.groq.com/openai/v1/chat/completions", "POST", {
+        Authorization: `Bearer ${apiKey}`,
+    }, JSON.stringify({
+        model,
+        temperature,
+        max_tokens: maxTokens,
+        messages,
+    }));
 
     // Rate limit handling
     if (res.status === 429) {
