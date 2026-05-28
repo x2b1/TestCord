@@ -866,56 +866,38 @@ export default definePlugin({
             }
         };
 
-        // Perf: the previous implementation observed the entire document.body
-        // subtree and fired a 80ms-debounced inject() on every mutation. Discord
-        // mutates the DOM thousands of times per minute, which made this the
-        // single biggest CPU hog in the plugin. Now we observe lazily: as soon
-        // as the nav item is in place we disconnect, and only re-arm if the
-        // injected node is removed (route change, sidebar remount, etc).
+        // Perf: keep the broad observer (it's required — Discord can re-render
+        // the sidebar at any time) but make the callback near-free in the common
+        // case. We early-return if our nav item is already in place, and only
+        // schedule a debounced inject() when it's actually missing.
         let debounceTimer: ReturnType<typeof setTimeout> | null = null;
         this._debounceTimer = null as ReturnType<typeof setTimeout> | null;
 
-        const ensureInjected = () => {
-            debounceTimer = null;
-            this._debounceTimer = null;
-            inject();
-            // After a successful inject our node exists in the DOM. Disconnect
-            // the broad observer and switch to a narrow one that only watches
-            // the parent of the injected node for child removals.
-            const injected = document.getElementById("nai-nav-injected");
-            if (injected?.parentElement && this._observer) {
-                this._observer.disconnect();
-                this._observer = new MutationObserver(records => {
-                    for (const r of records) {
-                        for (const removed of r.removedNodes) {
-                            if (removed === injected || (removed instanceof Element && removed.contains(injected))) {
-                                // Our node was torn down — re-arm the broad observer
-                                this._observer?.disconnect();
-                                this._observer = new MutationObserver(scheduleInject);
-                                this._observer.observe(document.body, { childList: true, subtree: true });
-                                scheduleInject();
-                                return;
-                            }
-                        }
-                    }
-                });
-                this._observer.observe(injected.parentElement, { childList: true });
-            }
+        const isAlreadyInjected = (): boolean => {
+            const node = document.getElementById("nai-nav-injected");
+            // Must exist AND be adjacent to a (hidden) shop nav item — otherwise
+            // a stale node from a previous render is still around and we need to re-run.
+            if (!node || !node.nextSibling) return false;
+            const next = node.nextSibling as HTMLElement;
+            return next?.style?.display === "none" || next?.querySelector?.('[data-list-item-id$="___shop"]') != null;
         };
 
         const scheduleInject = () => {
+            // Fast path: if our button is already in place, do nothing. This
+            // turns ~99% of MutationObserver callbacks into a single DOM lookup.
+            if (isAlreadyInjected()) return;
             if (debounceTimer) return; // already pending
-            debounceTimer = setTimeout(ensureInjected, 80);
+            debounceTimer = setTimeout(() => {
+                debounceTimer = null;
+                this._debounceTimer = null;
+                inject();
+            }, 250);
             this._debounceTimer = debounceTimer;
         };
 
         this._observer = new MutationObserver(scheduleInject);
         this._observer.observe(document.body, { childList: true, subtree: true });
         inject();
-        // If inject succeeded synchronously, narrow the observer immediately.
-        if (document.getElementById("nai-nav-injected")) {
-            ensureInjected();
-        }
     },
 
     stop() {
