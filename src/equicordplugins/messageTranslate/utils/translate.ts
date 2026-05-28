@@ -8,6 +8,7 @@ import { Logger } from "@utils/Logger";
 
 import { settings } from "../settings";
 import { CachedTranslation, TranslateResponse } from "../types";
+import { TRANSLATION_CACHE_MAX } from "@utils/cacheLimits";
 
 const logger = new Logger("MessageTranslate");
 
@@ -55,6 +56,10 @@ export async function translate(messageId: string, text: string): Promise<Cached
 
         if (response.src === targetLang || response.confidence < settings.store.confidenceRequirement) {
             failed.set(messageId, text);
+            if (TRANSLATION_CACHE_MAX < Infinity && failed.size > TRANSLATION_CACHE_MAX) {
+                const first = failed.keys().next().value;
+                if (first !== undefined) failed.delete(first);
+            }
             return null;
         }
 
@@ -70,10 +75,18 @@ export async function translate(messageId: string, text: string): Promise<Cached
             sourceLang: response.src,
         };
         translationCache.set(messageId, entry);
+        if (TRANSLATION_CACHE_MAX < Infinity && translationCache.size > TRANSLATION_CACHE_MAX) {
+            const first = translationCache.keys().next().value;
+            if (first !== undefined) translationCache.delete(first);
+        }
         return entry;
     } catch (e) {
         logger.error("Translation failed", e);
         failed.set(messageId, text);
+        if (TRANSLATION_CACHE_MAX < Infinity && failed.size > TRANSLATION_CACHE_MAX) {
+            const first = failed.keys().next().value;
+            if (first !== undefined) failed.delete(first);
+        }
         return null;
     } finally {
         inProgress.delete(messageId);

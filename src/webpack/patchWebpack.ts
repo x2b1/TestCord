@@ -18,6 +18,14 @@ import { _blacklistBadModules, _initWebpack, factoryListeners, findModuleFactory
 
 export const patches = [] as Patch[];
 
+export function removePatchesByPlugin(pluginName: string) {
+    for (let i = patches.length - 1; i >= 0; i--) {
+        if (patches[i].plugin === pluginName) {
+            patches.splice(i, 1);
+        }
+    }
+}
+
 export const SYM_ORIGINAL_MODULE_FACTORIES = Symbol("WebpackPatcher.originalModuleFactories");
 export const SYM_IS_PROXIED_FACTORY = Symbol("WebpackPatcher.isProxiedFactory");
 export const SYM_ORIGINAL_FACTORY = Symbol("WebpackPatcher.originalFactory");
@@ -26,6 +34,10 @@ export const SYM_PATCHED_BY = Symbol("WebpackPatcher.patchedBy");
 export const allWebpackInstances = new Set<AnyWebpackRequire>();
 
 export const patchTimings = [] as Array<[plugin: string, moduleId: PropertyKey, match: PatchReplacement["match"], totalTime: number]>;
+
+export function clearPatchTimings() {
+    patchTimings.length = 0;
+}
 
 export const getBuildNumber = makeLazy(() => {
     try {

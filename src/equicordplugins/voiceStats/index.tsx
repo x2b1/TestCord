@@ -15,6 +15,7 @@ import definePlugin from "@utils/types";
 import { VoiceState } from "@vencord/discord-types";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 import { SelectedChannelStore, UserStore, VoiceStateStore } from "@webpack/common";
+import { TOTALS_MAX } from "@utils/cacheLimits";
 
 const wrapperClasses = findCssClassesLazy("memberSinceWrapper");
 const containerClasses = findCssClassesLazy("memberSince");
@@ -28,14 +29,28 @@ const totalsByUser = new Map<string, number>();
 let trackedChannelId: string | null = null;
 let saveIntervalId: ReturnType<typeof setInterval> | null = null;
 
+function trimTotals() {
+    if (totalsByUser.size <= TOTALS_MAX) return;
+    const sorted = [...totalsByUser.entries()].sort((a, b) => a[1] - b[1]);
+    const toDelete = sorted.slice(0, totalsByUser.size - TOTALS_MAX);
+    for (const [userId] of toDelete) totalsByUser.delete(userId);
+}
+
 async function loadStoredTotals() {
     const saved = await get<Record<string, number>>(storageKey);
     if (!saved) return;
     for (const [userId, value] of Object.entries(saved)) totalsByUser.set(userId, value);
+    trimTotals();
 }
 
 async function persistTotals() {
-    await set(storageKey, Object.fromEntries(totalsByUser));
+    const obj: Record<string, number> = {};
+    let i = 0;
+    for (const [userId, value] of totalsByUser) {
+        obj[userId] = value;
+        if (++i >= TOTALS_MAX) break;
+    }
+    await set(storageKey, obj);
 }
 
 function flushActiveSessions() {
@@ -45,6 +60,7 @@ function flushActiveSessions() {
         totalsByUser.set(userId, (totalsByUser.get(userId) ?? 0) + accrued);
         sessionStarts.set(userId, now);
     }
+    trimTotals();
 }
 
 function startTrackingChannel(channelId: string, myId: string) {
@@ -171,6 +187,7 @@ export default definePlugin({
                     const startedAt = sessionStarts.get(userId)!;
                     const accrued = Math.floor((Date.now() - startedAt) / 1000);
                     totalsByUser.set(userId, (totalsByUser.get(userId) ?? 0) + accrued);
+                    trimTotals();
                     sessionStarts.delete(userId);
                     persistTotals();
                 }

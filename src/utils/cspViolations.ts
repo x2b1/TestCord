@@ -7,6 +7,7 @@
 import { useLayoutEffect } from "@webpack/common";
 
 import { useForceUpdater } from "./react";
+import { CSP_MAX_ENTRIES } from "./cacheLimits";
 
 const cssRelevantDirectives = ["style-src", "style-src-elem", "img-src", "font-src"] as const;
 
@@ -17,6 +18,10 @@ document.addEventListener("securitypolicyviolation", ({ effectiveDirective, bloc
     if (!blockedURI || !cssRelevantDirectives.includes(effectiveDirective as any)) return;
 
     CspBlockedUrls.add(blockedURI);
+    if (CSP_MAX_ENTRIES < Infinity && CspBlockedUrls.size > CSP_MAX_ENTRIES) {
+        const first = CspBlockedUrls.values().next().value;
+        if (first !== undefined) CspBlockedUrls.delete(first);
+    }
 
     CspErrorListeners.forEach(listener => listener());
 });

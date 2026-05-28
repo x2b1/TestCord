@@ -145,6 +145,14 @@ export const toggleStyle = (name: string) => isStyleEnabled(name) ? disableStyle
  */
 export const isStyleEnabled = (name: string) => requireStyle(name).dom?.isConnected ?? false;
 
+export function removeStyle(name: string) {
+    const style = styleMap.get(name);
+    if (!style) return false;
+    if (style.dom) style.dom.remove();
+    styleMap.delete(name);
+    return true;
+}
+
 /**
  * Sets the variables of a style
  * ```ts

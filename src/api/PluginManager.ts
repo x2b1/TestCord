@@ -27,7 +27,7 @@ import { addMessageClickListener, addMessagePreEditListener, addMessagePreSendLi
 import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/MessagePopover";
 import { addNicknameIcon, removeNicknameIcon } from "@api/NicknameIcons";
 import { Settings, SettingsStore } from "@api/Settings";
-import { disableStyle, enableStyle } from "@api/Styles";
+import { disableStyle, enableStyle, removeStyle } from "@api/Styles";
 import { traceFunction } from "@debug/Tracer";
 import { Logger } from "@utils/Logger";
 import { onlyOnce } from "@utils/onlyOnce";
@@ -35,7 +35,7 @@ import { canonicalizeFind, canonicalizeReplacement } from "@utils/patches";
 import { DefinedSettings, Patch, Plugin, PluginDef, PluginSettingDef, ReporterTestable, StartAt } from "@utils/types";
 import { FluxEvents } from "@vencord/discord-types";
 import { FluxDispatcher } from "@webpack/common";
-import { patches } from "@webpack/patcher";
+import { patches, removePatchesByPlugin } from "@webpack/patcher";
 
 import Plugins from "~plugins";
 export { Plugins as plugins };
@@ -346,6 +346,10 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
     }
 
     p.started = false;
+
+    removePatchesByPlugin(name);
+
+    if (managedStyle) removeStyle(managedStyle);
 
     if (commands?.length) {
         logger.debug("Unregistering commands of plugin", name);

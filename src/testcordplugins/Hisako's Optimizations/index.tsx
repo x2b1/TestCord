@@ -114,6 +114,14 @@ export default definePlugin({
         this.restoreOriginalMethods();
         this.cleanupMemoryManagement();
         this.cleanupVirtualScrolling();
+        if (this.resourceCacheInterval) {
+            clearInterval(this.resourceCacheInterval);
+            this.resourceCacheInterval = null;
+        }
+        if (this.weakRefInterval) {
+            clearInterval(this.weakRefInterval);
+            this.weakRefInterval = null;
+        }
         this.optimizationCache.clear();
         console.log("[Hisako's Optimizations] Cleanup completed.");
     },
@@ -230,7 +238,7 @@ export default definePlugin({
             this.originalMethods.fetch = originalFetch;
 
             // Periodic cache cleanup
-            setInterval(() => {
+            this.resourceCacheInterval = setInterval(() => {
                 const now = Date.now();
                 for (const [key, value] of resourceCache.entries()) {
                     if ((now - value.timestamp) > CACHE_DURATION) {
@@ -374,7 +382,7 @@ export default definePlugin({
         const weakRefs = new WeakMap();
 
         // Periodic cleanup of weak references
-        setInterval(() => {
+        this.weakRefInterval = setInterval(() => {
             const dummy = {};
             weakRefs.set(dummy, Date.now());
             setTimeout(() => weakRefs.delete(dummy), 1000);

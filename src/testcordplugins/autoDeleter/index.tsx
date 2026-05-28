@@ -414,6 +414,20 @@ export default definePlugin({
             }
         });
 
+        // Stop batch and retry processors
+        if (this.batchProcessor) {
+            clearInterval(this.batchProcessor);
+            this.batchProcessor = null;
+        }
+        if (this.retryProcessor) {
+            clearInterval(this.retryProcessor);
+            this.retryProcessor = null;
+        }
+
+        // Clear queues
+        this.deletionQueue = [];
+        this.retryQueue = [];
+
         // Save remaining messages
         this.saveTrackedMessages();
     },

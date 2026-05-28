@@ -76,7 +76,17 @@ interface NativeFetchResult {
     error?: string;
 }
 
+import { ZIP_CACHE_MAX } from "@utils/cacheLimits";
+
 const zipCache = new Map<string, ZipPreviewCacheState>();
+
+function trimZipCache() {
+    if (ZIP_CACHE_MAX === Infinity) return;
+    if (zipCache.size > ZIP_CACHE_MAX) {
+        const first = zipCache.keys().next().value;
+        if (first !== undefined) zipCache.delete(first);
+    }
+}
 
 export function isZipFile(fileName?: string): boolean {
     return typeof fileName === "string" && /\.zip$/i.test(fileName);
@@ -97,17 +107,22 @@ export function getCachedZip(url: string): ZipPreviewCacheState {
     const promise = loadZip(url)
         .then(result => {
             zipCache.set(url, { status: "resolved", result });
+            trimZipCache();
             return result;
         })
         .catch(error => {
             const message = error instanceof Error ? error.message : "Failed to preview ZIP.";
             if (message === CANCELLED_PREVIEW_MESSAGE || message === NATIVE_UNAVAILABLE_MESSAGE) zipCache.delete(url);
-            else zipCache.set(url, { status: "rejected", message });
+            else {
+                zipCache.set(url, { status: "rejected", message });
+                trimZipCache();
+            }
             throw error;
         });
 
     const pending = { status: "pending" as const, promise };
     zipCache.set(url, pending);
+    trimZipCache();
     return pending;
 }
 

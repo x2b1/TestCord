@@ -12,6 +12,7 @@ import { getMessageStatus } from "./utils";
 import { stripTransientRenderState } from "./utils/cleanUp";
 import { DB_NAME, DB_VERSION } from "./utils/constants";
 import { getAttachmentBlobUrl } from "./utils/saveImage";
+import { CACHED_MESSAGES_MAX } from "@utils/cacheLimits";
 
 export enum DBMessageStatus {
     DELETED = "DELETED",
@@ -64,6 +65,10 @@ async function cacheRecord(record?: DBMessageRecord | null) {
 
     stripTransientRenderState(record.message);
     cachedMessages.set(record.message_id, record.message);
+    if (CACHED_MESSAGES_MAX < Infinity && cachedMessages.size > CACHED_MESSAGES_MAX) {
+        const first = cachedMessages.keys().next().value;
+        if (first !== undefined) cachedMessages.delete(first);
+    }
     return record;
 }
 

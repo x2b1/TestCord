@@ -7,6 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
+import { disableCacheLimits, resetCacheLimits } from "@utils/cacheLimits";
 import definePlugin, { OptionType } from "@utils/types";
 import { findAll } from "@webpack";
 
@@ -169,6 +170,11 @@ const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         description: "Log optimization activity to the console. Disable for production.",
         default: false
+    },
+    cacheLimitsEnabled: {
+        type: OptionType.BOOLEAN,
+        description: "Cap internal plugin caches (diffs, translations, ZIP previews, logged messages, voice stats) to prevent unbounded memory growth. Disable if you have RAM to spare and want maximum cache hit rate.",
+        default: true
     }
 });
 
@@ -290,6 +296,14 @@ export default definePlugin({
         if (settings.store.lazyEmbedImages) this.installLazyImages();
         this.installExtraCSS();
 
+        if (settings.store.cacheLimitsEnabled) {
+            resetCacheLimits();
+            if (settings.store.verboseLogging) logger.info("Plugin cache limits active");
+        } else {
+            disableCacheLimits();
+            if (settings.store.verboseLogging) logger.info("Plugin cache limits disabled");
+        }
+
         if (settings.store.verboseLogging) logger.info("Started");
     },
 
@@ -312,6 +326,8 @@ export default definePlugin({
 
         this.networkCache.clear();
         this.networkCacheOrder.length = 0;
+
+        resetCacheLimits();
     },
 
     // ---------------------------------------------------------------------

@@ -117,6 +117,16 @@ export const waitForSubscriptions = new Map<FilterFn, CallbackFn>();
 export const moduleListeners = new Set<CallbackFn>();
 export const factoryListeners = new Set<FactoryListernFn>();
 
+export function addModuleListener(cb: CallbackFn) {
+    moduleListeners.add(cb);
+    return () => moduleListeners.delete(cb);
+}
+
+export function addFactoryListener(cb: FactoryListernFn) {
+    factoryListeners.add(cb);
+    return () => factoryListeners.delete(cb);
+}
+
 export function _initWebpack(webpackRequire: WebpackRequire) {
     wreq = webpackRequire;
     cache = webpackRequire.c;
@@ -392,7 +402,18 @@ export function findModuleFactory(...code: CodeFilter) {
 
 // FIXME: give this a better name
 export type TypeWebpackSearchHistory = "find" | "findByProps" | "findByCode" | "findCssClasses" | "findStore" | "findComponent" | "findComponentByCode" | "findExportedComponent" | "waitFor" | "waitForComponent" | "waitForStore" | "proxyLazyWebpack" | "LazyComponentWebpack" | "extractAndLoadChunks" | "mapMangledModule";
-export const lazyWebpackSearchHistory = [] as Array<[TypeWebpackSearchHistory, any[]]>;
+export const lazyWebpackSearchHistory = new Proxy([] as Array<[TypeWebpackSearchHistory, any[]]>, {
+    get(target, prop) {
+        if (prop === "push") {
+            return function (...args: any[]) {
+                const result = Array.prototype.push.apply(target, args);
+                if (target.length > 1000) target.splice(0, target.length - 1000);
+                return result;
+            };
+        }
+        return Reflect.get(target, prop, target);
+    }
+});
 
 /**
  * This is just a wrapper around {@link proxyLazy} to make our reporter test for your webpack finds.

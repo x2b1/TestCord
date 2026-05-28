@@ -11,6 +11,8 @@ export interface DiffPart {
     text: string;
 }
 
+import { DIFF_CACHE_MAX } from "@utils/cacheLimits";
+
 const diffCache = new Map<string, DiffPart[]>();
 
 function diffCacheKey(oldText: string, newText: string): string {
@@ -28,6 +30,10 @@ export function computeDiffAsync(oldText: string, newText: string): Promise<Diff
 
     return exec(createWordDiff, oldText, newText).then(result => {
         diffCache.set(key, result);
+        if (DIFF_CACHE_MAX < Infinity && diffCache.size > DIFF_CACHE_MAX) {
+            const firstKey = diffCache.keys().next().value;
+            if (firstKey !== undefined) diffCache.delete(firstKey);
+        }
         return result;
     });
 }
@@ -38,6 +44,10 @@ export function precomputeDiff(oldText: string, newText: string): DiffPart[] {
     if (!cached) {
         cached = createWordDiff(oldText, newText);
         diffCache.set(key, cached);
+        if (DIFF_CACHE_MAX < Infinity && diffCache.size > DIFF_CACHE_MAX) {
+            const firstKey = diffCache.keys().next().value;
+            if (firstKey !== undefined) diffCache.delete(firstKey);
+        }
     }
     return cached;
 }
