@@ -4,9 +4,42 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { exec } from "@api/PluginWorker";
+
 export interface DiffPart {
     type: "added" | "removed" | "unchanged";
     text: string;
+}
+
+const diffCache = new Map<string, DiffPart[]>();
+
+function diffCacheKey(oldText: string, newText: string): string {
+    return oldText + "\0" + newText;
+}
+
+export function getCachedDiff(oldText: string, newText: string): DiffPart[] | undefined {
+    return diffCache.get(diffCacheKey(oldText, newText));
+}
+
+export function computeDiffAsync(oldText: string, newText: string): Promise<DiffPart[]> {
+    const key = diffCacheKey(oldText, newText);
+    const cached = diffCache.get(key);
+    if (cached) return Promise.resolve(cached);
+
+    return exec(createWordDiff, oldText, newText).then(result => {
+        diffCache.set(key, result);
+        return result;
+    });
+}
+
+export function precomputeDiff(oldText: string, newText: string): DiffPart[] {
+    const key = diffCacheKey(oldText, newText);
+    let cached = diffCache.get(key);
+    if (!cached) {
+        cached = createWordDiff(oldText, newText);
+        diffCache.set(key, cached);
+    }
+    return cached;
 }
 
 function tokenizeMessage(text: string): string[] {

@@ -26,8 +26,13 @@ export class Queue {
     /**
      * @param maxSize The maximum amount of functions that can be queued at once.
      *                If the queue is full, the oldest function will be removed.
+     * @param yieldBetween If true, yields to the event loop between tasks using setTimeout(0).
+     *                     Prevents a burst of tasks from blocking the main thread.
      */
-    constructor(public readonly maxSize = Infinity) { }
+    constructor(
+        public readonly maxSize = Infinity,
+        public readonly yieldBetween = false
+    ) { }
 
     private queue = [] as Array<() => Promisable<unknown>>;
 
@@ -35,11 +40,19 @@ export class Queue {
 
     private next() {
         const func = this.queue.shift();
-        if (func)
-            this.promise = Promise.resolve()
+        if (func) {
+            const run = () => Promise.resolve()
                 .then(func)
                 .finally(() => this.next());
-        else
+
+            if (this.yieldBetween) {
+                this.promise = new Promise<void>(r => setTimeout(() => r(), 0))
+                    .then(() => run())
+                    .finally(() => { });
+            } else {
+                this.promise = run();
+            }
+        } else
             this.promise = undefined;
     }
 

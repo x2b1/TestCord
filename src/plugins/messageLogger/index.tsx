@@ -26,7 +26,7 @@ import { ChannelStore, FluxDispatcher, Menu, MessageStore, Parser, SelectedChann
 
 import overlayStyle from "./deleteStyleOverlay.css?managed";
 import textStyle from "./deleteStyleText.css?managed";
-import { createMessageDiff, DiffPart } from "./diffUtils";
+import { precomputeDiff, computeDiffAsync, DiffPart } from "./diffUtils";
 import { openHistoryModal } from "./HistoryModal";
 
 interface MLMessage extends Message {
@@ -264,7 +264,8 @@ export function parseEditContent(content: string, message: Message, previousCont
         aggregatedNodes: React.ReactNode;
     };
     if (previousContent && content !== previousContent && settings.store.showEditDiffs && perMessageDiffEnabled) {
-        const diffParts = createMessageDiff(content, previousContent);
+        const diffParts = precomputeDiff(content, previousContent);
+        scheduleMicrotask(() => { computeDiffAsync(content, previousContent); });
         const originalSegments = buildViewSegments(diffParts, "original");
         const updatedSegments = buildViewSegments(diffParts, "updated");
         const useSeparatedDiffs = settings.store.separatedDiffs;
@@ -467,7 +468,8 @@ export default definePlugin({
                 };
 
                 if (!aggregatedState || aggregatedState.key !== diffKey) {
-                    const aggregatedDiff = createMessageDiff(original.content, message.content);
+                    const aggregatedDiff = precomputeDiff(original.content, message.content);
+                    scheduleMicrotask(() => { computeDiffAsync(original.content, message.content); });
                     const originalSegments = buildViewSegments(aggregatedDiff, "original");
                     const aggregatedSegments = buildViewSegments(aggregatedDiff, "updated");
                     const originalNodes = originalSegments.length
