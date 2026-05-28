@@ -568,20 +568,19 @@ export class BDPluginManager {
      */
     static async loadAllPlugins(): Promise<void> {
         try {
-            // In a real implementation, this would read from the file system
-            // For now, we'll use the dynamically imported plugins
             logger.info("Loading all BetterDiscord plugins...");
 
-            // The actual plugin files are loaded via the build system
-            // This method just initializes any that are enabled
             const plugins = this.getAllPlugins();
             let loadedCount = 0;
 
-            for (const plugin of plugins) {
-                if (this.isPluginEnabled(plugin.id)) {
-                    if (this.startPlugin(plugin.id)) {
-                        loadedCount++;
-                    }
+            const pending = plugins.filter(p => this.isPluginEnabled(p.id));
+
+            for (let i = 0; i < pending.length; i++) {
+                if (this.startPlugin(pending[i].id)) {
+                    loadedCount++;
+                }
+                if (i % 5 === 4) {
+                    await new Promise(r => setTimeout(r, 0));
                 }
             }
 

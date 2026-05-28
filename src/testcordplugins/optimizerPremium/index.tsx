@@ -528,7 +528,9 @@ export default definePlugin({
         for (const spring of this.springs) {
             spring.Globals?.assign?.({ skipAnimation: false });
         }
-        // Keep `springs` cached for next start()
+        // Drop module refs so they don't pin webpack chunks in memory when the
+        // plugin is disabled. Next start() will repopulate via findAll().
+        this.springs = [];
     },
 
     // ---------------------------------------------------------------------

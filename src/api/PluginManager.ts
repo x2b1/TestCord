@@ -50,6 +50,26 @@ const logger = new Logger("PluginManager", "#a6d189");
 
 export const PMLogger = logger;
 
+function scheduleBatch(tasks: Array<() => void>, yieldMs = 0): Promise<void> {
+    return new Promise(resolve => {
+        let i = 0;
+        function next() {
+            const end = Math.min(i + 1, tasks.length);
+            while (i < end) {
+                try { tasks[i](); } catch (e) { logger.error("Scheduled task failed", e); }
+                i++;
+            }
+            if (i < tasks.length) {
+                setTimeout(next, yieldMs);
+            } else {
+                resolve();
+            }
+        }
+        if (tasks.length === 0) resolve();
+        else setTimeout(next, yieldMs);
+    });
+}
+
 /** Whether we have subscribed to flux events of all the enabled plugins when FluxDispatcher was ready */
 let enabledPluginsSubscribedFlux = false;
 const subscribedFluxEventsPlugins = new Set<string>();
@@ -132,6 +152,7 @@ export function pluginRequiresRestart(p: Plugin) {
 
 export const startAllPlugins = traceFunction("startAllPlugins", function startAllPlugins(target: StartAt) {
     logger.info(`Starting plugins (stage ${target})`);
+    const pending: Array<() => void> = [];
     for (const name in Plugins) {
         if (isPluginEnabled(name) && (!IS_REPORTER || isReporterTestable(Plugins[name], ReporterTestable.Start))) {
             const p = Plugins[name];
@@ -139,9 +160,10 @@ export const startAllPlugins = traceFunction("startAllPlugins", function startAl
             const startAt = p.startAt ?? StartAt.WebpackReady;
             if (startAt !== target) continue;
 
-            startPlugin(Plugins[name]);
+            pending.push(() => startPlugin(Plugins[name]));
         }
     }
+    scheduleBatch(pending);
 });
 
 export function startDependenciesRecursive(p: Plugin) {

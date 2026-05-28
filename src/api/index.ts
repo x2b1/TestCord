@@ -32,6 +32,7 @@ import * as $MessageUpdater from "./MessageUpdater";
 import * as $NicknameIcons from "./NicknameIcons";
 import * as $Notices from "./Notices";
 import * as $Notifications from "./Notifications";
+import * as $PluginWorker from "./PluginWorker";
 import * as $UserArea from "./UserArea";
 export * as PluginManager from "./PluginManager";
 import * as $ProfileCollections from "./ProfileCollections";
@@ -182,3 +183,23 @@ export const ProfileCollections = $ProfileCollections;
  * An API allowing you to add sections near the 'Member Since' area of user profile panels.
  */
 export const ProfileSections = $ProfileSections;
+
+/**
+ * An API allowing you to run plugin code in a separate thread
+ * via Web Workers. Prevents heavy computation from lagging Discord's UI.
+ *
+ * @example
+ * import { PluginWorker } from "@api/index";
+ *
+ * // Run a heavy function off the main thread
+ * const result = await PluginWorker.exec((nums: number[]) => {
+ *   return nums.sort((a, b) => a - b);
+ * }, [3, 1, 4, 1, 5, 9, 2, 6]);
+ *
+ * // Create a persistent worker for multiple calls
+ * const worker = PluginWorker.WorkerHandle.create();
+ * worker.init((data: string) => data.toUpperCase());
+ * const upper = await worker.post("hello");
+ * worker.terminate();
+ */
+export const PluginWorker = $PluginWorker;
