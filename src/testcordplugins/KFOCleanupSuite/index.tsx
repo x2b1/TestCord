@@ -95,8 +95,6 @@ function getDeleteState(channelId: string): ChannelState {
     return deleteStates[channelId];
 }
 
-// -------- Shared Helpers --------
-
 async function sleep(ms: number) {
     return new Promise(r => setTimeout(r, ms));
 }
@@ -137,8 +135,6 @@ function parseIds(str: string): string[] {
         .map(s => s.trim())
         .filter(Boolean);
 }
-
-// -------- Smart Cleanup Logic --------
 
 function isOld(msg: any): boolean {
     const days = settings.store.trackedDays;
@@ -274,8 +270,6 @@ async function runCleanup(ctx: any, mode: CleanMode, extra?: { fromId?: string; 
     }
 }
 
-// -------- Regular Delete Logic --------
-
 async function runDelete(ctx: any, mode: DeleteMode) {
     const channelId = ctx.channel.id;
     const guildId = getGuildId(ctx);
@@ -406,8 +400,6 @@ async function stopDelete(ctx: any) {
         });
     }
 }
-
-// -------- Plugin Definition --------
 
 export default definePlugin({
     name: "Smart Cleanup Suite",

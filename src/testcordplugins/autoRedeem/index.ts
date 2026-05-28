@@ -65,8 +65,6 @@ const settings = definePluginSettings({
     },
 });
 
-// --- Queue / state ----------------------------------------------------------
-
 // Bounded LRU of codes we've already seen, so we never retry within the same
 // session but also don't leak unbounded memory across long uptimes.
 const SEEN_CAP = 5000;

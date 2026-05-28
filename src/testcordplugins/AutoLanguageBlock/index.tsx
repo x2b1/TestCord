@@ -3,7 +3,6 @@ import { FluxDispatcher, Toasts, UserStore } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 import { definePluginSettings } from "@api/Settings";
 
-// ==================== KEYWORDS BY LANGUAGE ====================
 const languageKeywords: Record<string, string[]> = {
     es: [
         "hola", "gracias", "adios", "adiós", "como", "cómo", "que", "qué",
@@ -158,7 +157,6 @@ const languageKeywords: Record<string, string[]> = {
     ],
 };
 
-// ==================== SETTINGS ====================
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
@@ -204,10 +202,8 @@ const settings = definePluginSettings({
     },
 });
 
-// ==================== LAZY IMPORTS ====================
 const RelationshipActions = findByPropsLazy("addRelationship", "removeRelationship");
 
-// ==================== DETECTION LOGIC ====================
 function detectLanguage(content: string, lang: string, minMatches: number): boolean {
     const keywords = languageKeywords[lang];
     if (!keywords || keywords.length === 0) return false;
@@ -225,7 +221,6 @@ function detectLanguage(content: string, lang: string, minMatches: number): bool
     return false;
 }
 
-// ==================== MESSAGE HANDLER ====================
 const handleMessage = (payload: any) => {
     if (!settings.store.enabled) return;
 
@@ -279,7 +274,6 @@ const handleMessage = (payload: any) => {
     }
 };
 
-// ==================== ABOUT COMPONENT ====================
 function AboutComponent() {
     return (
         <div style={{ marginBottom: "8px" }}>
@@ -308,7 +302,6 @@ function AboutComponent() {
     );
 }
 
-// ==================== PLUGIN DEFINITION ====================
 export default definePlugin({
     name: "AutoLanguageBlock",
     description: "Automatically blocks users who write in the configured language by detecting keywords in their messages.",

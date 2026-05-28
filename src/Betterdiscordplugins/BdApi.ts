@@ -11,10 +11,6 @@ import { FluxDispatcher, React, ReactDOM } from "@webpack/common";
 
 const bdLogger = new Logger("BdApi", "#7289da");
 
-// ============================================================================
-// Patcher Implementation (Enhanced with caller tracking)
-// ============================================================================
-
 interface Patch {
     caller: string;
     type: "before" | "after" | "instead";
@@ -221,10 +217,6 @@ class PatcherManager {
         return this.pushChildPatch(moduleToPatch, functionName, callback, { ...options, type: "instead" }) || (() => { });
     }
 }
-
-// ============================================================================
-// Webpack Module Access (Enhanced)
-// ============================================================================
 
 const BdWebpack = {
     Filters: {
@@ -458,10 +450,6 @@ const BdWebpack = {
     require: wreq
 };
 
-// ============================================================================
-// React Utilities (from BetterEquicord)
-// ============================================================================
-
 const exoticComponents = {
     memo: Symbol.for("react.memo"),
     forwardRef: Symbol.for("react.forward_ref"),
@@ -633,10 +621,6 @@ const ReactUtils = {
     }
 };
 
-// ============================================================================
-// Flux-Compatible Store
-// ============================================================================
-
 class FluxCompatibleStore {
     private listeners: Set<() => void> = new Set();
 
@@ -669,10 +653,6 @@ class FluxCompatibleStore {
         }
     }
 }
-
-// ============================================================================
-// Hooks API
-// ============================================================================
 
 let _cachedUseStateFromStores: any = null;
 function getUseStateFromStores(): any {
@@ -713,10 +693,6 @@ const HooksHolder = {
         return React.useReducer((n: number) => n + 1, 0);
     }
 };
-
-// ============================================================================
-// DOM API (Enhanced)
-// ============================================================================
 
 class BdDOM {
     private pluginName: string;
@@ -901,10 +877,6 @@ class BdDOM {
     }
 }
 
-// ============================================================================
-// Data API (Enhanced with event listeners)
-// ============================================================================
-
 type PerKeyListener = (value?: any) => void;
 type GlobalListener = (key: string, value?: any) => void;
 
@@ -1013,10 +985,6 @@ class BdData {
     }
 }
 
-// ============================================================================
-// Logger
-// ============================================================================
-
 class BdLogger {
     private prefix: string;
 
@@ -1034,10 +1002,6 @@ class BdLogger {
         if (error?.stack) console.error(error.stack);
     }
 }
-
-// ============================================================================
-// UI Utilities (Enhanced with tooltips, modals, etc.)
-// ============================================================================
 
 const BdUI = {
     alert(title: string, content: string): void {
@@ -1204,10 +1168,6 @@ class BdTooltip {
     }
 }
 
-// ============================================================================
-// Utils
-// ============================================================================
-
 const BdUtils = {
     suppressErrors: <T extends Function>(method: T, message: string = ""): T => {
         return (function (this: any, ...args: any[]) {
@@ -1239,10 +1199,6 @@ const BdUtils = {
     Store: FluxCompatibleStore
 };
 
-// ============================================================================
-// ContextMenu (Stub for now)
-// ============================================================================
-
 const BdContextMenu = {
     patch(navId: string, callback: Function): () => void {
         bdLogger.warn("ContextMenu.patch is not fully implemented");
@@ -1258,10 +1214,6 @@ const BdContextMenu = {
 
     close(): void { }
 };
-
-// ============================================================================
-// Commands API
-// ============================================================================
 
 const commandRegistry = new Map<string, Set<string>>();
 
@@ -1323,10 +1275,6 @@ const BdCommands = {
     }
 };
 
-// ============================================================================
-// Components (Stub)
-// ============================================================================
-
 const BdComponents = {
     get Button() { return React.forwardRef((props: any, ref: any) => React.createElement("button", { ...props, ref })); },
     get Switch() { return React.forwardRef((props: any, ref: any) => React.createElement("input", { ...props, type: "checkbox", ref })); },
@@ -1338,10 +1286,6 @@ const BdComponents = {
     get ColorPicker() { return React.forwardRef((props: any, ref: any) => React.createElement("input", { ...props, type: "color", ref })); },
     get SettingsPanel() { return BdUI.buildSettingsPanel; }
 };
-
-// ============================================================================
-// Main BdApi Class
-// ============================================================================
 
 export class BdApiClass {
     static version: string = "Testcord BD Compatibility Layer v2.0 (Enhanced)";
@@ -1399,10 +1343,6 @@ export class BdApiClass {
     }
 }
 
-// ============================================================================
-// Initialize Static Properties
-// ============================================================================
-
 BdApiClass.Logger = BdLogger;
 BdApiClass.Webpack = BdWebpack;
 BdApiClass.UI = BdUI;
@@ -1416,10 +1356,6 @@ BdApiClass.Net = { fetch };
 BdApiClass.Commands = BdCommands;
 BdApiClass.Hooks = HooksHolder;
 BdApiClass.ReactUtils = ReactUtils;
-
-// ============================================================================
-// Plugin & Theme APIs (placeholders - managed by PluginManager)
-// ============================================================================
 
 class BdPluginAPI {
     get folder(): string { return "Betterdiscordplugins"; }
@@ -1467,19 +1403,11 @@ BdApiClass.Patcher = new PatcherManager("BdApi");
 BdApiClass.Data = new BdData();
 BdApiClass.DOM = new BdDOM();
 
-// ============================================================================
-// Exports
-// ============================================================================
-
 export const BdApi = BdApiClass;
 
 export function createBdApi(pluginName: string): BdApiClass {
     return new BdApiClass(pluginName);
 }
-
-// ============================================================================
-// Global API Setup
-// ============================================================================
 
 if (typeof window !== "undefined") {
     (window as any).BdApi = new BdApiClass("Global");

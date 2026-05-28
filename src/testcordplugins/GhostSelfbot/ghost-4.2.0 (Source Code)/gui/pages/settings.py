@@ -122,8 +122,6 @@ class SettingsPage:
         self._create_pill(self.pages_wrapper, "Rich Presence", 4, lambda: self.toggle("rich_presence"))
         self._create_pill(self.pages_wrapper, "Snipers", 5, lambda: self.toggle("snipers"))
         
-        # -------
-        
         self.settings_wrapper.pack(fill=ttk.BOTH, expand=True, pady=(10, 0))
         self.pages[self.current_page].pack(fill=ttk.BOTH, expand=True, pady=(0, 10))
         self.toggle(self.current_page)

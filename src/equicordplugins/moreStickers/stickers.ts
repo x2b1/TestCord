@@ -115,8 +115,6 @@ export async function deleteStickerPack(id: string, packsKey: string = PACKS_KEY
     ]);
 }
 
-// ---------------------------- Dynamic Packs ----------------------------
-
 export async function getDynamicStickerPack(dspm: DynamicStickerPackMeta): Promise<StickerPack | null> {
     const dsp = await corsFetch(dspm.dynamic.refreshUrl, {
         headers: dspm.dynamic.authHeaders,

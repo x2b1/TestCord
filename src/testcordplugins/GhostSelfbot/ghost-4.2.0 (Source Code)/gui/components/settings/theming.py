@@ -199,8 +199,6 @@ There are 166 commands!""", font=("Host Grotesk", 12))
         self.themes = self.cfg.get_themes()
         self.theme_dict = self.cfg.theme.to_dict()
         
-        #-------
-        
         create_label = ttk.Label(wrapper, text="New theme name")
         create_label.configure(background=self.root.style.colors.get("dark"))
         
@@ -212,8 +210,6 @@ There are 166 commands!""", font=("Host Grotesk", 12))
         self.create_button.grid(row=1, column=1, sticky=ttk.E, padx=(0, 10), pady=(10, 0))
         self.create_button.set_state("disabled")
         
-        #-------
-        
         select_label = ttk.Label(wrapper, text="Select theme")
         select_label.configure(background=self.root.style.colors.get("dark"))
             
@@ -221,11 +217,7 @@ There are 166 commands!""", font=("Host Grotesk", 12))
         self.select_menu.set_selected(self.cfg.theme.name)
         self.select_menu.draw().grid(row=3, column=0, columnspan=2, sticky="we", padx=(10, 10), pady=(10, 0))
     
-        #-------
-    
         ttk.Separator(wrapper, orient="horizontal").grid(row=4, column=0, columnspan=3, sticky="we", padx=(10, 10), pady=(15, 15))
-        
-        #-------
         
         start_row = 5  # where your fields begin
 
@@ -253,11 +245,7 @@ There are 166 commands!""", font=("Host Grotesk", 12))
             
         row_now = start_row + (len(self.theme_dict) * 2)
             
-        #-------
-        
         ttk.Separator(wrapper, orient="horizontal").grid(row=row_now, column=0, columnspan=3, sticky="we", padx=(10, 10), pady=(5, 15))
-        
-        #-------
         
         buttons_frame = RoundedFrame(wrapper, radius=(0, 0, 15, 15), style="dark.TFrame", parent_background=self.root.style.colors.get("bg"))
         buttons_frame.grid(row=row_now + 1, column=0, columnspan=3, sticky="we")

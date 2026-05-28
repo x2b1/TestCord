@@ -252,7 +252,6 @@ export default definePlugin({
         }
     ],
 
-    // ---- Runtime state (cleaned up in stop()) ----
     originals: {} as {
         rAF?: typeof window.requestAnimationFrame;
         cAF?: typeof window.cancelAnimationFrame;
@@ -330,9 +329,6 @@ export default definePlugin({
         resetCacheLimits();
     },
 
-    // ---------------------------------------------------------------------
-    // DOM throttle — observer-based, doesn't touch appendChild
-    // ---------------------------------------------------------------------
     installDomThrottle() {
         const delay = settings.store.domThrottleDelay;
         const matches = (el: Element): boolean => {
@@ -373,9 +369,6 @@ export default definePlugin({
         this.domThrottleTimers.clear();
     },
 
-    // ---------------------------------------------------------------------
-    // rAF reduction with proper cancelAnimationFrame support
-    // ---------------------------------------------------------------------
     installRafReduction() {
         const original = window.requestAnimationFrame.bind(window);
         const originalCancel = window.cancelAnimationFrame.bind(window);
@@ -425,9 +418,6 @@ export default definePlugin({
         this.rafFakeHandles.clear();
     },
 
-    // ---------------------------------------------------------------------
-    // Network layer with LRU cap
-    // ---------------------------------------------------------------------
     installNetworkLayer() {
         const originalFetch = window.fetch.bind(window);
         this.originals.fetch = window.fetch;
@@ -524,9 +514,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // Spring skip — cache findAll result
-    // ---------------------------------------------------------------------
     installSpringSkip() {
         if (this.springs.length === 0) {
             const mods = findAll(mod => {
@@ -549,9 +536,6 @@ export default definePlugin({
         this.springs = [];
     },
 
-    // ---------------------------------------------------------------------
-    // Memory manager — guarded, no fake gc() spam
-    // ---------------------------------------------------------------------
     installMemoryManager() {
         const intervalMs = settings.store.memoryCheckSeconds * 1000;
         const perf = performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number; }; };
@@ -595,9 +579,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // Offscreen media pause
-    // ---------------------------------------------------------------------
     installOffscreenMediaPause() {
         if (typeof IntersectionObserver === "undefined") return;
         const paused = this.pausedMedia;
@@ -650,9 +631,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // CSS optimizations — scoped selectors only
-    // ---------------------------------------------------------------------
     installCSSOptimizations() {
         const rules: string[] = [];
         if (settings.store.virtualizeMessages) {
@@ -679,9 +657,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // Passive listeners — preserve removeEventListener compatibility
-    // ---------------------------------------------------------------------
     installPassiveListeners() {
         const PASSIVE_EVENTS = new Set(["wheel", "mousewheel", "touchstart", "touchmove", "touchend"]);
         const originalAdd = EventTarget.prototype.addEventListener;
@@ -715,9 +690,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // Console suppression
-    // ---------------------------------------------------------------------
     installConsoleSuppression() {
         this.originals.console = {
             log: console.log,
@@ -739,9 +711,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // ResizeObserver throttle — preserve instanceof via prototype chain
-    // ---------------------------------------------------------------------
     installResizeObserverThrottle() {
         if (typeof ResizeObserver === "undefined") return;
         const Native = ResizeObserver;
@@ -796,9 +765,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // GIF freezer — memory-bounded. Uses one shared canvas, no per-image data URLs.
-    // ---------------------------------------------------------------------
     installGifFreezer() {
         const sharedCanvas = document.createElement("canvas");
         const ctx = sharedCanvas.getContext("2d");
@@ -885,9 +851,6 @@ export default definePlugin({
         });
     },
 
-    // ---------------------------------------------------------------------
-    // Lazy images
-    // ---------------------------------------------------------------------
     installLazyImages() {
         const apply = (img: HTMLImageElement) => {
             if (img.dataset.opLazy === "1") return;
@@ -914,9 +877,6 @@ export default definePlugin({
         }
     },
 
-    // ---------------------------------------------------------------------
-    // Extra CSS — kept narrow to avoid universal-selector cost
-    // ---------------------------------------------------------------------
     installExtraCSS() {
         const rules: string[] = [];
 

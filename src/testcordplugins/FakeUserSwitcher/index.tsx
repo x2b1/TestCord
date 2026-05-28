@@ -10,7 +10,7 @@ import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import type { User } from "@vencord/discord-types";
-import { FluxDispatcher, IconUtils, React, UsernameUtils, UserStore } from "@webpack/common";
+import { FluxDispatcher, IconUtils, PresenceStore, React, UsernameUtils, UserStore } from "@webpack/common";
 
 import { getCachedTarget, isActive, isCurrentUser, loadTarget, logger, setEnabled, settings, subscribe } from "./data";
 import { FakeUserSwitcherModal } from "./modal";
@@ -140,9 +140,12 @@ let originalGetFormattedName: typeof UsernameUtils.getFormattedName | null = nul
 let originalGetUserTag: typeof UsernameUtils.getUserTag | null = null;
 let originalUseName: typeof UsernameUtils.useName | null = null;
 let originalUseUserTag: typeof UsernameUtils.useUserTag | null = null;
+let originalGetStatus: typeof PresenceStore.getStatus | null = null;
+let originalGetClientStatus: typeof PresenceStore.getClientStatus | null = null;
 
 let storePatched = false;
 let utilsPatched = false;
+let presencePatched = false;
 
 function patchStore() {
     if (storePatched) return;
@@ -264,6 +267,31 @@ function unpatchUtils() {
     if (originalUseName) UsernameUtils.useName = originalUseName;
     if (originalUseUserTag) UsernameUtils.useUserTag = originalUseUserTag;
     utilsPatched = false;
+}
+
+function patchPresence() {
+    if (presencePatched) return;
+    presencePatched = true;
+
+    originalGetStatus = PresenceStore.getStatus;
+    originalGetClientStatus = PresenceStore.getClientStatus;
+
+    PresenceStore.getStatus = function (userId: string, ...args: any[]) {
+        if (isActive() && isCurrentUser(userId)) return undefined as any;
+        return originalGetStatus!.call(this, userId, ...args);
+    };
+
+    PresenceStore.getClientStatus = function (userId: string) {
+        if (isActive() && isCurrentUser(userId)) return undefined as any;
+        return originalGetClientStatus!.call(this, userId);
+    };
+}
+
+function unpatchPresence() {
+    if (!presencePatched) return;
+    if (originalGetStatus) PresenceStore.getStatus = originalGetStatus;
+    if (originalGetClientStatus) PresenceStore.getClientStatus = originalGetClientStatus;
+    presencePatched = false;
 }
 
 function notifyUpdate() {
@@ -433,6 +461,7 @@ export default definePlugin({
         addProfileBadge(dynamicBadge);
         patchStore();
         patchUtils();
+        patchPresence();
 
         unsub = subscribe(syncSpoofState);
 
@@ -449,6 +478,7 @@ export default definePlugin({
 
     stop() {
         clearWrapCache();
+        unpatchPresence();
         unpatchUtils();
         unpatchStore();
         removeProfileBadge(dynamicBadge);
@@ -559,6 +589,18 @@ export default definePlugin({
         if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
         if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
 
+        // Mirror display name so the user popout shows the target's name
+        const targetUserProfile = (targetProfile as any).userProfile ?? {};
+        const spoofedDisplayName = targetUserProfile.displayName
+            ?? targetUserProfile.display_name
+            ?? (target as any).globalName
+            ?? (target as any).username;
+        overrides.userProfile = {
+            ...(original?.userProfile ?? {}),
+            ...targetUserProfile,
+            displayName: spoofedDisplayName,
+        };
+
         if (settings.store.spoofBadges) {
             if (targetProfile.badges && targetProfile.badges.length) {
                 overrides.badges = targetProfile.badges;
@@ -589,7 +631,13 @@ export default definePlugin({
             if (targetProfile.connectedAccounts) overrides.connectedAccounts = targetProfile.connectedAccounts;
             if (targetProfile.legacyApplications) overrides.legacyApplications = targetProfile.legacyApplications;
             if (targetProfile.applicationRoleConnections) overrides.applicationRoleConnections = targetProfile.applicationRoleConnections;
-            if (targetProfile.userProfile) overrides.userProfile = targetProfile.userProfile;
+            if (targetProfile.userProfile) {
+                overrides.userProfile = {
+                    ...overrides.userProfile,
+                    ...targetProfile.userProfile,
+                    displayName: spoofedDisplayName,
+                };
+            }
         }
 
         const merged = original

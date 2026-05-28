@@ -111,8 +111,6 @@ let virtualOutputDevice = {
     gainNode: null as GainNode | null,
 };
 
-// ==================== UTILITY FUNCTIONS ====================
-
 // Function to inject virtual device into Discord
 function injectVirtualDevice() {
     try {
@@ -313,8 +311,6 @@ function getInputDevices() {
     }
 }
 
-// ==================== VIRTUAL DEVICE ====================
-
 // Function to create virtual input device
 async function createVirtualInputDevice() {
     try {
@@ -464,8 +460,6 @@ function setVirtualDeviceAsOutput() {
         console.error("AudioCenter: Error setting virtual device:", error);
     }
 }
-
-// ==================== AUDIO MIXER ====================
 
 // Function to create audio context and mix sources
 async function createAudioMixer(
@@ -657,8 +651,6 @@ function stopAudioMixing() {
     }
 }
 
-// ==================== STOP FUNCTIONS ====================
-
 // Function to stop virtual device
 function stopVirtualOutputDevice() {
     try {
@@ -680,8 +672,6 @@ function stopVirtualOutputDevice() {
         console.error("AudioCenter: Error stopping virtual device:", error);
     }
 }
-
-// ==================== DIAGNOSTIC ====================
 
 // Full diagnostic function
 async function runFullDiagnostic() {
@@ -840,8 +830,6 @@ async function runFullDiagnostic() {
         }
     }
 }
-
-// ==================== REACT COMPONENTS ====================
 
 // Primary device selector component
 function PrimaryDeviceSelector() {
@@ -1002,8 +990,6 @@ function StatusDisplay() {
         </div>
     );
 }
-
-// ==================== MAIN PLUGIN ====================
 
 export default definePlugin({
     name: "AudioCenter",

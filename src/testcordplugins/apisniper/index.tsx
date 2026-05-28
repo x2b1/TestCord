@@ -64,13 +64,11 @@ function isLikelyFalsePositive(match: string, fullContent: string): boolean {
 
 // Regex patterns to detect various API keys, tokens, and credentials
 const PATTERNS: Record<string, RegExp> = {
-    // ==================== DISCORD TOKENS ====================
     discordTokenGeneric: /^[A-Za-z\d_-]{20,}\.[A-Za-z\d_-]{6,}\.[A-Za-z\d_-]{27,}$/,
     discordBotToken: /^Bot [A-Za-z\d_-]{20,}\.[A-Za-z\d_-]{6,}\.[A-Za-z\d_-]{27,}$/i,
     discordWebhook: /https:\/\/(?:canary|ptb)?\.?discord(?:app)?\.com\/api\/webhooks\/\d+\/[A-Za-z0-9_-]+/i,
     discordLabeled: /(?:discord[_-]?)?(?:token|bot[_-]?token)["'\s]*[:=]["'\s]*["']?([A-Za-z\d_-]{20,}\.[A-Za-z\d_-]{6}\.[A-Za-z\d_-]{27,})/i,
 
-    // ==================== CLOUD / DEV PLATFORMS ====================
     awsAccessKey: /\b(?:AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}\b/,
     awsSecretKey: /(?:aws_secret_access_key|aws_secret_key)["'\s]*[:=]["'\s]*["']?([A-Za-z0-9/+=]{40})/i,
     githubToken: /\bgh[opsu]_[A-Za-z0-9_]{36}\b/,
@@ -94,7 +92,6 @@ const PATTERNS: Record<string, RegExp> = {
     squarespaceKey: /\bsq0[a-z]{3}-[A-Za-z0-9_-]{20,}\b/,
     mailgunKey: /\bkey-[a-f0-9]{32}\b/,
 
-    // ==================== AI/ML SERVICES ====================
     openaiKey: /\bsk-[A-Za-z0-9_-]{20,}\b/,
     openaiProjectKey: /\bsk-proj-[A-Za-z0-9_-]{20,}\b/,
     anthropicKey: /\bsk-ant-[A-Za-z0-9_-]{20,}\b/,
@@ -111,12 +108,10 @@ const PATTERNS: Record<string, RegExp> = {
     stabilityKey: /\bstability-[A-Za-z0-9_-]{20,}\b/,
     aiServiceKey: /(?:openai|anthropic|claude|gemini|chatgpt|gpt-?4|llama|ai)["'\s]*[:=]["'\s]*["']?[A-Za-z0-9_-]{16,}/i,
 
-    // ==================== LABELED API KEYS ====================
     apiKey: /(?:api[_-]?key|apikey|api[_-]?token)["'\s]*[:=]["'\s]*["']?([A-Za-z0-9_-]{16,})["']/i,
     authToken: /(?:auth[_-]?token|authtoken|access[_-]?token)["'\s]*[:=]["'\s]*["']?([A-Za-z0-9_-]{16,})["']/i,
     secretKey: /(?:secret[_-]?key|secretkey|private[_-]?key)["'\s]*[:=]["'\s]*["']?([A-Za-z0-9_-]{16,})["']/i,
 
-    // ==================== AUTH / SECURITY ====================
     jwt: /^eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/,
     oauthToken: /\bya29\.[A-Za-z0-9_-]+\b/,
     bearerToken: /(?:bearer|authorization)[\s]+[A-Za-z0-9_.-]{20,}/i,
@@ -126,7 +121,6 @@ const PATTERNS: Record<string, RegExp> = {
     sshKey: /\bssh-(?:rsa|dss|ed25519)\s+[A-Za-z0-9+/]+={0,3}/,
     apiKeyInUrl: /[?&](?:api[_-]?key|apikey|token|auth|access_token)=([A-Za-z0-9_-]{16,})/i,
 
-    // ==================== DATABASE URIs ====================
     mongodbUri: /\bmongodb(?:\+srv)?:\/\/[^\s]+:[^\s]+@[^\s]+\b/i,
     postgresUri: /\bpostgres(?:ql)?:\/\/[^\s]+:[^\s]+@[^\s]+\b/i,
     mysqlUri: /\bmysql?:\/\/[^\s]+:[^\s]+@[^\s]+\b/i,

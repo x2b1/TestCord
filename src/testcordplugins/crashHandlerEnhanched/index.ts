@@ -26,7 +26,6 @@ import { maybePromptToUpdate } from "@utils/updater";
 import { filters, findBulk, proxyLazyWebpack } from "@webpack";
 import { DraftType, ExpressionPickerStore, FluxDispatcher, NavigationRouter, SelectedChannelStore, UserStore } from "@webpack/common";
 
-// ==================== INTERFACES ====================
 interface CrashReport {
     id: string;
     timestamp: number;
@@ -61,10 +60,8 @@ interface PerformanceMetrics {
     heapSize?: number;
 }
 
-// ==================== LOGGER ====================
 const CrashHandlerLogger = new Logger("CrashHandlerEnhanced");
 
-// ==================== WEBPACK ====================
 const { ModalStack, DraftManager } = proxyLazyWebpack(() => {
     const [ModalStack, DraftManager] = findBulk(
         filters.byProps("pushLazy", "popAll"),
@@ -77,9 +74,7 @@ const { ModalStack, DraftManager } = proxyLazyWebpack(() => {
     };
 });
 
-// ==================== SETTINGS ====================
 const settings = definePluginSettings({
-    // ============ BASIC RECOVERY ============
     attemptToPreventCrashes: {
         type: OptionType.BOOLEAN,
         description: "Attempt to prevent Discord crashes and auto-recover",
@@ -103,7 +98,6 @@ const settings = definePluginSettings({
         markers: [1, 100, 500, 1000, 2000, 5000]
     },
 
-    // ============ ADVANCED RECOVERY ============
     aggressiveRecovery: {
         type: OptionType.BOOLEAN,
         description: "Use aggressive recovery (clears more state, higher success rate)",
@@ -130,7 +124,6 @@ const settings = definePluginSettings({
         default: true
     },
 
-    // ============ CRASH DETECTION ============
     enablePreventiveMeasures: {
         type: OptionType.BOOLEAN,
         description: "Enable preventive measures (monitor memory, performance)",
@@ -159,7 +152,6 @@ const settings = definePluginSettings({
         markers: [10, 30, 60, 120, 300]
     },
 
-    // ============ NOTIFICATIONS ============
     showCrashNotifications: {
         type: OptionType.BOOLEAN,
         description: "Show notifications when crashes occur",
@@ -187,7 +179,6 @@ const settings = definePluginSettings({
         markers: [3, 5, 10, 15, 30]
     },
 
-    // ============ CRASH LOGGING ============
     enableCrashLogging: {
         type: OptionType.BOOLEAN,
         description: "Log all crashes with detailed information",
@@ -220,7 +211,6 @@ const settings = definePluginSettings({
         default: true
     },
 
-    // ============ STATISTICS ============
     enableStatistics: {
         type: OptionType.BOOLEAN,
         description: "Track crash statistics and patterns",
@@ -237,7 +227,6 @@ const settings = definePluginSettings({
         default: true
     },
 
-    // ============ AUTO-ACTIONS ============
     autoRestart: {
         type: OptionType.BOOLEAN,
         description: "Auto-restart Discord after fatal crashes",
@@ -259,7 +248,6 @@ const settings = definePluginSettings({
         default: false
     },
 
-    // ============ HIDDEN STORAGE ============
     crashLogs: {
         type: OptionType.STRING,
         description: "Crash logs storage (JSON) - managed automatically",
@@ -280,7 +268,6 @@ const settings = definePluginSettings({
     }
 });
 
-// ==================== STATE ====================
 let hasCrashedOnce = false;
 let isRecovering = false;
 let shouldAttemptRecover = true;
@@ -290,7 +277,6 @@ let lastCrashTime = 0;
 let performanceMonitorInterval: NodeJS.Timeout | null = null;
 let sessionStartTime = Date.now();
 
-// ==================== UTILITY FUNCTIONS ====================
 function generateCrashId(): string {
     return `crash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
