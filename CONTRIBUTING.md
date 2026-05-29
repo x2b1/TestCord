@@ -1,7 +1,10 @@
 # Introduction
 
-Testcord is a community project and welcomes any kind of contribution from anyone!
-
+> [!NOTE]
+> **AI Usage Notice**
+>
+> Your contribution UNLIKE equicord, can be vibecoded as long as the code isn't shit.
+> Also please don't AI generate pull request names.
 
 > [!IMPORTANT]
 > All contributions must follow our [Code of Conduct](./CODE_OF_CONDUCT.md).
@@ -10,14 +13,17 @@ Testcord is a community project and welcomes any kind of contribution from anyon
 
 Contributions are submitted through pull requests. If you are new to Git or GitHub, we recommend reading [this guide](https://opensource.com/article/19/7/create-pull-request-github).
 
-Pull requests can target either the `main` or `dev` branch.
-Unless you are experienced and know what you are doing, **always target `main`**. The `dev` branch may contain unstable changes and can be force-pushed frequently, which may break your pull request.
+Pull requests are made either to the main or dev branch, personally unlike equicord, we prefer you to pull request to dev as I (x2b) only use the dev branch, the other owners use main, meaning if something breaks accidentally I'll be the only one affected.
 
 ## Writing a Plugin
 
 Developing a plugin is the primary way to contribute.
 
 Before starting your plugin:
+
+- Consider if this plugin would be useful to a large portion of the userbase. We do not accept niche plugins
+- Check existing pull requests to see if someone is already working on a similar plugin
+- Familarise yourself with our plugin rules below to ensure your plugin is not banned
 
 - Join our Discord server.
 - Check existing pull requests to avoid duplicate work.
@@ -31,7 +37,10 @@ Before starting your plugin:
 ## Plugin Rules
 
 To keep TestCord stable, secure and maintainable, all plugins must follow these rules:
-1. Fuck rules i wanna create a client wout any restrictions, just dont make plugins that will hack the user using it (this rule doesnt apply to other people tho)
+
+1. No simple slash-command plugins (e.g. `/cat`). If applicable, create a [user-installable Discord app](https://discord.com/developers/docs/change-log#userinstallable-apps-preview) instead. (negotiable)
+2. No raw DOM manipulation — always use proper patches and React. (negotiable)
+3. No plugins that only hide or redesign UI elements (use CSS for that). This rule may be negotiable.
 
 **Plugins that violate any of these rules will not be accepted.**
 
