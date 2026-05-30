@@ -409,7 +409,7 @@ export default definePlugin({
                 },
                 {
                     // Prefer the CTA + progress button branch when Questify can complete the Quest.
-                    match: /(?<="data-migration-pending":.{0,100}?enabledQuestStates.has\(\i\)\?)/,
+                    match: /(?<="data-migration-pending":.{0,400}?enabledQuestStates.has\(\i\)\?)/,
                     replace: "!$self.canAutoCompleteQuest(arguments[0].quest)&&"
                 }
             ]

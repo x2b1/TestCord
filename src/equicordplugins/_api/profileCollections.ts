@@ -14,7 +14,7 @@ export default definePlugin({
     patches: [
         // message and member list popouts
         {
-            find: ".USER_PROFILE_POPOUT])",
+            find: '"UserProfilePopout");',
             replacement: {
                 match: /user:\i,widgets:.{0,100}?\}\),/,
                 replace: "$&Vencord.Api.ProfileCollections.renderProfileCollections(arguments[0]),",
