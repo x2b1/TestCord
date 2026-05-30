@@ -1,0 +1,36 @@
+/* Esharq — donor badge with crimson glow */
+
+.esharq-donor-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    flex-shrink: 0;
+    border-radius: 50%;
+    animation: esharq-donor-pulse 2.5s ease-in-out infinite;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.esharq-donor-badge:hover {
+    transform: scale(1.3);
+    animation: none;
+    filter:
+        drop-shadow(0 0 5px #d6455a)
+        drop-shadow(0 0 12px #a01b2d)
+        drop-shadow(0 0 20px rgb(160 27 45 / 60%));
+}
+
+@keyframes esharq-donor-pulse {
+    0%, 100% {
+        filter:
+            drop-shadow(0 0 3px rgb(160 27 45 / 70%))
+            drop-shadow(0 0 6px rgb(214 69 90 / 40%));
+    }
+
+    50% {
+        filter:
+            drop-shadow(0 0 6px #d6455a)
+            drop-shadow(0 0 12px rgb(160 27 45 / 75%))
+            drop-shadow(0 0 18px rgb(214 69 90 / 45%));
+    }
+}
