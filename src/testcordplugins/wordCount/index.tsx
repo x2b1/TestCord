@@ -5,7 +5,7 @@
  */
 
 import { addMessageAccessory } from "@api/MessageAccessories";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Text } from "@webpack/common";
 
@@ -38,8 +38,3 @@ export default definePlugin({
         ), 2);
     }
 });
-
-
-
-
-
