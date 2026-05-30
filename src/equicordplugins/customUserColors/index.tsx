@@ -102,7 +102,7 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "CustomUserColors",
-    get description() { return t("يتيح لك إضافة لون مخصص لأي مستخدم في أي مكان! يُنصح باستخدامه مع typingTweaks و roleColorEverywhere", "Lets you assign a custom color to any user anywhere! Recommended to use with typingTweaks and roleColorEverywhere"); },
+    description: "Lets you assign a custom color to any user anywhere! Recommended to use with typingTweaks and roleColorEverywhere",
     tags: ["Appearance", "Customisation", "Chat"],
     authors: [EquicordDevs.mochienya],
     contextMenus: {

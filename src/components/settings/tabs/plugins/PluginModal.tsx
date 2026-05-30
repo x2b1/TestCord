@@ -33,6 +33,7 @@ import { t } from "@utils/esharqI18n";
 import { proxyLazy } from "@utils/lazy";
 import { Margins } from "@utils/margins";
 import { classes, isObjectEmpty } from "@utils/misc";
+import { resolvePluginDescription, resolvePluginOption } from "@utils/i18n";
 import { PLUGIN_TRANSLATIONS } from "@utils/pluginTranslations";
 import { OptionType, Plugin, PluginTag } from "@utils/types";
 import { RenderModalProps, User } from "@vencord/discord-types";
@@ -90,7 +91,8 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
     const pluginSettings = useSettings([`plugins.${plugin.name}.*`, "plugins.Settings.arabicMode"]).plugins[plugin.name];
     const arabicMode = (Settings.plugins as any)?.Settings?.arabicMode ?? false;
     const hasSettings = hasAnyVisibleSettings(plugin);
-    const displayDescription = (!arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.description) || plugin.description;
+    const fallbackDescription = (!arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.description) || plugin.description;
+    const displayDescription = resolvePluginDescription(plugin.name, fallbackDescription);
 
     // avoid layout shift by showing dummy users while loading users
     const fallbackAuthors = useMemo(() => [makeDummyUser({ username: "Loading...", id: "-1465912127305809920" })], []);
@@ -137,8 +139,15 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
             }
 
             const Component = OptionComponentMap[setting.type];
-            const enOptionDesc = !arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.options?.[key];
-            const resolvedSetting = enOptionDesc ? { ...setting, description: enOptionDesc } : setting;
+            // Component settings have no description field; only resolve where one exists.
+            let resolvedSetting = setting;
+            if ("description" in setting) {
+                const enOptionDesc = !arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.options?.[key];
+                const baseOptionDesc = (enOptionDesc || setting.description) as string;
+                const resolvedOptionDesc = resolvePluginOption(plugin.name, key, baseOptionDesc);
+                if (resolvedOptionDesc !== setting.description)
+                    resolvedSetting = { ...setting, description: resolvedOptionDesc };
+            }
             return (
                 <ErrorBoundary noop key={key}>
                     <Component

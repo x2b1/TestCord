@@ -203,6 +203,53 @@ export const globPlugins = kind => ({
 });
 
 /**
+ * Aggregates the per-plugin translation overlay modules in src/i18n/plugins/
+ * into the virtual module `~i18n`. Mirrors globPlugins: each file is keyed by
+ * its filename (which IS the plugin name), so adding/removing a translation is
+ * a single file create/delete with zero edits to any central table.
+ * @type {import("esbuild").Plugin}
+ */
+export const globPluginI18n = {
+    name: "glob-plugin-i18n",
+    setup: build => {
+        const filter = /^~i18n$/;
+        build.onResolve({ filter }, args => ({
+            namespace: "import-i18n",
+            path: args.path
+        }));
+
+        build.onLoad({ filter, namespace: "import-i18n" }, async () => {
+            const dir = "i18n/plugins";
+            const fullDir = `./src/${dir}`;
+            let code = "";
+            let mapCode = "\n";
+            let i = 0;
+            if (await exists(fullDir)) {
+                const files = await readdir(fullDir, { withFileTypes: true });
+                for (const file of files) {
+                    const fileName = file.name;
+                    if (file.isDirectory()) continue;
+                    if (fileName.startsWith("_") || fileName.startsWith(".")) continue;
+                    if (!/\.tsx?$/.test(fileName)) continue;
+
+                    const key = fileName.replace(/\.tsx?$/, "");
+                    const mod = `i${i}`;
+                    code += `import ${mod} from "./${dir}/${key}";\n`;
+                    mapCode += `${JSON.stringify(key)}:${mod},\n`;
+                    i++;
+                }
+            }
+            code += `export default {${mapCode}};`;
+            return {
+                contents: code,
+                resolveDir: "./src",
+                watchDirs: [resolve("src", dir)],
+            };
+        });
+    }
+};
+
+/**
  * @type {import("esbuild").Plugin}
  */
 export const gitHashPlugin = {
@@ -354,7 +401,7 @@ export const commonOpts = {
     legalComments: "linked",
     banner,
     plugins: [fileUrlPlugin, gitHashPlugin, gitRemotePlugin, stylePlugin],
-    external: ["~plugins", "~git-hash", "~git-remote", "/assets/*"],
+    external: ["~plugins", "~i18n", "~git-hash", "~git-remote", "/assets/*"],
     inject: [join(dirname(fileURLToPath(import.meta.url)), "inject/react.mjs")],
     jsx: "transform",
     jsxFactory: "VencordCreateElement",

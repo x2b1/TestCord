@@ -5,13 +5,12 @@
  */
 
 import { Devs } from "@utils/constants";
-import { t } from "@utils/esharqI18n";
 import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "NoTypingAnimation",
     authors: [Devs.AutumnVN],
-    get description() { return t("يعطّل أنيميشن نقاط الكتابة الذي يستهلك الموارد", "Disables the resource-consuming typing dots animation"); },
+    description: "Disables the resource-consuming typing dots animation",
     tags: ["Appearance"],
     patches: [
         {

@@ -6,7 +6,6 @@
 
 import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
-import { t } from "@utils/esharqI18n";
 import definePlugin from "@utils/types";
 import { findComponentByCodeLazy, findStoreLazy } from "@webpack";
 import { TypingStore, UserStore, useStateFromStores } from "@webpack/common";
@@ -18,7 +17,7 @@ const PrivateChannelSortStore = findStoreLazy("PrivateChannelSortStore") as { ge
 
 export default definePlugin({
     name: "HomeTyping",
-    get description() { return t("يحوّل زر الرئيسية إلى مؤشر كتابة عندما يكتب أحدهم في رسائلك الخاصة", "Turns the home button into a typing indicator when someone is typing in your DMs"); },
+    description: "Turns the home button into a typing indicator when someone is typing in your DMs",
     tags: ["Chat"],
     authors: [Devs.Samwich],
     TypingIcon() {

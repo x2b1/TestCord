@@ -24,7 +24,7 @@ import { appendFile, mkdir, readdir, readFile, rm, writeFile } from "fs/promises
 import JSZip from "jszip";
 import path, { join } from "path";
 
-import { BUILD_TIMESTAMP, commonOpts, globPlugins, IS_DEV, IS_REPORTER, IS_COMPANION_TEST, IS_STANDALONE, VERSION, commonRendererPlugins, buildOrWatchAll, stringifyValues, IS_ANTI_CRASH_TEST } from "./common.mjs";
+import { BUILD_TIMESTAMP, commonOpts, globPlugins, globPluginI18n, IS_DEV, IS_REPORTER, IS_COMPANION_TEST, IS_STANDALONE, VERSION, commonRendererPlugins, buildOrWatchAll, stringifyValues, IS_ANTI_CRASH_TEST } from "./common.mjs";
 
 /**
  * @type {import("esbuild").BuildOptions}
@@ -34,10 +34,11 @@ const commonOptions = {
     entryPoints: ["browser/Vencord.ts"],
     format: "iife",
     globalName: "Vencord",
-    external: ["~plugins", "~git-hash", "/assets/*"],
+    external: ["~plugins", "~i18n", "~git-hash", "/assets/*"],
     target: ["esnext"],
     plugins: [
         globPlugins("web"),
+        globPluginI18n,
         ...commonRendererPlugins
     ],
     define: stringifyValues({

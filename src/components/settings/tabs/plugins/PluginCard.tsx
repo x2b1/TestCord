@@ -11,6 +11,7 @@ import { CogWheel, InfoIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
+import { resolvePluginDescription } from "@utils/i18n";
 import { PLUGIN_TRANSLATIONS } from "@utils/pluginTranslations";
 import { Plugin } from "@utils/types";
 import { React, showToast, Toasts } from "@webpack/common";
@@ -39,8 +40,11 @@ const USERPLUGINS_ICON_URI = "data:image/x-icon;base64,AAABAAYAAAAAAAEAIABNGQAAZ
 export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLeave, isNew }: PluginCardProps) {
     useSettings(["plugins.Settings.arabicMode"]);
     const arabicMode = (Settings.plugins as any)?.Settings?.arabicMode ?? true;
-    const displayDescription = (!arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.description)
+    // Overlay (src/i18n/plugins/) takes precedence; otherwise fall through to the
+    // legacy PLUGIN_TRANSLATIONS-or-source behavior for not-yet-migrated plugins.
+    const fallbackDescription = (!arabicMode && PLUGIN_TRANSLATIONS[plugin.name]?.description)
         || plugin.description;
+    const displayDescription = resolvePluginDescription(plugin.name, fallbackDescription);
 
     const settings = Settings.plugins[plugin.name];
     const pluginMeta = PluginMeta[plugin.name];

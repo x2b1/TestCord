@@ -26,6 +26,11 @@ declare module "~plugins" {
     export const ExcludedPlugins: Record<string, "web" | "discordDesktop" | "vesktop" | "equibop" | "desktop" | "dev">;
 }
 
+declare module "~i18n" {
+    const pluginI18n: Record<string, import("./utils/i18n/types").PluginI18n>;
+    export default pluginI18n;
+}
+
 declare module "~git-hash" {
     const hash: string;
     export default hash;
