@@ -1088,7 +1088,7 @@ sealed class InstallerForm : Form
         if (_btnInstall == null) return;
         if (Logic.IsInstalled)
         {
-            _btnInstall.Text      = T("تحديث Esharq  ↑", "Update Esharq  ↑");
+            _btnInstall.Text      = T("تحميل Esharq  ↑", "Download Esharq  ↑");
             _btnInstall.BackColor = BLUE;
             _btnInstall.FlatAppearance.MouseOverBackColor = Color.FromArgb(110, 120, 250);
         }
