@@ -249,15 +249,62 @@ static class Logic
     {
         try
         {
+            // Process name derived from the install path (e.g. "Discord", "DiscordPTB"),
+            // plus the common variants as a safety net. Discord minimises to the tray and
+            // spawns several child processes that all keep app.asar locked, so a single
+            // Process.Kill() often leaves stragglers behind. taskkill /F /T force-kills the
+            // whole process tree by image name; we loop until none remain.
             var discordRoot = Path.GetDirectoryName(Path.GetDirectoryName(resourcesPath));
-            if (string.IsNullOrEmpty(discordRoot)) return;
-            var procName = Path.GetFileName(discordRoot);
-            if (string.IsNullOrEmpty(procName)) return;
-            foreach (var p in Process.GetProcessesByName(procName))
-                try { p.Kill(); p.WaitForExit(3000); } catch { }
-            Thread.Sleep(800);
+            var derived = string.IsNullOrEmpty(discordRoot) ? null : Path.GetFileName(discordRoot);
+            string[] names = { derived, "Discord", "DiscordCanary", "DiscordPTB", "DiscordDevelopment" };
+
+            for (int round = 0; round < 6; round++)
+            {
+                bool any = false;
+                foreach (var name in names)
+                {
+                    if (string.IsNullOrEmpty(name)) continue;
+                    if (Process.GetProcessesByName(name).Length == 0) continue;
+                    any = true;
+
+                    // Force-kill the entire tree by image name (most reliable).
+                    try
+                    {
+                        var psi = new ProcessStartInfo("taskkill", "/F /T /IM \"" + name + ".exe\"")
+                        {
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            WindowStyle = ProcessWindowStyle.Hidden
+                        };
+                        var tk = Process.Start(psi);
+                        if (tk != null) tk.WaitForExit(3000);
+                    }
+                    catch { }
+
+                    // Fallback: kill any survivors directly.
+                    foreach (var p in Process.GetProcessesByName(name))
+                        try { p.Kill(); p.WaitForExit(2000); } catch { }
+                }
+                if (!any) break;
+                Thread.Sleep(500);
+            }
+            Thread.Sleep(400); // let Windows release the app.asar file handle
         }
         catch { }
+    }
+
+    // Overwriting app.asar can transiently fail if Windows hasn't released the handle
+    // yet after Discord exits. Retry a few times before giving up with a clear message.
+    static void CopyWithRetry(string src, string dest)
+    {
+        Exception last = null;
+        for (int i = 0; i < 12; i++)
+        {
+            try { File.Copy(src, dest, true); return; }
+            catch (Exception ex) { last = ex; Thread.Sleep(500); }
+        }
+        throw new Exception("تعذّر استبدال app.asar — تأكد أن Discord مغلق تماماً (بما في ذلك أيقونة شريط المهام) ثم أعد المحاولة. "
+            + (last != null ? last.Message : ""));
     }
 
     public static void Install(string res, Action<string> status, Action<int> progress)
@@ -295,11 +342,13 @@ static class Logic
             }
         }
 
-        status("تطبيق التعديل على Discord...");
+        status("جارٍ إغلاق Discord...");
         progress(82);
         KillDiscord(res);
-        File.Copy(tmp, Path.Combine(res, ASAR), true);
-        File.Copy(tmp, AsarTarget, true);
+        status("تطبيق التعديل على Discord...");
+        progress(90);
+        CopyWithRetry(tmp, Path.Combine(res, ASAR));
+        CopyWithRetry(tmp, AsarTarget);
         try { File.Delete(tmp); } catch { }
         progress(100);
         status("✓ تم التثبيت — أعد تشغيل Discord لتفعيل Esharq");
@@ -332,7 +381,7 @@ static class Logic
         Download(OPENASAR_URL, tmp, (p, dl, tot) => progress(10 + (int)(p * 0.85)));
         status("تطبيق OpenAsar...");
         progress(97);
-        File.Copy(tmp, Path.Combine(res, "app.asar"), true);
+        CopyWithRetry(tmp, Path.Combine(res, "app.asar"));
         try { File.Delete(tmp); } catch { }
         progress(100);
         status("✓ تم تثبيت OpenAsar — أعد تشغيل Discord");
