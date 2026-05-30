@@ -154,7 +154,17 @@ cmd_install() {
   hdr "جارٍ تطبيق التعديل..."
   kill_discord
 
-  cp "$tmp" "${res_dir}/${ASAR}"
+  # Inject by swapping app.asar: back up the original to _app.asar (once), then
+  # place the Esharq mod as app.asar. Its patcher.js loads ../_app.asar at runtime.
+  app_asar="${res_dir}/app.asar"
+  backup_asar="${res_dir}/_app.asar"
+  if [ ! -f "$backup_asar" ]; then
+    [ -f "$app_asar" ] || die "لم يُعثر على app.asar في ${res_dir} — تأكد من مجلد resources الصحيح"
+    mv "$app_asar" "$backup_asar"
+  elif [ -f "$app_asar" ]; then
+    rm -f "$app_asar"
+  fi
+  cp "$tmp" "$app_asar"
   cp "$tmp" "${DATA_DIR}/equicord.asar"
 
   echo ""
@@ -175,13 +185,20 @@ cmd_uninstall() {
 
   kill_discord
 
-  [ -f "${res_dir}/${ASAR}" ] \
-    && rm -f "${res_dir}/${ASAR}" \
-    && ok "تم حذف ${ASAR} من Discord"
+  # Restore the original Discord app.asar from the backup.
+  app_asar="${res_dir}/app.asar"
+  backup_asar="${res_dir}/_app.asar"
+  if [ -f "$backup_asar" ]; then
+    rm -f "$app_asar"
+    mv "$backup_asar" "$app_asar"
+    ok "تمت استعادة app.asar الأصلي"
+  fi
 
+  # Clean up the data copy and any stray desktop.asar from older installs.
   [ -f "${DATA_DIR}/equicord.asar" ] \
     && rm -f "${DATA_DIR}/equicord.asar" \
     && ok "تم حذف equicord.asar"
+  [ -f "${res_dir}/${ASAR}" ] && rm -f "${res_dir}/${ASAR}"
 
   ok "اكتملت الإزالة — أعد تشغيل Discord"
 }
@@ -201,9 +218,9 @@ cmd_status() {
   local res_dir
   if res_dir=$(find_discord 2>/dev/null); then
     ok "Discord موجود في: ${res_dir}"
-    [ -f "${res_dir}/${ASAR}" ] \
-      && ok "${ASAR} مطبَّق على هذا التثبيت" \
-      || log "${ASAR} غير مطبَّق على هذا التثبيت"
+    [ -f "${res_dir}/_app.asar" ] \
+      && ok "التعديل مطبَّق على هذا التثبيت (app.asar مُحقون)" \
+      || log "التعديل غير مطبَّق على هذا التثبيت"
   else
     log "لم يُعثر على Discord في /Applications"
   fi

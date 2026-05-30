@@ -353,11 +353,49 @@ static class Logic
         KillDiscord(res);
         status("تطبيق التعديل على Discord...");
         progress(90);
-        CopyWithRetry(tmp, Path.Combine(res, ASAR));
-        CopyWithRetry(tmp, AsarTarget);
+        PatchDiscord(res, tmp);          // wire the mod into Discord's startup
+        CopyWithRetry(tmp, AsarTarget);  // keep a copy for status/IsInstalled
         try { File.Delete(tmp); } catch { }
         progress(100);
         status("✓ تم التثبيت — أعد تشغيل Discord لتفعيل Esharq");
+    }
+
+    // Discord loads resources/app.asar. To inject, the original app.asar is backed
+    // up to _app.asar (once) and the Esharq desktop.asar — whose package.json main
+    // is patcher.js — is placed as app.asar. patcher.js then loads the original from
+    // ../_app.asar at runtime. This mirrors the standard Vencord/Equicord model.
+    static void PatchDiscord(string res, string modAsar)
+    {
+        var appAsar    = Path.Combine(res, "app.asar");
+        var backupAsar = Path.Combine(res, "_app.asar");
+
+        bool freshBackup = false;
+        if (!File.Exists(backupAsar))
+        {
+            // First install: back up the REAL original. If _app.asar already exists,
+            // app.asar is our previously-installed mod — never back that up.
+            if (!File.Exists(appAsar))
+                throw new Exception("لم يُعثر على app.asar في مجلد Discord — تأكد أنك اخترت مجلد resources الصحيح");
+            File.Move(appAsar, backupAsar);
+            freshBackup = true;
+        }
+        else if (File.Exists(appAsar))
+        {
+            try { File.Delete(appAsar); } catch { }
+        }
+
+        try
+        {
+            CopyWithRetry(modAsar, appAsar);
+        }
+        catch
+        {
+            // if we just moved the original and the copy failed, restore it so
+            // Discord isn't left without an app.asar
+            if (freshBackup && !File.Exists(appAsar) && File.Exists(backupAsar))
+                try { File.Move(backupAsar, appAsar); } catch { }
+            throw;
+        }
     }
 
     public static void Uninstall(string res, Action<string> status, Action<int> progress)
@@ -366,10 +404,21 @@ static class Logic
         progress(20);
         KillDiscord(res);
         progress(50);
-        var f = Path.Combine(res, ASAR);
-        if (File.Exists(f)) File.Delete(f);
-        progress(80);
+
+        // Restore the original Discord app.asar from the backup.
+        var appAsar    = Path.Combine(res, "app.asar");
+        var backupAsar = Path.Combine(res, "_app.asar");
+        if (File.Exists(backupAsar))
+        {
+            if (File.Exists(appAsar)) { try { File.Delete(appAsar); } catch { } }
+            File.Move(backupAsar, appAsar);   // _app.asar -> app.asar
+        }
+        progress(70);
+
+        // Clean up the DataDir copy and any stray desktop.asar from older installs.
         if (File.Exists(AsarTarget)) File.Delete(AsarTarget);
+        var stray = Path.Combine(res, ASAR);
+        if (File.Exists(stray)) { try { File.Delete(stray); } catch { } }
         progress(100);
         status("✓ تمت الإزالة — أعد تشغيل Discord");
     }
