@@ -24,6 +24,7 @@ import equicordToolbox from "@equicordplugins/equicordToolbox";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Menu } from "@webpack/common";
+import { TestcordDevs } from "@utils/constants";
 
 const ShowCurrentGame = getUserSettingLazy<boolean>("status", "showCurrentGame")!;
 
@@ -84,13 +85,14 @@ function GameActivityToggleButton({ iconForeground, hideTooltips, nameplate }: U
 
     return (
         <UserAreaButton
+            className="button__201d5 wrapper__201d5"
             tooltipText={hideTooltips ? void 0 : showCurrentGame ? "Disable Game Activity" : "Enable Game Activity"}
-            icon={<Icon className={iconForeground} />}
             role="switch"
-            aria-checked={!showCurrentGame}
-            redGlow={!showCurrentGame}
+            aria-checked={showCurrentGame} 
+            redGlow={!showCurrentGame} 
             plated={nameplate != null}
             onClick={() => ShowCurrentGame.updateSetting(old => !old)}
+            icon={<Icon className={iconForeground} />}
         />
     );
 }
@@ -99,7 +101,7 @@ export default definePlugin({
     name: "GameActivityToggle",
     description: "Adds a button next to the mic and deafen button to toggle game activity.",
     tags: ["Activity", "Shortcuts"],
-    authors: [Devs.Nuckyz, Devs.RuukuLada],
+    authors: [Devs.Nuckyz, Devs.RuukuLada, TestcordDevs.sirphantom89],
     dependencies: ["UserSettingsAPI", "UserAreaAPI"],
     settings,
 
