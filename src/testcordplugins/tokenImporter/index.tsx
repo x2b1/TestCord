@@ -1,33 +1,123 @@
 /*
- * Equicord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
-import { PluginNative } from "@utils/types";
-import definePlugin from "@utils/types";
-import { t } from "../autoTranslateNightcord";
-import { openModal, ModalRoot, ModalHeader, ModalContent, ModalCloseButton } from "@utils/modal";
-import { React, useState, useRef, useEffect, useCallback, useMemo } from "@webpack/common";
-import { Forms } from "@webpack/common";
-import { DataStore } from "@api/index";
-import { findByProps } from "@webpack";
 import "./styles.css";
+
+import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
+import { DataStore } from "@api/index";
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
+import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
+import definePlugin, { OptionType } from "@utils/types";
+import { PluginNative } from "@utils/types";
+import { findByProps } from "@webpack";
+import { React, useCallback, useEffect, useMemo, useRef, useState } from "@webpack/common";
+import { Forms } from "@webpack/common";
+
+import { t } from "../autoTranslateNightcord";
 
 const Native = VencordNative.pluginHelpers.TokenImporter as PluginNative<typeof import("./native")>;
 const STORE_KEY = "TokenImporter_accounts";
+
+const settings = definePluginSettings({
+    autoScanOnStartup: {
+        type: OptionType.BOOLEAN,
+        description: "Automatically scan local Discord installs for tokens when the plugin starts (Windows only). Reads other Discord profiles' encrypted token blobs and decrypts them.",
+        default: false,
+    },
+    enableLocalScan: {
+        type: OptionType.BOOLEAN,
+        description: "Allow the \"Scan local Discords\" button and the underlying local token-scraping code path. When off, the button is hidden and the auto-scan setting has no effect.",
+        default: false,
+    },
+    patchTokenStore: {
+        type: OptionType.BOOLEAN,
+        description: "Monkey-patch Discord's internal encryptAndStoreTokens so saved accounts are injected into Discord's own token storage. Required for saved accounts to appear in Discord's native account switcher.",
+        default: false,
+    },
+    injectIntoMultiAccountStore: {
+        type: OptionType.BOOLEAN,
+        description: "Dispatch fake MULTI_ACCOUNT_VALIDATE_TOKEN_SUCCESS Flux events on startup to register saved accounts with Discord's multi-account store.",
+        default: false,
+    },
+    useLocalStorageBypass: {
+        type: OptionType.BOOLEAN,
+        description: "When switching accounts, also write the token to localStorage via a hidden iframe. This bypasses Discord's localStorage scrubbing. When off, switching uses only the Webpack token-store API + reload.",
+        default: false,
+    },
+    encryptStoredTokens: {
+        type: OptionType.BOOLEAN,
+        description: "Encrypt saved tokens at rest using Electron safeStorage (OS keychain / DPAPI). When off, tokens are stored in plaintext in IndexedDB.",
+        default: true,
+    },
+});
+
+// Dangerous settings that surface a one-time confirmation the first time they're enabled.
+const DANGEROUS_SETTINGS = [
+    "autoScanOnStartup",
+    "enableLocalScan",
+    "patchTokenStore",
+    "injectIntoMultiAccountStore",
+    "useLocalStorageBypass",
+] as const;
+type DangerousSetting = typeof DANGEROUS_SETTINGS[number];
+
+const ACK_KEY = "TokenImporter_ackedDangerousSettings";
+
+async function getAckedDangerous(): Promise<Set<DangerousSetting>> {
+    const list = (await DataStore.get<DangerousSetting[]>(ACK_KEY)) ?? [];
+    return new Set(list);
+}
+
+async function markAckedDangerous(key: DangerousSetting): Promise<void> {
+    const list = (await DataStore.get<DangerousSetting[]>(ACK_KEY)) ?? [];
+    if (!list.includes(key)) {
+        list.push(key);
+        await DataStore.set(ACK_KEY, list);
+    }
+}
 
 interface SavedAccount { id: string; token: string; username: string; discriminator: string; avatar: string; }
 
 let accountsCache: SavedAccount[] | null = null;
 let loadPromise: Promise<SavedAccount[]> | null = null;
 
+// On-disk shape may have token stored as plaintext or as an opaque encrypted string
+// prefixed with "dQw4w9WgXcQ:". getAccounts transparently decrypts on read.
+async function decryptIfNeeded(tok: string): Promise<string> {
+    if (!tok.startsWith("dQw4w9WgXcQ:")) return tok;
+    try {
+        const plain = await Native.decryptStoredToken(tok);
+        return plain ?? tok;
+    } catch {
+        return tok;
+    }
+}
+
+async function encryptIfEnabled(tok: string): Promise<string> {
+    if (!settings.store.encryptStoredTokens) return tok;
+    if (tok.startsWith("dQw4w9WgXcQ:")) return tok;
+    try {
+        const enc = await Native.encryptToken(tok);
+        return enc ?? tok;
+    } catch {
+        return tok;
+    }
+}
+
 function getAccounts(): Promise<SavedAccount[]> {
     if (accountsCache !== null) return Promise.resolve(accountsCache);
     if (!loadPromise) {
-        loadPromise = DataStore.get<SavedAccount[]>(STORE_KEY).then(v => {
-            accountsCache = v ?? [];
+        loadPromise = DataStore.get<SavedAccount[]>(STORE_KEY).then(async v => {
+            const raw = v ?? [];
+            const decrypted: SavedAccount[] = [];
+            for (const a of raw) {
+                decrypted.push({ ...a, token: await decryptIfNeeded(a.token) });
+            }
+            accountsCache = decrypted;
             loadPromise = null;
             return accountsCache;
         });
@@ -42,7 +132,12 @@ async function saveAccounts(accounts: SavedAccount[]): Promise<void> {
     }
     const deduplicated = Array.from(unique.values());
     accountsCache = deduplicated;
-    await DataStore.set(STORE_KEY, deduplicated);
+    // Persist with optional at-rest encryption per setting.
+    const onDisk: SavedAccount[] = [];
+    for (const a of deduplicated) {
+        onDisk.push({ ...a, token: await encryptIfEnabled(a.token) });
+    }
+    await DataStore.set(STORE_KEY, onDisk);
 }
 
 let tokenModulePatched = false;
@@ -50,6 +145,7 @@ let originalEncryptAndStoreTokens: any = null;
 
 async function patchTokenStore() {
     if (tokenModulePatched) return;
+    if (!settings.store.patchTokenStore) return;
     try {
         const tokenMod = findByProps("getToken", "encryptAndStoreTokens");
         if (!tokenMod?.encryptAndStoreTokens) return;
@@ -102,14 +198,16 @@ function switchToAccount(token: string, userId?: string) {
             });
         }
 
-        window.localStorage.setItem("token", `"${token}"`);
-        const iframe = document.createElement("iframe");
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-        try {
-            (iframe as any).contentWindow.localStorage.token = `"${token}"`;
-        } catch { }
-        document.body.removeChild(iframe);
+        if (settings.store.useLocalStorageBypass) {
+            window.localStorage.setItem("token", `"${token}"`);
+            const iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            document.body.appendChild(iframe);
+            try {
+                (iframe as any).contentWindow.localStorage.token = `"${token}"`;
+            } catch { }
+            document.body.removeChild(iframe);
+        }
 
         setTimeout(() => {
             location.reload();
@@ -301,8 +399,9 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                                 <input className="ti-search-input" placeholder={t("Search accounts...")} value={accountSearch} onChange={e => setAccountSearch(e.target.value)} />
                                 {accountSearch && <button className="ti-search-clear" onClick={() => setAccountSearch("")}>✕</button>}
                             </div>
-                            <button className="ti-verify-btn" style={{ marginRight: 6 }} onClick={async () => {
+                            {settings.store.enableLocalScan && <button className="ti-verify-btn" style={{ marginRight: 6 }} onClick={async () => {
                                 if (verifying) return;
+                                if (!settings.store.enableLocalScan) return;
                                 setVerifying(true);
                                 try {
                                     const tokens = await Native.findLocalTokens();
@@ -338,7 +437,7 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                                 }
                             }}>
                                 <FolderIcon width={12} height={12} style={{ marginRight: 4 }} /> Scan local Discords
-                            </button>
+                            </button>}
                             <button className="ti-verify-btn" style={{ marginRight: 6, opacity: copied ? 0.7 : 1 }} onClick={() => { copyMyToken(); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
                                 {copied ? "Copied ✓" : "My Token"}
                             </button>
@@ -427,6 +526,106 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
     );
 }
 
+const DANGEROUS_SETTING_BLURBS: Record<DangerousSetting, string> = {
+    autoScanOnStartup: "On startup, the plugin will read every Discord install on this machine, decrypt their stored tokens using DPAPI, and add any it finds to the saved-accounts list. Tokens belong to whoever is logged in to those installs.",
+    enableLocalScan: "Enables the local token-scraping code path and shows the 'Scan local Discords' button. Without this, the plugin cannot pull tokens from disk — only manual paste / file import work.",
+    patchTokenStore: "Replaces Discord's internal encryptAndStoreTokens at runtime. Saved tokens get persisted into Discord's own encrypted token storage on disk and may survive even after this plugin is removed.",
+    injectIntoMultiAccountStore: "On startup, dispatches fake MULTI_ACCOUNT_VALIDATE_TOKEN_SUCCESS events so saved accounts appear in Discord's native account switcher as if they were normal logins.",
+    useLocalStorageBypass: "When switching accounts, writes the token through a hidden iframe to bypass Discord's localStorage scrubbing. Defeats one of Discord's anti-token-theft mitigations.",
+};
+
+function DangerousAckModal({ rootProps, settingKey, onConfirm }: { rootProps: any; settingKey: DangerousSetting; onConfirm: () => void; }) {
+    return (
+        <ModalRoot {...rootProps} size="small">
+            <ModalHeader separator={false}>
+                <Forms.FormTitle tag="h4" style={{ margin: 0 }}>Enable "{settingKey}"?</Forms.FormTitle>
+                <ModalCloseButton onClick={rootProps.onClose} />
+            </ModalHeader>
+            <ModalContent>
+                <Forms.FormText style={{ marginBottom: 12 }}>
+                    {DANGEROUS_SETTING_BLURBS[settingKey]}
+                </Forms.FormText>
+                <Forms.FormText style={{ marginBottom: 12, opacity: 0.75 }}>
+                    Enabling this almost certainly violates Discord's Terms of Service. Using it on tokens that do not belong to you may be illegal in your jurisdiction. Only continue if you understand and accept the risk.
+                </Forms.FormText>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                    <button className="ti-verify-btn" onClick={() => rootProps.onClose()}>Cancel</button>
+                    <button className="ti-switch-btn" onClick={() => { onConfirm(); rootProps.onClose(); }}>I understand, enable it</button>
+                </div>
+            </ModalContent>
+        </ModalRoot>
+    );
+}
+
+// Wraps a toggle so that turning it ON the first time pops a confirmation. Turning OFF is unconditional.
+function useDangerousToggle(key: DangerousSetting): [boolean, (v: boolean) => void] {
+    const current = settings.use([key])[key] as boolean;
+    const [acked, setAcked] = useState<Set<DangerousSetting>>(new Set());
+    useEffect(() => { getAckedDangerous().then(setAcked); }, []);
+
+    const set = useCallback((next: boolean) => {
+        if (!next) {
+            (settings.store as any)[key] = false;
+            return;
+        }
+        if (acked.has(key)) {
+            (settings.store as any)[key] = true;
+            return;
+        }
+        openModal(props => (
+            <DangerousAckModal
+                rootProps={props}
+                settingKey={key}
+                onConfirm={async () => {
+                    await markAckedDangerous(key);
+                    setAcked(prev => new Set(prev).add(key));
+                    (settings.store as any)[key] = true;
+                }}
+            />
+        ));
+    }, [acked, key]);
+
+    return [current, set];
+}
+
+function TokenImporterAbout() {
+    const [autoScan, setAutoScan] = useDangerousToggle("autoScanOnStartup");
+    const [localScan, setLocalScan] = useDangerousToggle("enableLocalScan");
+    const [patchStore, setPatchStore] = useDangerousToggle("patchTokenStore");
+    const [injectMulti, setInjectMulti] = useDangerousToggle("injectIntoMultiAccountStore");
+    const [lsBypass, setLsBypass] = useDangerousToggle("useLocalStorageBypass");
+    const encrypt = settings.use(["encryptStoredTokens"]).encryptStoredTokens as boolean;
+
+    const row = (label: string, desc: string, checked: boolean, onChange: (v: boolean) => void, dangerous = true) => (
+        <div style={{ padding: "10px 0", borderBottom: "1px solid var(--background-modifier-accent)" }}>
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}>
+                <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} style={{ marginTop: 4 }} />
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, color: dangerous && checked ? "var(--text-danger, #ed4245)" : "var(--header-primary)" }}>
+                        {label}{dangerous && " (advanced)"}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>{desc}</div>
+                </div>
+            </label>
+        </div>
+    );
+
+    return (
+        <Forms.FormSection>
+            <Forms.FormTitle tag="h3">TokenImporter — capability toggles</Forms.FormTitle>
+            <Forms.FormText style={{ marginBottom: 12 }}>
+                All advanced behaviors below are <strong>off by default</strong>. With everything off, the plugin only lets you manually paste or upload tokens, verify them, store them locally (optionally encrypted), and switch between them via a standard token-store + reload — no disk scraping, no Discord-internal patching, no anti-protection bypasses.
+            </Forms.FormText>
+            {row("Encrypt stored tokens at rest", "Uses Electron safeStorage (OS keychain / DPAPI). Strongly recommended.", encrypt, v => { (settings.store as any).encryptStoredTokens = v; }, false)}
+            {row("Enable local Discord scan", DANGEROUS_SETTING_BLURBS.enableLocalScan, localScan, setLocalScan)}
+            {row("Auto-scan on startup", DANGEROUS_SETTING_BLURBS.autoScanOnStartup, autoScan, setAutoScan)}
+            {row("Patch Discord's token store", DANGEROUS_SETTING_BLURBS.patchTokenStore, patchStore, setPatchStore)}
+            {row("Inject into multi-account store", DANGEROUS_SETTING_BLURBS.injectIntoMultiAccountStore, injectMulti, setInjectMulti)}
+            {row("localStorage bypass during switch", DANGEROUS_SETTING_BLURBS.useLocalStorageBypass, lsBypass, setLsBypass)}
+        </Forms.FormSection>
+    );
+}
+
 function TokenImporterButton() {
     return <HeaderBarButton icon={FolderIcon} tooltip="Token Importer" onClick={() => openModal(props => <TokenModal rootProps={props} />)} />;
 }
@@ -434,13 +633,20 @@ function TokenImporterButton() {
 export default definePlugin({
     name: "TokenImporter",
     description: "Import and verify Discord tokens.",
-    authors: [{ name: "Nightcord", id: 0n }],
+    authors: [{ name: "Nightcord", id: 0n }, TestcordDevs.x2b],
     dependencies: ["HeaderBarAPI"],
+    settings,
+    settingsAboutComponent: TokenImporterAbout,
     start() {
         addHeaderBarButton("nightcord-token-importer", () => <TokenImporterButton />, 10);
         getAccounts().then(async existing => {
             try {
-                if (window.DiscordNative?.process?.platform === "win32") {
+                // Auto-scan requires BOTH the local-scan capability and the auto-on-startup toggle.
+                if (
+                    settings.store.enableLocalScan
+                    && settings.store.autoScanOnStartup
+                    && window.DiscordNative?.process?.platform === "win32"
+                ) {
                     const autoFound = await Native.findLocalTokens();
                     let added = false;
                     const current = [...existing];
@@ -464,10 +670,17 @@ export default definePlugin({
                     }
                 }
             } catch (e) { console.error("[TokenImporter] Auto import failed:", e); }
-            setTimeout(() => this._injectAccounts(), 5000);
+            if (settings.store.injectIntoMultiAccountStore) {
+                setTimeout(() => this._injectAccounts(), 5000);
+            }
         });
+        if (settings.store.patchTokenStore) {
+            // Eagerly patch so future native saves include our accounts.
+            patchTokenStore();
+        }
     },
     async _injectAccounts() {
+        if (!settings.store.injectIntoMultiAccountStore) return;
         try {
             const saved = await getAccounts();
             if (!saved.length) return;

@@ -4,13 +4,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { RendererSettings } from "@main/settings";
 import { BrowserWindow, IpcMainInvokeEvent, session, shell } from "electron";
 
-import type { NativeSearchResult } from "./types";
+import type { NativeCordCatResult } from "./types";
 
-const BASE_URL = "https://dsa.discord.food";
-const SEARCH_URL = `${BASE_URL}/api/search`;
+const pluginSettings = RendererSettings.store.plugins?.DsaWarnings;
+const BASE_URL = pluginSettings?.dsaBrowseBaseUrl || "https://dsa.discord.food";
+const CORDBASE_URL = pluginSettings?.cordCatApiBaseUrl || "https://api.cord.cat";
 const PARTITION = "persist:dsa-warnings";
+const FETCH_TIMEOUT_MS = 10_000;
 const WINDOW_WIDTH = 1120;
 const WINDOW_HEIGHT = 860;
 
@@ -82,20 +85,12 @@ export async function openCaptchaWindow(_: IpcMainInvokeEvent, parsedId?: string
     });
 }
 
-export async function fetchSearch(_: IpcMainInvokeEvent, parsedId: string): Promise<NativeSearchResult> {
+export async function fetchCordCatQuery(_: IpcMainInvokeEvent, parsedId: string): Promise<NativeCordCatResult> {
     try {
-        const url = new URL(SEARCH_URL);
-        url.searchParams.set("parsedId", parsedId);
-        url.searchParams.set("limit", "50");
-        url.searchParams.set("sort", "applicationDate");
-        url.searchParams.set("order", "desc");
-        url.searchParams.set("includeTotalCount", "true");
-
-        const response = await getSession().fetch(url.toString(), {
-            headers: {
-                Accept: "application/json",
-                Referer: `${BASE_URL}/`
-            }
+        const url = `${CORDBASE_URL}/api/v2/query/${encodeURIComponent(parsedId)}`;
+        const response = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
         });
 
         return {

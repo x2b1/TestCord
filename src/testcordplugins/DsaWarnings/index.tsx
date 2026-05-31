@@ -6,18 +6,32 @@
 
 import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { definePluginSettings } from "@api/Settings";
 import { EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { classes } from "@utils/misc";
 import { useAwaiter } from "@utils/react";
-import definePlugin, { PluginNative } from "@utils/types";
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import type { User } from "@vencord/discord-types";
 import { findCssClassesLazy } from "@webpack";
 import { Clickable, useState } from "@webpack/common";
 
-import { fetchCordCatBreaches, fetchDsaWarnings, getActionTags, getActiveRestrictionLabels, invalidateWarnings } from "./api";
+import { fetchActiveWarnings, getActionTags, getActiveRestrictionLabels, invalidateWarnings } from "./api";
 import managedStyle from "./style.css?managed";
 import type { BreachRecord, DsaAction } from "./types";
+
+const settings = definePluginSettings({
+    cordCatApiBaseUrl: {
+        type: OptionType.STRING,
+        description: "Base URL for the CordCat intelligence query API",
+        default: "https://api.cord.cat",
+    },
+    dsaBrowseBaseUrl: {
+        type: OptionType.STRING,
+        description: "Base URL for the DSA lookup browse UI",
+        default: "https://dsa.discord.food",
+    },
+});
 
 const cl = classNameFactory("vc-dsa-warnings-");
 const DMSideBarClasses = findCssClassesLazy("widgetPreviews");
@@ -68,7 +82,7 @@ function formatDate(value: string) {
 }
 
 function buildDsaBrowseUrl(parsedId: string) {
-    const url = new URL("https://dsa.discord.food/browse");
+    const url = new URL(`${settings.store.dsaBrowseBaseUrl}/browse`);
     url.searchParams.set("parsedId", parsedId);
     url.searchParams.set("sort", "applicationDate");
     url.searchParams.set("order", "desc");
@@ -76,7 +90,7 @@ function buildDsaBrowseUrl(parsedId: string) {
 }
 
 function buildCordCatUrl(parsedId: string) {
-    return new URL(`https://cord.cat/${parsedId}`).toString();
+    return new URL(`${settings.store.cordCatApiBaseUrl}/${parsedId}`).toString();
 }
 
 function getCardTags(action: DsaAction) {
@@ -139,23 +153,26 @@ const DsaWarningsCollection = ErrorBoundary.wrap(function DsaWarningsCollection(
 }) {
     const [refreshKey, setRefreshKey] = useState(0);
     const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-    const [warnings] = useAwaiter(() => fetchDsaWarnings(user.id), {
+    const [result] = useAwaiter(() => fetchActiveWarnings(user.id), {
         deps: [user.id, refreshKey],
         fallbackValue: null
-    });
-    const [breaches] = useAwaiter(() => fetchCordCatBreaches(user.id), {
-        deps: [user.id, refreshKey],
-        fallbackValue: { breaches: [], breachStatus: "unavailable" as const }
     });
 
     const isExpanded = expandedUserId === user.id;
     const isLightTheme = hasLightProfileTheme(displayProfile);
-    const subtitle = warnings == null
+    const isReady = result?.kind === "ready";
+    const isCaptcha = result?.kind === "captcha";
+    const isUnavailable = result?.kind === "unavailable";
+    const isError = result?.kind === "error";
+    const actions = isReady ? result.actions : [];
+    const breaches = isReady ? (result.breaches ?? []) : [];
+    const breachStatus = isReady ? result.breachStatus : "unavailable";
+    const subtitle = result == null
         ? "Loading DSA lookup..."
-        : warnings.kind === "ready"
-        ? breaches.breachStatus === "ready"
-            ? `${warnings.actions.length} warnings • ${breaches.breaches.length} breaches`
-            : `${warnings.actions.length} warnings • breach lookup unavailable`
+        : isReady
+        ? breachStatus === "ready"
+            ? `${actions.length} warnings • ${breaches.length} breaches`
+            : `${actions.length} warnings • breach lookup unavailable`
         : "Direct API lookup is currently unavailable";
     const retryFetch = () => {
         invalidateWarnings(user.id);
@@ -171,12 +188,8 @@ const DsaWarningsCollection = ErrorBoundary.wrap(function DsaWarningsCollection(
         VencordNative.native.openExternal(buildDsaBrowseUrl(user.id));
         retryFetch();
     };
-    const visibleActions = warnings?.kind === "ready" && isExpanded ? warnings.actions : warnings?.kind === "ready" ? warnings.actions.slice(0, MAX_VISIBLE_CARDS) : [];
-    const visibleBreaches = isExpanded ? breaches.breaches : breaches.breaches.slice(0, MAX_VISIBLE_CARDS);
-    const isReady = warnings?.kind === "ready";
-    const isCaptcha = warnings?.kind === "captcha";
-    const isUnavailable = warnings?.kind === "unavailable";
-    const isError = warnings?.kind === "error";
+    const visibleActions = isReady && isExpanded ? actions : isReady ? actions.slice(0, MAX_VISIBLE_CARDS) : [];
+    const visibleBreaches = isExpanded ? breaches : breaches.slice(0, MAX_VISIBLE_CARDS);
 
     const content = (
         <section className={classes(cl("section"), isLightTheme && cl("light"))}>
@@ -190,7 +203,7 @@ const DsaWarningsCollection = ErrorBoundary.wrap(function DsaWarningsCollection(
                 </Clickable>
             </div>
             <div className={cl("list")}>
-                {warnings == null && (
+                {result == null && (
                     <StatusCard
                         title="Loading Warnings"
                         message="Fetching active DSA warnings for this profile."
@@ -287,14 +300,14 @@ const DsaWarningsCollection = ErrorBoundary.wrap(function DsaWarningsCollection(
                         </Clickable>
                     );
                 })}
-                {isReady && warnings.actions.length === 0 && breaches.breaches.length === 0 && (
+                {isReady && actions.length === 0 && breaches.length === 0 && (
                     <StatusCard
                         title="No Intelligence Results"
                         message="No active warnings or breach results were returned for this profile."
                         onClick={() => VencordNative.native.openExternal(buildDsaBrowseUrl(user.id))}
                     />
                 )}
-                {isReady && breaches.breachStatus === "unavailable" && breaches.breaches.length === 0 && (
+                {isReady && breachStatus === "unavailable" && breaches.length === 0 && (
                     <StatusCard
                         title="Breach Lookup Unavailable"
                         message="CordCat returned the user intelligence report, but the upstream breach provider was blocked or unavailable for this lookup."
@@ -323,13 +336,13 @@ const DsaWarningsCollection = ErrorBoundary.wrap(function DsaWarningsCollection(
                     />
                 )}
             </div>
-            {isReady && (warnings.actions.length > MAX_VISIBLE_CARDS || breaches.breaches.length > MAX_VISIBLE_CARDS || warnings.actions.length + breaches.breaches.length > MAX_VISIBLE_CARDS) && (
+            {isReady && (actions.length > MAX_VISIBLE_CARDS || breaches.length > MAX_VISIBLE_CARDS || actions.length + breaches.length > MAX_VISIBLE_CARDS) && (
                 <Clickable
                     className={cl("toggle")}
                     onClick={() => setExpandedUserId(current => current === user.id ? null : user.id)}
                 >
                     <BaseText className={cl("toggle-text")} tag="span" size="xs" weight="bold" defaultColor={false}>
-                        {isExpanded ? "Show Less" : `Show All ${warnings.actions.length + breaches.breaches.length} Results`}
+                        {isExpanded ? "Show Less" : `Show All ${actions.length + breaches.length} Results`}
                     </BaseText>
                 </Clickable>
             )}
@@ -346,6 +359,7 @@ export default definePlugin({
     description: "Shows active DSA standing warnings on user profiles.",
     tags: ["Privacy", "Utility"],
     authors: [EquicordDevs.omaw],
+    settings,
     managedStyle,
     renderProfileCollection: {
         priority: 0,

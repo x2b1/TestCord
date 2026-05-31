@@ -75,6 +75,19 @@ export async function encryptToken(_: any, token: string): Promise<string | null
     }
 }
 
+// Decryption companion for encryptToken — used when encryptStoredTokens setting is enabled.
+export async function decryptStoredToken(_: any, payload: string): Promise<string | null> {
+    try {
+        if (!safeStorage.isEncryptionAvailable()) return null;
+        if (!payload.startsWith("dQw4w9WgXcQ:")) return null;
+        const b64 = payload.slice("dQw4w9WgXcQ:".length);
+        const buf = Buffer.from(b64, "base64");
+        return safeStorage.decryptString(buf);
+    } catch {
+        return null;
+    }
+}
+
 function decryptDPAPI(encryptedKeyBase64: string): Buffer {
     const buf = Buffer.from(encryptedKeyBase64, "base64").slice(5);
     const hexStr = buf.toString("hex");
