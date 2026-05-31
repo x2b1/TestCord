@@ -501,7 +501,7 @@ export default definePlugin({
     name: "GuildCopier",
     description: "Copy a full server including channels, roles, permissions, emojis, stickers, and categories to create an identical server.",
     tags: ["Servers", "Utility"],
-    authors: [{ name: "x2b", id: 0n }, { name: "nnenaza", id: 0n }],
+    authors: [{ name: "x2b", id: 996137713432530976n }, { name: "nnenaza", id: 1501441039418785933n }],
     dependencies: [],
 
     settings,
