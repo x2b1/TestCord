@@ -5,6 +5,7 @@
     --vc-dsa-warnings-link: var(--text-1, var(--text-normal, var(--header-primary, var(--white-500))));
     --vc-dsa-warnings-chip-user-bg: color-mix(in srgb, var(--brand-500) 26%, transparent);
     --vc-dsa-warnings-chip-user-fg: #dfe5ff;
+
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -265,7 +266,7 @@
     white-space: normal;
 }
 
-@media (max-width: 700px) {
+@media (width <=700px) {
     .vc-dsa-warnings-card-top {
         flex-direction: column;
     }
