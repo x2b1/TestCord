@@ -11,11 +11,9 @@ import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
-import definePlugin, { OptionType } from "@utils/types";
-import { PluginNative } from "@utils/types";
+import definePlugin, { OptionType, PluginNative } from "@utils/types";
 import { findByProps } from "@webpack";
-import { React, useCallback, useEffect, useMemo, useRef, useState } from "@webpack/common";
-import { Forms } from "@webpack/common";
+import { Forms, React, useCallback, useEffect, useMemo, useRef, useState } from "@webpack/common";
 
 import { t } from "../autoTranslateNightcord";
 
@@ -151,10 +149,14 @@ async function patchTokenStore() {
         if (!tokenMod?.encryptAndStoreTokens) return;
         originalEncryptAndStoreTokens = tokenMod.encryptAndStoreTokens;
         const orig = tokenMod.encryptAndStoreTokens.bind(tokenMod);
-        tokenMod.encryptAndStoreTokens = async function (tokens: Record<string, string>) {
-            try { const saved = await getAccounts(); for (const acc of saved) { if (!tokens[acc.id]) tokens[acc.id] = acc.token; } } catch { }
-            return orig(tokens);
-        };
+        Object.defineProperty(tokenMod, "encryptAndStoreTokens", {
+            value: async function (tokens: Record<string, string>) {
+                try { const saved = await getAccounts(); for (const acc of saved) { if (!tokens[acc.id]) tokens[acc.id] = acc.token; } } catch { }
+                return orig(tokens);
+            },
+            writable: true,
+            configurable: true
+        });
         tokenModulePatched = true;
     } catch (e) {
         console.warn("[TokenImporter] patchTokenStore failed", e);
@@ -709,7 +711,11 @@ export default definePlugin({
             try {
                 const tokenMod = findByProps("getToken", "encryptAndStoreTokens");
                 if (tokenMod && originalEncryptAndStoreTokens) {
-                    tokenMod.encryptAndStoreTokens = originalEncryptAndStoreTokens;
+                    Object.defineProperty(tokenMod, "encryptAndStoreTokens", {
+                        value: originalEncryptAndStoreTokens,
+                        writable: true,
+                        configurable: true
+                    });
                 }
             } catch (e) {
                 console.warn("[TokenImporter] unpatchTokenStore failed", e);
