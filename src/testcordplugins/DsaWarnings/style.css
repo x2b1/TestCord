@@ -266,7 +266,7 @@
     white-space: normal;
 }
 
-@media (width <=700px) {
+@media (width <= 700px) {
     .vc-dsa-warnings-card-top {
         flex-direction: column;
     }
