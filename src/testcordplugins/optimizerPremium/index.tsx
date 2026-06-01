@@ -185,7 +185,7 @@ const settings = definePluginSettings({
     },
     lazyIframes: {
         type: OptionType.BOOLEAN,
-        description: "Defer iframe loading until they scroll into view. Reduces initial page load cost.",
+        description: "Defer iframe loading until they scroll into view. Reduces initial page load cost. hcaptcha iframes are excluded to prevent breaking verification.",
         default: true
     },
     batchDomUpdates: {
@@ -1004,9 +1004,11 @@ export default definePlugin({
 
         const observeIframe = (iframe: HTMLIFrameElement) => {
             if (iframe.dataset.opLazyLoad) return;
+            const src = iframe.src || "";
+            if (/\.hcaptcha\.com/i.test(src)) return;
             iframe.dataset.opLazyLoad = "pending";
-            if (iframe.src && !iframe.dataset.src) {
-                iframe.dataset.src = iframe.src;
+            if (src && !iframe.dataset.src) {
+                iframe.dataset.src = src;
                 iframe.removeAttribute("src");
             }
             this.intersectionObserver?.observe(iframe);
