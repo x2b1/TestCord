@@ -1,19 +1,14 @@
 .vc-dm-opener-icon {
-    bottom: -2px;
-    padding: 0;
-    width: var(--space-32);
-    min-width: 0;
-    height: var(--space-32);
-    color: var(--interactive-normal) !important;
+    color: var(--text-2, var(--interactive-hover, #dbdee1)) !important;
     transition: all 0.2s ease;
 
     &:hover {
-        color: var(--brand-experiment) !important;
+        color: var(--text-1, var(--interactive-active, #fff)) !important;
         transform: scale(1.1);
     }
 
     & svg {
-        filter: drop-shadow(0 0 2px rgba(88, 101, 242, 0.3));
+        filter: drop-shadow(0 0 2px rgb(88 101 242 / 30%));
     }
 
     &:active {

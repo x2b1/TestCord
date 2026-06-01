@@ -6,12 +6,13 @@
 
 import "./style.css";
 
+import { HeaderBarButton } from "@api/HeaderBar";
 import { ErrorBoundary } from "@components/index";
 import { TestcordDevs } from "@utils/constants";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
-import { Button, Forms, NavigationRouter, React, RestAPI, TextInput, Tooltip } from "@webpack/common";
+import { Button, Forms, NavigationRouter, React, RestAPI, TextInput } from "@webpack/common";
 const FormText = Forms.FormText as any;
 
 const UserIcon = (props: any) => (
@@ -25,7 +26,11 @@ const UserIcon = (props: any) => (
         viewBox="0 0 24 24"
         fill="currentColor"
     >
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-8 4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm0 6c-2.2 0-4.5.9-4.5 2.2v0.8h9v-0.8c0-1.3-2.3-2.2-4.5-2.2z"
+        />
     </svg>
 );
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_TOP:", '.iconBadge,"top"');
@@ -109,7 +114,7 @@ function DirectMessageModal(props: any) {
                 )}
             </ModalContent>
 
-            <ModalFooter>
+            <ModalFooter style={{ display: "flex", flexDirection: "row-reverse", gap: "16px", alignItems: "center" }}>
                 <Button
                     color={Button.Colors.BRAND}
                     disabled={loading || !userId.trim()}
@@ -121,6 +126,7 @@ function DirectMessageModal(props: any) {
                     color={Button.Colors.TRANSPARENT}
                     look={Button.Looks.LINK}
                     onClick={props.onClose}
+                    style={{ marginRight: "8px" }}
                 >
                     Cancel
                 </Button>
@@ -165,19 +171,12 @@ export default definePlugin({
 
     renderDMButton() {
         return (
-            <Tooltip text="Open DM by User ID">
-                {tooltipProps => (
-                    <Button
-                        style={{ backgroundColor: "transparent", border: "none" }}
-                        {...tooltipProps}
-                        size={Button.Sizes.SMALL}
-                        className="vc-dm-opener-icon"
-                        onClick={openDirectMessageModal}
-                    >
-                        <UserIcon width={20} height={20} size={Button.Sizes.SMALL} />
-                    </Button>
-                )}
-            </Tooltip>
+            <HeaderBarButton
+                icon={UserIcon}
+                tooltip="Open DM by User ID"
+                className="vc-dm-opener-icon"
+                onClick={openDirectMessageModal}
+            />
         );
     },
 
