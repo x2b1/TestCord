@@ -9,7 +9,7 @@ export const Native = getNative();
 import "./styles.css";
 
 import { LogsIcon } from "@components/Icons";
-import { Devs, EquicordDevs } from "@utils/constants";
+import { Devs, EquicordDevs, TestcordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
@@ -31,7 +31,6 @@ import { doesMatch } from "./utils/parseQuery";
 import * as imageUtils from "./utils/saveImage";
 import * as ImageManager from "./utils/saveImage/ImageManager";
 export { settings };
-
 export const Flogger = new Logger("MessageLoggerEnhanced", "#f26c6c");
 
 export const cacheSentMessages = new LimitedMap<string, LoggedMessageJSON>();
@@ -237,10 +236,13 @@ async function processMessageFetch(response: FetchMessagesResponse) {
 
             const { message } = record;
 
-            for (let j = 0, len2 = message.mentions.length; j < len2; j++) {
-                const user = message.mentions[j];
-                const cachedUser = fetchUser((user as any).id || user);
-                if (cachedUser) (message.mentions[j] as any) = cleanupUserObject(cachedUser);
+            if (Array.isArray(message.mentions)) {
+                for (let j = 0, len2 = message.mentions.length; j < len2; j++) {
+                    const user = message.mentions[j];
+                    const cachedUser = fetchUser((user as any).id || user);
+                    if (cachedUser) (message.mentions[j] as any) = cleanupUserObject(cachedUser);
+                }
+                message.mentions = message.mentions.filter(m => m && typeof m === "object");
             }
 
             const author = fetchUser(message.author.id);
@@ -257,7 +259,7 @@ async function processMessageFetch(response: FetchMessagesResponse) {
 
 export default definePlugin({
     name: "MessageLoggerEnhanced",
-    authors: [Devs.Aria, EquicordDevs.keircn],
+    authors: [Devs.Aria, EquicordDevs.keircn, TestcordDevs.SirPhantom89],
     description: "Improves MessageLogger with edited message history, ghost ping detection and more",
     tags: ["Chat", "Servers"],
     dependencies: ["MessageLogger", "HeaderBarAPI"],
@@ -346,13 +348,29 @@ export default definePlugin({
     imageUtils,
     idb,
 
-    coolReAddDeletedMessages: (messages: LoggedMessageJSON[] & { extra: LoggedMessageJSON[]; }, payload: LoadMessagePayload) => {
+    coolReAddDeletedMessages: (messages: any[] & { extra?: any[]; }, payload: LoadMessagePayload) => {
         try {
+            console.log("[MessageLoggerEnhanced] coolReAddDeletedMessages called. messages:", messages, "payload:", payload);
+            if (!Array.isArray(messages)) return messages;
+
+            const validMessages = messages.filter(m => m && typeof m === "object");
+            if (validMessages.length !== messages.length) {
+                console.log("[MessageLoggerEnhanced] Filtering non-object messages. Before:", messages.length, "After:", validMessages.length);
+                messages.length = 0;
+                messages.push(...validMessages);
+            }
+
             if (messages.extra)
                 reAddDeletedMessages(messages, messages.extra, !payload.hasMoreAfter && !payload.isBefore, !payload.hasMoreBefore && !payload.isAfter);
+
+            for (const msg of messages) {
+                if (msg && typeof msg === "object" && Array.isArray(msg.mentions)) {
+                    msg.mentions = msg.mentions.filter(m => m && typeof m === "object");
+                }
+            }
         }
         catch (e) {
-            Flogger.error("Failed to re-add deleted messages", e);
+            console.error("[MessageLoggerEnhanced] Failed to re-add deleted messages", e);
         }
         finally {
             return messages;
