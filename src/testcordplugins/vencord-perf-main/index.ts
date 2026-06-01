@@ -58,8 +58,8 @@ patches: [{
         // Remove analytics from gateway, this cost me upwards of 100ms because they JSON.stringify the entire thing
         find: "getDispatchHandler needs to be passed in first!",
         replacement: {
-            match: /(\.flush\(\w,\w\),"READY"===\w\)\{).+?;(.+?\)),.+?\}/,
-            replace: (_, pre, mid) => pre + mid + "}",
+            match: /let \i=Date\.now\(\),(\i=\i\.Z\.flush\(\i,\i\));\i\.\i\.showPerformanceTelemetry\?.+?Telemetry\(.+?,\i\)/,
+            replace: "$1",
         }
     }]
 });
