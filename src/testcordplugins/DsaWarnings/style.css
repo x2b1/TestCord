@@ -1,17 +1,17 @@
 .vc-dsa-warnings-section {
-    --vc-dsa-warnings-title: var(--header-primary, var(--white-500));
-    --vc-dsa-warnings-muted: color-mix(in srgb, var(--header-primary, var(--white-500)) 76%, transparent);
-    --vc-dsa-warnings-body: color-mix(in srgb, var(--header-primary, var(--white-500)) 88%, transparent);
-    --vc-dsa-warnings-link: var(--header-primary, var(--white-500));
+    --vc-dsa-warnings-title: var(--text-1, var(--text-normal, var(--header-primary, var(--white-500))));
+    --vc-dsa-warnings-muted: var(--text-3, color-mix(in srgb, var(--header-primary, var(--white-500)) 76%, transparent));
+    --vc-dsa-warnings-body: var(--text-2, color-mix(in srgb, var(--header-primary, var(--white-500)) 88%, transparent));
+    --vc-dsa-warnings-link: var(--text-1, var(--text-normal, var(--header-primary, var(--white-500))));
     --vc-dsa-warnings-chip-user-bg: color-mix(in srgb, var(--brand-500) 26%, transparent);
     --vc-dsa-warnings-chip-user-fg: #dfe5ff;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-top: 12px;
+    margin: 12px 12px 4px -12px;
     color: var(--vc-dsa-warnings-title);
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .vc-dsa-warnings-light {
@@ -99,7 +99,7 @@
     flex-direction: column;
     gap: 14px;
     padding: 18px;
-    border: 1px solid color-mix(in srgb, var(--white-500) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--white-500, #fff) 8%, transparent);
     border-radius: 18px;
     background:
         radial-gradient(circle at top right, color-mix(in srgb, var(--status-danger) 16%, transparent), transparent 34%),
@@ -107,14 +107,14 @@
     cursor: pointer;
     transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
     color: var(--vc-dsa-warnings-title);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--white-500) 4%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--white-500, #fff) 4%, transparent);
     max-width: 100%;
     overflow: hidden;
 }
 
 .vc-dsa-warnings-card:hover {
     transform: translateY(-1px);
-    border-color: color-mix(in srgb, var(--status-danger) 36%, var(--white-500) 14%);
+    border-color: color-mix(in srgb, var(--status-danger) 36%, var(--white-500, #fff) 14%);
 }
 
 .vc-dsa-warnings-card-breach {
