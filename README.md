@@ -1,6 +1,6 @@
 <img src="./browser/icon.png" width="40" align="left" alt="Testcord">Testcord
 
-[![Release](https://img.shields.io/github/v/release/x2b1/TestCord?label=Latest+Release&color=blue)](https://github.com/x2b1/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
+[![Release](https://img.shields.io/github/v/release/TestcordDev/TestCord?label=Latest+Release&color=blue)](https://github.com/TestcordDev/TestCord/releases/tag/untagged-5c75afbdfad18f944bcb)
 [![Discord](https://img.shields.io/discord/1434211283317690502?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/EMDpkV57gW)
 [![Owner](https://img.shields.io/badge/Owner-Mixiruri-ff69b4?logo=github&logoColor=white)](https://github.com/Mixiruri)
 [![Owner](https://img.shields.io/badge/Owner-x2b1-red?logo=github&logoColor=white)](https://github.com/x2b1)
@@ -25,7 +25,7 @@ Testcord's included plugins can be found [here](https://catgirlhentai.online). (
 
 **Windows**
 
-- [CLI](https://github.com/x2b1/TestCord/releases/download/latest/Testcord_installer_cli.exe)
+- [CLI](https://github.com/TestcordDev/TestCord/releases/download/latest/Testcord_installer_cli.exe)
 
 **MacOS**
 
@@ -54,7 +54,7 @@ npm i -g pnpm
 Clone Testcord:
 
 ```sh
-git clone https://github.com/x2b1/TestCord
+git clone https://github.com/TestcordDev/TestCord
 cd TestCord
 ```
 
@@ -100,7 +100,7 @@ After building Testcord's web extension, locate the appropriate ZIP file in the 
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=x2b1/testcord&type=Date)](https://www.star-history.com/#x2b1/Testcord&type=date&legend=bottom-right)
+[![Star History Chart](https://api.star-history.com/svg?repos=TestcordDev/testcord&type=Date)](https://www.star-history.com/#TestcordDev/Testcord&type=date&legend=bottom-right)
 
 ## Disclaimer
 

@@ -12,7 +12,7 @@ permissions:
 
 jobs:
     release:
-        if: github.repository == 'x2b1/TestCord-Builds'
+        if: github.repository == 'TestcordDev/TestCord-builds'
         runs-on: ubuntu-latest
 
         steps:

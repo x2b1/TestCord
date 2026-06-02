@@ -3,13 +3,13 @@
     "private": "true",
     "version": "1.14.13.1",
     "description": "The less stable fork of Equicord",
-    "homepage": "https://github.com/x2b1/Testcord#readme",
+    "homepage": "https://github.com/TestcordDev/Testcord#readme",
     "bugs": {
-        "url": "https://github.com/x2b1/Testcord/issues"
+        "url": "https://github.com/TestcordDev/Testcord/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/x2b1/Testcord.git"
+        "url": "git+https://github.com/TestcordDev/Testcord.git"
     },
     "license": "GPL-3.0-or-later",
     "author": "x2b",

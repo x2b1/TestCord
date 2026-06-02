@@ -1608,7 +1608,7 @@ stop() {
  * @author Testcord Team
  * @version 1.0.0
  * @description Simple CSS animations for Discord - works in browser context
- * @source https://github.com/x2b1/Testcord
+ * @source https://github.com/TestcordDev/Testcord
  */
 
 module.exports = {

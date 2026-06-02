@@ -51,7 +51,7 @@ function EquibopSection() {
                 <HeadingSecondary>Tesktop & Testcord</HeadingSecondary>
                 <Paragraph>Tesktop and Testcord are two separate things. This updater is for Testcord.</Paragraph>
                 <Paragraph className={Margins.top8}>
-                    You receive separate popups for Tesktop updates. You can also manually update by installing the <Link href="https://github.com/x2b1/Testktop">latest version</Link>.
+                    You receive separate popups for Tesktop updates. You can also manually update by installing the <Link href="https://github.com/TestcordDev/Testktop">latest version</Link>.
                 </Paragraph>
             </Card>
 

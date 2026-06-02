@@ -35,15 +35,15 @@ import { EquicordTranslatorModal, TestCordDonorModal, VencordDonorModal } from "
 
 const CONTRIBUTOR_BADGE = "https://cdn.discordapp.com/emojis/1092089799109775453.png?size=64";
 const EQUICORD_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/favicon.png";
-const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/x2b1/TestCord/main/browser/icon.png";
+const TESTCORD_CONTRIBUTOR_BADGE = "https://raw.githubusercontent.com/TestcordDev/TestCord/main/browser/icon.png";
 const USERPLUGIN_CONTRIBUTOR_BADGE = "https://Equicord.org/assets/icons/misc/userplugin.png";
-const TESTCORD_ADMIN_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/main/adm.png";
-const TESTCORD_OWNER_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/owner.png";
-const TESTCORD_DEV_BADGE = "https://raw.githubusercontent.com/x2b1/tbadges/refs/heads/main/dev.png";
+const TESTCORD_ADMIN_BADGE = "https://raw.githubusercontent.com/TestcordDev/tbadges/main/adm.png";
+const TESTCORD_OWNER_BADGE = "https://raw.githubusercontent.com/TestcordDev/tbadges/refs/heads/main/owner.png";
+const TESTCORD_DEV_BADGE = "https://raw.githubusercontent.com/TestcordDev/tbadges/refs/heads/main/dev.png";
 
 // URL for custom testcord badges (managed by /badge command)
-const TBADGES_JSON_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main/badges.json";
-const TBADGES_REPO_URL = "https://raw.githubusercontent.com/x2b1/tbadges/main";
+const TBADGES_JSON_URL = "https://raw.githubusercontent.com/TestcordDev/tbadges/main/badges.json";
+const TBADGES_REPO_URL = "https://raw.githubusercontent.com/TestcordDev/tbadges/main";
 
 const ContributorBadge: ProfileBadge = {
     id: "vencord_contributor_badge",

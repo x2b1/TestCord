@@ -18,7 +18,7 @@ on:
 env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.ETOKEN }}
-    REPO: x2b1/TestCord-Builds
+    REPO: TestcordDev/TestCord-builds
     USERNAME: GitHub-Actions
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
     Build:
         name: Build TestCord
         runs-on: ubuntu-latest
-        if: github.repository == 'x2b1/TestCord'
+        if: github.repository == 'TestcordDev/TestCord'
 
         steps:
             - uses: actions/checkout@v6
