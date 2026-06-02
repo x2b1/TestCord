@@ -19,7 +19,7 @@ You can join our [Discord server](https://discord.gg/EMDpkV57gW) for commits, ch
 
 ## Included Plugins
 
-Testcord's included plugins can be found [here](https://catgirlhentai.online). (site by dxrx99)
+Testcord's included plugins can be found [here](https://Testcord.dev).
 
 ## Installing / Uninstalling
 
