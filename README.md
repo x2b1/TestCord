@@ -29,7 +29,7 @@ Testcord's included plugins can be found [here](https://Testcord.dev).
 
 **MacOS**
 
-- Currently no MacOS ver, js use goofcord w testcord js or sum like tha
+- I hate MacOS so no ver for u, u can still use TC on goofcord tho.
 
 **Linux**
 
