@@ -126,7 +126,7 @@ function getAccounts(): Promise<SavedAccount[]> {
 async function saveAccounts(accounts: SavedAccount[]): Promise<void> {
     const unique = new Map<string, SavedAccount>();
     for (const a of accounts) {
-        if (!unique.has(a.id)) unique.set(a.id, a);
+        unique.set(a.id, a); // Always overwrite so an updated token for an existing account is kept
     }
     const deduplicated = Array.from(unique.values());
     accountsCache = deduplicated;
@@ -175,29 +175,9 @@ function switchToAccount(token: string, userId?: string) {
         }
 
         const TokenStore = findByProps("getToken", "setToken");
-        const FluxDispatcher = findByProps("dispatch", "subscribe", "register");
 
         if (TokenStore && typeof (TokenStore as any).setToken === "function") {
             (TokenStore as any).setToken(token);
-        }
-
-        if (FluxDispatcher) {
-            FluxDispatcher.dispatch({
-                type: "CONNECTION_OPEN",
-                user: {},
-                experiments: [],
-                guilds: [],
-                relationships: [],
-                private_channels: [],
-                users: [],
-                analytics_token: "",
-                session_id: ""
-            });
-
-            FluxDispatcher.dispatch({
-                type: "LOGIN_SUCCESS",
-                token: token
-            });
         }
 
         if (settings.store.useLocalStorageBypass) {
@@ -253,6 +233,12 @@ function CrossIcon() {
     return <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 17.59 13.41 12 19 6.41z" /></svg>;
 }
 
+function getAvatarUrl(userId: string, avatarHash: string | null | undefined): string {
+    return avatarHash
+        ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.webp?size=64`
+        : `https://cdn.discordapp.com/embed/avatars/${(BigInt(userId) >> 22n) % 6n}.png`;
+}
+
 const TOKEN_REGEX = /(?:mfa\.[\w-]{84}|[\w-]{24,26}\.[\w-]{4,7}\.[\w-]{27,40})/g;
 
 function extractTokens(raw: string): string[] {
@@ -264,6 +250,46 @@ function extractTokens(raw: string): string[] {
 }
 
 interface TokenResult { token: string; status: "pending" | "checking" | "valid" | "invalid" | "error" | "rate_limited"; username?: string; avatar?: string; id?: string; }
+
+function RemoveInvalidModal({ rootProps, invalidAccounts, onConfirm }: {
+    rootProps: any;
+    invalidAccounts: SavedAccount[];
+    onConfirm: () => void;
+}) {
+    return (
+        <ModalRoot {...rootProps} size="small">
+            <ModalHeader separator={false}>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, flex: 1 }}>Remove invalid tokens?</Forms.FormTitle>
+                <ModalCloseButton onClick={rootProps.onClose} />
+            </ModalHeader>
+            <ModalContent>
+                <Forms.FormText style={{ marginBottom: 12 }}>
+                    {invalidAccounts.length} account{invalidAccounts.length !== 1 ? "s" : ""} had invalid or revoked tokens:
+                </Forms.FormText>
+                <div className="ti-list" style={{ maxHeight: 120, marginBottom: 12 }}>
+                    {invalidAccounts.map(a => (
+                        <div key={a.id} className="ti-row ti-row--invalid">
+                            {a.avatar
+                                ? <img src={a.avatar} className="ti-avatar" alt="" />
+                                : <div className="ti-avatar ti-avatar--ph">{a.username?.[0]?.toUpperCase() ?? "?"}</div>}
+                            <span className="ti-username">{a.username}</span>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                    <button className="ti-verify-btn" onClick={() => rootProps.onClose()}>Keep them</button>
+                    <button
+                        className="ti-del-btn"
+                        style={{ padding: "4px 12px", fontSize: 13 }}
+                        onClick={() => { onConfirm(); rootProps.onClose(); }}
+                    >
+                        Remove invalid
+                    </button>
+                </div>
+            </ModalContent>
+        </ModalRoot>
+    );
+}
 
 function TokenModal({ rootProps }: { rootProps: any; }) {
     const [accounts, setAccounts] = useState<SavedAccount[]>(() => accountsCache ?? []);
@@ -315,17 +341,36 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
     }
 
     async function verifyAll() {
-        if (verifying) return; setVerifying(true);
+        if (verifying) return;
+        setVerifying(true);
         const ns: Record<string, string> = {};
         for (const acc of accounts) {
-            ns[acc.id] = "checking"; setStatuses({ ...ns });
-            try { const r = await Native.checkToken(acc.token); ns[acc.id] = r.valid ? "valid" : "invalid"; } catch { ns[acc.id] = "error"; }
+            ns[acc.id] = "checking";
+            setStatuses({ ...ns });
+            try {
+                const r = await Native.checkToken(acc.token);
+                ns[acc.id] = r.valid ? "valid" : "invalid";
+            } catch {
+                ns[acc.id] = "error";
+            }
             setStatuses({ ...ns });
             await new Promise(r => setTimeout(r, 400));
         }
-        const toKeep = accounts.filter(a => ns[a.id] !== "invalid");
-        if (toKeep.length !== accounts.length) { setAccounts(toKeep); await saveAccounts(toKeep); }
         setVerifying(false);
+        const invalidAccs = accounts.filter(a => ns[a.id] === "invalid");
+        if (invalidAccs.length > 0) {
+            openModal(props => (
+                <RemoveInvalidModal
+                    rootProps={props}
+                    invalidAccounts={invalidAccs}
+                    onConfirm={async () => {
+                        const toKeep = accounts.filter(a => ns[a.id] !== "invalid");
+                        setAccounts(toKeep);
+                        await saveAccounts(toKeep);
+                    }}
+                />
+            ));
+        }
     }
 
     async function processTokens(raw: string) {
@@ -341,8 +386,7 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                 const result = await Native.checkToken(tokens[i]);
                 if (result.valid && result.user) {
                     const u = result.user;
-                    const av = u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=64`
-                        : `https://cdn.discordapp.com/embed/avatars/${(BigInt(u.id) >> 22n) % 6n}.png`;
+                    const av = getAvatarUrl(u.id, u.avatar);
                     if (!existing.find(a => a.id === u.id)) {
                         existing.push({ id: u.id, token: tokens[i], username: u.global_name || u.username, discriminator: u.discriminator ?? "0", avatar: av });
                         await saveAccounts(existing);
@@ -378,7 +422,7 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
     return (
         <ModalRoot {...rootProps} size="medium">
             <ModalHeader separator={false}>
-                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "#ffffff" }}>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, color: "#ffffff", flex: 1 }}>
                     <FolderIcon width={16} height={16} /> Token Importer
                 </Forms.FormTitle>
                 <ModalCloseButton onClick={rootProps.onClose} />
@@ -403,7 +447,6 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                             </div>
                             {settings.store.enableLocalScan && <button className="ti-verify-btn" style={{ marginRight: 6 }} onClick={async () => {
                                 if (verifying) return;
-                                if (!settings.store.enableLocalScan) return;
                                 setVerifying(true);
                                 try {
                                     const tokens = await Native.findLocalTokens();
@@ -414,8 +457,7 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                                             const verified = await Native.checkToken(tok);
                                             if (verified.valid && verified.user) {
                                                 const u = verified.user;
-                                                const av = u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=64`
-                                                    : `https://cdn.discordapp.com/embed/avatars/${(BigInt(u.id) >> 22n) % 6n}.png`;
+                                                const av = getAvatarUrl(u.id, u.avatar);
                                                 if (!existing.find(a => a.id === u.id)) {
                                                     existing.push({ id: u.id, token: tok, username: u.global_name || u.username, discriminator: u.discriminator ?? "0", avatar: av });
                                                     addedCount++;
@@ -444,7 +486,7 @@ function TokenModal({ rootProps }: { rootProps: any; }) {
                                 {copied ? "Copied ✓" : "My Token"}
                             </button>
                             <button className="ti-verify-btn" onClick={verifyAll} disabled={verifying || !loaded}>
-                                {verifying ? "Stopping..." : "Verify all"}
+                                {verifying ? "Verifying..." : "Verify all"}
                             </button>
                         </div>
                         {!loaded ? <div className="ti-empty" style={{ opacity: 0.5 }}>Loading accounts...</div>
@@ -540,7 +582,7 @@ function DangerousAckModal({ rootProps, settingKey, onConfirm }: { rootProps: an
     return (
         <ModalRoot {...rootProps} size="small">
             <ModalHeader separator={false}>
-                <Forms.FormTitle tag="h4" style={{ margin: 0 }}>Enable "{settingKey}"?</Forms.FormTitle>
+                <Forms.FormTitle tag="h4" style={{ margin: 0, flex: 1 }}>Enable "{settingKey}"?</Forms.FormTitle>
                 <ModalCloseButton onClick={rootProps.onClose} />
             </ModalHeader>
             <ModalContent>
@@ -636,47 +678,46 @@ export default definePlugin({
     name: "TokenImporter",
     description: "Import and verify Discord tokens.",
     tags: ["Nightcord"],
-    authors: [{ name: "Nightcord", id: 0n }, TestcordDevs.x2b],
+    authors: [{ name: "Nightcord", id: 0n }, TestcordDevs.x2b, TestcordDevs.sirphantom89],
     dependencies: ["HeaderBarAPI"],
     settings,
     settingsAboutComponent: TokenImporterAbout,
-    start() {
+    async start() {
         addHeaderBarButton("nightcord-token-importer", () => <TokenImporterButton />, 10);
-        getAccounts().then(async existing => {
-            try {
-                // Auto-scan requires BOTH the local-scan capability and the auto-on-startup toggle.
-                if (
-                    settings.store.enableLocalScan
-                    && settings.store.autoScanOnStartup
-                    && window.DiscordNative?.process?.platform === "win32"
-                ) {
-                    const autoFound = await Native.findLocalTokens();
-                    let added = false;
-                    const current = [...existing];
-                    for (const tok of autoFound) {
-                        if (!current.find(a => a.token === tok)) {
-                            const verified = await Native.checkToken(tok);
-                            if (verified.valid && verified.user) {
-                                const u = verified.user;
-                                if (!current.find(a => a.id === u.id)) {
-                                    const av = u.avatar ? `https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=64`
-                                        : `https://cdn.discordapp.com/embed/avatars/${(BigInt(u.id) >> 22n) % 6n}.png`;
-                                    current.push({ id: u.id, token: tok, username: u.global_name || u.username, discriminator: u.discriminator ?? "0", avatar: av });
-                                    added = true;
-                                }
+        try {
+            const existing = await getAccounts();
+            // Auto-scan requires BOTH the local-scan capability and the auto-on-startup toggle.
+            if (
+                settings.store.enableLocalScan
+                && settings.store.autoScanOnStartup
+                && window.DiscordNative?.process?.platform === "win32"
+            ) {
+                const autoFound = await Native.findLocalTokens();
+                let added = false;
+                const current = [...existing];
+                for (const tok of autoFound) {
+                    if (!current.find(a => a.token === tok)) {
+                        const verified = await Native.checkToken(tok);
+                        if (verified.valid && verified.user) {
+                            const u = verified.user;
+                            if (!current.find(a => a.id === u.id)) {
+                                current.push({ id: u.id, token: tok, username: u.global_name || u.username, discriminator: u.discriminator ?? "0", avatar: getAvatarUrl(u.id, u.avatar) });
+                                added = true;
                             }
                         }
                     }
-                    if (added) {
-                        await saveAccounts(current);
-                        await patchTokenStore();
-                    }
                 }
-            } catch (e) { console.error("[TokenImporter] Auto import failed:", e); }
+                if (added) {
+                    await saveAccounts(current);
+                    await patchTokenStore();
+                }
+            }
             if (settings.store.injectIntoMultiAccountStore) {
                 setTimeout(() => this._injectAccounts(), 5000);
             }
-        });
+        } catch (e) {
+            console.error("[TokenImporter] Startup failed:", e);
+        }
         if (settings.store.patchTokenStore) {
             // Eagerly patch so future native saves include our accounts.
             patchTokenStore();
@@ -724,5 +765,6 @@ export default definePlugin({
             originalEncryptAndStoreTokens = null;
         }
         accountsCache = null;
+        loadPromise = null;
     },
 });
