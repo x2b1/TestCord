@@ -6,6 +6,7 @@
 
 import { addProfileBadge, BadgePosition, type ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
+import BadgeAPIPlugin from "@plugins/_api/badges";
 import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
@@ -13,6 +14,7 @@ import type { User } from "@vencord/discord-types";
 import { FluxDispatcher, IconUtils, PresenceStore, React, UsernameUtils, UserStore } from "@webpack/common";
 
 import { getCachedTarget, isActive, isCurrentUser, loadTarget, logger, setEnabled, settings, subscribe } from "./data";
+import { FakeUserProfileModal } from "./legacyModal";
 import { FakeUserSwitcherModal } from "./modal";
 
 const FLAG_BADGES: { flag: number; image: string; description: string; }[] = [
@@ -42,7 +44,7 @@ function getTargetUser(): any {
             username: settings.store.manualUsername || "FakeUser",
             globalName: settings.store.manualUsername || "FakeUser",
             discriminator: "0",
-            avatar: "manual",
+            avatar: settings.store.manualAvatar || "manual",
         };
     }
     const t = getCachedTarget();
@@ -52,7 +54,12 @@ function getTargetUser(): any {
 
 function getTargetProfile(): any {
     if (settings.store.manualMode && settings.store.spoofActive) {
-        return { bio: "", badges: [] };
+        return {
+            bio: settings.store.manualBio || "",
+            pronouns: settings.store.manualPronouns || "",
+            banner: settings.store.manualBanner || null,
+            badges: [],
+        };
     }
     const t = getCachedTarget();
     if (!t || !settings.store.spoofActive) return null;
@@ -142,6 +149,11 @@ let originalUseName: typeof UsernameUtils.useName | null = null;
 let originalUseUserTag: typeof UsernameUtils.useUserTag | null = null;
 let originalGetStatus: typeof PresenceStore.getStatus | null = null;
 let originalGetClientStatus: typeof PresenceStore.getClientStatus | null = null;
+let originalGetActivities: typeof PresenceStore.getActivities | null = null;
+let originalGetPrimaryActivity: typeof PresenceStore.getPrimaryActivity | null = null;
+let originalGetUnfilteredActivities: typeof PresenceStore.getUnfilteredActivities | null = null;
+let originalFindActivity: typeof PresenceStore.findActivity | null = null;
+let originalGetApplicationActivity: typeof PresenceStore.getApplicationActivity | null = null;
 
 let storePatched = false;
 let utilsPatched = false;
@@ -190,6 +202,9 @@ function patchUtils() {
 
     IconUtils.getUserAvatarURL = function (user: any, animated?: any, size?: any, format?: any) {
         if (isActive() && user && isCurrentUser(user.id)) {
+            if (settings.store.manualMode) {
+                return settings.store.manualAvatar || "https://cdn.discordapp.com/embed/avatars/0.png";
+            }
             const t = getTargetUser();
             if (t) return originalGetUserAvatarURL!.call(this, t, animated, size, format);
         }
@@ -198,6 +213,12 @@ function patchUtils() {
 
     IconUtils.getUserBannerURL = function (params: any) {
         if (isActive() && params && isCurrentUser(params.id)) {
+            if (settings.store.manualMode) {
+                if (settings.store.manualBanner && !settings.store.manualBanner.startsWith("#")) {
+                    return settings.store.manualBanner;
+                }
+                return originalGetUserBannerURL!.call(this, params);
+            }
             const t = getTargetUser() as any;
             const targetBanner = params.banner ?? t?.banner ?? getTargetProfile()?.banner;
             if (t && targetBanner) {
@@ -269,21 +290,139 @@ function unpatchUtils() {
     utilsPatched = false;
 }
 
+function getManualActivityList() {
+    if (settings.store.manualActivityName) {
+        return [{
+            id: "manual-activity",
+            name: settings.store.manualActivityName,
+            type: Number(settings.store.manualActivityType ?? 0),
+            state: settings.store.manualActivityState || undefined,
+            details: settings.store.manualActivityDetails || undefined,
+            createdAt: Date.now()
+        }];
+    }
+    return [];
+}
+
 function patchPresence() {
     if (presencePatched) return;
     presencePatched = true;
 
     originalGetStatus = PresenceStore.getStatus;
     originalGetClientStatus = PresenceStore.getClientStatus;
+    originalGetActivities = PresenceStore.getActivities;
+    originalGetPrimaryActivity = PresenceStore.getPrimaryActivity;
+    originalGetUnfilteredActivities = PresenceStore.getUnfilteredActivities;
+    originalFindActivity = PresenceStore.findActivity;
+    originalGetApplicationActivity = PresenceStore.getApplicationActivity;
 
-    PresenceStore.getStatus = function (userId: string, ...args: any[]) {
-        if (isActive() && isCurrentUser(userId)) return undefined as any;
-        return originalGetStatus!.call(this, userId, ...args);
+    PresenceStore.getStatus = function (userId: string, guildId?: string | null, defaultStatus?: any): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                return settings.store.manualStatus || "online";
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetStatus!.call(this, target.id, guildId, defaultStatus);
+            }
+            return "offline";
+        }
+        return originalGetStatus!.call(this, userId, guildId, defaultStatus);
     };
 
-    PresenceStore.getClientStatus = function (userId: string) {
-        if (isActive() && isCurrentUser(userId)) return undefined as any;
+    PresenceStore.getClientStatus = function (userId: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                const status = settings.store.manualStatus || "online";
+                return { desktop: status, web: status, mobile: status } as any;
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetClientStatus!.call(this, target.id);
+            }
+            return {} as any;
+        }
         return originalGetClientStatus!.call(this, userId);
+    };
+
+    PresenceStore.getActivities = function (userId: string, guildId?: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                return getManualActivityList();
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetActivities!.call(this, target.id, guildId);
+            }
+            return [];
+        }
+        return originalGetActivities!.call(this, userId, guildId);
+    };
+
+    PresenceStore.getPrimaryActivity = function (userId: string, guildId?: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                const acts = getManualActivityList();
+                return acts[0] ?? null;
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetPrimaryActivity!.call(this, target.id, guildId);
+            }
+            return null;
+        }
+        return originalGetPrimaryActivity!.call(this, userId, guildId);
+    };
+
+    PresenceStore.getUnfilteredActivities = function (userId: string, guildId?: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                return getManualActivityList();
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetUnfilteredActivities!.call(this, target.id, guildId);
+            }
+            return [];
+        }
+        return originalGetUnfilteredActivities!.call(this, userId, guildId);
+    };
+
+    PresenceStore.findActivity = function (userId: string, predicate: any, guildId?: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                const acts = getManualActivityList();
+                return acts.find(predicate);
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalFindActivity!.call(this, target.id, predicate, guildId);
+            }
+            return undefined;
+        }
+        return originalFindActivity!.call(this, userId, predicate, guildId);
+    };
+
+    PresenceStore.getApplicationActivity = function (userId: string, applicationId: string, guildId?: string): any {
+        const id = userId ?? UserStore.getCurrentUser()?.id;
+        if (isActive() && id && isCurrentUser(id)) {
+            if (settings.store.manualMode) {
+                const acts = getManualActivityList();
+                return acts[0] ?? null; // simple fallback
+            }
+            const target = getTargetUser();
+            if (target && target.id !== "0") {
+                return originalGetApplicationActivity!.call(this, target.id, applicationId, guildId);
+            }
+            return null;
+        }
+        return originalGetApplicationActivity!.call(this, userId, applicationId, guildId);
     };
 }
 
@@ -291,7 +430,35 @@ function unpatchPresence() {
     if (!presencePatched) return;
     if (originalGetStatus) PresenceStore.getStatus = originalGetStatus;
     if (originalGetClientStatus) PresenceStore.getClientStatus = originalGetClientStatus;
+    if (originalGetActivities) PresenceStore.getActivities = originalGetActivities;
+    if (originalGetPrimaryActivity) PresenceStore.getPrimaryActivity = originalGetPrimaryActivity;
+    if (originalGetUnfilteredActivities) PresenceStore.getUnfilteredActivities = originalGetUnfilteredActivities;
+    if (originalFindActivity) PresenceStore.findActivity = originalFindActivity;
+    if (originalGetApplicationActivity) PresenceStore.getApplicationActivity = originalGetApplicationActivity;
     presencePatched = false;
+}
+
+let originalGetTestcordCustomBadges: any = null;
+let badgesPatched = false;
+
+function patchBadges() {
+    if (badgesPatched) return;
+    if (typeof BadgeAPIPlugin?.getTestCordCustomBadges !== "function") return;
+    badgesPatched = true;
+    originalGetTestcordCustomBadges = BadgeAPIPlugin.getTestCordCustomBadges.bind(BadgeAPIPlugin);
+    BadgeAPIPlugin.getTestCordCustomBadges = function (userId: string) {
+        if (settings.store.spoofBadges && isActive() && isCurrentUser(userId)) {
+            const target = getTargetUser();
+            if (target && target.id !== "0") return originalGetTestcordCustomBadges(target.id);
+        }
+        return originalGetTestcordCustomBadges(userId);
+    };
+}
+
+function unpatchBadges() {
+    if (!badgesPatched) return;
+    if (originalGetTestcordCustomBadges) BadgeAPIPlugin.getTestCordCustomBadges = originalGetTestcordCustomBadges;
+    badgesPatched = false;
 }
 
 function notifyUpdate() {
@@ -327,11 +494,18 @@ function FakeUserSwitcherButton({ iconForeground, hideTooltips, nameplate }: Use
     const target = getCachedTarget();
     const active = isActive();
 
+    let displayName = "Fake User Switcher V3";
+    if (settings.store.manualMode) {
+        displayName = settings.store.manualUsername || "FakeUser";
+    } else if (target) {
+        displayName = target.user.username;
+    }
+
     const tooltip = hideTooltips
         ? undefined
-        : target
-            ? (active ? `Spoofing as ${target.user.username} — click to manage` : `Click to spoof as ${target.user.username}`)
-            : "Fake User Switcher";
+        : active
+            ? `Spoofing as ${displayName} — click to manage`
+            : "Fake User Switcher V3";
 
     return (
         <UserAreaButton
@@ -340,10 +514,25 @@ function FakeUserSwitcherButton({ iconForeground, hideTooltips, nameplate }: Use
             role="button"
             plated={nameplate != null}
             redGlow={active}
-            onClick={() => openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps as any} />)}
-            onContextMenu={() => {
-                if (!target) {
+            onClick={() => {
+                if (settings.store.uiMode === "legacy") {
+                    openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />);
+                } else {
                     openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps as any} />);
+                }
+            }}
+            onContextMenu={() => {
+                if (settings.store.manualMode) {
+                    setEnabled(!settings.store.spoofActive);
+                    force();
+                    return;
+                }
+                if (!target) {
+                    if (settings.store.uiMode === "legacy") {
+                        openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />);
+                    } else {
+                        openModal(modalProps => <FakeUserSwitcherModal modalProps={modalProps as any} />);
+                    }
                     return;
                 }
                 setEnabled(!settings.store.spoofActive);
@@ -354,8 +543,8 @@ function FakeUserSwitcherButton({ iconForeground, hideTooltips, nameplate }: Use
 }
 
 const dynamicBadge: ProfileBadge = {
-    id: "fakeUserSwitcher-target",
-    description: "Fake User Switcher",
+    id: "fakeuserswitcherV3-target",
+    description: "Fake User Switcher V3",
     position: BadgePosition.END,
     shouldShow: ({ userId }) => settings.store.spoofBadges && isActive() && isCurrentUser(userId),
     getBadges: () => {
@@ -368,7 +557,7 @@ const dynamicBadge: ProfileBadge = {
         for (const fb of FLAG_BADGES) {
             if ((flags & fb.flag) === fb.flag) {
                 badges.push({
-                    id: `fakeUserSwitcher-flag-${fb.flag}`,
+                    id: `fakeuserswitcherV3-flag-${fb.flag}`,
                     description: fb.description,
                     iconSrc: fb.image,
                     position: BadgePosition.END,
@@ -379,7 +568,7 @@ const dynamicBadge: ProfileBadge = {
         const premium = (target as any).premiumType ?? 0;
         if (premium >= 1) {
             badges.push({
-                id: "fakeUserSwitcher-nitro",
+                id: "fakeuserswitcherV3-nitro",
                 description: "Discord Nitro",
                 iconSrc: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
                 position: BadgePosition.END,
@@ -392,9 +581,9 @@ const dynamicBadge: ProfileBadge = {
 
 function buildFakeMessage(channelId: string, content: string, replyMessageReference: any) {
     const target = getCachedTarget();
-    if (!target) return null;
+    const u = getTargetUser();
+    if (!u) return null;
 
-    const u = target.user as any;
     const id = makeSnowflake();
 
     return {
@@ -405,7 +594,7 @@ function buildFakeMessage(channelId: string, content: string, replyMessageRefere
             author: {
                 id: u.id,
                 username: u.username,
-                avatar: u.avatar,
+                avatar: u.avatar === "manual" ? null : u.avatar,
                 discriminator: u.discriminator,
                 public_flags: u.publicFlags ?? u.flags ?? 0,
                 premium_type: u.premiumType ?? 0,
@@ -444,8 +633,8 @@ function buildFakeMessage(channelId: string, content: string, replyMessageRefere
 let unsub: (() => void) | null = null;
 
 export default definePlugin({
-    name: "FakeUserSwitcher",
-    description: "Visually impersonate any Discord user client-side. Merges the best of FakeAccountSwitcher and FakeUserProfile.",
+    name: "fakeuserswitcherV3",
+    description: "Visually impersonate any Discord user client-side. Advanced status, activities, bio, and visual spoofing.",
     tags: ["Customisation", "Privacy", "Fun"],
     authors: [TestcordDevs.x2b, TestcordDevs.SirPhantom89],
     dependencies: ["UserAreaAPI", "BadgeAPI", "MessageEventsAPI"],
@@ -461,24 +650,29 @@ export default definePlugin({
         addProfileBadge(dynamicBadge);
         patchStore();
         patchUtils();
+        patchBadges();
         patchPresence();
 
         unsub = subscribe(syncSpoofState);
 
         const { targetId } = settings.store;
-        if (targetId) {
+        if (targetId && !settings.store.manualMode) {
             try {
                 await loadTarget(targetId);
-                if (settings.store.spoofActive) syncSpoofState();
             } catch (e) {
                 logger.warn("Failed to restore cached target", e);
             }
+        }
+
+        if (settings.store.spoofActive) {
+            syncSpoofState();
         }
     },
 
     stop() {
         clearWrapCache();
         unpatchPresence();
+        unpatchBadges();
         unpatchUtils();
         unpatchStore();
         removeProfileBadge(dynamicBadge);
@@ -488,7 +682,7 @@ export default definePlugin({
 
     flux: {
         CONNECTION_OPEN() {
-            if (settings.store.spoofActive && getCachedTarget()) {
+            if (settings.store.spoofActive && (settings.store.manualMode || getCachedTarget())) {
                 syncSpoofState();
             }
         },
@@ -498,7 +692,7 @@ export default definePlugin({
         {
             find: ",getUserTag:",
             replacement: {
-                match: /if\(\i\((\i)\)\.global_name\)return(?=.{0,100}return"\?\?\?")/,
+                match: /if\(\i\((\i)(?:\.global_name\)|\)\.global_name)\)return(?=.{0,100}return"\?\?\?")/,
                 replace: "const vcFupName=$self.getUsername($1);if(vcFupName)return vcFupName;$&"
             }
         },
@@ -527,16 +721,16 @@ export default definePlugin({
             find: ".banner)==null",
             replacement: {
                 match: /(?<=void 0:)\i\.getPreviewBanner\(\i,\i,\i\)/,
-                replace: "$self.bannerHook(arguments[0])||$&"
+                replace: "($self.bannerHook(arguments[0])??($&))"
             }
         },
         {
             find: ":\"SHOULD_LOAD\");",
             replacement: {
                 match: /\i(?:\?)?\.getPreviewBanner\(\i,\i,\i\)(?=.{0,100}"COMPLETE")/,
-                replace: "$self.bannerHook(arguments[0])||$&"
+                replace: "($self.bannerHook(arguments[0])??($&))"
             }
-        }
+        },
     ],
 
     getUsername(user: User) {
@@ -549,8 +743,8 @@ export default definePlugin({
     wrapAvatar(original: any) {
         return (user: User, animated: boolean, size: number) => {
             if (isActive() && isCurrentUser(user?.id)) {
-                if (settings.store.manualMode && settings.store.manualAvatar) {
-                    return settings.store.manualAvatar;
+                if (settings.store.manualMode) {
+                    return settings.store.manualAvatar || "https://cdn.discordapp.com/embed/avatars/0.png";
                 }
                 const t = getTargetUser();
                 if (t) return original(t, animated, size);
@@ -577,24 +771,40 @@ export default definePlugin({
         if (!targetProfile || !target) return original;
 
         const overrides: any = {};
-        if (targetProfile.bio != null) overrides.bio = targetProfile.bio;
-        if (targetProfile.pronouns != null) overrides.pronouns = targetProfile.pronouns;
-        if (targetProfile.themeColors) overrides.themeColors = targetProfile.themeColors;
-        if (targetProfile.accentColor != null) overrides.accentColor = targetProfile.accentColor;
-        if (targetProfile.banner) overrides.banner = targetProfile.banner;
-        if (targetProfile.profileEffect) overrides.profileEffect = targetProfile.profileEffect;
-        if (targetProfile.popoutAnimationParticleType != null) overrides.popoutAnimationParticleType = targetProfile.popoutAnimationParticleType;
-        if (targetProfile.profileEffectExpiresAt != null) overrides.profileEffectExpiresAt = targetProfile.profileEffectExpiresAt;
-        if (targetProfile.premiumType != null) overrides.premiumType = targetProfile.premiumType;
-        if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
-        if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
+        if (settings.store.manualMode) {
+            overrides.bio = settings.store.manualBio || "";
+            overrides.pronouns = settings.store.manualPronouns || "";
+            overrides.banner = settings.store.manualBanner || null;
+            if (settings.store.manualBanner && settings.store.manualBanner.startsWith("#")) {
+                try {
+                    const cleanHex = settings.store.manualBanner.replace("#", "");
+                    const colorVal = parseInt(cleanHex, 16);
+                    if (!isNaN(colorVal)) overrides.accentColor = colorVal;
+                } catch { /* ignore */ }
+            }
+        } else {
+            if (targetProfile.bio != null) overrides.bio = targetProfile.bio;
+            if (targetProfile.pronouns != null) overrides.pronouns = targetProfile.pronouns;
+            if (targetProfile.themeColors) overrides.themeColors = targetProfile.themeColors;
+            overrides.banner = targetProfile.banner ?? (target as any).banner ?? null;
+            overrides.accentColor = targetProfile.accentColor ?? (target as any).accentColor ?? null;
+            if (targetProfile.profileEffect) overrides.profileEffect = targetProfile.profileEffect;
+            if (targetProfile.popoutAnimationParticleType != null) overrides.popoutAnimationParticleType = targetProfile.popoutAnimationParticleType;
+            if (targetProfile.profileEffectExpiresAt != null) overrides.profileEffectExpiresAt = targetProfile.profileEffectExpiresAt;
+            if (targetProfile.premiumType != null) overrides.premiumType = targetProfile.premiumType;
+            if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
+            if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
+        }
 
-        // Mirror display name so the user popout shows the target's name
-        const targetUserProfile = (targetProfile as any).userProfile ?? {};
-        const spoofedDisplayName = targetUserProfile.displayName
-            ?? targetUserProfile.display_name
-            ?? (target as any).globalName
-            ?? (target as any).username;
+        // Mirror the userProfile sub-object so the popout's display-name section reflects the target.
+        const targetUserProfile = settings.store.manualMode ? {} : ((targetProfile as any).userProfile ?? {});
+        const spoofedDisplayName = settings.store.manualMode
+            ? (settings.store.manualUsername || "FakeUser")
+            : (targetUserProfile.displayName
+                ?? targetUserProfile.display_name
+                ?? (target as any).globalName
+                ?? (target as any).username);
+
         overrides.userProfile = {
             ...(original?.userProfile ?? {}),
             ...targetUserProfile,
@@ -610,7 +820,7 @@ export default definePlugin({
                 for (const fb of FLAG_BADGES) {
                     if ((flags & fb.flag) === fb.flag) {
                         computed.push({
-                            id: `fakeUserSwitcher-flag-${fb.flag}`,
+                            id: `fakeuserswitcherV3-flag-${fb.flag}`,
                             description: fb.description,
                             icon: fb.image,
                         });
@@ -618,7 +828,7 @@ export default definePlugin({
                 }
                 if (((target as any).premiumType ?? 0) >= 1) {
                     computed.push({
-                        id: "fakeUserSwitcher-nitro",
+                        id: "fakeuserswitcherV3-nitro",
                         description: "Discord Nitro",
                         icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
                     });
@@ -627,7 +837,7 @@ export default definePlugin({
             }
         }
 
-        if (settings.store.spoofActivities) {
+        if (settings.store.spoofActivities && !settings.store.manualMode) {
             if (targetProfile.connectedAccounts) overrides.connectedAccounts = targetProfile.connectedAccounts;
             if (targetProfile.legacyApplications) overrides.legacyApplications = targetProfile.legacyApplications;
             if (targetProfile.applicationRoleConnections) overrides.applicationRoleConnections = targetProfile.applicationRoleConnections;
@@ -650,20 +860,27 @@ export default definePlugin({
         if (!isActive()) return undefined;
         const id = displayProfile?.userId ?? user?.id;
         if (!isCurrentUser(id)) return undefined;
+
+        if (settings.store.manualMode) {
+            if (settings.store.manualBanner) {
+                // If it's a solid hex color, return empty string (rely on accentColor in profileHook)
+                if (settings.store.manualBanner.startsWith("#")) return "";
+                return settings.store.manualBanner;
+            }
+            return "";
+        }
+
         const target = getTargetUser() as any;
-        if (target?.banner) {
+        if (target?.banner && target.banner !== "manual") {
             const animated = target.banner.startsWith("a_");
             const ext = animated ? "gif" : "png";
             return `https://cdn.discordapp.com/banners/${target.id}/${target.banner}.${ext}?size=600`;
         }
-        return undefined;
+        return "";
     },
 
     onBeforeMessageSend(channelId, msg, options) {
         if (!isActive() || !settings.store.fakeMessages) return;
-        const target = getCachedTarget();
-        if (!target) return;
-
         const replyRef = options?.replyOptions?.messageReference;
         const fake = buildFakeMessage(channelId, msg.content, replyRef);
         if (!fake) return;

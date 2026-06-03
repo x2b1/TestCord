@@ -11,7 +11,7 @@ import { OptionType } from "@utils/types";
 import type { User } from "@vencord/discord-types";
 import { UserProfileStore, UserStore, UserUtils } from "@webpack/common";
 
-export const logger = new Logger("FakeUserSwitcher");
+export const logger = new Logger("FakeUserSwitcherV3");
 
 export interface CachedTarget {
     id: string;
@@ -23,7 +23,7 @@ export interface CachedTarget {
 let cached: CachedTarget | null = null;
 const subscribers = new Set<() => void>();
 
-function notify() {
+export function notify() {
     for (const fn of subscribers) {
         try { fn(); } catch (e) { logger.error("subscriber failed", e); }
     }
@@ -94,10 +94,11 @@ export function setEnabled(value: boolean) {
     notify();
 }
 
-export function getSavedUsers(): { id: string; name: string; avatar: string | null; }[] {
+export function getSavedUsers(): { id: string; name: string; username?: string; avatar: string | null; }[] {
     try { return JSON.parse(settings.store.savedUsers || "[]"); } catch { return []; }
 }
-export function setSavedUsers(list: { id: string; name: string; avatar: string | null; }[]) {
+
+export function setSavedUsers(list: { id: string; name: string; username?: string; avatar: string | null; }[]) {
     settings.store.savedUsers = JSON.stringify(list);
 }
 
@@ -136,24 +137,112 @@ export const settings = definePluginSettings({
         type: OptionType.STRING,
         description: "Saved user IDs (JSON)",
         default: "[]",
-        hidden: true
+        hidden: true,
     },
     manualMode: {
         type: OptionType.BOOLEAN,
         description: "Use a custom username and avatar instead of cloning a user ID.",
         default: false,
-        hidden: true
+        hidden: true,
     },
     manualUsername: {
         type: OptionType.STRING,
         description: "Custom username for manual mode.",
         default: "FakeUser",
-        hidden: true
+        hidden: true,
     },
     manualAvatar: {
         type: OptionType.STRING,
         description: "Custom avatar URL for manual mode.",
         default: "",
-        hidden: true
+        hidden: true,
+    },
+    manualBio: {
+        type: OptionType.STRING,
+        description: "Custom bio / About Me in manual mode.",
+        default: "",
+        hidden: true,
+    },
+    manualPronouns: {
+        type: OptionType.STRING,
+        description: "Custom pronouns in manual mode.",
+        default: "",
+        hidden: true,
+    },
+    manualBanner: {
+        type: OptionType.STRING,
+        description: "Custom banner image URL or solid color hex in manual mode.",
+        default: "",
+        hidden: true,
+    },
+    manualStatus: {
+        type: OptionType.SELECT,
+        description: "Spoofed status in manual mode.",
+        default: "online",
+        options: [
+            { label: "Online", value: "online", default: true },
+            { label: "Idle", value: "idle" },
+            { label: "Do Not Disturb", value: "dnd" },
+            { label: "Offline", value: "offline" }
+        ],
+        hidden: true,
+    },
+    manualActivityName: {
+        type: OptionType.STRING,
+        description: "Spoofed activity name in manual mode.",
+        default: "",
+        hidden: true,
+    },
+    manualActivityType: {
+        type: OptionType.SELECT,
+        description: "Spoofed activity type in manual mode.",
+        default: 0,
+        options: [
+            { label: "Playing", value: 0, default: true },
+            { label: "Streaming", value: 1 },
+            { label: "Listening to", value: 2 },
+            { label: "Watching", value: 3 },
+            { label: "Custom Status", value: 4 },
+            { label: "Competing in", value: 5 }
+        ],
+        hidden: true,
+    },
+    manualActivityState: {
+        type: OptionType.STRING,
+        description: "Spoofed activity state (e.g. In Match, Chilling).",
+        default: "",
+        hidden: true,
+    },
+    manualActivityDetails: {
+        type: OptionType.STRING,
+        description: "Spoofed activity details (e.g. Playing Solo, Level 42).",
+        default: "",
+        hidden: true,
+    },
+    uiMode: {
+        type: OptionType.SELECT,
+        description: "Which user profile spoofing UI mode to use.",
+        default: "modern",
+        options: [
+            { label: "legacy", value: "legacy" },
+            { label: "modern", value: "modern", default: true }
+        ],
+    },
+    disableAnimations: {
+        type: OptionType.BOOLEAN,
+        description: "Disable all transitions and animations in the visual settings switcher.",
+        default: false,
+    },
+    configExpanded: {
+        type: OptionType.BOOLEAN,
+        description: "Whether the configuration accordion is expanded.",
+        default: true,
+        hidden: true,
+    },
+    manualExpanded: {
+        type: OptionType.BOOLEAN,
+        description: "Whether the manual spoofing accordion is expanded.",
+        default: false,
+        hidden: true,
     },
 });
