@@ -20,16 +20,53 @@ const settings = definePluginSettings({
 });
 
 function parseTokens(input: string): Array<{ userId: string; token: string; }> {
-    const lines = input.trim().split("\n");
+    const cleaned = input.trim();
+    if (!cleaned) return [];
+
     const tokens: Array<{ userId: string; token: string; }> = [];
+    const seen = new Set<string>();
 
-    for (let i = 0; i < lines.length; i += 3) {
-        const userId = lines[i]?.trim();
-        const token = lines[i + 2]?.trim().replace(/^["']|["']$/g, "");
-
-        if (userId && token) {
-            tokens.push({ userId, token });
+    const addToken = (raw: string) => {
+        const t = raw.trim().replace(/^["']|["']$/g, "");
+        if (t && !seen.has(t)) {
+            seen.add(t);
+            tokens.push({ userId: t.split(".")[0] ?? "Unknown", token: t });
         }
+    };
+
+    // Try 3-line format first (userId, blank, token)
+    const lines = cleaned.split("\n");
+    let matched3Line = false;
+    if (lines.length >= 3) {
+        const threeLineTokens: Array<{ userId: string; token: string; }> = [];
+        const threeLineSeen = new Set<string>();
+        for (let i = 0; i < lines.length; i += 3) {
+            const userId = lines[i]?.trim();
+            const token = lines[i + 2]?.trim().replace(/^["']|["']$/g, "");
+            if (userId && token && !threeLineSeen.has(token)) {
+                threeLineSeen.add(token);
+                threeLineTokens.push({ userId, token });
+            }
+        }
+        if (threeLineTokens.length > 0) {
+            matched3Line = true;
+            return threeLineTokens;
+        }
+    }
+
+    // Comma-separated
+    if (!matched3Line && cleaned.includes(",")) {
+        const parts = cleaned.split(",");
+        for (const part of parts) {
+            addToken(part);
+        }
+        if (tokens.length > 0) return tokens;
+    }
+
+    // Newline-separated (one token per line)
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) addToken(trimmed);
     }
 
     return tokens;
@@ -84,7 +121,7 @@ const ImportMultiTokensComponent = () => {
                 Import Multiple Tokens
             </Text>
             <Text variant="text-sm/normal" style={{ marginBottom: "16px", color: "var(--text-muted)" }}>
-                Paste tokens in format: userId, colon, token (one per 3 lines)
+                Supported formats: comma-separated, one per line, or 3-line format (userId, blank, token)
             </Text>
             <TextArea
                 placeholder="tokens from your local storage > tokens;"

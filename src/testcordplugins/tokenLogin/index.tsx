@@ -122,7 +122,7 @@ const AccountEntryComponent = ({ account, manager, onDelete }: {
         <div className="account-entry" key={account.id}>
             <div>
                 <Text variant="heading-sm/medium">{account.username}</Text>
-                <Text className="token-field">{showToken ? account.token : "••••••••••••••••"}</Text>
+                <Text className={showToken ? "" : "token-field"}>{showToken ? account.token : "••••••••••••••••"}</Text>
             </div>
             <div className="account-actions">
                 <Button
