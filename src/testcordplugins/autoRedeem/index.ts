@@ -38,6 +38,11 @@ function classifyGift(data: any): RedeemType {
 }
 
 const settings = definePluginSettings({
+    speedMode: {
+        type: OptionType.BOOLEAN,
+        description: "Blazing fast mode: parallel redemption with no delays. Forces prevalidation on. May increase captcha risk.",
+        default: false,
+    },
     ignoreSelf: {
         type: OptionType.BOOLEAN,
         description: "Ignore gifts sent by yourself",
@@ -88,6 +93,9 @@ function markSeen(code: string) {
     }
 }
 
+// Speed mode: how many codes to prevalidate/redeem concurrently.
+const FAST_CONCURRENCY = 5;
+
 // Codes currently waiting in the serial queue.
 const queue: QueueItem[] = [];
 let processing = false;
@@ -116,6 +124,12 @@ function isCaptchaError(body: any): boolean {
     if (Array.isArray(body.captcha_key) && body.captcha_key.includes("captcha-required")) return true;
     if (typeof body.captcha_sitekey === "string" && body.captcha_sitekey.length > 0) return true;
     return false;
+}
+
+// Fire a lightweight request on start to warm up DNS + TLS session for discord.com.
+// Subsequent requests reuse the cached connection, cutting first-request latency.
+function warmupConnection() {
+    RestAPI.get({ url: "/users/@me" }).catch(() => { });
 }
 
 function notifyPaused(reason: string) {
@@ -159,11 +173,20 @@ async function processQueue() {
     if (processing) return;
     processing = true;
     try {
-        while (queue.length && !captchaPaused) {
-            const item = queue.shift()!;
-            await handleRedeem(item);
-            if (queue.length && !captchaPaused) {
-                await sleep(jitter(1, 1200));
+        if (settings.store.speedMode) {
+            // Parallel: process up to FAST_CONCURRENCY codes at once, zero delay.
+            while (queue.length && !captchaPaused) {
+                const batch = queue.splice(0, FAST_CONCURRENCY);
+                await Promise.allSettled(batch.map(item => handleRedeem(item)));
+            }
+        } else {
+            // Serial: one at a time with jitter.
+            while (queue.length && !captchaPaused) {
+                const item = queue.shift()!;
+                await handleRedeem(item);
+                if (queue.length && !captchaPaused) {
+                    await sleep(jitter(1, 1200));
+                }
             }
         }
     } finally {
@@ -173,14 +196,15 @@ async function processQueue() {
 
 async function handleRedeem(item: QueueItem) {
     const { code, channelId, messageId, guildId } = item;
+    const fast = settings.store.speedMode;
 
-    if (settings.store.prevalidate) {
+    if (fast || settings.store.prevalidate) {
         const pre = await precheckGift(code);
         if (!pre.ok) {
             const reason = pre.reason ?? "unredeemable";
             addLog({ code, status: "failed", type: "other", error: reason, channelId, messageId });
             logger.info(`Skipping ${code}: ${reason}`);
-            if (settings.store.notifyOnFail && reason !== "already claimed" && reason !== "invalid code" && reason !== "expired") {
+            if (!fast && settings.store.notifyOnFail && reason !== "already claimed" && reason !== "invalid code" && reason !== "expired") {
                 showToast(`AutoRedeem skipped ${code}: ${reason}`, Toasts.Type.MESSAGE);
             }
             return;
@@ -196,9 +220,11 @@ async function handleRedeem(item: QueueItem) {
         });
         const giftType = classifyGift(body);
         addLog({ code, status: "success", type: giftType, channelId, messageId });
-        showToast(`Redeemed gift: ${code}`, Toasts.Type.SUCCESS);
+        if (!fast) {
+            showToast(`Redeemed gift: ${code}`, Toasts.Type.SUCCESS);
+        }
         logger.info(`Redeemed gift code: ${code}`);
-        if (settings.store.notifyOnRedeem) {
+        if (!fast && settings.store.notifyOnRedeem) {
             const user = UserStore.getCurrentUser();
             showNotification({
                 title: "Gift Redeemed! 🎉",
@@ -222,9 +248,11 @@ async function handleRedeem(item: QueueItem) {
         }
         const msg: string = e?.body?.message ?? "Unknown error";
         addLog({ code, status: "failed", type: "other", error: msg, channelId, messageId });
-        showToast(`Failed to redeem ${code}: ${msg}`, Toasts.Type.FAILURE);
+        if (!fast) {
+            showToast(`Failed to redeem ${code}: ${msg}`, Toasts.Type.FAILURE);
+        }
         logger.warn(`Failed to redeem ${code}:`, msg);
-        if (settings.store.notifyOnFail) {
+        if (!fast && settings.store.notifyOnFail) {
             const user = UserStore.getCurrentUser();
             showNotification({
                 title: "Redeem Failed ❌",
@@ -245,6 +273,7 @@ export default definePlugin({
 
     start() {
         loadLogs();
+        warmupConnection();
         if (!SettingsPlugin.customEntries.some(e => e.key === SETTINGS_KEY)) {
             SettingsPlugin.customEntries.push({
                 key: SETTINGS_KEY,
