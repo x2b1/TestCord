@@ -1,6 +1,6 @@
 /*
- * Equicord, a Discord client mod
- * Copyright (c) 2024 Vendicated and contributors
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -82,6 +82,9 @@ const CSS = `
 }
 `;
 
+let focusHandler: (() => void) | null = null;
+let blurHandler: (() => void) | null = null;
+
 function injectMacOsButtons() {
     if (document.getElementById("macos-window-controls")) return;
 
@@ -104,22 +107,22 @@ function injectMacOsButtons() {
     const btnClose = document.createElement("button");
     btnClose.className = "macos-btn macos-btn-close";
     btnClose.title = "Close";
-    btnClose.innerHTML = `<span class="macos-btn-icon"><svg width="6" height="6" viewBox="0 0 6 6" fill="none"><path d="M1 1L5 5M5 1L1 5" stroke="#4d0000" stroke-width="1.3" stroke-linecap="round"/></svg></span>`;
-    btnClose.addEventListener("click", (e) => { e.stopPropagation(); Native.closeWindow(); });
+    btnClose.innerHTML = "<span class=\"macos-btn-icon\"><svg width=\"6\" height=\"6\" viewBox=\"0 0 6 6\" fill=\"none\"><path d=\"M1 1L5 5M5 1L1 5\" stroke=\"#4d0000\" stroke-width=\"1.3\" stroke-linecap=\"round\"/></svg></span>";
+    btnClose.addEventListener("click", e => { e.stopPropagation(); Native.closeWindow(); });
 
     // Yellow — Minimize
     const btnMin = document.createElement("button");
     btnMin.className = "macos-btn macos-btn-min";
     btnMin.title = "Minimize";
-    btnMin.innerHTML = `<span class="macos-btn-icon"><svg width="7" height="2" viewBox="0 0 7 2" fill="none"><path d="M0.5 1H6.5" stroke="#6d4c00" stroke-width="1.3" stroke-linecap="round"/></svg></span>`;
-    btnMin.addEventListener("click", (e) => { e.stopPropagation(); Native.minimizeWindow(); });
+    btnMin.innerHTML = "<span class=\"macos-btn-icon\"><svg width=\"7\" height=\"2\" viewBox=\"0 0 7 2\" fill=\"none\"><path d=\"M0.5 1H6.5\" stroke=\"#6d4c00\" stroke-width=\"1.3\" stroke-linecap=\"round\"/></svg></span>";
+    btnMin.addEventListener("click", e => { e.stopPropagation(); Native.minimizeWindow(); });
 
     // Green — Maximize
     const btnMax = document.createElement("button");
     btnMax.className = "macos-btn macos-btn-max";
     btnMax.title = "Maximize / Restore";
-    btnMax.innerHTML = `<span class="macos-btn-icon"><svg width="7" height="7" viewBox="0 0 7 7" fill="none"><path d="M1 6L6 1M1 3.5V1H3.5M3.5 6H6V3.5" stroke="#0a3a00" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-    btnMax.addEventListener("click", (e) => { e.stopPropagation(); Native.maximizeWindow(); });
+    btnMax.innerHTML = "<span class=\"macos-btn-icon\"><svg width=\"7\" height=\"7\" viewBox=\"0 0 7 7\" fill=\"none\"><path d=\"M1 6L6 1M1 3.5V1H3.5M3.5 6H6V3.5\" stroke=\"#0a3a00\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span>";
+    btnMax.addEventListener("click", e => { e.stopPropagation(); Native.maximizeWindow(); });
 
     container.appendChild(btnClose);
     container.appendChild(btnMin);
@@ -130,8 +133,10 @@ function injectMacOsButtons() {
     pushToolbarLeft();
 
     // Focus / unfocus
-    window.addEventListener("focus", () => container.classList.remove("macos-unfocused"));
-    window.addEventListener("blur", () => container.classList.add("macos-unfocused"));
+    focusHandler = () => container.classList.remove("macos-unfocused");
+    blurHandler = () => container.classList.add("macos-unfocused");
+    window.addEventListener("focus", focusHandler);
+    window.addEventListener("blur", blurHandler);
     if (!document.hasFocus()) container.classList.add("macos-unfocused");
 }
 
@@ -160,6 +165,14 @@ function removeMacOsButtons() {
     document.getElementById("macos-window-controls")?.remove();
     document.getElementById("macos-buttons-style")?.remove();
     document.getElementById("macos-toolbar-push")?.remove();
+    if (focusHandler) {
+        window.removeEventListener("focus", focusHandler);
+        focusHandler = null;
+    }
+    if (blurHandler) {
+        window.removeEventListener("blur", blurHandler);
+        blurHandler = null;
+    }
 }
 
 export default definePlugin({

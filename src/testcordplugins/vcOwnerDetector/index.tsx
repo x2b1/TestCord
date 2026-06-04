@@ -1,13 +1,17 @@
-import definePlugin, { OptionType } from "@utils/types";
-import { TestcordDevs } from "@utils/constants";
-import { Toasts, FluxDispatcher, UserStore, ChannelStore } from "@webpack/common";
-import { definePluginSettings } from "@api/Settings";
-import { findStoreLazy, findByPropsLazy } from "@webpack";
-import { Menu, React } from "@webpack/common";
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalSize, ModalRoot, openModal } from "@utils/modal";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
 import { getCurrentGuild } from "@utils/discord";
-import { Button, TextInput, Forms } from "@webpack/common";
+import { ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy,findStoreLazy } from "@webpack";
+import { Button, ChannelStore, FluxDispatcher, Forms, Menu, React, TextInput, Toasts, UserStore } from "@webpack/common";
 
 const Flex = ({ children, style, ...props }: React.PropsWithChildren<{ style?: React.CSSProperties; }>) => (
     <div style={{ display: "flex", ...style }} {...props}>{children}</div>
@@ -15,7 +19,8 @@ const Flex = ({ children, style, ...props }: React.PropsWithChildren<{ style?: R
 
 const vc = findStoreLazy("VoiceStateStore");
 const voiceshit = findByPropsLazy("getVoiceChannelId");
-let veryimportantmap = new Set<string>();
+const veryimportantmap = new Set<string>();
+let checkInterval: ReturnType<typeof setInterval> | null = null;
 
 const settings = definePluginSettings({
     guildidetectionslol: {
@@ -177,7 +182,7 @@ function ChannelMakeContextMenuPatch(): NavContextMenuPatchCallback {
 }
 
 function Kbind(e: KeyboardEvent) {
-    if (e.altKey && e.key.toLowerCase() === 'v') {
+    if (e.altKey && e.key.toLowerCase() === "v") {
         openModal((modalProps: any) => <EncModals modalProps={modalProps} />);
     }
 }
@@ -198,7 +203,7 @@ export default definePlugin({
     start() {
         try {
             FluxDispatcher.subscribe("VOICE_STATE_UPDATES", this.handleVoiceStateUpdate);
-            document.addEventListener('keydown', Kbind);
+            document.addEventListener("keydown", Kbind);
             this.initializePlugin();
         } catch (e) {
             console.error("Plugin start error:", e);
@@ -208,7 +213,12 @@ export default definePlugin({
     stop() {
         try {
             FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", this.handleVoiceStateUpdate);
-            document.removeEventListener('keydown', Kbind);
+            document.removeEventListener("keydown", Kbind);
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+            document.getElementById("vc-owner-styles")?.remove();
         } catch (e) {
             console.error("Plugin stop error:", e);
         }
@@ -252,9 +262,9 @@ export default definePlugin({
         settings.store.amivcowner = false;
 
         // Add CSS for yellow username
-        if (!document.getElementById('vc-owner-styles')) {
-            const style = document.createElement('style');
-            style.id = 'vc-owner-styles';
+        if (!document.getElementById("vc-owner-styles")) {
+            const style = document.createElement("style");
+            style.id = "vc-owner-styles";
             style.textContent = `
                 .vc-owner-yellow {
                     color: #fbbf24 !important;
@@ -265,7 +275,7 @@ export default definePlugin({
         }
 
         // Check VC ownership periodically (but don't show toasts)
-        setInterval(() => {
+        checkInterval = setInterval(() => {
             try {
                 const guild = getCurrentGuild();
                 if (!guild) return;

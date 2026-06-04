@@ -17,12 +17,12 @@
 */
 
 import { classNameFactory, disableStyle, enableStyle } from "@api/Styles";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
 import { closeModal, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
-import { Button, Forms, showToast, Toasts, useState } from "@webpack/common";
+import { Button, Forms, showToast, Toasts, useEffect, useState } from "@webpack/common";
 
 import style from "./style.css?managed";
 
@@ -88,16 +88,26 @@ function EditCode() {
 function RunIcon({ className, text }: { className?: string; text: string; }) {
     const [shift, setShift] = useState(false);
 
-    document.addEventListener("keyup", event => {
-        if (event.key === "Shift") try {
-            setShift(false);
-        } catch (e) { }
-    });
-    document.addEventListener("keydown", event => {
-        if (event.key === "Shift") try {
-            setShift(true);
-        } catch (e) { }
-    });
+    useEffect(() => {
+        const handleKeyUp = (event: KeyboardEvent) => {
+            if (event.key === "Shift") {
+                try { setShift(false); } catch {}
+            }
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Shift") {
+                try { setShift(true); } catch {}
+            }
+        };
+
+        document.addEventListener("keyup", handleKeyUp);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("keyup", handleKeyUp);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
 
     return (
         <div role="button">
@@ -158,8 +168,3 @@ export default definePlugin({
         disableStyle(style);
     },
 });
-
-
-
-
-

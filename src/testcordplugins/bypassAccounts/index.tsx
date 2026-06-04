@@ -6,10 +6,9 @@
 
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
-import { ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize, openModal } from "@utils/modal";
+import { ModalContent, ModalFooter, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin, { OptionType } from "@utils/types";
-import { React, showToast, Toasts, UserStore } from "@webpack/common";
-import { Button, Forms, TextInput } from "@webpack/common";
+import { Button, Forms, React, showToast, TextInput, Toasts, UserStore } from "@webpack/common";
 
 const Flex = ({ children, style, ...props }: React.PropsWithChildren<{ style?: React.CSSProperties; }>) => (
     <div style={{ display: "flex", ...style }} {...props}>{children}</div>
@@ -58,7 +57,7 @@ class PasswordGenerator {
         }
 
         if (config.excludeAmbiguous) {
-            charset = charset.replace(/[{}[\]()\/\\'"~,;<>.]/g, "");
+            charset = charset.replace(/[{}[\]()/\\'"~,;<>.]/g, "");
         }
 
         return charset;
@@ -816,12 +815,12 @@ export default definePlugin({
 
     async start() {
         if (settings.store.enableQuickSwitch) {
-            document.addEventListener("keydown", this.handleQuickSwitch.bind(this));
+            document.addEventListener("keydown", this.handleQuickSwitch);
         }
     },
 
     stop() {
-        document.removeEventListener("keydown", this.handleQuickSwitch.bind(this));
+        document.removeEventListener("keydown", this.handleQuickSwitch);
     },
 
     handleQuickSwitch(event: KeyboardEvent) {

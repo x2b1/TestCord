@@ -1,22 +1,26 @@
-import definePlugin, { OptionType } from "@utils/types";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { TestcordDevs } from "@utils/constants";
-import { Toasts, FluxDispatcher, PermissionsBits, UserStore, GuildStore, GuildMemberStore, RestAPI } from "@webpack/common";
-import { definePluginSettings } from "@api/Settings";
-import { Guild, GuildMember, Role } from "@vencord/discord-types";
-import { findByPropsLazy, findStoreLazy, findByCodeLazy, findLazy } from "@webpack";
+import definePlugin from "@utils/types";
+import { Guild, GuildMember } from "@vencord/discord-types";
+import { findStoreLazy } from "@webpack";
+import { FluxDispatcher, GuildMemberStore,GuildStore, Toasts, UserStore } from "@webpack/common";
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 
 const alarm = "https://www.myinstants.com/media/sounds/tmp_7901-951678082.mp3";
-
 
 export default definePlugin({
     name: "antiMod",
     description: "Tools to avoid mods",
     tags: ["Privacy", "Utility"],
     authors: [TestcordDevs.dot],
-    start() { FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb); }
-
+    start() { FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb); },
+    stop() { FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", cb); }
 });
 
 const avoidPermission: bigint[] = [
@@ -36,8 +40,8 @@ const avoidPermission: bigint[] = [
 const cb = async (e: any) => {
     const state = e.voiceStates[0];
     if (!state?.channelId) return;
-    if (state.userId == UserStore.getCurrentUser().id || !state.userId) return;
-    if (state?.channelId == state?.oldChannelId) return;
+    if (state.userId === UserStore.getCurrentUser().id || !state.userId) return;
+    if (state?.channelId === state?.oldChannelId) return;
 
     const channelVoiceStates = VoiceStateStore.getVoiceStatesForChannel(state?.channelId) ?? {};
     if (!Object.keys(channelVoiceStates).includes(UserStore.getCurrentUser().id)) return;
@@ -49,8 +53,8 @@ const cb = async (e: any) => {
             type: 0,
             ...role
         }));
-    for (let role of roles) {
-        for (let permission of avoidPermission) {
+    for (const role of roles) {
+        for (const permission of avoidPermission) {
             if ((role.permissions & permission) === permission) {
                 Toasts.show({
                     message: `MOD ALERT  ${state.userId} detected`,
@@ -84,5 +88,3 @@ function audio() {
     audioElement.volume = 1;
     audioElement.play();
 }
-
-

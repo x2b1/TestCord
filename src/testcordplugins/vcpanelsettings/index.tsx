@@ -8,23 +8,15 @@ import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
 import { Link } from "@components/Link";
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { identity } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { findByPropsLazy } from "@webpack";
-import { FluxDispatcher, Forms, Select, Slider, Text, useEffect, useState } from "@webpack/common";
+import { FluxDispatcher, Forms, MediaEngineStore, Select, Slider, Text, useState, useStateFromStores } from "@webpack/common";
 
 import { Settings } from "../../Vencord";
 
-const configModule = findByPropsLazy("getOutputVolume");
-
 function OutputVolumeComponent() {
-    const [outputVolume, setOutputVolume] = useState(configModule.getOutputVolume());
-
-    useEffect(() => {
-        const listener = () => setOutputVolume(configModule.getOutputVolume());
-        FluxDispatcher.subscribe("AUDIO_SET_OUTPUT_VOLUME", listener);
-    });
+    const outputVolume = useStateFromStores([MediaEngineStore], () => MediaEngineStore.getOutputVolume());
 
     return (
         <>
@@ -40,12 +32,7 @@ function OutputVolumeComponent() {
 }
 
 function InputVolumeComponent() {
-    const [inputVolume, setInputVolume] = useState(configModule.getInputVolume());
-
-    useEffect(() => {
-        const listener = () => setInputVolume(configModule.getInputVolume());
-        FluxDispatcher.subscribe("AUDIO_SET_INPUT_VOLUME", listener);
-    });
+    const inputVolume = useStateFromStores([MediaEngineStore], () => MediaEngineStore.getInputVolume());
 
     return (
         <>
@@ -61,17 +48,12 @@ function InputVolumeComponent() {
 }
 
 function OutputDeviceComponent() {
-    const [outputDevice, setOutputDevice] = useState(configModule.getOutputDeviceId());
-
-    useEffect(() => {
-        const listener = () => setOutputDevice(configModule.getOutputDeviceId());
-        FluxDispatcher.subscribe("AUDIO_SET_OUTPUT_DEVICE", listener);
-    });
+    const outputDevice = useStateFromStores([MediaEngineStore], () => MediaEngineStore.getOutputDeviceId());
 
     return (
         <>
             {Settings.plugins.VCPanelSettings.showOutputDeviceHeader && <Forms.FormTitle>Output device</Forms.FormTitle>}
-            <Select options={Object.values(configModule.getOutputDevices()).map((device: any /* i am NOT typing this*/) => {
+            <Select options={Object.values(MediaEngineStore.getOutputDevices()).map((device: any /* i am NOT typing this*/) => {
                 return { value: device.id, label: Settings.plugins.VCPanelSettings.showOutputDeviceHeader ? device.name : `🔊 ${device.name}` };
             })}
                 serialize={identity}
@@ -89,17 +71,12 @@ function OutputDeviceComponent() {
 }
 
 function InputDeviceComponent() {
-    const [inputDevice, setInputDevice] = useState(configModule.getInputDeviceId());
-
-    useEffect(() => {
-        const listener = () => setInputDevice(configModule.getInputDeviceId());
-        FluxDispatcher.subscribe("AUDIO_SET_INPUT_DEVICE", listener);
-    });
+    const inputDevice = useStateFromStores([MediaEngineStore], () => MediaEngineStore.getInputDeviceId());
 
     return (
         <div style={{ marginTop: "10px" }}>
             {Settings.plugins.VCPanelSettings.showInputDeviceHeader && <Forms.FormTitle>Input device</Forms.FormTitle>}
-            <Select options={Object.values(configModule.getInputDevices()).map((device: any /* i am NOT typing this*/) => {
+            <Select options={Object.values(MediaEngineStore.getInputDevices()).map((device: any /* i am NOT typing this*/) => {
                 return { value: device.id, label: Settings.plugins.VCPanelSettings.showInputDeviceHeader ? device.name : `🎤 ${device.name}` };
             })}
                 serialize={identity}
@@ -117,17 +94,12 @@ function InputDeviceComponent() {
 }
 
 function VideoDeviceComponent() {
-    const [videoDevice, setVideoDevice] = useState(configModule.getVideoDeviceId());
-
-    useEffect(() => {
-        const listener = () => setVideoDevice(configModule.getVideoDeviceId());
-        FluxDispatcher.subscribe("MEDIA_ENGINE_SET_VIDEO_DEVICE", listener);
-    });
+    const videoDevice = useStateFromStores([MediaEngineStore], () => MediaEngineStore.getVideoDeviceId());
 
     return (
         <div style={{ marginTop: "10px" }}>
             {Settings.plugins.VCPanelSettings.showVideoDeviceHeader && <Forms.FormTitle>Camera</Forms.FormTitle>}
-            <Select options={Object.values(configModule.getVideoDevices()).map((device: any /* i am NOT typing this*/) => {
+            <Select options={Object.values(MediaEngineStore.getVideoDevices()).map((device: any /* i am NOT typing this*/) => {
                 return { value: device.id, label: Settings.plugins.VCPanelSettings.showVideoDeviceHeader ? device.name : `📷 ${device.name}` };
             })}
                 serialize={identity}
@@ -251,8 +223,3 @@ export default definePlugin({
         }
     ]
 });
-
-
-
-
-

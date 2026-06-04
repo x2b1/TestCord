@@ -217,10 +217,7 @@ class MimicManager {
     private activeTargets = new Map<string, MimicTarget>();
     private messageQueue: Array<{ channelId: string, content: string, delay: number; }> = [];
     private isProcessing = false;
-
-    constructor() {
-        this.processQueue();
-    }
+    private intervalId: ReturnType<typeof setInterval> | null = null;
 
     public addTarget(userId: string, username: string, channelId: string): boolean {
         if (userId === UserStore.getCurrentUser()?.id) {
@@ -300,8 +297,10 @@ class MimicManager {
         });
     }
 
-    private async processQueue() {
-        setInterval(async () => {
+    public start() {
+        if (this.intervalId) return;
+
+        this.intervalId = setInterval(async () => {
             if (this.isProcessing || this.messageQueue.length === 0) return;
 
             this.isProcessing = true;
@@ -322,6 +321,14 @@ class MimicManager {
 
             this.isProcessing = false;
         }, 100);
+    }
+
+    public stop() {
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        this.clearAllTargets();
     }
 
     private async sendMessage(channelId: string, content: string): Promise<boolean> {
@@ -354,7 +361,7 @@ const mimicManager = new MimicManager();
 // Get current channel ID from URL
 function getCurrentChannelId(): string {
     const path = window.location.pathname;
-    const matches = path.match(/\/channels\/[^\/]+\/(\d+)/);
+    const matches = path.match(/\/channels\/[^/]+\/(\d+)/);
     return matches ? matches[1] : "";
 }
 
@@ -444,6 +451,7 @@ export default definePlugin({
 
     start() {
         FluxDispatcher.subscribe("MESSAGE_CREATE", handleMessageCreate);
+        mimicManager.start();
         console.log("[MimicTroll] 🎭 Plugin started successfully with advanced content filtering");
         console.log("[MimicTroll] Right-click any user and toggle 'Mimic (Filtered)' to start/stop copying their messages");
         console.log("[MimicTroll] 🛡️ Content filtering is active to prevent harmful message mimicking");
@@ -451,7 +459,7 @@ export default definePlugin({
 
     stop() {
         FluxDispatcher.unsubscribe("MESSAGE_CREATE", handleMessageCreate);
-        mimicManager.clearAllTargets();
+        mimicManager.stop();
         console.log("[MimicTroll] 🛑 Plugin stopped");
     },
 });

@@ -208,6 +208,7 @@ export default definePlugin({
 
     tokenLoginManager: null as TokenLoginManager | null,
     ui: null as TokenLoginManagerUI | null,
+    sectionFunc: null as (() => any) | null,
 
     async start() {
         this.tokenLoginManager = new TokenLoginManager();
@@ -223,21 +224,27 @@ export default definePlugin({
             Icon: () => React.createElement("div", {}, "🔑") // Placeholder icon
         });
 
-        customSections.push(() => ({
+        this.sectionFunc = () => ({
             section: "TokenLoginManager",
             label: "Token Login Manager",
             element: () => this.ui!.render(),
             id: "TokenLoginManager"
-        }));
+        });
+        customSections.push(this.sectionFunc);
     },
 
     stop() {
-        const { customEntries } = SettingsPlugin;
+        const { customEntries, customSections } = SettingsPlugin;
         const entry = customEntries.findIndex(entry => entry.key === "tokenLoginManager");
         if (entry !== -1) customEntries.splice(entry, 1);
+
+        if (this.sectionFunc) {
+            const idx = customSections.indexOf(this.sectionFunc);
+            if (idx !== -1) customSections.splice(idx, 1);
+            this.sectionFunc = null;
+        }
 
         this.tokenLoginManager = null;
         this.ui = null;
     }
 });
-

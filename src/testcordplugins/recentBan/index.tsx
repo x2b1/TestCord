@@ -1,10 +1,14 @@
-import definePlugin, { OptionType } from "@utils/types";
-import { TestcordDevs } from "@utils/constants";
-import { Toasts, FluxDispatcher, UserStore, GuildStore, GuildMemberStore } from "@webpack/common";
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 import { definePluginSettings } from "@api/Settings";
-import { findStoreLazy, findByPropsLazy } from "@webpack";
-import { Menu, RestAPI, React, ChannelStore, ContextMenuApi, PermissionStore, Forms, GuildChannelStore } from "@webpack/common";
-import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { TestcordDevs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
+import { findByPropsLazy, findStoreLazy } from "@webpack";
+import { ChannelStore, FluxDispatcher, RestAPI, Toasts, UserStore } from "@webpack/common";
 // @ts-ignore
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 const vc = findByPropsLazy("getVoiceChannelId");
@@ -19,10 +23,10 @@ const settings = definePluginSettings({
 });
 
 function keybind2(e) {
-    if (settings.store.enablenormalkeybinds == false) return;
+    if (settings.store.enablenormalkeybinds === false) return;
     if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
-            message: `you're not the vc owner  also u gotta be in a vc to do this`,
+            message: "you're not the vc owner  also u gotta be in a vc to do this",
             id: "cutelittlemessage",
             type: Toasts.Type.FAILURE,
             options: {
@@ -31,7 +35,7 @@ function keybind2(e) {
         });
         return;
     }
-    if (e.altKey && e.key.toLowerCase() === 's') {
+    if (e.altKey && e.key.toLowerCase() === "s") {
         const cChannelId = vc.getVoiceChannelId();
         if (cChannelId) {
             const cChannel = ChannelStore.getChannel(cChannelId);
@@ -40,7 +44,7 @@ function keybind2(e) {
                 if (mftokick && friendststore.getFriendIDs().includes(mftokick)) {
                     trackedmfs.splice(trackedmfs.indexOf(mftokick), 1);
                     Toasts.show({
-                        message: `this person is on your friends list (skipping)`,
+                        message: "this person is on your friends list (skipping)",
                         id: "recent-ban-friend",
                         type: Toasts.Type.FAILURE,
                         options: {
@@ -51,7 +55,7 @@ function keybind2(e) {
                 }
                 if (mftokick) {
                     Toasts.show({
-                        message: `should be kicking the first person on the list now `,
+                        message: "should be kicking the first person on the list now ",
                         id: "recent-kick",
                         type: Toasts.Type.FAILURE,
                         options: {
@@ -71,10 +75,10 @@ function keybind2(e) {
 }
 
 function keybind(e) {
-    if (settings.store.enablenormalkeybinds == false) return;
+    if (settings.store.enablenormalkeybinds === false) return;
     if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
-            message: `you're not the vc owner`,
+            message: "you're not the vc owner",
             id: "cutelittlemessage",
             type: Toasts.Type.FAILURE,
             options: {
@@ -83,7 +87,7 @@ function keybind(e) {
         });
         return;
     }
-    if (e.altKey && e.key.toLowerCase() === 'z') {
+    if (e.altKey && e.key.toLowerCase() === "z") {
         const cChannelId = vc.getVoiceChannelId();
         if (cChannelId) {
             const cChannel = ChannelStore.getChannel(cChannelId);
@@ -92,7 +96,7 @@ function keybind(e) {
                 if (mftoban && friendststore.getFriendIDs().includes(mftoban)) {
                     trackedmfs.splice(trackedmfs.indexOf(mftoban), 1);
                     Toasts.show({
-                        message: `this person is on your friends list (skipping) `,
+                        message: "this person is on your friends list (skipping) ",
                         id: "recent-ban-friend",
                         type: Toasts.Type.FAILURE,
                         options: {
@@ -103,7 +107,7 @@ function keybind(e) {
                 }
                 if (mftoban) {
                     Toasts.show({
-                        message: `should be banning the first person on the list now `,
+                        message: "should be banning the first person on the list now ",
                         id: "recent-ban",
                         type: Toasts.Type.FAILURE,
                         options: {
@@ -122,21 +126,21 @@ function keybind(e) {
     }
 }
 
-const cb = async (e) => {
+const cb = async e => {
     const state = e.voiceStates[0];
     if (!state?.channelId) return;
-    if (state.userId == UserStore.getCurrentUser().id || !state.userId) return;
-    if (state?.channelId == state?.oldChannelId) return;
+    if (state.userId === UserStore.getCurrentUser().id || !state.userId) return;
+    if (state?.channelId === state?.oldChannelId) return;
     const Cvcstates = VoiceStateStore.getVoiceStatesForChannel(state?.channelId) ?? {};
     if (!Object.keys(Cvcstates).includes(UserStore.getCurrentUser().id)) return;
     trackedmfs.push(state.userId);
 };
 
-const good = async (e) => {
-    if (settings.store.enablenormalkeybinds == true) return;
+const good = async e => {
+    if (settings.store.enablenormalkeybinds === true) return;
     if (!(Vencord as any).Plugins.plugins.vcOwnerDetector.settings.store.amivcowner) {
         Toasts.show({
-            message: `you're not the vc owner `,
+            message: "you're not the vc owner ",
             id: "cutelittlemessage",
             type: Toasts.Type.FAILURE,
             options: {
@@ -155,7 +159,7 @@ const good = async (e) => {
             if (mftoban && friendststore.getFriendIDs().includes(mftoban)) {
                 trackedmfs.splice(trackedmfs.indexOf(mftoban), 1);
                 Toasts.show({
-                    message: `this person is on your friends list (skipping) `,
+                    message: "this person is on your friends list (skipping) ",
                     id: "recent-ban-friend",
                     type: Toasts.Type.FAILURE,
                     options: {
@@ -167,7 +171,7 @@ const good = async (e) => {
             if (mftoban) {
                 console.log("trying to ban first person on list (streamer mode method)");
                 Toasts.show({
-                    message: `should be banning the first person on the list now (streamer mode method)`,
+                    message: "should be banning the first person on the list now (streamer mode method)",
                     id: "recent-ban",
                     type: Toasts.Type.FAILURE,
                     options: {
@@ -191,13 +195,15 @@ export default definePlugin({
     authors: [TestcordDevs.dot],
     settings,
     start() {
-        document.addEventListener('keydown', keybind);
-        document.addEventListener('keydown', keybind2);
+        document.addEventListener("keydown", keybind);
+        document.addEventListener("keydown", keybind2);
         FluxDispatcher.subscribe("STREAMER_MODE_UPDATE", good);
         FluxDispatcher.subscribe("VOICE_STATE_UPDATES", cb);
     },
     stop() {
-        document.removeEventListener('keydown', keybind);
-        document.removeEventListener('keydown', keybind2);
+        document.removeEventListener("keydown", keybind);
+        document.removeEventListener("keydown", keybind2);
+        FluxDispatcher.unsubscribe("STREAMER_MODE_UPDATE", good);
+        FluxDispatcher.unsubscribe("VOICE_STATE_UPDATES", cb);
     },
 });
