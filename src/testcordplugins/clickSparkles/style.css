@@ -1,0 +1,20 @@
+.mc-sparkle {
+    position: fixed;
+    z-index: 99999;
+    pointer-events: none;
+    font-size: 14px;
+    transform: translate(-50%, -50%);
+    animation: mc-sparkle 700ms ease-out forwards;
+    text-shadow: 0 0 6px currentColor;
+}
+
+@keyframes mc-sparkle {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2);
+    }
+}
