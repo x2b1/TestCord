@@ -1,0 +1,660 @@
+/* TempMail plugin styles */
+
+.tm-modal .bd-modal-body,
+.tm-modal [class*="scrollerBase"] {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.tm-shell {
+    display: flex;
+    height: 540px;
+    overflow: hidden;
+    background: var(--background-primary);
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────── */
+.tm-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--background-secondary);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 12px;
+    gap: 12px;
+    overflow-y: auto;
+    border-right: 1px solid var(--background-modifier-accent);
+}
+
+.tm-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-normal);
+    padding: 0 4px;
+}
+
+.tm-active-addr {
+    background: var(--background-tertiary);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tm-active-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+}
+
+.tm-active-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-normal);
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.tm-copy-btn {
+    margin-top: 2px;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 4px;
+    color: var(--text-normal);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: var(--font-primary);
+    width: fit-content;
+}
+
+.tm-copy-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+.tm-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.tm-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s, color 0.1s;
+    font-family: var(--font-primary);
+}
+
+.tm-nav-item:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.tm-nav-item.tm-active {
+    background: var(--background-modifier-selected);
+    color: var(--text-normal);
+    font-weight: 600;
+}
+
+.tm-nav-icon {
+    font-size: 14px;
+}
+
+.tm-unread-pill {
+    margin-left: auto;
+    background: var(--brand-500);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.tm-count-dim {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.tm-sidebar-footer {
+    margin-top: auto;
+}
+
+.tm-storage-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: var(--background-tertiary);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.tm-storage-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.tm-storage-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.tm-storage-path {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+/* ── Content ───────────────────────────────────────────────────── */
+.tm-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.tm-error-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: hsl(0 60% 35% / 0.3);
+    border-bottom: 1px solid hsl(0 60% 45% / 0.4);
+    color: var(--text-danger, #f87171);
+    font-size: 12.5px;
+    padding: 8px 14px;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.tm-error-bar button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.7;
+    padding: 0;
+}
+
+.tm-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.tm-view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--background-modifier-accent);
+    flex-shrink: 0;
+}
+
+.tm-view-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.tm-view-sub {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+/* ── Empty states ──────────────────────────────────────────────── */
+.tm-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px;
+    text-align: center;
+}
+
+.tm-empty-icon {
+    font-size: 36px;
+    opacity: 0.4;
+}
+
+.tm-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.tm-empty-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 260px;
+    line-height: 1.5;
+}
+
+.tm-spinner {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ── Message list ──────────────────────────────────────────────── */
+.tm-message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.tm-msg-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-accent);
+    transition: background 0.1s;
+    position: relative;
+}
+
+.tm-msg-row:hover {
+    background: var(--background-modifier-hover);
+}
+
+.tm-msg-row:hover .tm-del-btn {
+    opacity: 1;
+}
+
+.tm-msg-row.tm-msg-unread::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--brand-500);
+    border-radius: 0 2px 2px 0;
+}
+
+.tm-msg-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.tm-msg-from {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tm-msg-subject {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+.tm-msg-preview {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.tm-msg-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.tm-msg-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.tm-del-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 3px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.1s, background 0.1s, color 0.1s;
+}
+
+.tm-del-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-danger, #f87171);
+}
+
+/* ── Message view ──────────────────────────────────────────────── */
+.tm-msg-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px 20px;
+    gap: 8px;
+}
+
+.tm-msg-view-subject {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-normal);
+    line-height: 1.3;
+}
+
+.tm-msg-view-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-accent);
+    flex-wrap: wrap;
+}
+
+.tm-msg-view-meta strong {
+    color: var(--text-normal);
+}
+
+.tm-msg-view-body {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 13.5px;
+    color: var(--text-normal);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+/* ── Accounts ──────────────────────────────────────────────────── */
+.tm-account-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tm-account-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--background-modifier-accent);
+    transition: background 0.1s;
+}
+
+.tm-account-card:hover {
+    background: var(--background-modifier-hover);
+}
+
+.tm-account-card.tm-account-active {
+    background: var(--background-modifier-selected);
+}
+
+.tm-account-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.tm-active-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-online, #23a55a);
+    flex-shrink: 0;
+}
+
+.tm-account-addr {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tm-account-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.tm-account-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── New address ───────────────────────────────────────────────── */
+.tm-new-section {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tm-new-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.tm-new-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: -4px;
+}
+
+.tm-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.tm-divider::before,
+.tm-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--background-modifier-accent);
+}
+
+.tm-custom-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tm-text-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.tm-at-sign {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.tm-domain-select {
+    flex: 1;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 4px;
+    color: var(--text-normal);
+    padding: 6px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+    font-family: var(--font-primary);
+    min-width: 0;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.tm-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--brand-500);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0 16px;
+    height: 34px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: var(--font-primary);
+    width: fit-content;
+}
+
+.tm-btn-primary:hover {
+    background: var(--brand-560);
+}
+
+.tm-btn-primary:disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
+.tm-btn-primary-sm {
+    background: var(--brand-500);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0 12px;
+    height: 28px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: var(--font-primary);
+}
+
+.tm-btn-primary-sm:hover {
+    background: var(--brand-560);
+}
+
+.tm-btn-danger-sm {
+    background: transparent;
+    color: var(--text-danger, #f87171);
+    border: 1px solid var(--text-danger, #f87171);
+    border-radius: 4px;
+    padding: 0 10px;
+    height: 28px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: var(--font-primary);
+}
+
+.tm-btn-danger-sm:hover {
+    background: hsl(0 60% 45% / 0.15);
+}
+
+.tm-back-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.1s;
+    font-family: var(--font-primary);
+}
+
+.tm-back-btn:hover {
+    color: var(--text-normal);
+}
+
+.tm-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+}
+
+.tm-icon-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.tm-icon-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+}
+
+.tm-icon-btn-danger:hover {
+    background: hsl(0 60% 45% / 0.15);
+    color: var(--text-danger, #f87171);
+}
