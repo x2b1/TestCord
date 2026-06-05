@@ -1,0 +1,190 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+import { definePluginSettings } from "@api/Settings";
+import { getUserSettingLazy } from "@api/UserSettings";
+import { Logger } from "@utils/Logger";
+import definePlugin, { OptionType } from "@utils/types";
+import { FluxDispatcher } from "@webpack/common";
+
+const logger = new Logger("LyricsStatus");
+
+const settings = definePluginSettings({
+    format: {
+        type: OptionType.STRING,
+        description: "Status template. {lyrics} = current lyric, {song} = track name, {artist} = artist name.",
+        default: "🎵 {lyrics}",
+    },
+    clearOnStop: {
+        type: OptionType.BOOLEAN,
+        description: "Clear your custom status when music stops or you disable the plugin.",
+        default: true,
+    },
+});
+
+// ── Playback tracking ─────────────────────────────────────────────────────────
+
+let isPlaying = false;
+let lastPosition = 0;
+let lastPositionTs = 0;
+let currentTrackId = "";
+let currentTrackName = "";
+let currentArtist = "";
+
+function getPosition(): number {
+    if (!isPlaying) return lastPosition;
+    return lastPosition + (Date.now() - lastPositionTs);
+}
+
+// ── Lyrics ────────────────────────────────────────────────────────────────────
+
+interface SyncedLine { time: number; text: string; }
+
+const lyricsCache = new Map<string, SyncedLine[] | null>();
+
+function parseLrc(lrc: string): SyncedLine[] {
+    const lines: SyncedLine[] = [];
+    for (const raw of lrc.split("\n")) {
+        const m = raw.match(/^\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
+        if (!m) continue;
+        const time = (parseInt(m[1]) * 60 + parseFloat(m[2])) * 1000;
+        const text = m[3].trim();
+        if (text) lines.push({ time, text });
+    }
+    return lines.sort((a, b) => a.time - b.time);
+}
+
+// Strip suffixes like "- 2012 Remaster", "(Remastered)", "- Live", etc. that break LrcLib lookups
+function cleanTrackName(name: string): string {
+    return name
+        .replace(/\s*[-–([\s]+(?:remaster(?:ed)?|remix|live|version|edit|radio edit|acoustic|demo|instrumental|extended|deluxe|anniversary|original mix)\b.*/i, "")
+        .trim();
+}
+
+async function fetchLyrics(track: string, artist: string, id: string): Promise<SyncedLine[] | null> {
+    if (lyricsCache.has(id)) return lyricsCache.get(id) ?? null;
+    const cleanedTrack = cleanTrackName(track);
+    try {
+        const res = await fetch(`https://lrclib.net/api/get?${new URLSearchParams({ track_name: cleanedTrack, artist_name: artist })}`);
+        if (!res.ok) { lyricsCache.set(id, null); return null; }
+        const data = await res.json() as { syncedLyrics?: string; };
+        const lines = data.syncedLyrics ? parseLrc(data.syncedLyrics) : null;
+        lyricsCache.set(id, lines);
+        return lines;
+    } catch (e) {
+        logger.warn("LrcLib fetch failed:", e);
+        lyricsCache.set(id, null);
+        return null;
+    }
+}
+
+function getCurrentLine(lines: SyncedLine[], posMs: number): string | null {
+    let current: string | null = null;
+    for (const line of lines) {
+        if (line.time <= posMs) current = line.text;
+        else break;
+    }
+    return current;
+}
+
+// ── Status ────────────────────────────────────────────────────────────────────
+
+const CustomStatusSetting = getUserSettingLazy("status", "customStatus")!;
+
+let lastSentLine: string | null = null;
+
+function setStatus(text: string) {
+    if (text === lastSentLine) return;
+    lastSentLine = text;
+    CustomStatusSetting?.updateSetting({
+        text: text.slice(0, 128),
+        expiresAtMs: "0",
+        emojiId: "0",
+        emojiName: "",
+        createdAtMs: String(Date.now()),
+    });
+}
+
+function clearStatus() {
+    lastSentLine = null;
+    CustomStatusSetting?.updateSetting({
+        text: "",
+        expiresAtMs: "0",
+        emojiId: "0",
+        emojiName: "",
+        createdAtMs: "0",
+    });
+}
+
+// ── Tick loop ─────────────────────────────────────────────────────────────────
+
+let intervalId: ReturnType<typeof setInterval> | null = null;
+let currentLines: SyncedLine[] | null = null;
+
+function tick() {
+    if (!isPlaying || !currentLines) return;
+    const line = getCurrentLine(currentLines, getPosition());
+    if (!line) return;
+    const text = settings.store.format
+        .replace("{lyrics}", line)
+        .replace("{song}", currentTrackName)
+        .replace("{artist}", currentArtist);
+    setStatus(text);
+}
+
+// ── Flux ──────────────────────────────────────────────────────────────────────
+
+interface SpotifyPlayerState {
+    track: { id: string; name: string; artists: { name: string; }[]; } | null;
+    isPlaying: boolean;
+    position: number;
+}
+
+function onSpotifyPlayerState(e: SpotifyPlayerState) {
+    const newId = e.track?.id ?? "";
+    const trackChanged = newId !== currentTrackId;
+
+    isPlaying = e.isPlaying ?? false;
+    lastPosition = e.position ?? 0;
+    lastPositionTs = Date.now();
+    currentTrackId = newId;
+    currentTrackName = e.track?.name ?? "";
+    currentArtist = e.track?.artists?.[0]?.name ?? "";
+
+    if (trackChanged) {
+        currentLines = null;
+        if (currentTrackId) {
+            fetchLyrics(currentTrackName, currentArtist, currentTrackId)
+                .then(lines => { currentLines = lines; });
+        }
+    }
+
+    if (!isPlaying && settings.store.clearOnStop) clearStatus();
+}
+
+export default definePlugin({
+    name: "LyricsStatus",
+    description: "Shows the current Spotify lyric line in your Discord custom status in real time. Lyrics fetched from LrcLib.",
+    tags: ["Activity", "Utility"],
+    authors: [{ name: "Sharp", id: 0n }],
+    settings,
+
+    start() {
+        FluxDispatcher.subscribe("SPOTIFY_PLAYER_STATE", onSpotifyPlayerState as any);
+        intervalId = setInterval(tick, 500);
+    },
+
+    stop() {
+        FluxDispatcher.unsubscribe("SPOTIFY_PLAYER_STATE", onSpotifyPlayerState as any);
+        if (intervalId !== null) { clearInterval(intervalId); intervalId = null; }
+        if (settings.store.clearOnStop) clearStatus();
+        currentLines = null;
+        lyricsCache.clear();
+        lastSentLine = null;
+        isPlaying = false;
+        currentTrackId = "";
+    },
+});
