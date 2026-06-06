@@ -8,6 +8,7 @@ import { addContextMenuPatch, removeContextMenuPatch } from "@api/ContextMenu";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { addHeaderBarButton, removeHeaderBarButton, HeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Menu, Parser, Toasts, useState, useEffect, React } from "@webpack/common";
 import type { Message } from "@vencord/discord-types";
@@ -138,7 +139,6 @@ function autoDecrypt(ciphertext: string): { text: string; technique: number; } |
 }
 
 let encryptionEnabled = false;
-let currentTechnique = 0;
 
 function LockIcon({ enabled, width = 20, height = 20 }: { enabled: boolean; width?: number; height?: number; }) {
     return (
@@ -151,71 +151,25 @@ function LockIcon({ enabled, width = 20, height = 20 }: { enabled: boolean; widt
     );
 }
 
-function TechniqueMenu() {
-    const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
-    return (
-        <Menu.Menu navId="encrypted-message-menu" aria-label="Encryption" onClose={() => { }}>
-            {Array.from({ length: 4 }, (_, g) => (
-                <Menu.MenuItem
-                    id={`enc-group-${g}`}
-                    key={g}
-                    label={`Technique ${g * 100} - ${(g + 1) * 100 - 1}`}
-                >
-                    {Array.from({ length: 100 }, (__, i) => {
-                        const idx = g * 100 + i;
-                        return (
-                            <Menu.MenuRadioItem
-                                key={idx}
-                                id={`enc-key-${idx}`}
-                                group="enc-technique"
-                                label={`Technique ${idx}`}
-                                checked={currentTechnique === idx}
-                                action={() => {
-                                    currentTechnique = idx;
-                                    forceUpdate();
-                                    Toasts.show({
-                                        message: `🔐 Encryption key → ${idx}`,
-                                        type: Toasts.Type.SUCCESS,
-                                        id: Toasts.genId(),
-                                    });
-                                }}
-                            />
-                        );
-                    })}
-                </Menu.MenuItem>
-            ))}
-        </Menu.Menu>
-    );
-}
-
 const EncryptButton: ChatBarButtonFactory = ({ type }) => {
     const [enabled, setEnabled] = React.useState(encryptionEnabled);
 
     if (!["normal", "sidebar"].some(n => type.analyticsName === n) || encryptSettings.store.showOnTopBar) return null;
 
     const tooltip = enabled
-        ? `Encryption active — Technique ${currentTechnique}`
+        ? "Encryption active — random technique"
         : "Encryption disabled";
 
     return (
-        <span
-            onContextMenu={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                const { ContextMenuApi } = Vencord.Webpack.Common as any;
-                ContextMenuApi?.openContextMenu?.(e, () => <TechniqueMenu />);
+        <ChatBarButton
+            tooltip={tooltip}
+            onClick={() => {
+                encryptionEnabled = !encryptionEnabled;
+                setEnabled(encryptionEnabled);
             }}
         >
-            <ChatBarButton
-                tooltip={tooltip}
-                onClick={() => {
-                    encryptionEnabled = !encryptionEnabled;
-                    setEnabled(encryptionEnabled);
-                }}
-            >
-                <LockIcon enabled={enabled} />
-            </ChatBarButton>
-        </span>
+            <LockIcon enabled={enabled} />
+        </ChatBarButton>
     );
 };
 
@@ -301,9 +255,9 @@ const messageContextPatch = (children: any, { message }: { message: any; }) => {
 
 export default definePlugin({
     name: "EncryptedMessage",
-    description: "Encrypts your messages with 400 unique techniques (0–399). Only those who know the key can decrypt.",
+    description: "Encrypts your messages with 400 unique techniques (0–399). A random technique is chosen each time you send a message. Only those who know the key can decrypt.",
     tags: ["Privacy", "Chat", "Nightcord"],
-    authors: [{ name: "Nightcord", id: 0n }],
+    authors: [{ name: "Nightcord", id: 0n }, TestcordDevs.x2b],
     dependencies: ["ChatInputButtonAPI", "MessageEventsAPI", "MessageAccessoriesAPI"],
     settings: encryptSettings,
 
@@ -336,7 +290,8 @@ export default definePlugin({
     async onBeforeMessageSend(_channelId: string, messageObj: { content: string; }) {
         if (!encryptionEnabled || !messageObj.content || messageObj.content.trim().length === 0) return;
 
-        const encrypted = encrypt(messageObj.content, currentTechnique);
+        const technique = Math.floor(Math.random() * 400);
+        const encrypted = encrypt(messageObj.content, technique);
         if (encrypted.length > 2000) {
             Toasts.show({
                 message: `❌ Message too long to encrypt (${encrypted.length}/2000)`,
