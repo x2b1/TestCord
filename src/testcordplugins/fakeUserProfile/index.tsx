@@ -11,9 +11,9 @@ import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import type { User } from "@vencord/discord-types";
-import { FluxDispatcher, IconUtils, PresenceStore, React, UsernameUtils, UserStore } from "@webpack/common";
+import { FluxDispatcher, IconUtils, PresenceStore, React, SnowflakeUtils, UsernameUtils, UserStore } from "@webpack/common";
 
-import { getCachedTarget, isActive, isCurrentUser, loadTarget, logger, setEnabled, settings, subscribe } from "./data";
+import { getCachedTarget, getManualProfile, isActive, isCurrentUser, loadTarget, logger, restoreStoredTarget, setEnabled, settings, subscribe } from "./data";
 import { FakeUserProfileModal } from "./modal";
 
 const FLAG_BADGES: { flag: number; image: string; description: string; }[] = [
@@ -46,6 +46,18 @@ function getTargetProfile(): any {
     const t = getCachedTarget();
     if (!t) return null;
     return t.profile;
+}
+
+function getManualAvatarDataUrl(): string | null {
+    const target = getCachedTarget();
+    if (!target?.manual) return null;
+    return target.manualProfile?.avatarDataUrl || getManualProfile().avatarDataUrl || null;
+}
+
+function getManualBannerDataUrl(): string | null {
+    const target = getCachedTarget();
+    if (!target?.manual) return null;
+    return target.manualProfile?.bannerDataUrl || getManualProfile().bannerDataUrl || null;
 }
 
 function buildOverrides(target: any): Record<string, unknown> {
@@ -111,6 +123,15 @@ function wrapUser(base: any): any {
     if (!base || !target || !isActive()) return base;
     if (cachedWrap && cachedWrap.base === base && cachedWrap.target === target) return cachedWrap.wrap;
     const wrap = mergeUser(base, buildOverrides(target));
+    try {
+        Object.defineProperty(wrap, "createdAt", {
+            get() {
+                return new Date(SnowflakeUtils.extractTimestamp(target.id));
+            },
+            enumerable: true,
+            configurable: true,
+        });
+    } catch { /* ignore */ }
     cachedWrap = { base, target, wrap };
     return wrap;
 }
@@ -131,6 +152,11 @@ let originalUseName: typeof UsernameUtils.useName | null = null;
 let originalUseUserTag: typeof UsernameUtils.useUserTag | null = null;
 let originalGetStatus: typeof PresenceStore.getStatus | null = null;
 let originalGetClientStatus: typeof PresenceStore.getClientStatus | null = null;
+let originalGetActivities: typeof PresenceStore.getActivities | null = null;
+let originalGetPrimaryActivity: typeof PresenceStore.getPrimaryActivity | null = null;
+let originalGetUnfilteredActivities: typeof PresenceStore.getUnfilteredActivities | null = null;
+let originalFindActivity: typeof PresenceStore.findActivity | null = null;
+let originalGetApplicationActivity: typeof PresenceStore.getApplicationActivity | null = null;
 
 let storePatched = false;
 let utilsPatched = false;
@@ -179,6 +205,8 @@ function patchUtils() {
 
     IconUtils.getUserAvatarURL = function (user: any, animated?: any, size?: any, format?: any) {
         if (isActive() && user && isCurrentUser(user.id)) {
+            const manualAvatar = getManualAvatarDataUrl();
+            if (manualAvatar) return manualAvatar;
             const t = getTargetUser();
             if (t) return originalGetUserAvatarURL!.call(this, t, animated, size, format);
         }
@@ -187,6 +215,8 @@ function patchUtils() {
 
     IconUtils.getUserBannerURL = function (params: any) {
         if (isActive() && params && isCurrentUser(params.id)) {
+            const manualBanner = getManualBannerDataUrl();
+            if (manualBanner) return manualBanner;
             const t = getTargetUser() as any;
             const targetBanner = params.banner ?? t?.banner ?? getTargetProfile()?.banner;
             if (t && targetBanner) {
@@ -264,15 +294,66 @@ function patchPresence() {
 
     originalGetStatus = PresenceStore.getStatus;
     originalGetClientStatus = PresenceStore.getClientStatus;
+    originalGetActivities = PresenceStore.getActivities;
+    originalGetPrimaryActivity = PresenceStore.getPrimaryActivity;
+    originalGetUnfilteredActivities = PresenceStore.getUnfilteredActivities;
+    originalFindActivity = PresenceStore.findActivity;
+    originalGetApplicationActivity = PresenceStore.getApplicationActivity;
 
-    PresenceStore.getStatus = function (userId: string, ...args: any[]) {
-        if (isActive() && isCurrentUser(userId)) return undefined as any;
-        return originalGetStatus!.call(this, userId, ...args);
+    PresenceStore.getStatus = function (userId: string, guildId?: string | null, defaultStatus?: any): any {
+        if (isActive() && isCurrentUser(userId)) {
+            const target = getTargetUser();
+            if (target) return originalGetStatus!.call(this, target.id, guildId, defaultStatus);
+        }
+        return originalGetStatus!.call(this, userId, guildId, defaultStatus);
     };
 
-    PresenceStore.getClientStatus = function (userId: string) {
-        if (isActive() && isCurrentUser(userId)) return undefined as any;
+    PresenceStore.getClientStatus = function (userId: string): any {
+        if (isActive() && isCurrentUser(userId)) {
+            const target = getTargetUser();
+            if (target) return originalGetClientStatus!.call(this, target.id);
+        }
         return originalGetClientStatus!.call(this, userId);
+    };
+
+    PresenceStore.getActivities = function (userId: string, guildId?: string): any {
+        if (isActive() && isCurrentUser(userId) && settings.store.spoofActivities) {
+            const target = getTargetUser();
+            if (target) return originalGetActivities!.call(this, target.id, guildId);
+        }
+        return originalGetActivities!.call(this, userId, guildId);
+    };
+
+    PresenceStore.getPrimaryActivity = function (userId: string, guildId?: string): any {
+        if (isActive() && isCurrentUser(userId) && settings.store.spoofActivities) {
+            const target = getTargetUser();
+            if (target) return originalGetPrimaryActivity!.call(this, target.id, guildId);
+        }
+        return originalGetPrimaryActivity!.call(this, userId, guildId);
+    };
+
+    PresenceStore.getUnfilteredActivities = function (userId: string, guildId?: string): any {
+        if (isActive() && isCurrentUser(userId) && settings.store.spoofActivities) {
+            const target = getTargetUser();
+            if (target) return originalGetUnfilteredActivities!.call(this, target.id, guildId);
+        }
+        return originalGetUnfilteredActivities!.call(this, userId, guildId);
+    };
+
+    PresenceStore.findActivity = function (userId: string, predicate: any, guildId?: string): any {
+        if (isActive() && isCurrentUser(userId) && settings.store.spoofActivities) {
+            const target = getTargetUser();
+            if (target) return originalFindActivity!.call(this, target.id, predicate, guildId);
+        }
+        return originalFindActivity!.call(this, userId, predicate, guildId);
+    };
+
+    PresenceStore.getApplicationActivity = function (userId: string, applicationId: string, guildId?: string): any {
+        if (isActive() && isCurrentUser(userId) && settings.store.spoofActivities) {
+            const target = getTargetUser();
+            if (target) return originalGetApplicationActivity!.call(this, target.id, applicationId, guildId);
+        }
+        return originalGetApplicationActivity!.call(this, userId, applicationId, guildId);
     };
 }
 
@@ -280,6 +361,11 @@ function unpatchPresence() {
     if (!presencePatched) return;
     if (originalGetStatus) PresenceStore.getStatus = originalGetStatus;
     if (originalGetClientStatus) PresenceStore.getClientStatus = originalGetClientStatus;
+    if (originalGetActivities) PresenceStore.getActivities = originalGetActivities;
+    if (originalGetPrimaryActivity) PresenceStore.getPrimaryActivity = originalGetPrimaryActivity;
+    if (originalGetUnfilteredActivities) PresenceStore.getUnfilteredActivities = originalGetUnfilteredActivities;
+    if (originalFindActivity) PresenceStore.findActivity = originalFindActivity;
+    if (originalGetApplicationActivity) PresenceStore.getApplicationActivity = originalGetApplicationActivity;
     presencePatched = false;
 }
 
@@ -479,6 +565,11 @@ export default definePlugin({
         unsub = subscribe(syncSpoofState);
 
         const { targetId } = settings.store;
+        if (restoreStoredTarget()) {
+            if (settings.store.spoofActive) syncSpoofState();
+            return;
+        }
+
         if (targetId) {
             try {
                 await loadTarget(targetId);
@@ -662,6 +753,8 @@ export default definePlugin({
         if (!isActive()) return undefined;
         const id = displayProfile?.userId ?? user?.id;
         if (!isCurrentUser(id)) return undefined;
+        const manualBanner = getManualBannerDataUrl();
+        if (manualBanner) return manualBanner;
         const target = getTargetUser() as any;
         if (target?.banner) {
             const animated = target.banner.startsWith("a_");

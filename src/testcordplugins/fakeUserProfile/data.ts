@@ -13,11 +13,45 @@ import { UserProfileStore, UserStore, UserUtils } from "@webpack/common";
 
 export const logger = new Logger("FakeUserProfile");
 
+export const manualBadgeFlags = {
+    DiscordStaff: 1 << 0,
+    PartneredServerOwner: 1 << 1,
+    HypeSquadEvents: 1 << 2,
+    DiscordBugHunter: 1 << 3,
+    HypeSquadBravery: 1 << 6,
+    HypeSquadBrilliance: 1 << 7,
+    HypeSquadBalance: 1 << 8,
+    EarlySupporter: 1 << 9,
+    GoldenDiscordBugHunter: 1 << 14,
+    EarlyVerifiedBotDeveloper: 1 << 17,
+    ModeratorProgramsAlumni: 1 << 18,
+    ActiveDeveloper: 1 << 22,
+} as const;
+
+export interface ManualProfileData {
+    id: string;
+    username: string;
+    globalName: string;
+    discriminator: string;
+    bio: string;
+    pronouns: string;
+    accentColor: string;
+    avatarDataUrl: string;
+    bannerDataUrl: string;
+    avatarHash: string;
+    bannerHash: string;
+    publicFlags: number;
+    premiumType: number;
+    bot: boolean;
+}
+
 export interface CachedTarget {
     id: string;
     user: User;
     profile: any;
     fetchedAt: number;
+    manual?: boolean;
+    manualProfile?: ManualProfileData;
 }
 
 let cached: CachedTarget | null = null;
@@ -43,6 +77,85 @@ export function clearTarget() {
     settings.store.targetId = "";
     settings.store.spoofActive = false;
     notify();
+}
+
+function getDefaultManualProfile(): ManualProfileData {
+    return {
+        id: "",
+        username: "",
+        globalName: "",
+        discriminator: "0",
+        bio: "",
+        pronouns: "",
+        accentColor: "",
+        avatarDataUrl: "",
+        bannerDataUrl: "",
+        avatarHash: "manual-avatar",
+        bannerHash: "manual-banner",
+        publicFlags: 0,
+        premiumType: 0,
+        bot: false,
+    };
+}
+
+export function getManualProfile(): ManualProfileData {
+    return {
+        ...getDefaultManualProfile(),
+        ...(settings.store.manualProfile as Partial<ManualProfileData> | undefined),
+    };
+}
+
+function createManualUser(profile: ManualProfileData): User {
+    const user = {
+        id: profile.id,
+        username: profile.username,
+        globalName: profile.globalName || null,
+        discriminator: profile.discriminator,
+        avatar: profile.avatarDataUrl ? profile.avatarHash : null,
+        banner: profile.bannerDataUrl ? profile.bannerHash : null,
+        publicFlags: profile.publicFlags,
+        flags: profile.publicFlags,
+        premiumType: profile.premiumType,
+        accentColor: profile.accentColor ? Number(profile.accentColor) : null,
+        usernameNormalized: profile.username.toLowerCase(),
+        bot: profile.bot,
+    } as unknown as User;
+
+    return user;
+}
+
+function createManualTarget(profile: ManualProfileData): CachedTarget {
+    const user = createManualUser(profile);
+
+    return {
+        id: profile.id,
+        user,
+        profile: {
+            userId: profile.id,
+            bio: profile.bio,
+            pronouns: profile.pronouns,
+            accentColor: profile.accentColor ? Number(profile.accentColor) : null,
+            banner: profile.bannerDataUrl ? profile.bannerHash : null,
+            premiumType: profile.premiumType,
+            userProfile: {
+                displayName: profile.globalName || profile.username,
+                bio: profile.bio,
+                pronouns: profile.pronouns,
+            },
+        },
+        fetchedAt: Date.now(),
+        manual: true,
+        manualProfile: profile,
+    };
+}
+
+export function saveManualProfile(profile: ManualProfileData): CachedTarget {
+    settings.store.manualProfile = profile;
+    settings.store.targetMode = "manual";
+    cached = createManualTarget(profile);
+    settings.store.targetId = profile.id;
+    notify();
+    return cached;
 }
 
 export async function loadTarget(targetId: string): Promise<CachedTarget> {
@@ -80,6 +193,17 @@ export async function loadTarget(targetId: string): Promise<CachedTarget> {
     return cached;
 }
 
+export function restoreStoredTarget(): CachedTarget | null {
+    if (settings.store.targetMode === "manual") {
+        const profile = getManualProfile();
+        if (!profile.id || !profile.username) return null;
+        cached = createManualTarget(profile);
+        return cached;
+    }
+
+    return null;
+}
+
 export function isCurrentUser(userId: string | undefined): boolean {
     if (!userId) return false;
     const me = UserStore.getCurrentUser();
@@ -105,6 +229,20 @@ export const settings = definePluginSettings({
         type: OptionType.STRING,
         description: "User ID to impersonate visually.",
         default: "",
+    },
+    targetMode: {
+        type: OptionType.SELECT,
+        description: "Whether to spoof a fetched Discord user or a fully manual profile.",
+        options: [
+            { label: "Lookup user", value: "lookup", default: true },
+            { label: "Manual profile", value: "manual" },
+        ],
+    },
+    manualProfile: {
+        type: OptionType.COMPONENT,
+        hidden: true,
+        default: getDefaultManualProfile(),
+        component: () => null,
     },
     fakeMessages: {
         type: OptionType.BOOLEAN,
