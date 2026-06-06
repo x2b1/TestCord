@@ -496,3 +496,26 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* ── CordCat section ── */
+
+.vc-osint-cordcat-action {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background: var(--background-tertiary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.vc-osint-cordcat-action-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.vc-osint-cordcat-date {
+    font-size: 11px;
+    opacity: 0.7;
+}

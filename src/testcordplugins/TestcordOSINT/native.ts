@@ -36,3 +36,32 @@ export async function osintFetch(
         };
     }
 }
+
+export interface NativeCordCatResult {
+    ok: boolean;
+    status?: number;
+    body?: string;
+    error?: string;
+}
+
+export async function fetchCordCat(
+    _: IpcMainInvokeEvent,
+    parsedId: string
+): Promise<NativeCordCatResult> {
+    try {
+        const response = await fetch(`https://api.cord.cat/api/v2/query/${encodeURIComponent(parsedId)}`, {
+            headers: { Accept: "application/json" },
+            signal: AbortSignal.timeout(10_000),
+        });
+        return {
+            ok: true,
+            status: response.status,
+            body: await response.text(),
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+        };
+    }
+}

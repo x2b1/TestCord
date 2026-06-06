@@ -7,7 +7,6 @@
 import "./style.css";
 
 import { ApplicationCommandInputType, findOption, sendBotMessage } from "@api/Commands";
-import { findGroupChildrenByChildId } from "@api/ContextMenu";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { HeaderBarButton } from "@api/HeaderBar";
@@ -18,7 +17,7 @@ import { Message } from "@vencord/discord-types";
 import { Button, ChannelStore, Constants, GuildMemberStore, GuildStore, IconUtils, Menu, PermissionsBits, PermissionStore, Popout, React, RestAPI, SelectedChannelStore, UserStore, useState, useRef, useEffect, useCallback } from "@webpack/common";
 
 import { AlgorithmResult, analyzeMessages, MessageData } from "./algorithms";
-import { callAI } from "./aiManager";
+import { callAI, CordCatResult, fetchCordCatData } from "./aiManager";
 
 const logger = new Logger("TestcordOSINT");
 
@@ -31,7 +30,7 @@ const settings = definePluginSettings({
     useAI: {
         type: OptionType.BOOLEAN,
         description: "Use AI for analysis (requires API key)",
-        default: true,
+        default: false,
     },
     unlimitedMessages: {
         type: OptionType.BOOLEAN,
@@ -483,6 +482,8 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
     const [mutualGuilds, setMutualGuilds] = useState<MutualGuildInfo[]>([]);
     const [currentGuildName, setCurrentGuildName] = useState("");
     const [guildsScanned, setGuildsScanned] = useState(0);
+    const [cordcatResult, setCordcatResult] = useState<CordCatResult | null>(null);
+    const [cordcatLoading, setCordcatLoading] = useState(false);
 
     const fetchStateRef = useRef<FetchState>({ running: false, aborted: false, total: 0 } as FetchState);
     const messagesRef = useRef<MessageData[]>([]);
@@ -588,6 +589,12 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
                 });
                 setPhase("done");
                 state.running = false;
+
+                setCordcatLoading(true);
+                fetchCordCatData(userId).then(r => {
+                    if (!cancelled && r) setCordcatResult(r);
+                    setCordcatLoading(false);
+                }).catch(() => setCordcatLoading(false));
             }
         }
 
@@ -687,6 +694,59 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
                         </div>
                     )}
                         <ResultSections algorithmResult={algorithmResult} aiResult={aiResult} />
+
+                        {/* CordCat Section */}
+                        {(cordcatLoading || cordcatResult) && (
+                            <div className={`vc-osint-section ${cordcatLoading ? "vc-osint-section--analyzing" : ""}`}>
+                                <div className="vc-osint-section-title">
+                                    {cordcatLoading && <div className="vc-osint-spinner-small" />}
+                                    CordCat Intelligence
+                                </div>
+                                {!cordcatLoading && cordcatResult && (
+                                    <div className="vc-osint-section-content">
+                                        {cordcatResult.actions.length === 0 && cordcatResult.breaches.length === 0 && (
+                                            <div style={{ opacity: 0.6 }}>No DSA actions or breach records found.</div>
+                                        )}
+
+                                        {cordcatResult.actions.length > 0 && (
+                                            <div style={{ marginBottom: 12 }}>
+                                                <div style={{ fontWeight: 600, marginBottom: 6 }}>DSA Actions ({cordcatResult.actions.length})</div>
+                                                {cordcatResult.actions.map((a, i) => (
+                                                    <div key={i} className="vc-osint-cordcat-action">
+                                                        <div className="vc-osint-cordcat-action-header">
+                                                            <span className="vc-osint-tag">{a.category}</span>
+                                                            {a.application_date && <span className="vc-osint-cordcat-date">{a.application_date}</span>}
+                                                        </div>
+                                                        {a.decision_account && <div>Account: {a.decision_account}</div>}
+                                                        {a.decision_visibility && <div>Visibility: {Array.isArray(a.decision_visibility) ? a.decision_visibility.join(", ") : a.decision_visibility}</div>}
+                                                        {a.decision_provision && <div>Provision: {a.decision_provision}</div>}
+                                                        {a.decision_monetary && <div>Monetary: {a.decision_monetary}</div>}
+                                                        {a.decision_ground && <div>Ground: {a.decision_ground}</div>}
+                                                        {a.incompatible_content_ground && <div>Content Ground: {a.incompatible_content_ground}</div>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {cordcatResult.breaches.length > 0 && (
+                                            <div>
+                                                <div style={{ fontWeight: 600, marginBottom: 6 }}>Breach Records ({cordcatResult.breaches.length})</div>
+                                                {cordcatResult.breaches.map((b, i) => (
+                                                    <div key={i} className="vc-osint-cordcat-action">
+                                                        <div className="vc-osint-cordcat-action-header">
+                                                            <span className="vc-osint-tag">{b.source}</span>
+                                                            {b.date && <span className="vc-osint-cordcat-date">{b.date}</span>}
+                                                        </div>
+                                                        {b.categories && b.categories.length > 0 && <div>Categories: {b.categories.join(", ")}</div>}
+                                                        {b.ip && <div>IP: {b.ip}</div>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {phase === "analyzing" && (
                             <div className="vc-osint-section vc-osint-section--analyzing">
                                 <div className="vc-osint-section-title">
@@ -707,9 +767,6 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
                             </Button>
                             <Button size={Button.Sizes.SMALL} onClick={() => openModal(p => <AttachmentsModal modalProps={p} messages={allMessages} />)}>
                                 View Attachments
-                            </Button>
-                            <Button size={Button.Sizes.SMALL} onClick={() => VencordNative.native.openExternal(`https://dis.cord.cat/lookup?id=${userId}`)}>
-                                CordCat
                             </Button>
                             <Button onClick={copyResults}>Copy Report</Button>
                         </>
@@ -1068,16 +1125,20 @@ export default definePlugin({
     contextMenus: {
         "user-context"(children, { id }: { id: string; }) {
             if (!id) return;
-            const group = findGroupChildrenByChildId("copy-id", children);
-            if (!group) return;
-            const idx = group.findIndex((c: any) => c?.props?.id === "copy-id");
-            if (idx === -1) return;
+
             const OSINTIcon = () => (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--interactive-normal)"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" /></svg>
             );
-            group.splice(idx + 1, 0, (
-                <Menu.MenuItem id="vc-osint-scan" label="OSINT Scan" icon={OSINTIcon} action={() => openScan(id, SelectedChannelStore.getChannelId())} />
-            ));
+
+            children.push(
+                <Menu.MenuSeparator />,
+                <Menu.MenuItem
+                    id="vc-osint-scan"
+                    label="OSINT Scan"
+                    icon={OSINTIcon}
+                    action={() => openScan(id, SelectedChannelStore.getChannelId())}
+                />
+            );
         },
     },
 

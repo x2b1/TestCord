@@ -6,7 +6,7 @@
 
 import { DataStore } from "@api/index";
 
-import type { NativeOSINTResponse } from "./native";
+import type { NativeCordCatResult, NativeOSINTResponse } from "./native";
 
 const DS_API_KEY = "testcord-osint-api-key";
 const DS_API_URL = "testcord-osint-api-url";
@@ -15,6 +15,7 @@ const DS_MODEL = "testcord-osint-model";
 // ── Native IPC fetch ────────────────────────────────────────────────────────
 
 let _nativeFetch: ((url: string, method: string, headers: Record<string, string>, body?: string) => Promise<NativeOSINTResponse>) | null = null;
+let _nativeCordCat: ((parsedId: string) => Promise<NativeCordCatResult>) | null = null;
 
 function getNativeFetch() {
     if (_nativeFetch) return _nativeFetch;
@@ -23,6 +24,18 @@ function getNativeFetch() {
         if (vn?.pluginHelpers?.TestcordOSINT?.osintFetch) {
             _nativeFetch = vn.pluginHelpers.TestcordOSINT.osintFetch;
             return _nativeFetch;
+        }
+    } catch { /* renderer-only mode */ }
+    return null;
+}
+
+function getNativeCordCat() {
+    if (_nativeCordCat) return _nativeCordCat;
+    try {
+        const vn = (globalThis as any).VencordNative;
+        if (vn?.pluginHelpers?.TestcordOSINT?.fetchCordCat) {
+            _nativeCordCat = vn.pluginHelpers.TestcordOSINT.fetchCordCat;
+            return _nativeCordCat;
         }
     } catch { /* renderer-only mode */ }
     return null;
@@ -39,6 +52,72 @@ export async function osintFetch(url: string, method: string, headers: Record<st
         });
     }
     return fetch(url, { method, headers, body });
+}
+
+export interface CordCatBreach {
+    source: string;
+    categories?: string[];
+    discordid?: string;
+    username?: string;
+    tag?: string;
+    ip?: string;
+    date?: string;
+}
+
+export interface CordCatDSAAction {
+    category: string;
+    decision_account?: string | null;
+    decision_visibility?: string | string[] | null;
+    decision_provision?: string | null;
+    decision_monetary?: string | null;
+    decision_ground?: string;
+    application_date?: string;
+    category_specification?: string | string[] | null;
+    incompatible_content_ground?: string;
+}
+
+export interface CordCatResult {
+    actions: CordCatDSAAction[];
+    breaches: CordCatBreach[];
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+    return typeof v === "object" && v !== null;
+}
+
+export async function fetchCordCatData(parsedId: string): Promise<CordCatResult | null> {
+    const native = getNativeCordCat();
+    if (!native) return null;
+
+    const res = await native(parsedId);
+    if (!res.ok || !res.body) return null;
+
+    try {
+        const payload = JSON.parse(res.body);
+        if (!isRecord(payload)) return null;
+
+        const statements: unknown[] = Array.isArray(payload.statements) ? payload.statements : [];
+        const actions = statements
+            .filter((s): s is CordCatDSAAction => isRecord(s) && typeof (s as any).category === "string")
+            .sort((a, b) => {
+                const da = (a as any).application_date ?? "";
+                const db = (b as any).application_date ?? "";
+                return String(db).localeCompare(String(da));
+            });
+
+        const breachObj = isRecord(payload.breach) ? payload.breach : null;
+        const breachSuccess = breachObj?.success === true;
+        let breaches: CordCatBreach[] = [];
+        if (breachSuccess) {
+            const breachData = isRecord(breachObj!.data) ? breachObj!.data : null;
+            const results = Array.isArray(breachData?.results) ? breachData!.results : [];
+            breaches = results.filter((r): r is CordCatBreach => isRecord(r) && typeof (r as any).source === "string");
+        }
+
+        return { actions, breaches };
+    } catch {
+        return null;
+    }
 }
 
 // ── DataStore read/write ────────────────────────────────────────────────────
