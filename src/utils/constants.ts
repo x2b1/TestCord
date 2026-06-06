@@ -1421,6 +1421,10 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
     hyyven: {
         name: "hyyven",
         id: 449282863582412850n
+    },
+    DemonBoobs: {
+        name: "DemonBoobs",
+        id: 569582579829964850n
     }
 } satisfies Record<string, Dev>);
 
