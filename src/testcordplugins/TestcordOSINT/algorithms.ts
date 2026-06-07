@@ -51,7 +51,7 @@ const EMOJI_REGEX = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\
 const URL_REGEX = /https?:\/\/[^\s<>"')\]]+/gi;
 const MENTION_REGEX = /<@!?\d+>/g;
 const CHANNEL_REGEX = /<#\d+>/g;
-const SPOILER_REGEX = /\|\|[^|]+\|\|/g;
+const SPOILER_REGEX = /\|\|[^|]+\|\|/;
 const CUSTOM_EMOJI_REGEX = /<a?:\w+:\d+>/g;
 
 const STOP_WORDS = new Set([

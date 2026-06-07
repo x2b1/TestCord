@@ -152,6 +152,7 @@ function canAccessChannel(channelId: string): boolean {
 // ── Fetch helpers ──
 
 function toMessageData(msg: Message): MessageData {
+    const raw = msg as any;
     return {
         id: msg.id,
         content: msg.content,
@@ -177,11 +178,11 @@ function toMessageData(msg: Message): MessageData {
         })),
         embeds: msg.embeds ?? [],
         reactions: msg.reactions,
-        stickerItems: msg.stickerItems,
-        message_reference: msg.messageReference,
+        stickerItems: raw.stickerItems ?? raw.sticker_items,
+        message_reference: raw.messageReference ?? raw.message_reference,
         type: msg.type,
         flags: msg.flags,
-        tts: (msg as any).tts,
+        tts: raw.tts,
         pinned: msg.pinned,
     } as MessageData;
 }
@@ -508,7 +509,7 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
         const acc: MessageData[] = [];
         messagesRef.current = acc;
 
-        async function searchGuild(guildId: string, guildName: string, chanId?: string): Promise<void> {
+        async function searchGuild(guildId: string | null, guildName: string, chanId?: string): Promise<void> {
             let offset = 0;
             while (state.running && !cancelled) {
                 try {
@@ -550,11 +551,10 @@ function OSINTScanPanel({ userId, channelId, modalProps }: { userId: string; cha
             } else {
                 const chan = ChannelStore.getChannel(channelId);
                 const guildId = chan?.guild_id;
-                if (!guildId) { setError("Channel not found"); setPhase("error"); return; }
                 if (!canAccessChannel(channelId)) { setError("No access to this channel"); setPhase("error"); return; }
                 setCurrentGuildName(chan?.name || channelId);
-                setProgress(unlimited ? "Searching current channel..." : `Searching ${chan?.name}...`);
-                await searchGuild(guildId, chan?.name || channelId, channelId);
+                setProgress(unlimited ? "Searching current channel..." : `Searching ${chan?.name || "DM"}...`);
+                await searchGuild(guildId ?? null, chan?.name || channelId, channelId);
             }
 
             if (!cancelled) {
