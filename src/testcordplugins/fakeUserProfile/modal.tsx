@@ -8,12 +8,12 @@ import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Margins } from "@utils/margins";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
-import { Button, Forms, IconUtils, showToast, Text, TextInput, Toasts, useState } from "@webpack/common";
+import { Button, Forms, IconUtils, React, showToast, Text, Toasts, useState } from "@webpack/common";
 
 import { clearTarget, getCachedTarget, getManualProfile, loadTarget, logger, manualBadgeFlags, saveManualProfile, setEnabled, settings } from "./data";
+import "./styles.css";
 
 const ID_RE = /^\d{17,20}$/;
-const DISCRIM_RE = /^\d{1,4}$/;
 
 async function readImageAsDataUrl(file: File): Promise<string> {
     return await new Promise((resolve, reject) => {
@@ -27,6 +27,143 @@ async function readImageAsDataUrl(file: File): Promise<string> {
     });
 }
 
+function SectionLabel({ children }: { children: React.ReactNode; }) {
+    return <div className="fup-section-label">{children}</div>;
+}
+
+function Field({ label, value, placeholder, onChange, type = "text" }: {
+    label: string; value: string; placeholder?: string; onChange: (v: string) => void; type?: string;
+}) {
+    return (
+        <div className="fup-field">
+            <SectionLabel>{label}</SectionLabel>
+            <input className="fup-input" type={type} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
+        </div>
+    );
+}
+
+function ColorPicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void; }) {
+    const hex = value ? "#" + value : "";
+    return (
+        <div className="fup-field">
+            <SectionLabel>{label}</SectionLabel>
+            <div className="fup-color-row">
+                <input
+                    type="color"
+                    className="fup-color-swatch"
+                    value={hex || "#5865f2"}
+                    onChange={e => {
+                        const n = parseInt(e.target.value.replace("#", ""), 16);
+                        if (!isNaN(n)) onChange(String(n));
+                    }}
+                />
+                <input
+                    className="fup-input fup-color-input"
+                    placeholder="#5865f2 (decimal)"
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                />
+                {value && (
+                    <button className="fup-clear-btn" onClick={() => onChange("")} title="Clear">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function ImageUpload({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void; }) {
+    const fileRef = React.useRef<HTMLInputElement>(null);
+    function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => { if (ev.target?.result) onChange(ev.target.result as string); };
+        reader.readAsDataURL(file);
+    }
+    return (
+        <div className="fup-field">
+            <SectionLabel>{label}</SectionLabel>
+            <div className="fup-image-row">
+                <input className="fup-input fup-url-input" placeholder="Image URL or upload..." value={value.startsWith("data:") ? "" : value} onChange={e => onChange(e.target.value)} />
+                <button className="fup-file-btn" onClick={() => fileRef.current?.click()} title="Choose a file">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Z" /></svg>
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFile} />
+                {value && <>
+                    <img src={value} alt="" className="fup-preview-avatar" />
+                    <button className="fup-clear-btn" onClick={() => onChange("")} title="Delete">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                    </button>
+                </>}
+            </div>
+        </div>
+    );
+}
+
+function BadgeBtn({ label, icon, active, onClick }: { label: string; icon?: string; active: boolean; onClick: () => void; }) {
+    return (
+        <button onClick={onClick} className={`fup-badge ${active ? "fup-badge--on" : ""}`}
+            style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            {icon && <img src={icon} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />}
+            <span>{label}</span>
+        </button>
+    );
+}
+
+const NITRO_LEVELS = [
+    { label: "None", icon: "" },
+    { label: "Nitro", icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png" },
+    { label: "Bronze (1 mo)", icon: "https://cdn.discordapp.com/badge-icons/4f33c4a9c64ce221936bd256c356f91f.png" },
+    { label: "Silver (2 mo)", icon: "https://cdn.discordapp.com/badge-icons/4514fab914bdbfb4ad2fa23df76121a6.png" },
+    { label: "Gold (3 mo)", icon: "https://cdn.discordapp.com/badge-icons/2895086c18d5531d499862e41d1155a6.png" },
+    { label: "Platinum (6 mo)", icon: "https://cdn.discordapp.com/badge-icons/0334688279c8359120922938dcb1d6f8.png" },
+    { label: "Diamond (12 mo)", icon: "https://cdn.discordapp.com/badge-icons/0d61871f72bb9a33a7ae568c1fb4f20a.png" },
+    { label: "Emerald (24 mo)", icon: "https://cdn.discordapp.com/badge-icons/11e2d339068b55d3a506cff34d3780f3.png" },
+    { label: "Ruby (36 mo)", icon: "https://cdn.discordapp.com/badge-icons/cd5e2cfd9d7f27a8cdcd3e8a8d5dc9f4.png" },
+    { label: "Opal (72 mo)", icon: "https://cdn.discordapp.com/badge-icons/5b154df19c53dce2af92c9b61e6be5e2.png" },
+];
+
+const BOOST_LEVELS = [
+    { label: "None", icon: "" },
+    { label: "1 mo", icon: "https://cdn.discordapp.com/badge-icons/51040c70d4f20a921ad6674ff86fc95c.png" },
+    { label: "2 mo", icon: "https://cdn.discordapp.com/badge-icons/0e4080d1d333bc7ad29ef6528b6f2fb7.png" },
+    { label: "3 mo", icon: "https://cdn.discordapp.com/badge-icons/72bed924410c304dbe3d00a6e593ff59.png" },
+    { label: "6 mo", icon: "https://cdn.discordapp.com/badge-icons/df199d2050d3ed4ebf84d64ae83989f8.png" },
+    { label: "9 mo", icon: "https://cdn.discordapp.com/badge-icons/996b3e870e8a22ce519b3a50e6bdd52f.png" },
+    { label: "12 mo", icon: "https://cdn.discordapp.com/badge-icons/991c9f39ee33d7537d9f408c3e53141e.png" },
+    { label: "15 mo", icon: "https://cdn.discordapp.com/badge-icons/cb3ae83c15e970e8f3d410bc62cb8b99.png" },
+    { label: "18 mo", icon: "https://cdn.discordapp.com/badge-icons/7142225d31238f6387d9f09efaa02759.png" },
+    { label: "24 mo", icon: "https://cdn.discordapp.com/badge-icons/ec92202290b48d0879b7413d2dde3bab.png" },
+];
+
+const AVATAR_DECORATIONS = [
+    { id: "1144307957425778779", label: "Hearts" },
+    { id: "1144308196723408958", label: "Hearts Animated" },
+    { id: "1212569433839636530", label: "Lofi Cafe" },
+    { id: "1481387347642810480", label: "Winter" },
+    { id: "1343751617362661526", label: "Magic Orb" },
+    { id: "1373015260465987705", label: "Dragon" },
+    { id: "1333866045303423026", label: "Ghost" },
+    { id: "1144308439720394944", label: "Sakura Drift" },
+    { id: "1432550258126229565", label: "Neon" },
+    { id: "1462116613632426014", label: "Cyber City" },
+    { id: "1462116613682757888", label: "Retro" },
+    { id: "1144307629225672846", label: "Fire" },
+    { id: "1341506443718688768", label: "Void" },
+    { id: "1447654090640330763", label: "Celestial" },
+    { id: "1483857762890022923", label: "Snowy" },
+    { id: "1479561706672885811", label: "Ice" },
+    { id: "1212569856189407352", label: "Cozy" },
+    { id: "1485784028710830242", label: "New Year" },
+    { id: "1341506444150702080", label: "Abyss" },
+    { id: "1232071712695386162", label: "Spring" },
+    { id: "1220514048068812901", label: "Summer" },
+    { id: "1427463138634109026", label: "Autumn" },
+    { id: "1341506443865489408", label: "Darkness" },
+];
+
 export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }) {
     const initial = getCachedTarget();
     const initialManual = getManualProfile();
@@ -39,6 +176,7 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const [spoofActivities, setSpoofActivities] = useState(settings.store.spoofActivities);
     const [target, setTarget] = useState(initial);
     const [mode, setMode] = useState(settings.store.targetMode ?? "lookup");
+
     const [manualId, setManualId] = useState(initialManual.id);
     const [manualUsername, setManualUsername] = useState(initialManual.username);
     const [manualGlobalName, setManualGlobalName] = useState(initialManual.globalName);
@@ -46,11 +184,20 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const [manualBio, setManualBio] = useState(initialManual.bio);
     const [manualPronouns, setManualPronouns] = useState(initialManual.pronouns);
     const [manualAccentColor, setManualAccentColor] = useState(initialManual.accentColor);
+    const [manualAccentColor2, setManualAccentColor2] = useState(initialManual.accentColor2);
     const [manualAvatarDataUrl, setManualAvatarDataUrl] = useState(initialManual.avatarDataUrl);
     const [manualBannerDataUrl, setManualBannerDataUrl] = useState(initialManual.bannerDataUrl);
     const [manualFlags, setManualFlags] = useState(initialManual.publicFlags);
     const [manualPremiumType, setManualPremiumType] = useState(String(initialManual.premiumType));
     const [manualBot, setManualBot] = useState(initialManual.bot);
+    const [manualNitroLevel, setManualNitroLevel] = useState(initialManual.nitroLevel);
+    const [manualBoostMonths, setManualBoostMonths] = useState(initialManual.boostMonths);
+    const [manualAvatarDecoration, setManualAvatarDecoration] = useState(initialManual.avatarDecoration);
+    const [manualCreatedAt, setManualCreatedAt] = useState(initialManual.createdAt);
+    const [manualEmail, setManualEmail] = useState(initialManual.email);
+    const [manualPhone, setManualPhone] = useState(initialManual.phone);
+    const [manualCustomBadgeIds, setManualCustomBadgeIds] = useState<string[]>(initialManual.customBadgeIds ?? []);
+    const [manualOldName, setManualOldName] = useState(initialManual.oldName);
 
     async function apply() {
         settings.store.targetMode = "lookup";
@@ -77,22 +224,6 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     function applyManual() {
         const id = manualId.trim();
         const username = manualUsername.trim();
-        const discriminator = manualDiscriminator.trim() || "0";
-
-        if (!ID_RE.test(id)) {
-            showToast("Enter a valid Discord user ID.", Toasts.Type.FAILURE);
-            return;
-        }
-
-        if (!username) {
-            showToast("Enter a username.", Toasts.Type.FAILURE);
-            return;
-        }
-
-        if (!DISCRIM_RE.test(discriminator)) {
-            showToast("Enter a valid discriminator.", Toasts.Type.FAILURE);
-            return;
-        }
 
         const premiumType = Number(manualPremiumType);
         if (!Number.isInteger(premiumType) || premiumType < 0 || premiumType > 3) {
@@ -104,10 +235,11 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
             id,
             username,
             globalName: manualGlobalName.trim(),
-            discriminator,
+            discriminator: manualDiscriminator.trim() || "0",
             bio: manualBio,
             pronouns: manualPronouns,
             accentColor: manualAccentColor.trim(),
+            accentColor2: manualAccentColor2.trim(),
             avatarDataUrl: manualAvatarDataUrl,
             bannerDataUrl: manualBannerDataUrl,
             avatarHash: "manual-avatar",
@@ -115,6 +247,14 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
             publicFlags: manualFlags,
             premiumType,
             bot: manualBot,
+            nitroLevel: manualNitroLevel,
+            boostMonths: manualBoostMonths,
+            avatarDecoration: manualAvatarDecoration,
+            createdAt: manualCreatedAt,
+            email: manualEmail,
+            phone: manualPhone,
+            customBadgeIds: manualCustomBadgeIds,
+            oldName: manualOldName,
         });
 
         setTarget(manual);
@@ -132,10 +272,7 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     }
 
     function toggle(v: boolean) {
-        if (v && !target) {
-            showToast("Pick a target user first.", Toasts.Type.FAILURE);
-            return;
-        }
+        if (v && !target) { showToast("Pick a target user first.", Toasts.Type.FAILURE); return; }
         setEnabled(v);
         setEnabledLocal(v);
     }
@@ -147,7 +284,6 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
         input.onchange = async () => {
             const file = input.files?.[0];
             if (!file) return;
-
             try {
                 const dataUrl = await readImageAsDataUrl(file);
                 if (kind === "avatar") setManualAvatarDataUrl(dataUrl);
@@ -161,38 +297,32 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
         input.click();
     }
 
-    function toggleFlag(flag: number, enabled: boolean) {
-        setManualFlags(current => enabled ? current | flag : current & ~flag);
+    function toggleFlag(flag: number, v: boolean) {
+        setManualFlags(current => v ? current | flag : current & ~flag);
     }
 
     return (
-        <ModalRoot {...modalProps} size={ModalSize.MEDIUM}>
+        <ModalRoot {...modalProps} size={ModalSize.LARGE}>
             <ModalHeader>
                 <Text variant="heading-lg/semibold" style={{ flexGrow: 1 }}>Fake User Profile</Text>
                 <ModalCloseButton onClick={modalProps.onClose} />
             </ModalHeader>
-            <ModalContent>
+            <ModalContent className="fup-content">
                 <Forms.FormText className={Margins.bottom8}>
-                    Pick a user by ID. Your client will visually treat you as them: avatar, banner, badges, bio, pronouns, decorations, activities, name. Messages you send can be replaced with a local fake from the target user.
+                    Pick a user by ID, or create a fully manual profile. Your client will visually treat you as them.
                 </Forms.FormText>
 
-                <Forms.FormTitle>Mode</Forms.FormTitle>
+                <SectionLabel>Mode</SectionLabel>
                 <Flex style={{ gap: 8 }} className={Margins.bottom16}>
                     <Button
                         color={mode === "lookup" ? Button.Colors.PRIMARY : Button.Colors.TRANSPARENT}
-                        onClick={() => {
-                            settings.store.targetMode = "lookup";
-                            setMode("lookup");
-                        }}
+                        onClick={() => { settings.store.targetMode = "lookup"; setMode("lookup"); }}
                     >
                         Lookup user
                     </Button>
                     <Button
                         color={mode === "manual" ? Button.Colors.PRIMARY : Button.Colors.TRANSPARENT}
-                        onClick={() => {
-                            settings.store.targetMode = "manual";
-                            setMode("manual");
-                        }}
+                        onClick={() => { settings.store.targetMode = "manual"; setMode("manual"); }}
                     >
                         Manual profile
                     </Button>
@@ -200,15 +330,10 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
 
                 {mode === "lookup" ? (
                     <>
-                        <Forms.FormTitle>Target user ID</Forms.FormTitle>
+                        <SectionLabel>Target user ID</SectionLabel>
                         <Flex style={{ alignItems: "center", gap: 8 }} className={Margins.bottom16}>
                             <div style={{ flexGrow: 1 }}>
-                                <TextInput
-                                    placeholder="123456789012345678"
-                                    value={value}
-                                    onChange={setValue}
-                                    autoFocus
-                                />
+                                <input className="fup-input" placeholder="123456789012345678" value={value} onChange={e => setValue(e.target.value)} autoFocus />
                             </div>
                             <Button onClick={apply} disabled={busy || !value.trim()}>
                                 {busy ? "Loading..." : "Apply"}
@@ -217,136 +342,104 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
                     </>
                 ) : (
                     <>
-                        <Forms.FormTitle>User ID</Forms.FormTitle>
-                        <TextInput value={manualId} onChange={setManualId} placeholder="123456789012345678" className={Margins.bottom8} />
+                        <SectionLabel>User ID</SectionLabel>
+                        <input className="fup-input" value={manualId} onChange={e => setManualId(e.target.value)} placeholder="123456789012345678" />
 
-                        <Forms.FormTitle>Username</Forms.FormTitle>
-                        <TextInput value={manualUsername} onChange={setManualUsername} placeholder="fakeuser" className={Margins.bottom8} />
+                        <SectionLabel>Username</SectionLabel>
+                        <input className="fup-input" value={manualUsername} onChange={e => setManualUsername(e.target.value)} placeholder="fakeuser" />
 
-                        <Forms.FormTitle>Display name</Forms.FormTitle>
-                        <TextInput value={manualGlobalName} onChange={setManualGlobalName} placeholder="Fake User" className={Margins.bottom8} />
+                        <SectionLabel>Display name</SectionLabel>
+                        <input className="fup-input" value={manualGlobalName} onChange={e => setManualGlobalName(e.target.value)} placeholder="Fake User" />
 
-                        <Forms.FormTitle>Discriminator</Forms.FormTitle>
-                        <TextInput value={manualDiscriminator} onChange={setManualDiscriminator} placeholder="0" className={Margins.bottom8} />
+                        <SectionLabel>Discriminator</SectionLabel>
+                        <input className="fup-input" value={manualDiscriminator} onChange={e => setManualDiscriminator(e.target.value)} placeholder="0" />
 
-                        <Forms.FormTitle>Bio</Forms.FormTitle>
-                        <TextInput value={manualBio} onChange={setManualBio} placeholder="Anything you want" className={Margins.bottom8} />
+                        <div className="fup-divider" />
 
-                        <Forms.FormTitle>Pronouns</Forms.FormTitle>
-                        <TextInput value={manualPronouns} onChange={setManualPronouns} placeholder="they/them" className={Margins.bottom8} />
+                        <SectionLabel>Bio</SectionLabel>
+                        <input className="fup-input" value={manualBio} onChange={e => setManualBio(e.target.value)} placeholder="Anything you want" />
 
-                        <Forms.FormTitle>Accent color</Forms.FormTitle>
-                        <TextInput value={manualAccentColor} onChange={setManualAccentColor} placeholder="16711680" className={Margins.bottom8} />
+                        <SectionLabel>Pronouns</SectionLabel>
+                        <input className="fup-input" value={manualPronouns} onChange={e => setManualPronouns(e.target.value)} placeholder="they/them" />
 
-                        <Forms.FormTitle>Nitro type</Forms.FormTitle>
-                        <TextInput value={manualPremiumType} onChange={setManualPremiumType} placeholder="0" className={Margins.bottom8} />
+                        <div className="fup-divider" />
 
-                        <Flex style={{ gap: 8 }} className={Margins.bottom16}>
-                            <Button onClick={() => uploadImage("avatar")}>Upload avatar</Button>
-                            <Button onClick={() => uploadImage("banner")}>Upload banner</Button>
-                            <Button
-                                color={Button.Colors.TRANSPARENT}
-                                onClick={() => {
-                                    setManualAvatarDataUrl("");
-                                    setManualBannerDataUrl("");
-                                }}
-                            >
-                                Clear images
-                            </Button>
-                        </Flex>
+                        <ColorPicker label="Accent color" value={manualAccentColor} onChange={setManualAccentColor} />
+                        <ColorPicker label="Accent color 2 (gradient)" value={manualAccentColor2} onChange={setManualAccentColor2} />
 
-                        <FormSwitch
-                            value={manualBot}
-                            onChange={setManualBot}
-                            description="Show the profile as a bot user."
-                            title="Bot"
-                        />
+                        <div className="fup-divider" />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.DiscordStaff) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.DiscordStaff, v)}
-                            description="Show the Discord Staff badge."
-                            title="Discord Staff"
-                        />
+                        <SectionLabel>Nitro badge tier</SectionLabel>
+                        <div className="fup-badges" style={{ marginBottom: 14 }}>
+                            {NITRO_LEVELS.map((n, i) => (
+                                <BadgeBtn key={i} label={n.label} icon={n.icon || undefined} active={manualNitroLevel === (i - 1)} onClick={() => {
+                                    const level = i - 1;
+                                    setManualNitroLevel(level);
+                                    if (level >= 0) setManualPremiumType("2");
+                                }} />
+                            ))}
+                        </div>
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.PartneredServerOwner) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.PartneredServerOwner, v)}
-                            description="Show the Partnered Server Owner badge."
-                            title="Partnered Server Owner"
-                        />
+                        <SectionLabel>Boost badge tier</SectionLabel>
+                        <div className="fup-badges" style={{ marginBottom: 14 }}>
+                            {BOOST_LEVELS.map((b, i) => (
+                                <BadgeBtn key={i} label={b.label} icon={b.icon || undefined} active={manualBoostMonths === (i - 1)} onClick={() => setManualBoostMonths(i - 1)} />
+                            ))}
+                        </div>
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.HypeSquadEvents) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.HypeSquadEvents, v)}
-                            description="Show the HypeSquad Events badge."
-                            title="HypeSquad Events"
-                        />
+                        <div className="fup-divider" />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.DiscordBugHunter) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.DiscordBugHunter, v)}
-                            description="Show the Discord Bug Hunter badge."
-                            title="Discord Bug Hunter"
-                        />
+                        <SectionLabel>Profile picture</SectionLabel>
+                        <ImageUpload label="" value={manualAvatarDataUrl} onChange={setManualAvatarDataUrl} />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.HypeSquadBravery) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.HypeSquadBravery, v)}
-                            description="Show the HypeSquad Bravery badge."
-                            title="HypeSquad Bravery"
-                        />
+                        <SectionLabel>Banner</SectionLabel>
+                        <ImageUpload label="" value={manualBannerDataUrl} onChange={setManualBannerDataUrl} />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.HypeSquadBrilliance) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.HypeSquadBrilliance, v)}
-                            description="Show the HypeSquad Brilliance badge."
-                            title="HypeSquad Brilliance"
-                        />
+                        <div className="fup-divider" />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.HypeSquadBalance) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.HypeSquadBalance, v)}
-                            description="Show the HypeSquad Balance badge."
-                            title="HypeSquad Balance"
-                        />
+                        <SectionLabel>Avatar decoration</SectionLabel>
+                        <div className="fup-badges" style={{ marginBottom: 14 }}>
+                            <BadgeBtn label="None" active={!manualAvatarDecoration} onClick={() => setManualAvatarDecoration("")} />
+                            {AVATAR_DECORATIONS.map(d => (
+                                <BadgeBtn key={d.id} label={d.label} active={manualAvatarDecoration === d.id} onClick={() => setManualAvatarDecoration(manualAvatarDecoration === d.id ? "" : d.id)} />
+                            ))}
+                        </div>
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.EarlySupporter) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.EarlySupporter, v)}
-                            description="Show the Early Supporter badge."
-                            title="Early Supporter"
-                        />
+                        <SectionLabel>Custom badges</SectionLabel>
+                        <div className="fup-badges" style={{ marginBottom: 14 }}>
+                            {[
+                                { id: "quest", label: "Completed a quest", icon: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png" },
+                                { id: "orbs", label: "Orbs — Apprentice", icon: "https://cdn.discordapp.com/badge-icons/83d8a1eb09a8d64e59233eec5d4d5c2d.png" },
+                                { id: "oldname", label: "Old username", icon: "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png" },
+                            ].map(b => (
+                                <BadgeBtn key={b.id} label={b.label} icon={b.icon} active={manualCustomBadgeIds.includes(b.id)} onClick={() => setManualCustomBadgeIds(
+                                    manualCustomBadgeIds.includes(b.id) ? manualCustomBadgeIds.filter(x => x !== b.id) : [...manualCustomBadgeIds, b.id]
+                                )} />
+                            ))}
+                        </div>
+                        {manualCustomBadgeIds.includes("oldname") && (
+                            <Field label="Old username" value={manualOldName} placeholder="OldUser#0000" onChange={setManualOldName} />
+                        )}
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.GoldenDiscordBugHunter) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.GoldenDiscordBugHunter, v)}
-                            description="Show the Golden Discord Bug Hunter badge."
-                            title="Golden Discord Bug Hunter"
-                        />
+                        <div className="fup-divider" />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.EarlyVerifiedBotDeveloper) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.EarlyVerifiedBotDeveloper, v)}
-                            description="Show the Early Verified Bot Developer badge."
-                            title="Early Verified Bot Developer"
-                        />
+                        <Field label="Creation date" value={manualCreatedAt} placeholder="2010-06-29" type="date" onChange={setManualCreatedAt} />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.ModeratorProgramsAlumni) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.ModeratorProgramsAlumni, v)}
-                            description="Show the Moderator Programs Alumni badge."
-                            title="Moderator Programs Alumni"
-                        />
+                        <SectionLabel>Bot</SectionLabel>
+                        <FormSwitch value={manualBot} onChange={setManualBot} description="Show the profile as a bot user." title="Bot" />
 
-                        <FormSwitch
-                            value={(manualFlags & manualBadgeFlags.ActiveDeveloper) !== 0}
-                            onChange={v => toggleFlag(manualBadgeFlags.ActiveDeveloper, v)}
-                            description="Show the Active Developer badge."
-                            title="Active Developer"
-                        />
+                        <div className="fup-divider" />
 
-                        <Button onClick={applyManual} className={Margins.top8}>Apply manual profile</Button>
+                        <SectionLabel>Badge flags (bitfield)</SectionLabel>
+                        <input className="fup-input" type="number" value={String(manualFlags)} onChange={e => setManualFlags(Number(e.target.value) || 0)} placeholder="0" />
+
+                        <SectionLabel>Nitro type (0-3)</SectionLabel>
+                        <input className="fup-input" type="number" value={manualPremiumType} onChange={e => setManualPremiumType(e.target.value)} placeholder="0" min="0" max="3" />
+
+                        <Field label="Email (local display only)" value={manualEmail} placeholder="user@example.com" onChange={setManualEmail} />
+                        <Field label="Phone (local display only)" value={manualPhone} placeholder="+1 234 567 890" onChange={setManualPhone} />
+
+                        <button className="fup-btn fup-btn-primary" style={{ marginTop: 8, width: "100%", justifyContent: "center" }} onClick={applyManual}>Apply manual profile</button>
                     </>
                 )}
 
@@ -354,10 +447,7 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
                     <Flex style={{ alignItems: "center", gap: 12 }} className={Margins.bottom16}>
                         <img
                             src={mode === "manual" && manualAvatarDataUrl ? manualAvatarDataUrl : IconUtils.getUserAvatarURL(target.user, true, 64)}
-                            alt=""
-                            width={48}
-                            height={48}
-                            style={{ borderRadius: "50%" }}
+                            alt="" width={48} height={48} style={{ borderRadius: "50%" }}
                         />
                         <div>
                             <Text variant="text-md/semibold">{target.user.globalName ?? target.user.username}</Text>
@@ -366,48 +456,17 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
                     </Flex>
                 )}
 
-                <FormSwitch
-                    value={enabled}
-                    onChange={toggle}
-                    description="Enable the visual spoof. The user area button toggles the same setting."
-                    title="Spoof active"
-                />
+                <div className="fup-divider" />
 
-                <FormSwitch
-                    value={fakeMessages}
-                    onChange={v => { settings.store.fakeMessages = v; setFakeMessages(v); }}
-                    description="When you send a message, post a local fake one as the target instead of really sending it."
-                    title="Fake outgoing messages"
-                />
-
-                <FormSwitch
-                    value={sendRealToo}
-                    onChange={v => { settings.store.sendRealToo = v; setSendRealToo(v); }}
-                    description="Also send the real message in addition to the local fake. Off keeps it client-side only."
-                    disabled={!fakeMessages}
-                    title="Send real message too"
-                />
-
-                <FormSwitch
-                    value={spoofBadges}
-                    onChange={v => { settings.store.spoofBadges = v; setSpoofBadges(v); }}
-                    description="Mirror the target's badges onto your client-side profile."
-                    title="Spoof badges"
-                />
-
-                <FormSwitch
-                    value={spoofActivities}
-                    onChange={v => { settings.store.spoofActivities = v; setSpoofActivities(v); }}
-                    description="Mirror the target's connected accounts and game collection."
-                    hideBorder
-                    title="Spoof activities and connections"
-                />
+                <FormSwitch value={enabled} onChange={toggle} description="Enable the visual spoof. The user area button toggles the same setting." title="Spoof active" />
+                <FormSwitch value={fakeMessages} onChange={v => { settings.store.fakeMessages = v; setFakeMessages(v); }} description="When you send a message, post a local fake one as the target instead of really sending it." title="Fake outgoing messages" />
+                <FormSwitch value={sendRealToo} onChange={v => { settings.store.sendRealToo = v; setSendRealToo(v); }} description="Also send the real message in addition to the local fake." disabled={!fakeMessages} title="Send real message too" />
+                <FormSwitch value={spoofBadges} onChange={v => { settings.store.spoofBadges = v; setSpoofBadges(v); }} description="Mirror the target's badges onto your client-side profile." title="Spoof badges" />
+                <FormSwitch value={spoofActivities} onChange={v => { settings.store.spoofActivities = v; setSpoofActivities(v); }} description="Mirror the target's connected accounts and game collection." hideBorder title="Spoof activities and connections" />
             </ModalContent>
-            <ModalFooter>
-                <Flex style={{ gap: 8 }}>
-                    <Button color={Button.Colors.RED} onClick={clear} disabled={!target}>Clear</Button>
-                    <Button color={Button.Colors.PRIMARY} onClick={modalProps.onClose}>Close</Button>
-                </Flex>
+            <ModalFooter className="fup-footer">
+                <button className="fup-btn fup-btn-danger" onClick={clear} disabled={!target}>Clear</button>
+                <button className="fup-btn fup-btn-ghost" onClick={modalProps.onClose}>Close</button>
             </ModalFooter>
         </ModalRoot>
     );

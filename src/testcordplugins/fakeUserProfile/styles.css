@@ -1,0 +1,222 @@
+/* ── Fake User Profile Plugin ── */
+
+.fup-content {
+    padding: 16px 20px 8px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.fup-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 10px 0;
+}
+
+.fup-field {
+    margin-bottom: 14px;
+}
+
+.fup-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-bottom: 6px;
+}
+
+.fup-input {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.fup-input:focus {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.fup-input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.fup-input[type="date"] {
+    color-scheme: dark;
+}
+
+.fup-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fup-color-swatch {
+    width: 38px;
+    height: 38px;
+    padding: 2px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.fup-color-input {
+    flex: 1;
+    width: auto;
+}
+
+.fup-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fup-badge {
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.1s;
+}
+
+.fup-badge:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.fup-badge--on {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: #5865f2;
+    color: #fff;
+    font-weight: 700;
+}
+
+.fup-image-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fup-file-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.fup-file-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.fup-preview-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.fup-clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: color 0.1s;
+}
+
+.fup-clear-btn:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.fup-url-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.fup-hint {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 6px;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.fup-footer {
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+    padding: 14px 20px !important;
+}
+
+.fup-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    color: #fff;
+}
+
+.fup-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.fup-btn-ghost {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.fup-btn-ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+.fup-btn-danger {
+    background: rgba(237, 66, 69, 0.15);
+    color: #ed4245;
+    border: 1.5px solid rgba(237, 66, 69, 0.3);
+}
+
+.fup-btn-danger:hover:not(:disabled) {
+    background: rgba(237, 66, 69, 0.25);
+}
+
+.fup-btn-primary {
+    background: #5865f2;
+}
+
+.fup-btn-primary:hover:not(:disabled) {
+    background: #4752c4;
+}

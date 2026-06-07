@@ -9,7 +9,7 @@ import { fetchUserProfile } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { OptionType } from "@utils/types";
 import type { User } from "@vencord/discord-types";
-import { UserProfileStore, UserStore, UserUtils } from "@webpack/common";
+import { UserProfileStore, UserStore, UserUtils, SnowflakeUtils } from "@webpack/common";
 
 export const logger = new Logger("FakeUserProfile");
 
@@ -36,6 +36,7 @@ export interface ManualProfileData {
     bio: string;
     pronouns: string;
     accentColor: string;
+    accentColor2: string;
     avatarDataUrl: string;
     bannerDataUrl: string;
     avatarHash: string;
@@ -43,6 +44,14 @@ export interface ManualProfileData {
     publicFlags: number;
     premiumType: number;
     bot: boolean;
+    nitroLevel: number;
+    boostMonths: number;
+    avatarDecoration: string;
+    createdAt: string;
+    email: string;
+    phone: string;
+    customBadgeIds: string[];
+    oldName: string;
 }
 
 export interface CachedTarget {
@@ -79,6 +88,19 @@ export function clearTarget() {
     notify();
 }
 
+function makeDateForUser(userId: string, totalMonths: number): Date {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+    }
+    const seed = Math.abs(hash);
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - totalMonths, 1);
+    const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(((seed % maxDay) + 1));
+    return target;
+}
+
 function getDefaultManualProfile(): ManualProfileData {
     return {
         id: "",
@@ -88,6 +110,7 @@ function getDefaultManualProfile(): ManualProfileData {
         bio: "",
         pronouns: "",
         accentColor: "",
+        accentColor2: "",
         avatarDataUrl: "",
         bannerDataUrl: "",
         avatarHash: "manual-avatar",
@@ -95,6 +118,14 @@ function getDefaultManualProfile(): ManualProfileData {
         publicFlags: 0,
         premiumType: 0,
         bot: false,
+        nitroLevel: -1,
+        boostMonths: -1,
+        avatarDecoration: "",
+        createdAt: "",
+        email: "",
+        phone: "",
+        customBadgeIds: [],
+        oldName: "",
     };
 }
 
@@ -106,19 +137,36 @@ export function getManualProfile(): ManualProfileData {
 }
 
 function createManualUser(profile: ManualProfileData): User {
+    const me = UserStore.getCurrentUser();
+    const id = profile.id || me?.id || "";
+    const username = profile.username || me?.username || "unknown";
+    const base = me && id === me.id ? me : (UserStore.getUser(id) || me);
+
     const user = {
-        id: profile.id,
-        username: profile.username,
-        globalName: profile.globalName || null,
-        discriminator: profile.discriminator,
-        avatar: profile.avatarDataUrl ? profile.avatarHash : null,
-        banner: profile.bannerDataUrl ? profile.bannerHash : null,
-        publicFlags: profile.publicFlags,
-        flags: profile.publicFlags,
-        premiumType: profile.premiumType,
-        accentColor: profile.accentColor ? Number(profile.accentColor) : null,
-        usernameNormalized: profile.username.toLowerCase(),
-        bot: profile.bot,
+        id,
+        username: profile.username || (base as any)?.username || "unknown",
+        globalName: profile.globalName || (base as any)?.globalName || null,
+        discriminator: profile.discriminator || (base as any)?.discriminator || "0",
+        avatar: profile.avatarDataUrl ? profile.avatarHash : ((base as any)?.avatar ?? null),
+        banner: profile.bannerDataUrl ? profile.bannerHash : ((base as any)?.banner ?? null),
+        publicFlags: profile.publicFlags || (base as any)?.publicFlags || 0,
+        flags: profile.publicFlags || (base as any)?.flags || 0,
+        premiumType: profile.premiumType || (base as any)?.premiumType || 0,
+        accentColor: profile.accentColor ? Number(profile.accentColor) : ((base as any)?.accentColor ?? null),
+        usernameNormalized: (profile.username || (base as any)?.username || "").toLowerCase(),
+        bot: profile.bot || (base as any)?.bot || false,
+        avatarDecorationData: profile.avatarDecoration
+            ? { asset: profile.avatarDecoration, skuId: profile.avatarDecoration }
+            : ((base as any)?.avatarDecorationData ?? undefined),
+        createdAt: profile.createdAt
+            ? new Date(profile.createdAt + "T12:00:00Z")
+            : (base as any)?.createdAt ?? new Date(SnowflakeUtils.extractTimestamp(id)),
+        premiumSince: profile.premiumType > 0
+            ? makeDateForUser(id, [1, 2, 3, 6, 12, 24, 36, 72][profile.nitroLevel] ?? 1)
+            : ((base as any)?.premiumSince ?? undefined),
+        premiumGuildSince: profile.boostMonths >= 0
+            ? makeDateForUser(id, [1, 2, 3, 6, 9, 12, 15, 18, 24][profile.boostMonths] ?? 1)
+            : ((base as any)?.premiumGuildSince ?? undefined),
     } as unknown as User;
 
     return user;
@@ -126,21 +174,45 @@ function createManualUser(profile: ManualProfileData): User {
 
 function createManualTarget(profile: ManualProfileData): CachedTarget {
     const user = createManualUser(profile);
+    const me = UserStore.getCurrentUser();
+    const id = profile.id || me?.id || "";
+    const realProfile = (UserProfileStore.getUserProfile(id) ?? {}) as any;
+
+    const accentColor = profile.accentColor ? Number(profile.accentColor) : (realProfile.accentColor ?? null);
+    const accentColor2 = profile.accentColor2 ? Number(profile.accentColor2) : null;
+    const themeColors = accentColor != null ? (accentColor2 != null ? [accentColor, accentColor2] : [accentColor]) : undefined;
+
+    const hasNitro = profile.premiumType > 0 || (realProfile.premiumType ?? 0) > 0;
+    const nitroLevel = profile.nitroLevel;
+    const NITRO_M = [1, 2, 3, 6, 12, 24, 36, 72];
+    const premiumSince = hasNitro
+        ? (profile.premiumType > 0 ? makeDateForUser(id, NITRO_M[nitroLevel] ?? 1) : (realProfile.premiumSince ?? null))
+        : null;
+
+    const BOOST_M = [1, 2, 3, 6, 9, 12, 15, 18, 24];
+    const premiumGuildSince = profile.boostMonths >= 0
+        ? makeDateForUser(id, BOOST_M[profile.boostMonths] ?? 1)
+        : (realProfile.premiumGuildSince ?? null);
 
     return {
-        id: profile.id,
+        id,
         user,
         profile: {
-            userId: profile.id,
-            bio: profile.bio,
-            pronouns: profile.pronouns,
-            accentColor: profile.accentColor ? Number(profile.accentColor) : null,
-            banner: profile.bannerDataUrl ? profile.bannerHash : null,
-            premiumType: profile.premiumType,
+            userId: id,
+            bio: profile.bio || realProfile.bio || null,
+            pronouns: profile.pronouns || realProfile.pronouns || null,
+            accentColor,
+            themeColors,
+            banner: profile.bannerDataUrl ? profile.bannerHash : (realProfile.banner ?? (user as any).banner ?? null),
+            premiumType: profile.premiumType || realProfile.premiumType || 0,
+            premiumSince,
+            premiumGuildSince,
+            publicFlags: profile.publicFlags || (user as any).publicFlags || 0,
+            badges: realProfile.badges ?? [],
             userProfile: {
-                displayName: profile.globalName || profile.username,
-                bio: profile.bio,
-                pronouns: profile.pronouns,
+                displayName: profile.globalName || (user as any).globalName || (user as any).username,
+                bio: profile.bio || realProfile.bio || null,
+                pronouns: profile.pronouns || realProfile.pronouns || null,
             },
         },
         fetchedAt: Date.now(),

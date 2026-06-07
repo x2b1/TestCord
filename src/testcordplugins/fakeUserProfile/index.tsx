@@ -72,6 +72,8 @@ function buildOverrides(target: any): Record<string, unknown> {
         publicFlags: target.publicFlags ?? target.flags ?? 0,
         flags: target.flags ?? 0,
         premiumType: target.premiumType ?? 0,
+        premiumSince: target.premiumSince ?? profile?.premiumSince ?? null,
+        premiumGuildSince: target.premiumGuildSince ?? profile?.premiumGuildSince ?? null,
         accentColor: target.accentColor ?? profile?.accentColor ?? null,
         usernameNormalized: typeof target.username === "string" ? target.username.toLowerCase() : undefined,
         bot: target.bot ?? false,
@@ -81,6 +83,7 @@ function buildOverrides(target: any): Record<string, unknown> {
     if (target.clan !== undefined) overrides.clan = target.clan;
     if (target.collectibles !== undefined) overrides.collectibles = target.collectibles;
     if (target.displayNameStyles !== undefined) overrides.displayNameStyles = target.displayNameStyles;
+    if (target.createdAt !== undefined) overrides.createdAt = target.createdAt;
     overrides.tag = `${target.username}${target.discriminator && target.discriminator !== "0" ? `#${target.discriminator}` : ""}`;
     return overrides;
 }
@@ -124,10 +127,12 @@ function wrapUser(base: any): any {
     if (cachedWrap && cachedWrap.base === base && cachedWrap.target === target) return cachedWrap.wrap;
     const wrap = mergeUser(base, buildOverrides(target));
     try {
+        const manual = getCachedTarget()?.manualProfile;
+        const createdAt = manual?.createdAt
+            ? new Date(manual.createdAt + "T12:00:00Z")
+            : new Date(SnowflakeUtils.extractTimestamp(target.id));
         Object.defineProperty(wrap, "createdAt", {
-            get() {
-                return new Date(SnowflakeUtils.extractTimestamp(target.id));
-            },
+            get() { return createdAt; },
             enumerable: true,
             configurable: true,
         });
@@ -458,6 +463,7 @@ const dynamicBadge: ProfileBadge = {
     shouldShow: ({ userId }) => settings.store.spoofBadges && isActive() && isCurrentUser(userId),
     getBadges: () => {
         const target = getTargetUser();
+        const manual = getCachedTarget()?.manualProfile;
         if (!target) return [];
 
         const flags = (target as any).publicFlags ?? (target as any).flags ?? 0;
@@ -476,12 +482,94 @@ const dynamicBadge: ProfileBadge = {
 
         const premium = (target as any).premiumType ?? 0;
         if (premium >= 1) {
+            const NITRO_ICONS = [
+                "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
+                "https://cdn.discordapp.com/badge-icons/4f33c4a9c64ce221936bd256c356f91f.png",
+                "https://cdn.discordapp.com/badge-icons/4514fab914bdbfb4ad2fa23df76121a6.png",
+                "https://cdn.discordapp.com/badge-icons/2895086c18d5531d499862e41d1155a6.png",
+                "https://cdn.discordapp.com/badge-icons/0334688279c8359120922938dcb1d6f8.png",
+                "https://cdn.discordapp.com/badge-icons/0d61871f72bb9a33a7ae568c1fb4f20a.png",
+                "https://cdn.discordapp.com/badge-icons/11e2d339068b55d3a506cff34d3780f3.png",
+                "https://cdn.discordapp.com/badge-icons/cd5e2cfd9d7f27a8cdcd3e8a8d5dc9f4.png",
+                "https://cdn.discordapp.com/badge-icons/5b154df19c53dce2af92c9b61e6be5e2.png",
+            ];
+            const NITRO_TIER_NAMES = ["", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Emerald", "Ruby", "Opal"];
+            const nitroLevel = manual?.nitroLevel ?? -1;
+            const icon = nitroLevel >= 0 && nitroLevel < NITRO_ICONS.length ? NITRO_ICONS[nitroLevel] : NITRO_ICONS[0];
+            const tierName = nitroLevel >= 0 && nitroLevel < NITRO_TIER_NAMES.length ? NITRO_TIER_NAMES[nitroLevel] : "";
+            const description = tierName ? `Nitro ${tierName}` : "Discord Nitro";
             badges.push({
                 id: "fakeUserProfile-nitro",
-                description: "Discord Nitro",
-                iconSrc: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
+                description,
+                iconSrc: icon,
                 position: BadgePosition.END,
             });
+        }
+
+        // Boost badge
+        const boostMonths = manual?.boostMonths ?? -1;
+        if (boostMonths >= 0) {
+            const BOOST_ICONS = [
+                "https://cdn.discordapp.com/badge-icons/51040c70d4f20a921ad6674ff86fc95c.png",
+                "https://cdn.discordapp.com/badge-icons/0e4080d1d333bc7ad29ef6528b6f2fb7.png",
+                "https://cdn.discordapp.com/badge-icons/72bed924410c304dbe3d00a6e593ff59.png",
+                "https://cdn.discordapp.com/badge-icons/df199d2050d3ed4ebf84d64ae83989f8.png",
+                "https://cdn.discordapp.com/badge-icons/996b3e870e8a22ce519b3a50e6bdd52f.png",
+                "https://cdn.discordapp.com/badge-icons/991c9f39ee33d7537d9f408c3e53141e.png",
+                "https://cdn.discordapp.com/badge-icons/cb3ae83c15e970e8f3d410bc62cb8b99.png",
+                "https://cdn.discordapp.com/badge-icons/7142225d31238f6387d9f09efaa02759.png",
+                "https://cdn.discordapp.com/badge-icons/ec92202290b48d0879b7413d2dde3bab.png",
+            ];
+            if (boostMonths < BOOST_ICONS.length) {
+                const BOOST_M = [1, 2, 3, 6, 9, 12, 15, 18, 24];
+                const userId = target.id;
+                let hash = 0;
+                for (let i = 0; i < userId.length; i++) {
+                    hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+                }
+                const seed = Math.abs(hash);
+                const now = new Date();
+                const boostDate = new Date(now.getFullYear(), now.getMonth() - (BOOST_M[boostMonths] ?? 1), 1);
+                const maxDay = new Date(boostDate.getFullYear(), boostDate.getMonth() + 1, 0).getDate();
+                boostDate.setDate(((seed % maxDay) + 1));
+                const dateStr = `${boostDate.getMonth() + 1}/${boostDate.getDate()}/${String(boostDate.getFullYear()).slice(-2)}`;
+                badges.push({
+                    id: "fakeUserProfile-boost",
+                    description: `Server Booster\nServer boosting since ${dateStr}`,
+                    iconSrc: BOOST_ICONS[boostMonths],
+                    position: BadgePosition.END,
+                });
+            }
+        }
+
+        // Custom badges (quest, orbs, oldname)
+        if (manual?.customBadgeIds) {
+            if (manual.customBadgeIds.includes("quest")) {
+                badges.push({
+                    id: "fakeUserProfile-quest",
+                    description: "Completed a quest",
+                    iconSrc: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
+                    position: BadgePosition.END,
+                });
+            }
+            if (manual.customBadgeIds.includes("orbs")) {
+                badges.push({
+                    id: "fakeUserProfile-orbs",
+                    description: "Orbs — Apprentice",
+                    iconSrc: "https://cdn.discordapp.com/badge-icons/83d8a1eb09a8d64e59233eec5d4d5c2d.png",
+                    position: BadgePosition.END,
+                });
+            }
+            if (manual.customBadgeIds.includes("oldname")) {
+                const OLD_NAME_ICON = "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png";
+                const oldNameText = manual.oldName ? `Old username\u00a0: ${manual.oldName}` : "Old username";
+                badges.push({
+                    id: "fakeUserProfile-oldname",
+                    description: oldNameText,
+                    iconSrc: OLD_NAME_ICON,
+                    position: BadgePosition.END,
+                });
+            }
         }
 
         return badges;
@@ -677,6 +765,7 @@ export default definePlugin({
         const targetProfile = getTargetProfile();
         const target = getTargetUser();
         if (!targetProfile || !target) return original;
+        const manual = getCachedTarget()?.manualProfile;
 
         const overrides: any = {};
         if (targetProfile.bio != null) overrides.bio = targetProfile.bio;
@@ -691,6 +780,11 @@ export default definePlugin({
         if (targetProfile.premiumType != null) overrides.premiumType = targetProfile.premiumType;
         if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
         if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
+
+        // Gradient theme colors from accentColor2 in manual mode
+        if (manual?.accentColor2 && overrides.accentColor != null) {
+            overrides.themeColors = [overrides.accentColor, Number(manual.accentColor2)];
+        }
 
         // Mirror the userProfile sub-object so the popout's display-name section reflects the target.
         const targetUserProfile = (targetProfile as any).userProfile ?? {};
@@ -725,6 +819,32 @@ export default definePlugin({
                         description: "Discord Nitro",
                         icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
                     });
+                }
+                // Manual custom badges
+                if (manual?.customBadgeIds) {
+                    const OLD_NAME_ICON = "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png";
+                    if (manual.customBadgeIds.includes("quest")) {
+                        computed.push({
+                            id: "fakeUserProfile-quest",
+                            description: "Completed a quest",
+                            icon: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
+                        });
+                    }
+                    if (manual.customBadgeIds.includes("orbs")) {
+                        computed.push({
+                            id: "fakeUserProfile-orbs",
+                            description: "Orbs — Apprentice",
+                            icon: "https://cdn.discordapp.com/badge-icons/83d8a1eb09a8d64e59233eec5d4d5c2d.png",
+                        });
+                    }
+                    if (manual.customBadgeIds.includes("oldname")) {
+                        const oldNameText = manual.oldName ? `Old username\u00a0: ${manual.oldName}` : "Old username";
+                        computed.push({
+                            id: "fakeUserProfile-oldname",
+                            description: oldNameText,
+                            icon: OLD_NAME_ICON,
+                        });
+                    }
                 }
                 if (computed.length) overrides.badges = computed;
             }
