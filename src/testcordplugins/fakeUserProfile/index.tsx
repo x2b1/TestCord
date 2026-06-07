@@ -11,9 +11,9 @@ import { TestcordDevs } from "@utils/constants";
 import { openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import type { User } from "@vencord/discord-types";
-import { FluxDispatcher, IconUtils, PresenceStore, React, SnowflakeUtils, UsernameUtils, UserStore } from "@webpack/common";
+import { ComponentDispatch, FluxDispatcher, IconUtils, PresenceStore, React, SnowflakeUtils, Tooltip, UsernameUtils, UserStore } from "@webpack/common";
 
-import { getCachedTarget, getManualProfile, isActive, isCurrentUser, loadTarget, logger, restoreStoredTarget, setEnabled, settings, subscribe } from "./data";
+import { getCachedTarget, getManualProfile, isActive, isCurrentUser, loadData, loadTarget, logger, makeDateForUser, makeDateInRange, restoreManualProfileIfNeeded, restoreStoredTarget, setEnabled, settings, subscribe } from "./data";
 import { FakeUserProfileModal } from "./modal";
 
 const FLAG_BADGES: { flag: number; image: string; description: string; }[] = [
@@ -30,6 +30,58 @@ const FLAG_BADGES: { flag: number; image: string; description: string; }[] = [
     { flag: 1 << 18, image: "https://cdn.discordapp.com/badge-icons/fee1624003e2fee35cb398e125dc479b.png", description: "Moderator Programs Alumni" },
     { flag: 1 << 22, image: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png", description: "Active Developer" },
 ];
+
+const NITRO_TIER_NAMES = ["", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Emerald", "Ruby", "Opal"];
+
+function NitroBadgeTooltip({ icon, tierName, dateStr }: { icon: string; tierName: string; dateStr: string; }) {
+    const title = tierName ? `NITRO ${tierName.toUpperCase()}` : "NITRO";
+    return (
+        <Tooltip
+            text={
+                <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    padding: "8px 12px",
+                    gap: 2,
+                }}>
+                    <img
+                        src={icon}
+                        alt=""
+                        style={{ width: 60, height: 60, objectFit: "contain", marginBottom: 4 }}
+                    />
+                    <div style={{
+                        fontWeight: 700,
+                        fontSize: 14,
+                        letterSpacing: "0.06em",
+                        lineHeight: 1.2,
+                    }}>
+                        {title}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.8 }}>
+                        Subscriber since {dateStr}
+                    </div>
+                </div>
+            }
+        >
+            {(tooltipProps: any) => (
+                <img
+                    {...tooltipProps}
+                    src={icon}
+                    alt={title}
+                    style={{ borderRadius: "50%", width: "22px", height: "22px" }}
+                />
+            )}
+        </Tooltip>
+    );
+}
+
+/** Extract the bare hash from a badge-icons CDN URL so Discord's internal renderer can build the URL itself. */
+function badgeIconHash(url: string): string {
+    const m = url.match(/\/([a-f0-9]+)\.png/);
+    return m ? m[1] : url;
+}
 
 const SNOWFLAKE_EPOCH = 1420070400000n;
 function makeSnowflake(): string {
@@ -143,6 +195,7 @@ function wrapUser(base: any): any {
 
 function clearWrapCache() {
     cachedWrap = null;
+    clearBadgeCache();
 }
 
 let originalGetUser: typeof UserStore.getUser | null = null;
@@ -429,12 +482,19 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
 
     const target = getCachedTarget();
     const active = isActive();
+    const manualProfile = getManualProfile();
+    const hasManualProfile = settings.store.targetMode === "manual" && manualProfile.username;
 
-    const tooltip = hideTooltips
-        ? undefined
-        : target
-            ? (active ? `Spoofing as ${target.user.username} — click to manage` : `Click to spoof as ${target.user.username}`)
-            : "Fake User Profile";
+    let tooltip: string | undefined;
+    if (!hideTooltips) {
+        if (target) {
+            tooltip = active ? `Spoofing as ${target.user.username} \u2014 click to manage` : `Click to spoof as ${target.user.username}`;
+        } else if (hasManualProfile) {
+            tooltip = active ? `Spoofing as ${manualProfile.username} \u2014 click to manage` : `Click to spoof as ${manualProfile.username}`;
+        } else {
+            tooltip = "Fake User Profile";
+        }
+    }
 
     return (
         <UserAreaButton
@@ -445,7 +505,7 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
             redGlow={active}
             onClick={() => openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />)}
             onContextMenu={() => {
-                if (!target) {
+                if (!target && !restoreManualProfileIfNeeded()) {
                     openModal(modalProps => <FakeUserProfileModal modalProps={modalProps as any} />);
                     return;
                 }
@@ -454,6 +514,16 @@ function FakeUserProfileButton({ iconForeground, hideTooltips, nameplate }: User
             }}
         />
     );
+}
+
+let cachedBadges: ProfileBadge[] | null = null;
+let cachedBadgesTarget: User | null = null;
+let cachedBadgesManual: any = null;
+
+function clearBadgeCache() {
+    cachedBadges = null;
+    cachedBadgesTarget = null;
+    cachedBadgesManual = null;
 }
 
 const dynamicBadge: ProfileBadge = {
@@ -465,6 +535,10 @@ const dynamicBadge: ProfileBadge = {
         const target = getTargetUser();
         const manual = getCachedTarget()?.manualProfile;
         if (!target) return [];
+
+        if (cachedBadges && cachedBadgesTarget === target && cachedBadgesManual === manual) {
+            return cachedBadges;
+        }
 
         const flags = (target as any).publicFlags ?? (target as any).flags ?? 0;
         const badges: ProfileBadge[] = [];
@@ -493,16 +567,35 @@ const dynamicBadge: ProfileBadge = {
                 "https://cdn.discordapp.com/badge-icons/cd5e2cfd9d7f27a8cdcd3e8a8d5dc9f4.png",
                 "https://cdn.discordapp.com/badge-icons/5b154df19c53dce2af92c9b61e6be5e2.png",
             ];
-            const NITRO_TIER_NAMES = ["", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Emerald", "Ruby", "Opal"];
+            const NITRO_M = [1, 2, 3, 6, 12, 24, 36, 72];
             const nitroLevel = manual?.nitroLevel ?? -1;
             const icon = nitroLevel >= 0 && nitroLevel < NITRO_ICONS.length ? NITRO_ICONS[nitroLevel] : NITRO_ICONS[0];
             const tierName = nitroLevel >= 0 && nitroLevel < NITRO_TIER_NAMES.length ? NITRO_TIER_NAMES[nitroLevel] : "";
-            const description = tierName ? `Nitro ${tierName}` : "Discord Nitro";
+            let dateStr = "";
+            if (manual?.nitroLevel != null && manual.nitroLevel >= 0) {
+                const minMonths = NITRO_M[manual.nitroLevel] ?? 1;
+                const maxMonths = NITRO_M[manual.nitroLevel + 1] ?? minMonths + 12;
+                const nitroDate = makeDateInRange(target.id, minMonths, maxMonths);
+                const month = nitroDate.getMonth() + 1;
+                const day = nitroDate.getDate();
+                const year = nitroDate.getFullYear();
+                dateStr = `${month}/${day}/${String(year).slice(-2)}`;
+            }
+            const description = dateStr ? `NITRO ${tierName}\nSubscriber since ${dateStr}` : (tierName ? `NITRO ${tierName}` : "Discord Nitro");
+            const style = { borderRadius: "50%", width: "22px", height: "22px" };
             badges.push({
                 id: "fakeUserProfile-nitro",
                 description,
                 iconSrc: icon,
                 position: BadgePosition.END,
+                props: { style },
+                component: () => (
+                    <NitroBadgeTooltip
+                        icon={icon}
+                        tierName={tierName}
+                        dateStr={dateStr}
+                    />
+                ),
             });
         }
 
@@ -522,56 +615,23 @@ const dynamicBadge: ProfileBadge = {
             ];
             if (boostMonths < BOOST_ICONS.length) {
                 const BOOST_M = [1, 2, 3, 6, 9, 12, 15, 18, 24];
-                const userId = target.id;
-                let hash = 0;
-                for (let i = 0; i < userId.length; i++) {
-                    hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
-                }
-                const seed = Math.abs(hash);
-                const now = new Date();
-                const boostDate = new Date(now.getFullYear(), now.getMonth() - (BOOST_M[boostMonths] ?? 1), 1);
-                const maxDay = new Date(boostDate.getFullYear(), boostDate.getMonth() + 1, 0).getDate();
-                boostDate.setDate(((seed % maxDay) + 1));
-                const dateStr = `${boostDate.getMonth() + 1}/${boostDate.getDate()}/${String(boostDate.getFullYear()).slice(-2)}`;
+                const minMonths = BOOST_M[boostMonths] ?? 1;
+                const maxMonths = BOOST_M[boostMonths + 1] ?? minMonths + 6;
+                const boostDate = makeDateInRange(target.id, minMonths, maxMonths);
+                const BOOST_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const dateStr = `${BOOST_MONTHS[boostDate.getMonth()]} ${boostDate.getDate()}, ${boostDate.getFullYear()}`;
                 badges.push({
                     id: "fakeUserProfile-boost",
-                    description: `Server Booster\nServer boosting since ${dateStr}`,
+                    description: `Server boosting since ${dateStr}`,
                     iconSrc: BOOST_ICONS[boostMonths],
                     position: BadgePosition.END,
                 });
             }
         }
 
-        // Custom badges (quest, orbs, oldname)
-        if (manual?.customBadgeIds) {
-            if (manual.customBadgeIds.includes("quest")) {
-                badges.push({
-                    id: "fakeUserProfile-quest",
-                    description: "Completed a quest",
-                    iconSrc: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
-                    position: BadgePosition.END,
-                });
-            }
-            if (manual.customBadgeIds.includes("orbs")) {
-                badges.push({
-                    id: "fakeUserProfile-orbs",
-                    description: "Orbs — Apprentice",
-                    iconSrc: "https://cdn.discordapp.com/badge-icons/83d8a1eb09a8d64e59233eec5d4d5c2d.png",
-                    position: BadgePosition.END,
-                });
-            }
-            if (manual.customBadgeIds.includes("oldname")) {
-                const OLD_NAME_ICON = "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png";
-                const oldNameText = manual.oldName ? `Old username\u00a0: ${manual.oldName}` : "Old username";
-                badges.push({
-                    id: "fakeUserProfile-oldname",
-                    description: oldNameText,
-                    iconSrc: OLD_NAME_ICON,
-                    position: BadgePosition.END,
-                });
-            }
-        }
-
+        cachedBadges = badges;
+        cachedBadgesTarget = target;
+        cachedBadgesManual = manual;
         return badges;
     },
 };
@@ -644,6 +704,7 @@ export default definePlugin({
     },
 
     async start() {
+        await loadData();
         addProfileBadge(dynamicBadge);
         patchStore();
         patchUtils();
@@ -754,10 +815,11 @@ export default definePlugin({
         const targetUserId = user?.id;
         if (!isCurrentUser(targetUserId)) return undefined;
         const t = getTargetUser() as any;
-        const deco = t?.avatarDecorationData;
-        if (!deco?.asset) return undefined;
-        const asset = canAnimate && deco.asset.startsWith("a_") ? deco.asset : deco.asset.replace(/^a_/, "");
-        return `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png${canAnimate && deco.asset.startsWith("a_") ? "" : "?passthrough=false"}`;
+        const manual = getCachedTarget()?.manualProfile;
+        const decoAsset = t?.avatarDecorationData?.asset || manual?.avatarDecoration || manual?.decorationAsset;
+        if (!decoAsset) return undefined;
+        const animated = canAnimate && decoAsset.startsWith("a_");
+        return `https://cdn.discordapp.com/media/v1/collectibles-shop/${decoAsset}/${animated ? "animated" : "static"}`;
     },
 
     profileHook(userId: string, original: any) {
@@ -799,55 +861,7 @@ export default definePlugin({
         };
 
         if (settings.store.spoofBadges) {
-            if (targetProfile.badges && targetProfile.badges.length) {
-                overrides.badges = targetProfile.badges;
-            } else {
-                const flags = (target as any).publicFlags ?? (target as any).flags ?? 0;
-                const computed: any[] = [];
-                for (const fb of FLAG_BADGES) {
-                    if ((flags & fb.flag) === fb.flag) {
-                        computed.push({
-                            id: `fakeUserProfile-flag-${fb.flag}`,
-                            description: fb.description,
-                            icon: fb.image,
-                        });
-                    }
-                }
-                if (((target as any).premiumType ?? 0) >= 1) {
-                    computed.push({
-                        id: "fakeUserProfile-nitro",
-                        description: "Discord Nitro",
-                        icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png",
-                    });
-                }
-                // Manual custom badges
-                if (manual?.customBadgeIds) {
-                    const OLD_NAME_ICON = "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png";
-                    if (manual.customBadgeIds.includes("quest")) {
-                        computed.push({
-                            id: "fakeUserProfile-quest",
-                            description: "Completed a quest",
-                            icon: "https://cdn.discordapp.com/badge-icons/7d9ae358c8c5e118768335dbe68b4fb8.png",
-                        });
-                    }
-                    if (manual.customBadgeIds.includes("orbs")) {
-                        computed.push({
-                            id: "fakeUserProfile-orbs",
-                            description: "Orbs — Apprentice",
-                            icon: "https://cdn.discordapp.com/badge-icons/83d8a1eb09a8d64e59233eec5d4d5c2d.png",
-                        });
-                    }
-                    if (manual.customBadgeIds.includes("oldname")) {
-                        const oldNameText = manual.oldName ? `Old username\u00a0: ${manual.oldName}` : "Old username";
-                        computed.push({
-                            id: "fakeUserProfile-oldname",
-                            description: oldNameText,
-                            icon: OLD_NAME_ICON,
-                        });
-                    }
-                }
-                if (computed.length) overrides.badges = computed;
-            }
+            overrides.badges = [];
         }
 
         if (settings.store.spoofActivities) {
@@ -900,6 +914,8 @@ export default definePlugin({
         } catch (e) {
             logger.error("Failed to dispatch fake message", e);
         }
+
+        ComponentDispatch.dispatchToLastSubscribed("CLEAR_TEXT");
 
         if (settings.store.sendRealToo) return;
         return { cancel: true };

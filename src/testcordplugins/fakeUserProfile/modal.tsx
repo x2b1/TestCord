@@ -4,14 +4,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import "./styles.css";
+
 import { Flex } from "@components/Flex";
 import { FormSwitch } from "@components/FormSwitch";
 import { Margins } from "@utils/margins";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, ModalRoot, ModalSize } from "@utils/modal";
 import { Button, Forms, IconUtils, React, showToast, Text, Toasts, useState } from "@webpack/common";
 
-import { clearTarget, getCachedTarget, getManualProfile, loadTarget, logger, manualBadgeFlags, saveManualProfile, setEnabled, settings } from "./data";
-import "./styles.css";
+import { clearTarget, getCachedTarget, getManualProfile, loadTarget, logger, saveManualProfile, setEnabled, settings } from "./data";
 
 const ID_RE = /^\d{17,20}$/;
 
@@ -198,6 +199,8 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const [manualPhone, setManualPhone] = useState(initialManual.phone);
     const [manualCustomBadgeIds, setManualCustomBadgeIds] = useState<string[]>(initialManual.customBadgeIds ?? []);
     const [manualOldName, setManualOldName] = useState(initialManual.oldName);
+    const [manualNitro, setManualNitro] = useState(initialManual.nitro);
+    const [manualDecorationAsset, setManualDecorationAsset] = useState(initialManual.decorationAsset);
 
     async function apply() {
         settings.store.targetMode = "lookup";
@@ -247,14 +250,17 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
             publicFlags: manualFlags,
             premiumType,
             bot: manualBot,
+            nitro: manualNitro,
             nitroLevel: manualNitroLevel,
             boostMonths: manualBoostMonths,
             avatarDecoration: manualAvatarDecoration,
+            decorationAsset: manualDecorationAsset,
             createdAt: manualCreatedAt,
             email: manualEmail,
             phone: manualPhone,
             customBadgeIds: manualCustomBadgeIds,
             oldName: manualOldName,
+            copiedUserId: "",
         });
 
         setTarget(manual);
@@ -369,13 +375,39 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
 
                         <div className="fup-divider" />
 
+                        <SectionLabel>Badges</SectionLabel>
+                        <div className="fup-badges" style={{ marginBottom: 14 }}>
+                            {[
+                                { flag: 1 << 0, label: "Discord Staff", icon: "https://cdn.discordapp.com/badge-icons/5e74e9b61934fc1f67c65515d1f7e60d.png" },
+                                { flag: 1 << 1, label: "Partnered Server Owner", icon: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png" },
+                                { flag: 1 << 2, label: "HypeSquad Events", icon: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png" },
+                                { flag: 1 << 3, label: "Bug Hunter Lvl 1", icon: "https://cdn.discordapp.com/badge-icons/2717692c7dca7289b35297368a940dd0.png" },
+                                { flag: 1 << 6, label: "HypeSquad Bravery", icon: "https://cdn.discordapp.com/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png" },
+                                { flag: 1 << 7, label: "HypeSquad Brilliance", icon: "https://cdn.discordapp.com/badge-icons/011940fd013da3f7fb926e4a1cd2e618.png" },
+                                { flag: 1 << 8, label: "HypeSquad Balance", icon: "https://cdn.discordapp.com/badge-icons/3aa41de486fa12454c3761e8e223442e.png" },
+                                { flag: 1 << 9, label: "Early Supporter", icon: "https://cdn.discordapp.com/badge-icons/7060786766c9c840eb3019e725d2b358.png" },
+                                { flag: 1 << 14, label: "Bug Hunter Lvl 2", icon: "https://cdn.discordapp.com/badge-icons/848f79194d4be5ff5f81505cbd0ce1e6.png" },
+                                { flag: 1 << 17, label: "Verified Developer", icon: "https://cdn.discordapp.com/badge-icons/6df5892e0f35b051f8b61eace34f4967.png" },
+                                { flag: 1 << 18, label: "Former Moderator", icon: "https://cdn.discordapp.com/badge-icons/fee1624003e2fee35cb398e125dc479b.png" },
+                                { flag: 1 << 22, label: "Active Developer", icon: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png" },
+                            ].map(b => (
+                                <BadgeBtn key={b.flag} label={b.label} icon={b.icon} active={!!(manualFlags & b.flag)} onClick={() => setManualFlags(v => v ^ b.flag)} />
+                            ))}
+                        </div>
+
                         <SectionLabel>Nitro badge tier</SectionLabel>
                         <div className="fup-badges" style={{ marginBottom: 14 }}>
                             {NITRO_LEVELS.map((n, i) => (
                                 <BadgeBtn key={i} label={n.label} icon={n.icon || undefined} active={manualNitroLevel === (i - 1)} onClick={() => {
                                     const level = i - 1;
                                     setManualNitroLevel(level);
-                                    if (level >= 0) setManualPremiumType("2");
+                                    if (level >= 0) {
+                                        setManualPremiumType("2");
+                                        setManualNitro(true);
+                                    } else {
+                                        setManualPremiumType("0");
+                                        setManualNitro(false);
+                                    }
                                 }} />
                             ))}
                         </div>
@@ -399,11 +431,16 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
 
                         <SectionLabel>Avatar decoration</SectionLabel>
                         <div className="fup-badges" style={{ marginBottom: 14 }}>
-                            <BadgeBtn label="None" active={!manualAvatarDecoration} onClick={() => setManualAvatarDecoration("")} />
+                            <BadgeBtn label="None" active={!manualAvatarDecoration} onClick={() => { setManualAvatarDecoration(""); setManualDecorationAsset(""); }} />
                             {AVATAR_DECORATIONS.map(d => (
-                                <BadgeBtn key={d.id} label={d.label} active={manualAvatarDecoration === d.id} onClick={() => setManualAvatarDecoration(manualAvatarDecoration === d.id ? "" : d.id)} />
+                                <BadgeBtn key={d.id} label={d.label} active={manualAvatarDecoration === d.id} onClick={() => {
+                                    const newval = manualAvatarDecoration === d.id ? "" : d.id;
+                                    setManualAvatarDecoration(newval);
+                                    setManualDecorationAsset(newval);
+                                }} />
                             ))}
                         </div>
+                        <Field label="Custom decoration asset ID" value={manualDecorationAsset} placeholder="1144307957425778779" onChange={v => { setManualDecorationAsset(v); setManualAvatarDecoration(v); }} />
 
                         <SectionLabel>Custom badges</SectionLabel>
                         <div className="fup-badges" style={{ marginBottom: 14 }}>

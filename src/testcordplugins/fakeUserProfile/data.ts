@@ -4,14 +4,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { fetchUserProfile } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { OptionType } from "@utils/types";
 import type { User } from "@vencord/discord-types";
-import { UserProfileStore, UserStore, UserUtils, SnowflakeUtils } from "@webpack/common";
+import { SnowflakeUtils, UserProfileStore, UserStore, UserUtils } from "@webpack/common";
 
 export const logger = new Logger("FakeUserProfile");
+
+const DS_KEY = "fakeUserProfile_data";
+const DS_ENABLED = "fakeUserProfile_enabled";
+const LS_KEY_DATA = "FakeUP_data";
+const LS_KEY_ENABLED = "FakeUP_enabled";
 
 export const manualBadgeFlags = {
     DiscordStaff: 1 << 0,
@@ -44,14 +50,17 @@ export interface ManualProfileData {
     publicFlags: number;
     premiumType: number;
     bot: boolean;
+    nitro: boolean;
     nitroLevel: number;
     boostMonths: number;
     avatarDecoration: string;
+    decorationAsset: string;
     createdAt: string;
     email: string;
     phone: string;
     customBadgeIds: string[];
     oldName: string;
+    copiedUserId: string;
 }
 
 export interface CachedTarget {
@@ -65,6 +74,9 @@ export interface CachedTarget {
 
 let cached: CachedTarget | null = null;
 const subscribers = new Set<() => void>();
+
+let storedManualProfile: ManualProfileData = getDefaultManualProfile();
+let storedEnabled = false;
 
 function notify() {
     for (const fn of subscribers) {
@@ -85,10 +97,15 @@ export function clearTarget() {
     cached = null;
     settings.store.targetId = "";
     settings.store.spoofActive = false;
+    storedManualProfile = getDefaultManualProfile();
+    storedEnabled = false;
+    saveDataSync(getDefaultManualProfile(), false);
+    DataStore.set(DS_KEY, getDefaultManualProfile()).catch(() => { });
+    DataStore.set(DS_ENABLED, false).catch(() => { });
     notify();
 }
 
-function makeDateForUser(userId: string, totalMonths: number): Date {
+export function makeDateForUser(userId: string, totalMonths: number): Date {
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
         hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
@@ -96,6 +113,22 @@ function makeDateForUser(userId: string, totalMonths: number): Date {
     const seed = Math.abs(hash);
     const now = new Date();
     const target = new Date(now.getFullYear(), now.getMonth() - totalMonths, 1);
+    const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(((seed % maxDay) + 1));
+    return target;
+}
+
+export function makeDateInRange(userId: string, minMonths: number, maxMonths: number): Date {
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+    }
+    const seed = Math.abs(hash);
+    const monthDiff = maxMonths - minMonths;
+    const randomMonths = monthDiff > 0 ? (seed % (monthDiff * 30)) / 30 : 0;
+    const totalMonths = minMonths + randomMonths;
+    const now = new Date();
+    const target = new Date(now.getFullYear(), now.getMonth() - Math.floor(totalMonths), 1);
     const maxDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
     target.setDate(((seed % maxDay) + 1));
     return target;
@@ -118,28 +151,77 @@ function getDefaultManualProfile(): ManualProfileData {
         publicFlags: 0,
         premiumType: 0,
         bot: false,
+        nitro: false,
         nitroLevel: -1,
         boostMonths: -1,
         avatarDecoration: "",
+        decorationAsset: "",
         createdAt: "",
         email: "",
         phone: "",
         customBadgeIds: [],
         oldName: "",
+        copiedUserId: "",
     };
+}
+
+function saveDataSync(data: ManualProfileData, enabled: boolean) {
+    try {
+        localStorage.setItem(LS_KEY_DATA, JSON.stringify(data));
+        localStorage.setItem(LS_KEY_ENABLED, enabled ? "1" : "0");
+    } catch { }
+}
+
+function loadDataSync() {
+    try {
+        const raw = localStorage.getItem(LS_KEY_DATA);
+        const en = localStorage.getItem(LS_KEY_ENABLED);
+        if (raw) {
+            try { storedManualProfile = JSON.parse(raw); } catch { storedManualProfile = getDefaultManualProfile(); }
+        } else {
+            storedManualProfile = getDefaultManualProfile();
+        }
+        storedEnabled = en === "1";
+    } catch {
+        storedManualProfile = getDefaultManualProfile();
+        storedEnabled = false;
+    }
+}
+
+export async function loadData() {
+    try {
+        const d = await DataStore.get(DS_KEY) as ManualProfileData | null;
+        const e = await DataStore.get(DS_ENABLED) as boolean | null;
+        if (d !== null && typeof d === "object" && Object.keys(d).length > 0) {
+            storedManualProfile = d;
+            saveDataSync(d, true);
+        } else {
+            loadDataSync();
+            if (storedManualProfile && Object.keys(storedManualProfile).length > 0 && storedManualProfile.username) {
+                DataStore.set(DS_KEY, storedManualProfile).catch(() => { });
+                DataStore.set(DS_ENABLED, true).catch(() => { });
+            }
+        }
+        if (e !== null) {
+            storedEnabled = e === true;
+            settings.store.spoofActive = e === true;
+        }
+        saveDataSync(storedManualProfile, storedEnabled);
+    } catch {
+        loadDataSync();
+    }
 }
 
 export function getManualProfile(): ManualProfileData {
     return {
         ...getDefaultManualProfile(),
-        ...(settings.store.manualProfile as Partial<ManualProfileData> | undefined),
+        ...storedManualProfile,
     };
 }
 
 function createManualUser(profile: ManualProfileData): User {
     const me = UserStore.getCurrentUser();
     const id = profile.id || me?.id || "";
-    const username = profile.username || me?.username || "unknown";
     const base = me && id === me.id ? me : (UserStore.getUser(id) || me);
 
     const user = {
@@ -155,8 +237,8 @@ function createManualUser(profile: ManualProfileData): User {
         accentColor: profile.accentColor ? Number(profile.accentColor) : ((base as any)?.accentColor ?? null),
         usernameNormalized: (profile.username || (base as any)?.username || "").toLowerCase(),
         bot: profile.bot || (base as any)?.bot || false,
-        avatarDecorationData: profile.avatarDecoration
-            ? { asset: profile.avatarDecoration, skuId: profile.avatarDecoration }
+        avatarDecorationData: (profile.avatarDecoration || profile.decorationAsset)
+            ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset }
             : ((base as any)?.avatarDecorationData ?? undefined),
         createdAt: profile.createdAt
             ? new Date(profile.createdAt + "T12:00:00Z")
@@ -183,7 +265,7 @@ function createManualTarget(profile: ManualProfileData): CachedTarget {
     const themeColors = accentColor != null ? (accentColor2 != null ? [accentColor, accentColor2] : [accentColor]) : undefined;
 
     const hasNitro = profile.premiumType > 0 || (realProfile.premiumType ?? 0) > 0;
-    const nitroLevel = profile.nitroLevel;
+    const { nitroLevel } = profile;
     const NITRO_M = [1, 2, 3, 6, 12, 24, 36, 72];
     const premiumSince = hasNitro
         ? (profile.premiumType > 0 ? makeDateForUser(id, NITRO_M[nitroLevel] ?? 1) : (realProfile.premiumSince ?? null))
@@ -214,6 +296,9 @@ function createManualTarget(profile: ManualProfileData): CachedTarget {
                 bio: profile.bio || realProfile.bio || null,
                 pronouns: profile.pronouns || realProfile.pronouns || null,
             },
+            avatarDecorationData: (profile.avatarDecoration || profile.decorationAsset)
+                ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset }
+                : undefined,
         },
         fetchedAt: Date.now(),
         manual: true,
@@ -222,7 +307,10 @@ function createManualTarget(profile: ManualProfileData): CachedTarget {
 }
 
 export function saveManualProfile(profile: ManualProfileData): CachedTarget {
-    settings.store.manualProfile = profile;
+    storedManualProfile = profile;
+    saveDataSync(profile, true);
+    DataStore.set(DS_KEY, profile).catch(() => { });
+    DataStore.set(DS_ENABLED, true).catch(() => { });
     settings.store.targetMode = "manual";
     cached = createManualTarget(profile);
     settings.store.targetId = profile.id;
@@ -250,8 +338,6 @@ export async function loadTarget(targetId: string): Promise<CachedTarget> {
         profile = UserProfileStore.getUserProfile(targetId);
     }
 
-    // fetchUserProfile dispatches USER_UPDATE which replaces the User instance in UserStore.
-    // Re-fetch so we capture banner / accent_color / primaryGuild that just got populated.
     user = UserStore.getUser(targetId) ?? user;
 
     cached = {
@@ -273,6 +359,11 @@ export function restoreStoredTarget(): CachedTarget | null {
         return cached;
     }
 
+    if (settings.store.targetMode === "lookup" && settings.store.targetId) {
+        if (cached && cached.id === settings.store.targetId) return cached;
+        return null;
+    }
+
     return null;
 }
 
@@ -282,12 +373,25 @@ export function isCurrentUser(userId: string | undefined): boolean {
     return !!me && me.id === userId;
 }
 
+export function restoreManualProfileIfNeeded(): boolean {
+    if (cached) return true;
+    if (settings.store.targetMode !== "manual") return false;
+    const profile = getManualProfile();
+    if (!profile.id || !profile.username) return false;
+    cached = createManualTarget(profile);
+    notify();
+    return true;
+}
+
 export function isActive(): boolean {
     return !!settings.store.spoofActive && !!cached;
 }
 
 export function setEnabled(value: boolean) {
     settings.store.spoofActive = value;
+    storedEnabled = value;
+    saveDataSync(storedManualProfile, value);
+    DataStore.set(DS_ENABLED, value).catch(() => { });
     notify();
 }
 
@@ -309,12 +413,6 @@ export const settings = definePluginSettings({
             { label: "Lookup user", value: "lookup", default: true },
             { label: "Manual profile", value: "manual" },
         ],
-    },
-    manualProfile: {
-        type: OptionType.COMPONENT,
-        hidden: true,
-        default: getDefaultManualProfile(),
-        component: () => null,
     },
     fakeMessages: {
         type: OptionType.BOOLEAN,
