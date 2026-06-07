@@ -1,0 +1,193 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+.vc-webhooksend-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    font-weight: 700;
+}
+
+.vc-webhooksend-header-icon {
+    color: var(--text-normal);
+}
+
+.vc-webhooksend-header-text {
+    color: var(--text-normal);
+}
+
+.vc-webhooksend-history-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+.vc-webhooksend-history-title {
+    margin-bottom: 8px;
+    color: var(--text-normal);
+}
+
+.vc-webhooksend-history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.vc-webhooksend-history-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.vc-webhooksend-history-btn {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 200px;
+}
+
+.vc-webhooksend-url-section {
+    margin-bottom: 12px;
+}
+
+.vc-webhooksend-tab-bar {
+    margin-bottom: 12px;
+}
+
+.vc-webhooksend-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 300px;
+}
+
+.vc-webhooksend-section-title {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    color: var(--text-normal);
+}
+
+.vc-webhooksend-mentions-hint {
+    margin-bottom: 8px;
+}
+
+.vc-webhooksend-tab-content input,
+.vc-webhooksend-tab-content textarea {
+    color: var(--text-normal) !important;
+}
+
+.vc-webhooksend-tab-content input::placeholder,
+.vc-webhooksend-tab-content textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.vc-webhooksend-url-section input {
+    color: var(--text-normal) !important;
+}
+
+.vc-webhooksend-url-section input::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.vc-webhooksend-preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.vc-webhooksend-embed-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.vc-webhooksend-embed-card {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-accent);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.vc-webhooksend-embed-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.vc-webhooksend-embed-header:hover {
+    background: var(--background-modifier-hover);
+}
+
+.vc-webhooksend-embed-expand-icon {
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 12px;
+}
+
+.vc-webhooksend-embed-title {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-webhooksend-embed-badge {
+    font-size: 11px;
+    padding: 1px 6px;
+    background: var(--background-modifier-accent);
+    border-radius: 10px;
+    color: var(--text-muted);
+}
+
+.vc-webhooksend-embed-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--background-modifier-accent);
+}
+
+.vc-webhooksend-embed-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.vc-webhooksend-field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vc-webhooksend-field-name {
+    flex: 1;
+}
+
+.vc-webhooksend-field-value {
+    flex: 2;
+}
+
+.vc-webhooksend-field-inline-switch {
+    margin: 0;
+    padding: 0;
+    min-width: 40px;
+}
+
+.vc-webhooksend-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    color: var(--text-muted);
+    font-style: italic;
+}
