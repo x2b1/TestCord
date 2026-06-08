@@ -92,6 +92,7 @@ export default definePlugin({
     tags: ["Utility"],
     authors: [Devs.Ven, Devs.surgedevs],
     settings: pluginSettings,
+    isModified: true,
 
     patches: [
         {
