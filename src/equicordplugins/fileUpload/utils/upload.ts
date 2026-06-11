@@ -23,7 +23,7 @@ const Native = IS_DISCORD_DESKTOP
     ? VencordNative.pluginHelpers.FileUpload as PluginNative<typeof import("../native")>
     : null;
 
-const logger = new Logger("FileUpload", "#7cb7ff");
+export const logger = new Logger("FileUpload", "#7cb7ff");
 
 function toProxyUrl(url: string): string {
     const corsProxyUrl = normalizeCorsProxyUrl((settings.store as { corsProxyUrl?: string; }).corsProxyUrl);
@@ -594,6 +594,8 @@ export function isConfigured(): boolean {
             return true;
         case ServiceType.PIXELVAULT:
             return Boolean((settings.store as { pixelVaultKey?: string; }).pixelVaultKey);
+        case ServiceType.WEBDAV:
+            return Boolean((settings.store as { webdavUrl?: string; }).webdavUrl);
         case ServiceType.SHAREX:
             try {
                 parseShareXConfigFromSettings();
@@ -972,6 +974,54 @@ async function uploadToPixelDrain(fileBlob: Blob, filename: string): Promise<str
     return `https://pixeldrain.com/u/${data.id}`;
 }
 
+async function uploadToWebdav(fileBlob: Blob, filename: string): Promise<string> {
+    const { webdavUrl, webdavUsername, webdavPassword, webdavDirectory } = settings.store as {
+        webdavUrl?: string;
+        webdavUsername?: string;
+        webdavPassword?: string;
+        webdavDirectory?: string;
+    };
+
+    if (!webdavUrl) {
+        throw new Error("WebDAV server URL is required");
+    }
+
+    const baseUrl = webdavUrl.replace(/\/+$/, "");
+    const dir = (webdavDirectory || "").replace(/^\/+|\/+$/g, "");
+    const path = dir ? `/${dir}/${encodeURIComponent(filename)}` : `/${encodeURIComponent(filename)}`;
+    const uploadUrl = `${baseUrl}${path}`;
+
+    const headers: Record<string, string> = {
+        "Content-Type": fileBlob.type || "application/octet-stream"
+    };
+
+    if (webdavUsername?.trim() && webdavPassword?.trim()) {
+        headers.Authorization = `Basic ${btoa(`${webdavUsername.trim()}:${webdavPassword.trim()}`)}`;
+    }
+
+    if (Native) {
+        const arrayBuffer = await fileBlob.arrayBuffer();
+        const result = await Native.uploadToWebdav(arrayBuffer, uploadUrl, headers);
+        if (!result.success) {
+            throw new Error(result.error || "Upload failed");
+        }
+        return uploadUrl;
+    }
+
+    const response = await uploadRequestWithTimeout(uploadUrl, {
+        method: "PUT",
+        headers,
+        body: fileBlob
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+    }
+
+    return uploadUrl;
+}
+
 async function uploadToService(serviceType: ServiceType, fileBlob: Blob, filename: string): Promise<string> {
     switch (serviceType) {
         case ServiceType.ZIPLINE:
@@ -1006,6 +1056,8 @@ async function uploadToService(serviceType: ServiceType, fileBlob: Blob, filenam
             return uploadToPixelVault(fileBlob, filename);
         case ServiceType.PIXELDRAIN:
             return uploadToPixelDrain(fileBlob, filename);
+        case ServiceType.WEBDAV:
+            return uploadToWebdav(fileBlob, filename);
         default:
             throw new Error("Unknown service type");
     }
@@ -1116,6 +1168,25 @@ function finalizeUploadedUrl(url: string): string {
     }
 }
 
+function getAllowedExtensions(): Set<string> | null {
+    const raw = (settings.store as { uploadAllowedFileTypes?: string; }).uploadAllowedFileTypes?.trim();
+    if (!raw) return null;
+
+    const exts = raw.split(/[\s,;]+/).map(e => e.trim().toLowerCase()).filter(Boolean);
+    return exts.length > 0 ? new Set(exts) : null;
+}
+
+export function isFileTypeAllowed(file: File): boolean {
+    const allowed = getAllowedExtensions();
+    if (!allowed) return true;
+
+    const dotIndex = file.name.lastIndexOf(".");
+    if (dotIndex < 1 || dotIndex === file.name.length - 1) return false;
+
+    const ext = file.name.slice(dotIndex + 1).toLowerCase();
+    return allowed.has(ext);
+}
+
 function getFilenameExtension(filename: string): string | undefined {
     const dotIndex = filename.lastIndexOf(".");
     if (dotIndex < 1 || dotIndex === filename.length - 1) return undefined;
@@ -1124,7 +1195,7 @@ function getFilenameExtension(filename: string): string | undefined {
     return ext.length <= 10 ? ext : undefined;
 }
 
-async function notifyUploadSuccess(finalUrl: string): Promise<void> {
+async function notifyUploadSuccess(finalUrl: string, forceSend?: boolean): Promise<void> {
     if (settings.store.autoCopy) {
         if (!finalUrl || !finalUrl.trim()) {
             showToast("Upload successful, but no URL was available to copy", Toasts.Type.MESSAGE);
@@ -1142,7 +1213,7 @@ async function notifyUploadSuccess(finalUrl: string): Promise<void> {
         showToast("Upload successful", Toasts.Type.SUCCESS);
     }
 
-    const autoSend = Boolean((settings.store as { autoSend?: boolean; }).autoSend);
+    const autoSend = forceSend || Boolean((settings.store as { autoSend?: boolean; }).autoSend);
     const autoFormat = Boolean((settings.store as { autoFormat?: boolean; }).autoFormat);
     if (autoSend) {
         insertTextIntoChatInputBox(autoFormat ? `<${finalUrl}>` : finalUrl);
@@ -1274,13 +1345,14 @@ async function normalizeUploadBlob(blob: Blob, sourceUrl?: string): Promise<{ bl
     };
 }
 
-async function uploadPreparedBlob(blob: Blob, sourceUrl?: string): Promise<void> {
+async function uploadPreparedBlob(blob: Blob, sourceUrl?: string, forceSend?: boolean): Promise<string> {
     const primary = settings.store.serviceType as ServiceType;
     const { blob: normalizedBlob, filename } = await normalizeUploadBlob(blob, sourceUrl);
     setUploadState({ fileName: filename, status: "File ready, starting upload...", percent: 4 });
     const uploadedUrl = await uploadWithFallbacks(normalizedBlob, filename, primary);
     const finalUrl = applyEmbedProxy(finalizeUploadedUrl(uploadedUrl));
-    await notifyUploadSuccess(finalUrl);
+    await notifyUploadSuccess(finalUrl, forceSend);
+    return finalUrl;
 }
 
 export async function uploadFile(url: string): Promise<void> {
@@ -1368,10 +1440,15 @@ export async function uploadPickedFile(): Promise<void> {
     const file = await chooseFile("*/*");
     if (!file) return;
 
+    if (!isFileTypeAllowed(file)) {
+        showToast("File type not allowed by current filter", Toasts.Type.FAILURE);
+        return;
+    }
+
     await uploadProvidedFiles([file]);
 }
 
-export async function uploadProvidedFiles(files: readonly File[]): Promise<void> {
+export async function uploadProvidedFiles(files: readonly File[], forceSend?: boolean): Promise<void> {
     if (isUploading) {
         showToast("Upload already in progress", Toasts.Type.MESSAGE);
         return;
@@ -1384,7 +1461,7 @@ export async function uploadProvidedFiles(files: readonly File[]): Promise<void>
 
     if (!files.length) return;
 
-    const uploadFiles = files.filter(file => Boolean(file));
+    const uploadFiles = files.filter(file => Boolean(file) && isFileTypeAllowed(file));
     if (!uploadFiles.length) return;
 
     isUploading = true;
@@ -1408,7 +1485,7 @@ export async function uploadProvidedFiles(files: readonly File[]): Promise<void>
                 canCancel: true
             });
 
-            await uploadPreparedBlob(file);
+            await uploadPreparedBlob(file, undefined, forceSend);
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

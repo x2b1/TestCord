@@ -41,6 +41,9 @@ Testcord's included plugins can be found [here](https://Testcord.dev).
 
 ## Installing Testcord Devbuild — recommended
 
+shell:
+bash -c "$(curl -sS https://raw.githubusercontent.com/TestcordDev/Testcord/refs/heads/main/misc/install.sh)"
+
 ### Dependencies
 
 [Git](https://git-scm.com/) and [Node.JS LTS](https://nodejs.org/) are required.

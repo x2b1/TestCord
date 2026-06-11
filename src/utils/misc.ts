@@ -19,7 +19,7 @@
 import { User } from "@vencord/discord-types";
 import { ChannelStore, GuildMemberStore, IconUtils } from "@webpack/common";
 
-import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, TestcordDevsById, VencordDevsById } from "./constants";
+import { EQUICORD_HELPERS, EquicordDevsById, GUILD_ID, KNOWN_ISSUES_CHANNEL_ID, SUPPORT_CHANNEL_ID, TESTCORD_GUILD_ID, TestcordDevsById, VencordDevsById } from "./constants";
 import { TestcordAdminsById } from "./testcordAdmins";
 
 /**
@@ -131,6 +131,11 @@ export function isTestCordGuild(id: string | null | undefined, isGuildId: boolea
 export function isSupportChannel(channelId: string | null | undefined): boolean {
     if (!channelId) return false;
     return channelId === SUPPORT_CHANNEL_ID;
+}
+
+export function isKnownIssuesCategory(channelId: string | null | undefined): boolean {
+    if (!channelId) return false;
+    return channelId === KNOWN_ISSUES_CHANNEL_ID;
 }
 
 export function isEquicordSupport(userId: string | null | undefined): boolean {

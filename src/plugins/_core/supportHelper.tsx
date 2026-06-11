@@ -20,6 +20,7 @@ import { sendBotMessage } from "@api/Commands";
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
+import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Flex } from "@components/Flex";
@@ -33,7 +34,7 @@ import { CONTRIB_ROLE_ID, Devs, DONOR_ROLE_ID, EQUICORD_TEAM, GUILD_ID, SUPPORT_
 import { sendMessage } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
-import { isAnyPluginDev, isSupportChannel, isTestCordGuild, tryOrElse } from "@utils/misc";
+import { isAnyPluginDev, isKnownIssuesCategory, isSupportChannel, isTestCordGuild, tryOrElse } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { onlyOnce } from "@utils/onlyOnce";
 import { makeCodeblock } from "@utils/text";
@@ -41,7 +42,7 @@ import definePlugin from "@utils/types";
 import { checkForUpdates, isOutdated, update } from "@utils/updater";
 import { RenderModalProps } from "@vencord/discord-types";
 import { CloudUploadPlatform } from "@vencord/discord-types/enums";
-import { Button, ChannelStore, CloudUploader, ConfirmModal, Constants, GuildMemberStore, openModal, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Text, Toasts, UserStore } from "@webpack/common";
+import { ChannelStore, CloudUploader, ConfirmModal, Constants, GuildMemberStore, openModal, Parser, PermissionsBits, PermissionStore, RelationshipStore, RestAPI, SelectedChannelStore, showToast, SnowflakeUtils, Text, Toasts, UserStore } from "@webpack/common";
 import { JSX } from "react";
 
 import plugins, { PluginMeta } from "~plugins";
@@ -434,7 +435,7 @@ export default definePlugin({
             buttons.push(
                 <Button
                     key="vc-update"
-                    color={Button.Colors.GREEN}
+                    variant="positive"
                     onClick={async () => {
                         try {
                             if (await forceUpdate())
@@ -452,19 +453,19 @@ export default definePlugin({
             );
         }
 
-        if (isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel) && testCordSupport) {
+        if (testCordSupport && isSupportChannel(props.channel.id) && PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) {
             if (props.message.content.includes("/testcord-debug") || props.message.content.includes("/testcord-plugins")) {
                 buttons.push(
                     <Button
                         key="vc-dbg"
-                        color={Button.Colors.PRIMARY}
+                        variant="secondary"
                         onClick={async () => sendMessage(props.channel.id, { content: await generateDebugInfoMessage() })}
                     >
                         Run /testcord-debug
                     </Button>,
                     <Button
                         key="vc-plg-list"
-                        color={Button.Colors.PRIMARY}
+                        variant="secondary"
                         onClick={async () => {
                             // If the message is exactly "/testcord-plugins", delete it to avoid showing the command text
                             if (props.message.content.trim() === "/testcord-plugins") {
@@ -532,54 +533,54 @@ export default definePlugin({
                     </Button>
                 );
             }
+        }
 
-            if (testCordSupport) {
-                const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
-                if (match) {
-                    buttons.push(
-                        <Button
-                            key="vc-run-snippet"
-                            onClick={async () => {
-                                try {
-                                    const result = await AsyncFunction(match[1])();
-                                    const stringed = String(result);
-                                    if (stringed) {
-                                        await sendBotMessage(SelectedChannelStore.getChannelId(), {
-                                            content: stringed
-                                        });
-                                    }
-
-                                    showToast("Success!", Toasts.Type.SUCCESS);
-                                } catch (e) {
-                                    new Logger(this.name).error("Error while running snippet:", e);
-                                    showToast("Failed to run snippet :(", Toasts.Type.FAILURE);
+        if (testCordSupport || isSupportChannel(props.channel.id) || isKnownIssuesCategory(props.channel.parent_id)) {
+            const match = CodeBlockRe.exec(props.message.content || props.message.embeds[0]?.rawDescription || "");
+            if (match) {
+                buttons.push(
+                    <Button
+                        key="vc-run-snippet"
+                        onClick={async () => {
+                            try {
+                                const result = await AsyncFunction(match[1])();
+                                const stringed = String(result);
+                                if (stringed) {
+                                    await sendBotMessage(SelectedChannelStore.getChannelId(), {
+                                        content: stringed
+                                    });
                                 }
-                            }}
-                        >
-                            Run Snippet
-                        </Button>
-                    );
-                }
+
+                                showToast("Success!", Toasts.Type.SUCCESS);
+                            } catch (e) {
+                                new Logger(this.name).error("Error while running snippet:", e);
+                                showToast("Failed to run snippet :(", Toasts.Type.FAILURE);
+                            }
+                        }}
+                    >
+                        Run Snippet
+                    </Button>
+                );
             }
         }
 
-        return buttons.length
-            ? <Flex>{buttons}</Flex>
-            : null;
+return buttons.length
+    ? <Flex>{buttons}</Flex>
+    : null;
     },
 
-    renderContributorDmWarningCard: ErrorBoundary.wrap(({ channel }) => {
-        const userId = channel.getRecipientId();
-        if (!isAnyPluginDev(userId)) return null;
-        if (RelationshipStore.isFriend(userId) || isAnyPluginDev(UserStore.getCurrentUser()?.id)) return null;
+renderContributorDmWarningCard: ErrorBoundary.wrap(({ channel }) => {
+    const userId = channel.getRecipientId();
+    if (!isAnyPluginDev(userId)) return null;
+    if (RelationshipStore.isFriend(userId) || isAnyPluginDev(UserStore.getCurrentUser()?.id)) return null;
 
-        return (
-            <Card variant="warning" className={Margins.top8} defaultPadding>
-                Please do not private message Testcord / Equicord / Vencord Developers / Plugin Devs for support!
-                <br />
-                Instead, use the support channel: {Parser.parse("https://discord.com/channels/1434211283317690502/1434228141123047434")}
-                {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}
-            </Card>
-        );
-    }, { noop: true }),
+    return (
+        <Card variant="warning" className={Margins.top8} defaultPadding>
+            Please do not private message Testcord / Equicord / Vencord Developers / Plugin Devs for support!
+            <br />
+            Instead, use the support channel: {Parser.parse("https://discord.com/channels/1434211283317690502/1434228141123047434")}
+            {!ChannelStore.getChannel(SUPPORT_CHANNEL_ID) && " (Click the link to join)"}
+        </Card>
+    );
+}, { noop: true }),
 });

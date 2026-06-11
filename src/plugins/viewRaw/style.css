@@ -1,0 +1,5 @@
+.vc-viewraw-codeblock {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    min-width: 40px !important;
+}
