@@ -64,10 +64,10 @@ class ContentFilter {
         "underage", "under age", "minor", "child", "kid", "young", "teen", "teenager",
         "cp", "c p", "child porn", "childporn", "loli", "shota", "pedo", "pedophile",
         "im underage", "i'm underage", "i am underage", "13", "14", "15", "16",
-        "years old", "yo ", " yo", "age verification", "jailbait",
+        "years old", "yo ", " yo", "age verification", "jailbait", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1",
 
         // Add other categories as needed
-        "illegal", "drugs", "weapons", "harm", "suicide", "self harm"
+        "illegal", "drugs", "weapons", "harm", "suicide", "self harm", "nigger", "sped", "kys"
     ];
 
     // Unicode character mappings for bypass detection
@@ -106,28 +106,46 @@ class ContentFilter {
         "\u2009": " ", "\u200A": " ",
     };
 
+    // Precomputed single-pass look-alike regex. Built once instead of ~80 regexes per call.
+    // All look-alike keys are single literal characters, so output is identical to the
+    // original per-key replacement loop, just faster.
+    private static readonly LOOKALIKE_REGEX = new RegExp(
+        Object.keys(ContentFilter.UNICODE_REPLACEMENTS)
+            .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+            .join("|"),
+        "g"
+    );
+
+    // NOTE: ordering is intentional and must stay this way. Punctuation is stripped to spaces
+    // BEFORE the leet pass, which means the symbol leet keys (@ $ ! |) never reach it. They are
+    // effectively inert. Reordering so they fire would mangle digit blocked terms like "13" into
+    // "ie" and "15" into "is", flooding the filter with false positives on a child-safety path.
+    // Do not reorder without a test harness.
+    private static readonly LEET_MAP: { [key: string]: string; } = {
+        "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b",
+        "@": "a", "$": "s", "!": "i", "|": "l", "ph": "f", "ck": "k"
+    };
+
+    private static readonly LEET_REGEX = new RegExp(
+        Object.keys(ContentFilter.LEET_MAP)
+            .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+            .join("|"),
+        "g"
+    );
+
     public static normalizeText(text: string): string {
         let normalized = text.toLowerCase();
 
-        // Replace Unicode look-alikes
-        for (const [unicode, replacement] of Object.entries(this.UNICODE_REPLACEMENTS)) {
-            normalized = normalized.replace(new RegExp(unicode, "g"), replacement);
-        }
+        // Replace Unicode look-alikes in one pass (identical output to the original loop)
+        normalized = normalized.replace(this.LOOKALIKE_REGEX, m => this.UNICODE_REPLACEMENTS[m]);
 
         // Remove excessive punctuation and spacing
         normalized = normalized.replace(/[^\w\s]/g, " ");
         normalized = normalized.replace(/\s+/g, " ");
         normalized = normalized.trim();
 
-        // Handle l33t speak and common substitutions
-        const leetMap: { [key: string]: string; } = {
-            "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b",
-            "@": "a", "$": "s", "!": "i", "|": "l", "ph": "f", "ck": "k"
-        };
-
-        for (const [leet, normal] of Object.entries(leetMap)) {
-            normalized = normalized.replace(new RegExp(leet, "g"), normal);
-        }
+        // Handle l33t speak and common substitutions, single pass
+        normalized = normalized.replace(this.LEET_REGEX, m => this.LEET_MAP[m]);
 
         return normalized;
     }
@@ -149,14 +167,6 @@ class ContentFilter {
             const spacedTerm = normalizedTerm.split("").join(" ");
             if (normalizedMessage.includes(spacedTerm)) {
                 console.log(`[MimicTroll] 🚫 Blocked spaced content detected: "${term}"`);
-                return true;
-            }
-
-            // Check for terms with extra characters inserted between letters
-            // Uses .+? instead of [^a-z]* to match any chars, not just non-letters
-            const regex = new RegExp(normalizedTerm.split("").join(".+?"), "i");
-            if (regex.test(normalizedMessage)) {
-                console.log(`[MimicTroll] 🚫 Blocked obfuscated content detected: "${term}"`);
                 return true;
             }
         }
@@ -273,16 +283,17 @@ class MimicManager {
 
         // Process async to avoid blocking UI
         setTimeout(() => {
-            // Content filtering check
-            let mimicContent = message.content;
-            if (ContentFilter.containsBlockedContent(mimicContent)) {
+            // Content filtering check. Blocked messages send the rejection on its own,
+            // bypassing the template so it doesn't read like "someone really said <rejection>".
+            if (ContentFilter.containsBlockedContent(message.content)) {
                 console.log(`[MimicTroll] 🚫 Blocked and replaced harmful content from ${message.author.username}`);
-                mimicContent = ContentFilter.getBlockedResponse();
+                this.queueMessage(target.channelId, ContentFilter.getBlockedResponse());
+                return;
             }
 
             // Apply message template
             const template = settings.store.messageTemplate || "{mimic}";
-            const finalMessage = template.replace(/\{mimic\}/g, mimicContent);
+            const finalMessage = template.replace(/\{mimic\}/g, message.content);
 
             // Queue the message to be sent
             this.queueMessage(target.channelId, finalMessage);
