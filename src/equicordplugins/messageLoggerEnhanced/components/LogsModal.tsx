@@ -67,11 +67,18 @@ interface Props {
 export function LogsModal({ modalProps, initalQuery }: Props) {
     const [currentTab, setCurrentTab] = useState(LogTabs.DELETED);
     const [queryEh, setQuery] = useState(initalQuery ?? "");
+    const [userQuery, setUserQuery] = useState("");
     const [sortNewest, setSortNewest] = useState(settings.store.sortNewest);
     const [numDisplayedMessages, setNumDisplayedMessages] = useState(settings.store.messagesToDisplayAtOnceInLogs);
     const contentRef = useRef<HTMLDivElement | null>(null);
 
-    const { messages, total, statusTotal, pending, reset } = useMessages(queryEh, currentTab, sortNewest, numDisplayedMessages);
+    const combinedQuery = useMemo(() => {
+        const trimmed = userQuery.trim();
+        if (!trimmed) return queryEh;
+        return `user:${trimmed} ${queryEh}`.trim();
+    }, [queryEh, userQuery]);
+
+    const { messages, total, statusTotal, pending, reset } = useMessages(combinedQuery, currentTab, sortNewest, numDisplayedMessages);
 
     return (
         <Modal
@@ -109,6 +116,9 @@ export function LogsModal({ modalProps, initalQuery }: Props) {
                             Ghost Pinged
                         </TabBar.Item>
                     </TabBar>
+                    <div className={cl("modal-filter")}>
+                        <TextInput value={userQuery} onChange={e => setUserQuery(e)} placeholder="Search by user (username or ID)" />
+                    </div>
                     <div className={cl("modal-filter")}>
                         <TextInput value={queryEh} onChange={e => setQuery(e)} placeholder="Filter Messages" />
                     </div>
