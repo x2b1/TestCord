@@ -9,6 +9,7 @@ import { definePluginSettings } from "@api/Settings";
 import { sendBotMessage } from "@api/Commands";
 import { addMessagePreSendListener, removeMessagePreSendListener, MessageSendListener } from "@api/MessageEvents";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { Devs } from "@utils/constants";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { IconComponent, OptionType } from "@utils/types";
@@ -333,7 +334,7 @@ const EncryptionToggleButton: ChatBarButtonFactory = ({ channel, type }) => {
 
     const validChat = ["normal", "sidebar"].some(x => type.analyticsName === x);
 
-    if (!validChat) return null;
+    if (!validChat || settings.store.location !== "chatbar") return null;
 
     // Only show button when plugin is activated
     if (!pluginActivated) {
@@ -379,6 +380,17 @@ const EncryptionToggleButton: ChatBarButtonFactory = ({ channel, type }) => {
 
 // Plugin settings definition
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     pluginActivated: {
         type: OptionType.BOOLEAN,
         description: "Activate/deactivate the Securecord Opossum plugin",
@@ -411,6 +423,25 @@ export default definePlugin({
     chatBarButton: { render: EncryptionToggleButton, icon: () => null as any },
 
     start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("SecurecordOpossum", () => (
+                <HeaderBarButton
+                    icon={() => settings.store.encryptionEnabled ? <EncryptionEnabledIcon /> : <EncryptionDisabledIcon />}
+                    tooltip={settings.store.encryptionEnabled ? "Disable Encryption" : "Enable Encryption"}
+                    onClick={() => { settings.store.encryptionEnabled = !settings.store.encryptionEnabled; }}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("SecurecordOpossum", () => (
+                <ChannelToolbarButton
+                    icon={() => settings.store.encryptionEnabled ? <EncryptionEnabledIcon /> : <EncryptionDisabledIcon />}
+                    tooltip={settings.store.encryptionEnabled ? "Disable Encryption" : "Enable Encryption"}
+                    onClick={() => { settings.store.encryptionEnabled = !settings.store.encryptionEnabled; }}
+                />
+            ), 5);
+        }
+
         // Add listener to encrypt messages before sending
         const listener: MessageSendListener = async (_, message) => {
             if (settings.store.pluginActivated && settings.store.encryptionEnabled && settings.store.encryptionPassword) {
@@ -460,6 +491,9 @@ export default definePlugin({
 
         // Clean up cipher
         cipher = null;
+
+        removeHeaderBarButton("SecurecordOpossum");
+        removeChannelToolbarButton("SecurecordOpossum");
 
         console.log("Securecord BlazingOpossum: Plugin stopped");
     },
