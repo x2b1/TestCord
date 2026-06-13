@@ -6,271 +6,270 @@
 
 import "./styles.css";
 
-import { addChatBarButton, ChatBarButton, ChatBarButtonFactory, removeChatBarButton } from "@api/ChatButtons";
+import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { definePluginSettings } from "@api/Settings";
 import { EquicordDevs, TestcordDevs } from "@utils/constants";
-import definePlugin from "@utils/types";
+import { Logger } from "@utils/Logger";
+import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
-import { ContextMenuApi, Menu, React } from "@webpack/common";
+import { Clickable, Popout, React } from "@webpack/common";
 
-const FormatIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-        <path fill="currentColor" d="m21.18 2.82-.45-1.2a.25.25 0 0 0-.46 0l-.45 1.2-1.2.45a.25.25 0 0 0 0 .46l1.2.45.45 1.2c.08.21.38.21.46 0l.45-1.2 1.2-.45a.25.25 0 0 0 0-.46l-1.2-.45ZM6.97 4.25l.76 2.02 2.02.76a.5.5 0 0 1 0 .94l-2.02.76-.76 2.02a.5.5 0 0 1-.94 0l-.76-2.02-2.02-.76a.5.5 0 0 1 0-.94l2.02-.76.76-2.02a.5.5 0 0 1 .94 0ZM18.53 7.6c.3-.3.3-.78 0-1.07l-1.06-1.06a.75.75 0 0 0-1.06 0l-1.94 1.94c-.3.3-.3.77 0 1.06l1.06 1.06c.3.3.77.3 1.06 0l1.94-1.94ZM14.53 11.6c.3-.3.3-.78 0-1.07l-1.06-1.06a.75.75 0 0 0-1.06 0l-9.94 9.94c-.3.3-.3.77 0 1.06l1.06 1.06c.3.3.77.3 1.06 0l9.94-9.94ZM20.73 13.27l-.76-2.02a.5.5 0 0 0-.94 0l-.76 2.02-2.02.76a.5.5 0 0 0 0 .94l2.02.76.76 2.02a.5.5 0 0 0 .94 0l.76-2.02 2.02-.76a.5.5 0 0 0 0-.94l-2.02-.76ZM10.73 1.62l.45 1.2 1.2.45c.21.08.21.38 0 .46l-1.2.45-.45 1.2a.25.25 0 0 1-.46 0l-.45-1.2-1.2-.45a.25.25 0 0 1 0-.46l1.2-.45.45-1.2a.25.25 0 0 1 .46 0Z" />
-    </svg>
-);
+const logger = new Logger("BetterFormattingRedux");
 
-const FORMAT_KEYS = [
-    { label: "Bold", tag: "**" },
-    { label: "Italic", tag: "*" },
-    { label: "Strike", tag: "~~" },
-    { label: "Underline", tag: "_" },
-    { label: "Inline Code", tag: "`" },
-    { label: "Codeblock", tag: "```" },
-    { label: "Blockquote", tag: ">" },
-    { label: "Unordered List", tag: "-" },
-    { label: "Spoiler", tag: "||" },
-    { label: "Superscript", tag: "ˢᵘᵖᵉʳˢᶜʳᶦᵖᵗ" },
-    { label: "Smallcaps", tag: "SᴍᴀʟʟCᴀᴘs" },
-    { label: "Fullwidth", tag: "Ｆｕｌｌｗｉｄｔｈ" },
-    { label: "Upsidedown", tag: "uʍopǝpᴉsd∩" },
-    { label: "Varied", tag: "VaRiEd CaPs" },
-    { label: "Leet", tag: "1337" },
-    { label: "Extra Thicc", tag: "乇乂下尺卂 下卄工匚匚" }
-];
+const settings = definePluginSettings({
+    enableWrapperSyntax: {
+        type: OptionType.BOOLEAN,
+        description: "Convert wrapper syntax (e.g. ^^text^^) to Unicode on send",
+        default: true,
+    },
+    showButton: {
+        type: OptionType.BOOLEAN,
+        description: "Show the formatting button in the chat bar",
+        default: true,
+    },
+});
 
-const allLanguages: Record<string, Record<string, string>> = {
-    C: { cpp: "C++", csharp: "C#", coffeescript: "CoffeeScript", css: "CSS" },
-    H: { html: "HTML/XML" },
-    J: { java: "Java", js: "JavaScript", json: "JSON" },
-    M: { markdown: "Markdown" },
-    P: { perl: "Perl", php: "PHP", py: "Python" },
-    R: { ruby: "Ruby" },
-    S: { sql: "SQL" },
-    V: { vbnet: "VB.NET", vhdl: "VHDL" },
-};
+const SlateUtils = findByPropsLazy("getSelectedText");
+const Transforms = findByPropsLazy("insertNodes", "textToText");
 
-const upsidedownChars = " ¡\"#$%℘,)(*+'-˙/0ƖᄅƐㄣϛ9ㄥ86:;>=<¿@∀qƆpƎℲפHIſʞ˥WNOԀQɹS┴∩ΛMXλZ]\\[^‾,ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz}|{";
+function getSlateEditor(): any {
+    try {
+        const el = document.querySelector("[class*='channelTextArea'] [class*='textArea']");
+        if (!el) return null;
+        const fiberKey = Object.keys(el).find(k => k.startsWith("__reactFiber$"));
+        if (!fiberKey) return null;
+        let node = (el as any)[fiberKey];
+        while (node) {
+            const sn = node.stateNode;
+            if (sn && typeof sn === "object" && sn.constructor?.name !== "Object") {
+                if (sn.ref?.current?.getSlateEditor) {
+                    return sn.ref.current.getSlateEditor();
+                }
+            }
+            node = node.return;
+        }
+        return null;
+    } catch {
+        return null;
+    }
+}
+
+function focusEditor() {
+    try {
+        const el = document.querySelector("[class*='channelTextArea'] [class*='textArea']");
+        (el as HTMLElement)?.focus();
+    } catch { /* */ }
+}
 
 const replaceList = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}";
-const smallCapsList = " !\"#$%&'()*+,-./0123456789:;<=>?@ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ{|}";
-const superscriptList = " !\"#$%&'⁽⁾*⁺,⁻./⁰¹²³⁴⁵⁶⁷⁸⁹:;<⁼>?@ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁνᵂˣʸᶻ[\\]^_`ᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖᑫʳˢᵗᵘᵛʷˣʸᶻ{|}";
+const superscriptList = " !\"#$%&'⁽⁾*⁺,⁻./⁰¹²³⁴⁵⁶⁷⁸⁹:;<⁼>?@ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁᵛᵂˣʸᶻ[\\]^_`ᵃᵇᶜᵈᵉᶠᵍʰĩʲᵏˡᵐⁿᵒᵖᑫʳˢᵗᵘᵛʷˣʸᶻ{|}";
+const smallCapsList = " !\"#$%&'()*+,-./0123456789:;<=>?@ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ[\\]^_`ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ{|}";
 const fullwidthList = "　！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝";
+const upsidedownList = " ¡\"#$%℘,)(*+'-˙/0ƖᄅƐㄣϛ9ㄥ86:;>=<¿@∀qƆpƎℲפHIſʞ˥WNOԀQɹS┴∩ΛMXλZ]\\[^‾,ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz}|{";
 const leetList = " !\"#$%&'()*+,-./0123456789:;<=>?@48CD3FG#IJK1MN0PQЯ57UVWXY2[\\]^_`48cd3fg#ijk1mn0pqЯ57uvwxy2{|}";
 const thiccList = "　!\"#$%&'()*+,-./0123456789:;<=>?@卂乃匚刀乇下厶卄工丁长乚从ん口尸㔿尺丂丅凵リ山乂丫乙[\\]^_`卂乃匚刀乇下厶卄工丁长乚从ん口尸㔿尺丂丅凵リ山乂丫乙{|}";
 
-const Transforms = findByPropsLazy("insertNodes", "select", "setSelection");
-const Editor = findByPropsLazy("start", "end", "toSlateRange");
-
-let editorRef: any = null;
-
-function getSlateEditor() {
-    if (!editorRef?.current?.ref?.current) return null;
-    return editorRef.current.ref.current.getSlateEditor();
+function mapChars(list: string, text: string): string {
+    return text.split("").map(char => {
+        const i = replaceList.indexOf(char);
+        return i !== -1 ? list[i] : char;
+    }).join("");
 }
 
 function wrapOrUnwrap(wrapper: string, text: string): string {
-    if (text.startsWith(wrapper) && text.endsWith(wrapper)) {
+    if (text.startsWith(wrapper) && text.endsWith(wrapper))
         return text.slice(wrapper.length, -wrapper.length);
-    }
     return `${wrapper}${text}${wrapper}`;
 }
 
 function mapLines(prefix: string, text: string): string {
-    return text.split("\n").map(line => {
-        if (line.startsWith(prefix)) {
-            return line.slice(prefix.length);
-        }
-        return `${prefix}${line}`;
-    }).join("\n");
+    return text.split("\n").map(l => l.startsWith(prefix) ? l.slice(prefix.length) : `${prefix}${l}`).join("\n");
 }
 
-function mapChars(list: string, text: string): string {
-    return text.split("").map(char => {
-        const index = replaceList.indexOf(char);
-        return index !== -1 ? list[index] : char;
-    }).join("");
-}
+type FormatTag =
+    | "bold" | "italic" | "underline" | "strikethrough" | "spoiler"
+    | "code" | "codeblock" | "blockquote" | "list"
+    | "superscript" | "smallcaps" | "fullwidth" | "upsidedown"
+    | "varied" | "1337" | "thicc" | "uppercase" | "lowercase" | "firstcaps";
 
-function formatText(tag: string, currentText: string): string {
+interface FormatDef { tag: FormatTag; icon: string; tooltip: string; }
+
+const FORMATS: FormatDef[] = [
+    { tag: "bold",          icon: "B",   tooltip: "Bold" },
+    { tag: "italic",        icon: "I",   tooltip: "Italic" },
+    { tag: "underline",     icon: "U",   tooltip: "Underline" },
+    { tag: "strikethrough", icon: "S̶",  tooltip: "Strikethrough" },
+    { tag: "spoiler",       icon: "!",   tooltip: "Spoiler" },
+    { tag: "code",          icon: "<>",  tooltip: "Inline Code" },
+    { tag: "codeblock",     icon: "{ }", tooltip: "Codeblock" },
+    { tag: "blockquote",    icon: "»",   tooltip: "Blockquote" },
+    { tag: "list",          icon: "•",   tooltip: "Bullet List" },
+    { tag: "superscript",   icon: "x²",  tooltip: "Superscript" },
+    { tag: "smallcaps",     icon: "SC",  tooltip: "Small Caps" },
+    { tag: "fullwidth",     icon: "Ｆ",  tooltip: "Fullwidth" },
+    { tag: "upsidedown",    icon: "∩",   tooltip: "Upside Down" },
+    { tag: "varied",        icon: "V",   tooltip: "Varied Caps" },
+    { tag: "1337",          icon: "13",  tooltip: "Leet Speak" },
+    { tag: "thicc",         icon: "丅",   tooltip: "Extra Thicc" },
+    { tag: "uppercase",     icon: "AA",  tooltip: "UPPERCASE" },
+    { tag: "lowercase",     icon: "aa",  tooltip: "lowercase" },
+    { tag: "firstcaps",     icon: "Aa",  tooltip: "First Caps" },
+];
+
+function formatText(tag: FormatTag, text: string): string {
     switch (tag) {
-        case "**":
-        case "*":
-        case "~~":
-        case "_":
-        case "`":
-        case "||":
-            return wrapOrUnwrap(tag, currentText);
-        case "```":
-            if (currentText.startsWith("```") && currentText.endsWith("```")) {
-                return currentText.slice(3, -3).trim();
-            }
-            return `\`\`\`\n${currentText}\n\`\`\``;
-        case ">":
-            return mapLines("> ", currentText);
-        case "-":
-            return mapLines("- ", currentText);
-        case "ˢᵘᵖᵉʳˢᶜʳᶦᵖᵗ":
-            return mapChars(superscriptList, currentText);
-        case "SᴍᴀʟʟCᴀᴘs":
-            return mapChars(smallCapsList, currentText);
-        case "Ｆｕｌｌｗｉｄｔḥ":
-            return mapChars(fullwidthList, currentText);
-        case "uʍopǝpᴉsd∩":
-            return mapChars(upsidedownChars, currentText).split("").reverse().join("");
-        case "VaRiEd CaPs":
-            return currentText.split("").map((char, i) => i % 2 === 0 ? char.toUpperCase() : char.toLowerCase()).join("");
-        case "1337":
-            return mapChars(leetList, currentText);
-        case "乇乂下尺卂 下卄工匚匚":
-            return mapChars(thiccList, currentText);
-        default:
-            return currentText;
+        case "bold":          return wrapOrUnwrap("**", text);
+        case "italic":        return wrapOrUnwrap("*", text);
+        case "underline":     return wrapOrUnwrap("__", text);
+        case "strikethrough": return wrapOrUnwrap("~~", text);
+        case "spoiler":       return wrapOrUnwrap("||", text);
+        case "code":          return wrapOrUnwrap("`", text);
+        case "codeblock":
+            if (text.startsWith("```") && text.endsWith("```")) return text.slice(3, -3).trim();
+            return `\`\`\`\n${text}\n\`\`\``;
+        case "blockquote":    return mapLines("> ", text);
+        case "list":          return mapLines("- ", text);
+        case "superscript":   return mapChars(superscriptList, text);
+        case "smallcaps":     return mapChars(smallCapsList, text);
+        case "fullwidth":     return mapChars(fullwidthList, text);
+        case "upsidedown":    return mapChars(upsidedownList, text).split("").reverse().join("");
+        case "varied":        return text.split("").map((c, i) => i % 2 === 0 ? c.toUpperCase() : c.toLowerCase()).join("");
+        case "1337":          return mapChars(leetList, text);
+        case "thicc":         return mapChars(thiccList, text);
+        case "uppercase":     return text.toUpperCase();
+        case "lowercase":     return text.toLowerCase();
+        case "firstcaps":     return text.split(" ").map(w => w.length ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
+        default:              return text;
     }
 }
 
-function applyFormat(tag: string) {
+function applyToSlate(tag: FormatTag): void {
     const slate = getSlateEditor();
-    console.log("[BFR] applyFormat slate:", !!slate, "selection:", !!slate?.selection);
-    if (!slate || !slate.selection) {
+    if (!slate?.selection) {
+        logger.debug("No slate editor or selection");
         return;
     }
-
-    const selection = slate.selection;
-    const selectedText = Editor.string(slate, selection);
-    console.log("[BFR] selectedText:", JSON.stringify(selectedText));
+    const selectedText = SlateUtils.getSelectedText(slate) ?? "";
     if (!selectedText) return;
 
-    const formattedText = formatText(tag, selectedText);
-    console.log("[BFR] formattedText:", JSON.stringify(formattedText));
+    const formatted = formatText(tag, selectedText);
 
-    slate.apply({ type: "deleteBackward", distance: selectedText.length });
-    slate.apply({ type: "insert_text", text: formattedText, path: selection.anchor.path, offset: selection.anchor.offset });
+    Transforms.delete(slate, { at: slate.selection });
+    Transforms.insertText(slate, formatted);
 
-    slate.selection = {
-        anchor: { path: selection.anchor.path, offset: selection.anchor.offset + formattedText.length },
-        focus: { path: selection.anchor.path, offset: selection.anchor.offset + formattedText.length }
-    };
+    focusEditor();
 }
 
-function CodeblockLanguageMenu({ onClose }: { onClose: () => void; }) {
-    const handleInsertCodeblock = (lang: string) => {
-        const slate = getSlateEditor();
-        if (!slate) {
-            onClose();
-            return;
-        }
-
-        if (slate.selection) {
-            const selectedText = Editor.string(slate, slate.selection);
-            slate.apply({ type: "deleteBackward", distance: selectedText.length });
-            slate.apply({ type: "insert_text", text: `\`\`\`${lang}\n${selectedText}\n\`\`\``, path: slate.selection.anchor.path, offset: slate.selection.anchor.offset });
-        } else {
-            slate.apply({ type: "insert_text", text: `\`\`\`${lang}\n\n\`\`\``, at: { path: [0], offset: 0 } });
-        }
-        onClose();
+function ToolbarPopout({ closePopout }: { closePopout: () => void; }) {
+    const handleFormat = (tag: FormatTag) => {
+        applyToSlate(tag);
+        closePopout();
+        setTimeout(focusEditor, 50);
     };
 
     return (
-        <Menu.Menu navId="bfr-codeblock-languages" onClose={onClose}>
-            {Object.entries(allLanguages).map(([letter, langs]) => (
-                <Menu.MenuGroup key={letter} label={letter}>
-                    {Object.entries(langs).map(([lang, label]) => (
-                        <Menu.MenuItem
-                            key={lang}
-                            id={`lang-${lang}`}
-                            label={label}
-                            onClick={() => handleInsertCodeblock(lang)}
-                        />
-                    ))}
-                </Menu.MenuGroup>
+        <div className="bfr-toolbar" style={{ background: "#2b2d31", border: "1px solid #1e1f22", borderRadius: 8, padding: 8, display: "flex", flexWrap: "wrap", gap: 2, maxWidth: 420 }}>
+            {FORMATS.map(f => (
+                <Clickable
+                    key={f.tag}
+                    className="bfr-toolbar-btn"
+                    onClick={() => handleFormat(f.tag)}
+                    aria-label={f.tooltip}
+                >
+                    <span className="bfr-toolbar-btn-label">{f.icon}</span>
+                    <span className="bfr-toolbar-btn-tooltip">{f.tooltip}</span>
+                </Clickable>
             ))}
-        </Menu.Menu>
+        </div>
     );
 }
 
-function FormatPopup({ onClose }: { onClose: () => void; }) {
-    const handleFormat = (tag: string) => {
-        if (tag === "```") {
-            ContextMenuApi.openContextMenu(undefined as unknown as React.MouseEvent, () => (
-                <CodeblockLanguageMenu onClose={ContextMenuApi.closeContextMenu} />
-            ));
-            return;
-        }
-
-        applyFormat(tag);
-        onClose();
-    };
-
-    return (
-        <Menu.Menu navId="bfr-format-menu" onClose={onClose}>
-            <Menu.MenuGroup>
-                {FORMAT_KEYS.slice(0, 9).map(({ label, tag }) => (
-                    <Menu.MenuItem
-                        key={tag}
-                        id={`format-${tag}`}
-                        label={label}
-                        onClick={() => handleFormat(tag)}
-                    />
-                ))}
-            </Menu.MenuGroup>
-            <Menu.MenuSeparator />
-            <Menu.MenuGroup label="Text Transforms">
-                {FORMAT_KEYS.slice(9).map(({ label, tag }) => (
-                    <Menu.MenuItem
-                        key={tag}
-                        id={`format-${tag}`}
-                        label={label}
-                        onClick={() => handleFormat(tag)}
-                    />
-                ))}
-            </Menu.MenuGroup>
-        </Menu.Menu>
-    );
-}
+const FormatIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24">
+        <text x="3" y="18" fontSize="16" fontWeight="bold" fill="currentColor" fontFamily="Arial, sans-serif">Aa</text>
+    </svg>
+);
 
 const FormatButton: ChatBarButtonFactory = ({ isMainChat }) => {
-    if (!isMainChat) return null;
+    const { showButton } = settings.use(["showButton"]);
+    const [open, setOpen] = React.useState(false);
+    const buttonRef = React.useRef<HTMLDivElement>(null);
+
+    if (!isMainChat || !showButton) return null;
 
     return (
-        <ChatBarButton
-            tooltip="Text Formatting"
-            onClick={e => {
-                ContextMenuApi.openContextMenu(e as unknown as React.MouseEvent, () => (
-                    <FormatPopup onClose={ContextMenuApi.closeContextMenu} />
-                ));
-            }}
+        <Popout
+            position="top"
+            align="center"
+            spacing={8}
+            animation={Popout.Animation.NONE}
+            shouldShow={open}
+            onRequestClose={() => setOpen(false)}
+            targetElementRef={buttonRef}
+            renderPopout={() => <ToolbarPopout closePopout={() => setOpen(false)} />}
         >
-            <FormatIcon />
-        </ChatBarButton>
+            {(_, { isShown }) => (
+                <div ref={buttonRef}>
+                    <ChatBarButton
+                        tooltip={isShown ? null : "Text Formatting"}
+                        onClick={() => setOpen(v => !v)}
+                    >
+                        <FormatIcon />
+                    </ChatBarButton>
+                </div>
+            )}
+        </Popout>
     );
 };
 
+const wrapperMap: Record<string, (text: string) => string> = {
+    "^^": text => mapChars(superscriptList, text),
+    "%%": text => mapChars(smallCapsList, text),
+    "##": text => mapChars(fullwidthList, text),
+    "&&": text => mapChars(upsidedownList, text).split("").reverse().join(""),
+    "==": text => text.split("").map((c, i) => i % 2 === 0 ? c.toUpperCase() : c.toLowerCase()).join(""),
+    "++": text => mapChars(leetList, text),
+    "$$": text => mapChars(thiccList, text),
+    "--": text => text.split(" ").map(w => w.length ? w[0].toUpperCase() + w.slice(1) : w).join(" "),
+    ">>": text => text.toUpperCase(),
+    "<<": text => text.toLowerCase(),
+};
+
+const WRAPPER_REGEX = /\^^(.+?)\^\^|%%(.+?)%%|##(.+?)##|&&(.+?)&&|==(.+?)==|\+\+(.+?)\+\+|\$\$(.+?)\$\$|--(.+?)--|>>(.+?)>>|<<(.+?)<</g;
+const wrapperKeys = Object.keys(wrapperMap);
+
+function transformSendTime(text: string): string {
+    const escapes: string[] = [];
+    const SENTINEL = "\u0000";
+    let prepared = text.replace(/\\\^\\\^|\\%%|\\##|\\&&|\\==|\\\+\\\+|\\\$\$|\\--|\\>>|\\<</g, m => {
+        escapes.push(m.slice(1));
+        return SENTINEL;
+    });
+    prepared = prepared.replace(WRAPPER_REGEX, (...args) => {
+        for (let i = 1; i <= wrapperKeys.length; i++) {
+            if (args[i] !== undefined) return wrapperMap[wrapperKeys[i - 1]](args[i]);
+        }
+        return args[0];
+    });
+    let escapeIdx = 0;
+    return prepared.replace(new RegExp(SENTINEL, "g"), () => escapes[escapeIdx++] ?? "");
+}
+
 export default definePlugin({
     name: "BetterFormattingRedux",
-    description: "Adds a button to enable different text formatting options in the input-bar.",
+    description: "Adds a formatting toolbar to the chat bar with text styling options.",
     tags: ["Chat", "Utility"],
     authors: [TestcordDevs.x2b, EquicordDevs.omaw],
-    dependencies: ["ChatInputButtonAPI"],
+    dependencies: ["ChatInputButtonAPI", "MessageEventsAPI"],
+    settings,
 
-    patches: [
-        {
-            find: ".CREATE_FORUM_POST||",
-            replacement: {
-                match: /(?<=,editorRef:(\i),.{0,200}textValue:(\i),editorHeight:\i,channelId:\i\.id\}\)),\i/,
-                replace: "$self.setEditorRef($1);"
-            }
-        }
-    ],
-
-    setEditorRef(ref: any) {
-        editorRef = { current: ref };
-        console.log("[BFR] setEditorRef called:", !!ref, "ref type:", typeof ref);
+    onBeforeMessageSend(_, message) {
+        if (!settings.store.enableWrapperSyntax || !message.content) return;
+        message.content = transformSendTime(message.content);
     },
 
-    start: () => {
-        addChatBarButton("BetterFormattingRedux", FormatButton, FormatIcon);
+    chatBarButton: {
+        icon: FormatIcon,
+        render: FormatButton,
     },
-    stop: () => {
-        removeChatBarButton("BetterFormattingRedux");
-        editorRef = null;
-    }
 });
