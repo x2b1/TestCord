@@ -5,8 +5,9 @@
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
-import {TestcordDevs} from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import { getCurrentChannel } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
 import { FluxDispatcher, React } from "@webpack/common";
@@ -24,6 +25,17 @@ let currentChannelId: string | null = null;
 const channelTimings: Map<string, { time: number; timestamp: Date; }> = new Map();
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     showIcon: {
         type: OptionType.BOOLEAN,
         description: "Show fetch time icon in message bar",
@@ -44,7 +56,7 @@ const settings = definePluginSettings({
 const FetchTimeButton: ChatBarButtonFactory = ({ isMainChat }) => {
     const { showMs, iconColor } = settings.use(["showMs", "iconColor"]);
 
-    if (!isMainChat || !settings.store.showIcon || !currentChannelId) {
+    if (!isMainChat || !settings.store.showIcon || !currentChannelId || settings.store.location !== "chatbar") {
         return null;
     }
 
@@ -155,6 +167,33 @@ export default definePlugin({
         if (currentChannel) {
             currentChannelId = currentChannel.id;
         }
+
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("MessageFetchTimer", () => (
+                <HeaderBarButton
+                    icon={() => (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                        </svg>
+                    )}
+                    tooltip="Message Fetch Timer"
+                    onClick={() => {}}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("MessageFetchTimer", () => (
+                <ChannelToolbarButton
+                    icon={() => (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                        </svg>
+                    )}
+                    tooltip="Message Fetch Timer"
+                    onClick={() => {}}
+                />
+            ), 5);
+        }
     },
 
     stop() {
@@ -165,9 +204,18 @@ export default definePlugin({
         currentFetch = null;
         channelTimings.clear();
         currentChannelId = null;
+        removeHeaderBarButton("MessageFetchTimer");
+        removeChannelToolbarButton("MessageFetchTimer");
     },
 
-    renderChatBarButton: FetchTimeButton as any,
+    chatBarButton: {
+        icon: (() => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+            </svg>
+        )) as any,
+        render: FetchTimeButton,
+    },
 });
 
 
