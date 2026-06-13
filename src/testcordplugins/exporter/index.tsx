@@ -4,14 +4,26 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { ChatBarButton } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { Devs, TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { Message } from "@vencord/discord-types";
 import { ChannelStore, Constants, ContextMenuApi, Menu, React, RestAPI, Toasts } from "@webpack/common";
-import { ChatBarButton } from "@api/ChatButtons";
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     includeImages: { type: OptionType.BOOLEAN, default: true, description: "Include image attachments" },
 });
 
@@ -156,33 +168,74 @@ export default definePlugin({
     tags: ["Utility", "Developers"],
     authors: [TestcordDevs.x2b],
     settings,
-    renderChatBarButton: (({ channel, isMainChat }) => {
-        if (!isMainChat || !channel?.id) return null;
-        return (
-            <ChatBarButton
-                tooltip="Exporter"
-                onClick={() => exportChannel(channel.id)}
-                onContextMenu={e =>
-                    ContextMenuApi.openContextMenu(e, () => (
-                        <Menu.Menu navId="pc-exporter-menu" onClose={ContextMenuApi.closeContextMenu} aria-label="Exporter">
-                            <Menu.MenuCheckboxItem
-                                id="pc-exporter-include-images"
-                                label="Include images"
-                                checked={settings.store.includeImages}
-                                action={() => settings.store.includeImages = !settings.store.includeImages}
-                            />
-                            <Menu.MenuSeparator />
-                            <Menu.MenuItem id="pc-exporter-run" label="Export chat" action={() => exportChannel(channel.id)} />
-                        </Menu.Menu>
-                    ))
-                }
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M12 16l-4-4h3V4h2v8h3l-4 4Zm-8 2h16v2H4v-2Z" />
-                </svg>
-            </ChatBarButton>
-        );
-    }) as any
+    chatBarButton: {
+        icon: (() => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 16l-4-4h3V4h2v8h3l-4 4Zm-8 2h16v2H4v-2Z" />
+            </svg>
+        )) as any,
+        render: (({ channel, isMainChat }) => {
+            if (!isMainChat || !channel?.id || settings.store.location !== "chatbar") return null;
+            return (
+                <ChatBarButton
+                    tooltip="Exporter"
+                    onClick={() => exportChannel(channel.id)}
+                    onContextMenu={e =>
+                        ContextMenuApi.openContextMenu(e, () => (
+                            <Menu.Menu navId="pc-exporter-menu" onClose={ContextMenuApi.closeContextMenu} aria-label="Exporter">
+                                <Menu.MenuCheckboxItem
+                                    id="pc-exporter-include-images"
+                                    label="Include images"
+                                    checked={settings.store.includeImages}
+                                    action={() => settings.store.includeImages = !settings.store.includeImages}
+                                />
+                                <Menu.MenuSeparator />
+                                <Menu.MenuItem id="pc-exporter-run" label="Export chat" action={() => exportChannel(channel.id)} />
+                            </Menu.Menu>
+                        ))
+                    }
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 16l-4-4h3V4h2v8h3l-4 4Zm-8 2h16v2H4v-2Z" />
+                    </svg>
+                </ChatBarButton>
+            );
+        }) as any,
+    },
+
+    start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("Exporter", () => (
+                <HeaderBarButton
+                    icon={() => (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12 16l-4-4h3V4h2v8h3l-4 4Zm-8 2h16v2H4v-2Z" />
+                        </svg>
+                    )}
+                    tooltip="Exporter"
+                    onClick={() => {}}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("Exporter", () => (
+                <ChannelToolbarButton
+                    icon={() => (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12 16l-4-4h3V4h2v8h3l-4 4Zm-8 2h16v2H4v-2Z" />
+                        </svg>
+                    )}
+                    tooltip="Exporter"
+                    onClick={() => {}}
+                />
+            ), 5);
+        }
+    },
+
+    stop() {
+        removeHeaderBarButton("Exporter");
+        removeChannelToolbarButton("Exporter");
+    },
 });
 
 
