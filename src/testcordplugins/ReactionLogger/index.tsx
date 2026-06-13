@@ -84,6 +84,14 @@ export default definePlugin({
                 timeoutId = null;
             }, Settings.plugins.ReactionLogger.delay * 1000);
         },
+    },
+
+    stop() {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+        reactions = {};
     }
 });
 
