@@ -5,6 +5,7 @@
  */
 
 import { ChatBarButton } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { Heading } from "@components/Heading";
@@ -303,6 +304,17 @@ function MessageEntries() {
 }
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     messages: {
         type: OptionType.COMPONENT,
         description: "Manage your auto-repeat messages",
@@ -362,8 +374,10 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
-    renderChatBarButton: (({ isMainChat }) => {
-        if (!isMainChat) return null;
+    chatBarButton: {
+        icon: StartRepeaterIcon as any,
+        render: (({ isMainChat }) => {
+            if (!isMainChat || settings.store.location !== "chatbar") return null;
 
         // Local state to track if the repeater is visually running
         const [isRunning, setIsRunning] = React.useState(isRepeating);
@@ -393,13 +407,34 @@ export default definePlugin({
             </ChatBarButton>
         );
     }) as any,
+    },
 
     async start() {
         const storedEntries = await DataStore.get(MESSAGE_ENTRIES_KEY) ?? [];
         messageEntries = storedEntries;
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("AutoMessageRepeater", () => (
+                <HeaderBarButton
+                    icon={StartRepeaterIcon}
+                    tooltip="Auto Message Repeater"
+                    onClick={() => { isRepeating ? stopRepeating() : startRepeating(); }}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("AutoMessageRepeater", () => (
+                <ChannelToolbarButton
+                    icon={StartRepeaterIcon}
+                    tooltip="Auto Message Repeater"
+                    onClick={() => { isRepeating ? stopRepeating() : startRepeating(); }}
+                />
+            ), 5);
+        }
     },
 
     stop() {
         stopRepeating();
+        removeHeaderBarButton("AutoMessageRepeater");
+        removeChannelToolbarButton("AutoMessageRepeater");
     }
 });
