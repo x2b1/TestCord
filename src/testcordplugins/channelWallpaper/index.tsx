@@ -275,10 +275,17 @@ function applyWallpaper(channelId?: string) {
 
     if (!tryInject()) {
         const observer = new MutationObserver((_, obs) => {
-            if (tryInject()) obs.disconnect();
+            if (tryInject()) {
+                obs.disconnect();
+                activeObservers.delete(observer);
+            }
         });
+        activeObservers.add(observer);
         observer.observe(document.body, { childList: true, subtree: true });
-        setTimeout(() => observer.disconnect(), 3000);
+        trackedTimeout(() => {
+            observer.disconnect();
+            activeObservers.delete(observer);
+        }, 3000);
     }
 }
 
@@ -368,8 +375,22 @@ function buildWallpaperMenu(channelId: string): React.ReactElement {
 // ── VPS Sync logic ─────────────────────────────────────────────────────────────
 
 let vpsSocket: WebSocket | null = null;
+let vpsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let stopping = false;
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+const activeObservers = new Set<MutationObserver>();
+
+function trackedTimeout(fn: () => void, ms: number) {
+    const timer = setTimeout(() => {
+        pendingTimers.delete(timer);
+        fn();
+    }, ms);
+    pendingTimers.add(timer);
+    return timer;
+}
+
 function initVPSSync() {
-    if (!settings.store.vpsUrl) return;
+    if (!settings.store.vpsUrl || stopping) return;
     try {
         vpsSocket = new WebSocket(settings.store.vpsUrl);
         vpsSocket.onmessage = (e) => {
@@ -384,7 +405,11 @@ function initVPSSync() {
             const channelId = SelectedChannelStore.getChannelId();
             if (channelId) vpsSocket?.send(JSON.stringify({ type: "JOIN", channelId, password: settings.store.vpsPassword }));
         };
-        vpsSocket.onclose = () => setTimeout(initVPSSync, 5000);
+        vpsSocket.onclose = () => {
+            // Don't reconnect if the plugin is stopping/stopped
+            if (stopping) return;
+            vpsReconnectTimer = setTimeout(initVPSSync, 5000);
+        };
     } catch (err) {
         console.error("[ChannelWallpaper] VPS Connection failed:", err);
     }
@@ -427,7 +452,7 @@ export default definePlugin({
     flux: {
         CHANNEL_SELECT({ channelId }: { channelId: string; }) {
             if (channelId) {
-                setTimeout(() => applyWallpaper(channelId), 100);
+                trackedTimeout(() => applyWallpaper(channelId), 100);
                 if (vpsSocket?.readyState === WebSocket.OPEN) {
                     vpsSocket.send(JSON.stringify({ type: "JOIN", channelId, password: settings.store.vpsPassword }));
                 }
@@ -472,21 +497,35 @@ export default definePlugin({
                 }
             }
             if (changed) {
-                setTimeout(() => applyWallpaper(d.channelId), 100);
+                trackedTimeout(() => applyWallpaper(d.channelId), 100);
             }
         }
     },
 
     start() {
+        stopping = false;
         if (settings.store.vpsUrl) initVPSSync();
         const cid = SelectedChannelStore.getChannelId();
         if (cid) {
-            setTimeout(() => applyWallpaper(cid), 500);
+            trackedTimeout(() => applyWallpaper(cid), 500);
         }
     },
 
     stop() {
+        stopping = true;
+        if (vpsReconnectTimer) {
+            clearTimeout(vpsReconnectTimer);
+            vpsReconnectTimer = null;
+        }
+        for (const timer of pendingTimers) clearTimeout(timer);
+        pendingTimers.clear();
+        for (const observer of activeObservers) observer.disconnect();
+        activeObservers.clear();
         removeWallpaperElements();
-        vpsSocket?.close();
+        if (vpsSocket) {
+            vpsSocket.onclose = null;
+            vpsSocket.close();
+            vpsSocket = null;
+        }
     }
 });
