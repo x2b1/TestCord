@@ -216,14 +216,33 @@ function shouldIgnoreMessage(msg: any): boolean {
     return false;
 }
 
+const MAX_CACHE_ENTRIES = 5000;
+
+function pruneProcessedMessages(now: number) {
+    for (const [id, seen] of processedMessages) {
+        if (now - seen >= CACHE_TTL) processedMessages.delete(id);
+    }
+    // Hard cap as a fallback in case TTL pruning isn't enough
+    if (processedMessages.size > MAX_CACHE_ENTRIES) {
+        const excess = processedMessages.size - MAX_CACHE_ENTRIES;
+        let i = 0;
+        for (const id of processedMessages.keys()) {
+            if (i++ >= excess) break;
+            processedMessages.delete(id);
+        }
+    }
+}
+
 function processMessage(msg: any, channelId: string) {
     if (shouldIgnoreMessage(msg)) return;
 
     // Deduplicate by message ID
     const msgId = msg.id;
+    const now = Date.now();
     const lastSeen = processedMessages.get(msgId);
-    if (lastSeen && Date.now() - lastSeen < CACHE_TTL) return;
-    processedMessages.set(msgId, Date.now());
+    if (lastSeen && now - lastSeen < CACHE_TTL) return;
+    pruneProcessedMessages(now);
+    processedMessages.set(msgId, now);
 
     const findings = checkForCredentials(msg.content);
     if (findings.length === 0) return;
