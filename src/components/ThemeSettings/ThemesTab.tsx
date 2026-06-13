@@ -796,9 +796,11 @@ function ThemesTab() {
         return themes;
     }, [allThemes, searchQuery, filter, settings.pinnedThemes]);
 
-    const localCount = allThemes.filter(t => t.type === "local").length;
-    const onlineCount = allThemes.filter(t => t.type === "online").length;
-    const enabledCount = allThemes.filter(t => t.enabled).length;
+    let localCount = 0, onlineCount = 0, enabledCount = 0;
+    for (const t of allThemes) {
+        if (t.type === "local") localCount++; else onlineCount++;
+        if (t.enabled) enabledCount++;
+    }
 
     return (
         <SettingsTab>
