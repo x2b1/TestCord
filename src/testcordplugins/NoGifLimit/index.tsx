@@ -6,6 +6,7 @@
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { PencilIcon } from "@components/Icons";
@@ -91,6 +92,17 @@ function getCurrentDiscordFavoriteUrls(): Set<string> {
 }
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     showNotifications: {
         type: OptionType.BOOLEAN,
         description: "Show notifications when adding items",
@@ -1031,6 +1043,7 @@ function NoGifLimitModal({ modalProps }: { modalProps: ModalProps; }): React.Rea
 }
 
 var HeartGifsButton: ChatBarButtonFactory = function () {
+    if (settings.store.location !== "chatbar") return null;
     return (
         <ChatBarButton onClick={() => openModal((props: any) => <NoGifLimitModal modalProps={props} />)} tooltip="HeartGifs">
             <HeartIcon />
@@ -1211,6 +1224,32 @@ export default definePlugin({
     chatBarButton: {
         icon: HeartIcon,
         render: HeartGifsButton
+    },
+
+    start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("HeartGifs", () => (
+                <HeaderBarButton
+                    icon={HeartIcon}
+                    tooltip="HeartGifs"
+                    onClick={() => openModal((props: any) => <NoGifLimitModal modalProps={props} />)}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("HeartGifs", () => (
+                <ChannelToolbarButton
+                    icon={HeartIcon}
+                    tooltip="HeartGifs"
+                    onClick={() => openModal((props: any) => <NoGifLimitModal modalProps={props} />)}
+                />
+            ), 5);
+        }
+    },
+
+    stop() {
+        removeHeaderBarButton("HeartGifs");
+        removeChannelToolbarButton("HeartGifs");
     },
 
     messagePopoverButton: {
