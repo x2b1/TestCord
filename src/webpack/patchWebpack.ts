@@ -78,6 +78,10 @@ export function getFactoryPatchedBy(moduleId: PropertyKey, webpackRequire = wreq
 
 const logger = new Logger("WebpackPatcher", "#8caaee");
 
+const AT_DIGIT_RE = /at \d+? \(/;
+const ASSETS_FILE_RE = /\/assets\/(.+?\.js)/;
+const IGNORED_INSTANCE_NAMES = ["sentry", "libdiscore", "fast-connect"];
+
 /** Whether we tried to fallback to the WebpackRequire of the factory, or disabled patches */
 let wreqFallbackApplied = false;
 
@@ -86,11 +90,10 @@ const define: typeof Reflect.defineProperty = (target, p, attributes) => {
         attributes.writable = true;
     }
 
-    return Reflect.defineProperty(target, p, {
-        configurable: true,
-        enumerable: true,
-        ...attributes
-    });
+    attributes.configurable = true;
+    attributes.enumerable ??= true;
+
+    return Reflect.defineProperty(target, p, attributes);
 };
 
 // wreq.m is the Webpack object containing module factories. It is pre-populated with factories, and is also populated via webpackGlobal.push
@@ -116,16 +119,17 @@ define(Function.prototype, "m", {
         // Ensure this is likely one of Discord main Webpack instances.
         // We may catch Discord bundled libs, React Devtools or other extensions Webpack instances here.
         const { stack } = new Error();
-        if (!stack?.includes("http") || stack.match(/at \d+? \(/) || !String(this).includes("exports:{}")) {
+        if (!stack?.includes("http") || AT_DIGIT_RE.test(stack) || !String(this).includes("exports:{}")) {
             return;
         }
 
-        const fileName = stack.match(/\/assets\/(.+?\.js)/)?.[1];
+        const fileName = ASSETS_FILE_RE.exec(stack)?.[1];
 
         // Currently, sentry and libdiscore Webpack instances are not meant to be patched.
         // As an extra measure, take advatange of the fact their files include the names and return early if it's one of them.
         // Later down we also include other measures to avoid patching them.
-        if (["sentry", "libdiscore", "fast-connect"].some(name => fileName?.toLowerCase()?.includes(name))) {
+        const lowerFileName = fileName?.toLowerCase();
+        if (lowerFileName != null && IGNORED_INSTANCE_NAMES.some(name => lowerFileName.includes(name))) {
             return;
         }
 
@@ -373,6 +377,8 @@ function defineInWebpackInstances(moduleId: PropertyKey, factory: AnyModuleFacto
  * @param factory The original factory to notify for
  */
 function notifyFactoryListeners(moduleId: PropertyKey, factory: AnyModuleFactory) {
+    if (factoryListeners.size === 0) return;
+
     for (const factoryListener of factoryListeners) {
         try {
             factoryListener(factory, moduleId);
@@ -400,9 +406,10 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
     }
 
     let [module, exports, require] = argArray;
+    const moduleId = module.id;
 
     // Restore the original factory in all the module factories objects, discarding our proxy and allowing it to be garbage collected
-    defineInWebpackInstances(module.id, originalFactory);
+    defineInWebpackInstances(moduleId, originalFactory);
 
     if (wreq == null) {
         if (!wreqFallbackApplied) {
@@ -411,11 +418,11 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
             // Make sure the require argument is actually the WebpackRequire function
             if (typeof require === "function" && require.m != null && require.c != null) {
                 const { stack } = new Error();
-                const webpackInstanceFileName = stack?.match(/\/assets\/(.+?\.js)/)?.[1];
+                const webpackInstanceFileName = ASSETS_FILE_RE.exec(stack ?? "")?.[1];
 
                 logger.warn(
                     "WebpackRequire was not initialized, falling back to WebpackRequire passed to the first called wrapped module factory (" +
-                    `id: ${String(module.id)}` + interpolateIfDefined`, WebpackInstance origin: ${webpackInstanceFileName}` +
+                    `id: ${String(moduleId)}` + interpolateIfDefined`, WebpackInstance origin: ${webpackInstanceFileName}` +
                     ")"
                 );
 
@@ -446,7 +453,7 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
     exports = module.exports;
 
     if (typeof require === "function" && require.c) {
-        if (_blacklistBadModules(require.c, exports, module.id)) {
+        if (_blacklistBadModules(require.c, exports, moduleId)) {
             return factoryReturn;
         }
     }
@@ -455,19 +462,25 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
         return factoryReturn;
     }
 
-    for (const callback of moduleListeners) {
-        try {
-            callback(exports, module.id);
-        } catch (err) {
-            logger.error("Error in Webpack module listener:\n", err, callback);
+    if (moduleListeners.size > 0) {
+        for (const callback of moduleListeners) {
+            try {
+                callback(exports, moduleId);
+            } catch (err) {
+                logger.error("Error in Webpack module listener:\n", err, callback);
+            }
         }
+    }
+
+    if (waitForSubscriptions.size === 0) {
+        return factoryReturn;
     }
 
     for (const [filter, callback] of waitForSubscriptions) {
         try {
             if (filter(exports)) {
                 waitForSubscriptions.delete(filter);
-                callback(exports, module.id);
+                callback(exports, moduleId);
                 continue;
             }
         } catch (err) {
@@ -494,7 +507,7 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
 
                 if (exportValue != null && filter(exportValue)) {
                     waitForSubscriptions.delete(filter);
-                    callback(exportValue, module.id);
+                    callback(exportValue, moduleId);
                     break;
                 }
             } catch (err) {
@@ -529,16 +542,16 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
 
     const patchedBy = new Set<string>();
 
+    const buildNumber = getBuildNumber();
+    const shouldCheckBuildNumber = buildNumber !== -1;
+
     for (let i = 0; i < patches.length; i++) {
         const patch = patches[i];
 
-        const buildNumber = getBuildNumber();
-        const shouldCheckBuildNumber = buildNumber !== -1;
-
         if (
             shouldCheckBuildNumber &&
-            (patch.fromBuild != null && buildNumber < patch.fromBuild) ||
-            (patch.toBuild != null && buildNumber > patch.toBuild)
+            ((patch.fromBuild != null && buildNumber < patch.fromBuild) ||
+            (patch.toBuild != null && buildNumber > patch.toBuild))
         ) {
             patches.splice(i--, 1);
             continue;
@@ -552,13 +565,17 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
             continue;
         }
 
-        const executePatch = traceFunctionWithResults(`patch by ${patch.plugin}`, (match: string | RegExp, replace: string) => {
+        const doReplace = (match: string | RegExp, replace: string) => {
             if (typeof match !== "string" && match.global) {
                 match.lastIndex = 0;
             }
 
             return code.replace(match, replace);
-        });
+        };
+
+        const executePatch = IS_REPORTER
+            ? traceFunctionWithResults(`patch by ${patch.plugin}`, doReplace)
+            : null;
 
         const previousCode = code;
         const previousFactory = originalFactory;
@@ -568,8 +585,8 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
         for (const replacement of patch.replacement as PatchReplacement[]) {
             if (
                 shouldCheckBuildNumber &&
-                (replacement.fromBuild != null && buildNumber < replacement.fromBuild) ||
-                (replacement.toBuild != null && buildNumber > replacement.toBuild)
+                ((replacement.fromBuild != null && buildNumber < replacement.fromBuild) ||
+                (replacement.toBuild != null && buildNumber > replacement.toBuild))
             ) {
                 continue;
             }
@@ -578,10 +595,13 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
             const lastFactory = originalFactory;
 
             try {
-                const [newCode, totalTime] = executePatch(replacement.match, replacement.replace as string);
-
+                let newCode: string;
                 if (IS_REPORTER) {
+                    const [result, totalTime] = executePatch!(replacement.match, replacement.replace as string);
+                    newCode = result;
                     patchTimings.push([patch.plugin, moduleId, replacement.match, totalTime]);
+                } else {
+                    newCode = doReplace(replacement.match, replacement.replace as string);
                 }
 
                 if (newCode === code) {
@@ -618,13 +638,17 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
                     continue;
                 }
 
-                const pluginsList = [...patchedBy];
-                if (!patchedBy.has(patch.plugin)) {
-                    pluginsList.push(patch.plugin);
-                }
-
                 code = newCode;
-                patchedSource = `// Webpack Module ${String(moduleId)} - Patched by ${pluginsList.join(", ")}\n${code}\n//# sourceURL=file:///WebpackModule${String(moduleId)}`;
+                const moduleIdStr = String(moduleId);
+                if (IS_DEV) {
+                    const pluginsList = [...patchedBy];
+                    if (!patchedBy.has(patch.plugin)) {
+                        pluginsList.push(patch.plugin);
+                    }
+                    patchedSource = `// Webpack Module ${moduleIdStr} - Patched by ${pluginsList.join(", ")}\n${code}\n//# sourceURL=file:///WebpackModule${moduleIdStr}`;
+                } else {
+                    patchedSource = `${code}\n//# sourceURL=file:///WebpackModule${moduleIdStr}`;
+                }
                 patchedFactory = (0, eval)(patchedSource);
 
                 if (!patchedBy.has(patch.plugin)) {
