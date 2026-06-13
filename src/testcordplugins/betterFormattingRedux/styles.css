@@ -1,5 +1,43 @@
-[id="codeblock-languages"] { 
-  position: absolute;
-  top: -328px;
-  left: -50px
+.bfr-toolbar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #b5bac1;
+    cursor: pointer;
+    padding: 4px;
+    transition: background-color 0.1s;
+}
+
+.bfr-toolbar-btn:hover {
+    background: #35373c;
+    color: #dbdee1;
+}
+
+.bfr-toolbar-btn:active {
+    background: #404249;
+    color: #fff;
+}
+
+.bfr-toolbar-btn-label {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.bfr-toolbar-btn-tooltip {
+    font-size: 9px;
+    color: #949ba4;
+    margin-top: 2px;
+    text-align: center;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
