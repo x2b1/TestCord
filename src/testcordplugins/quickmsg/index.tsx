@@ -5,6 +5,7 @@
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { IconComponent, OptionType } from "@utils/types";
@@ -14,6 +15,17 @@ import { Constants, DraftStore, DraftType, RestAPI } from "@webpack/common";
 const DraftManager = findByPropsLazy("clearDraft", "saveDraft");
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     deleteDelay: {
         type: OptionType.NUMBER,
         description: "Delay in milliseconds between sending and deleting the message (lower = harder to catch, but may fail if the server is slow).",
@@ -76,7 +88,7 @@ async function quickSend(channelId: string) {
 }
 
 const QuickMsgButton: ChatBarButtonFactory = ({ isAnyChat, channel }) => {
-    if (!isAnyChat) return null;
+    if (!isAnyChat || settings.store.location !== "chatbar") return null;
 
     return (
         <ChatBarButton
@@ -99,5 +111,39 @@ export default definePlugin({
     chatBarButton: {
         icon: QuickMsgIcon,
         render: QuickMsgButton
-    }
+    },
+
+    start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("QuickMsg", () => (
+                <HeaderBarButton
+                    icon={QuickMsgIcon}
+                    tooltip="Quick Send & Delete"
+                    onClick={() => {
+                        const { SelectedChannelStore } = require("@webpack/common");
+                        const chId = SelectedChannelStore.getChannelId();
+                        if (chId) quickSend(chId);
+                    }}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("QuickMsg", () => (
+                <ChannelToolbarButton
+                    icon={QuickMsgIcon}
+                    tooltip="Quick Send & Delete"
+                    onClick={() => {
+                        const { SelectedChannelStore } = require("@webpack/common");
+                        const chId = SelectedChannelStore.getChannelId();
+                        if (chId) quickSend(chId);
+                    }}
+                />
+            ), 5);
+        }
+    },
+
+    stop() {
+        removeHeaderBarButton("QuickMsg");
+        removeChannelToolbarButton("QuickMsg");
+    },
 });
