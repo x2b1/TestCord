@@ -256,6 +256,9 @@ export default definePlugin({
         return wrapped;
     },
 
+    _borderScanQueued: false,
+    _startupTimer: null as ReturnType<typeof setTimeout> | null,
+
     start() {
         logger.info("HyprTilesPremium started - REQUIRES RESTART TO APPLY BORDER SETTINGS");
         initializeHyprTilesStore();
@@ -264,10 +267,22 @@ export default definePlugin({
         addHeaderBarButton("HyprTilesPremium-hotkeys", () => <HotkeyReferenceButton />, 6);
 
         // Apply borders immediately and watch for new tiles
-        setTimeout(() => this.applyBorders(), 1000);
+        this._startupTimer = setTimeout(() => {
+            this._startupTimer = null;
+            this.applyBorders();
+        }, 1000);
 
-        // Watch for new tiles being created
-        const observer = new MutationObserver(() => this.applyBorders());
+        // Watch for new tiles being created. Coalesce a burst of mutations into a
+        // single rAF-scoped pass instead of running applyBorders (two
+        // querySelectorAll passes + style writes) on every mutation.
+        const observer = new MutationObserver(() => {
+            if (this._borderScanQueued) return;
+            this._borderScanQueued = true;
+            requestAnimationFrame(() => {
+                this._borderScanQueued = false;
+                this.applyBorders();
+            });
+        });
         observer.observe(document.body, { childList: true, subtree: true });
 
         // Store observer for cleanup
@@ -280,6 +295,12 @@ export default definePlugin({
         setHyprTilesRunning(false);
         removeHeaderBarButton("HyprTilesPremium-hotkeys");
         this.removeBorders();
+
+        if (this._startupTimer !== null) {
+            clearTimeout(this._startupTimer);
+            this._startupTimer = null;
+        }
+        this._borderScanQueued = false;
 
         // Cleanup observer
         if ((this as any)._borderObserver) {
