@@ -115,11 +115,14 @@ async function sendProgress(channelId: string, promise: Promise<{
         updateMessage(stdout);
     }, 500);
 
-    const data = await promise;
-    clearInterval(id);
-    const stdout = await Native.getStdout();
-    updateMessage(stdout, "error" in data ? "Error!" : "Done!");
-    return data;
+    try {
+        const data = await promise;
+        const stdout = await Native.getStdout();
+        updateMessage(stdout, "error" in data ? "Error!" : "Done!");
+        return data;
+    } finally {
+        clearInterval(id);
+    }
 }
 
 function sendFfmpegWarning(channelId: string) {
