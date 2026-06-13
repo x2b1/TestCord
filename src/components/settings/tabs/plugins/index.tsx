@@ -203,6 +203,7 @@ export default function PluginSettings() {
     }, []);
 
     const sortedPlugins = useMemo(() => Object.values(Plugins)
+        .filter(p => p.name)
         .sort((a, b) => a.name.localeCompare(b.name)), []);
 
     const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
