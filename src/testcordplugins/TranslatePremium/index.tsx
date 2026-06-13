@@ -76,6 +76,7 @@ const settings = definePluginSettings({
 });
 
 const originalMessages = new Map<string, string>();
+const MAX_ORIGINAL_MESSAGES = 1000;
 
 function getTrackedIds(): string[] {
     return settings.store.trackedUsers.split(",").map(s => s.trim()).filter(Boolean);
@@ -131,6 +132,10 @@ async function translateAndReplace(message: Message) {
     const result = await googleTranslate(message.content);
     if (!result) return;
 
+    if (originalMessages.size >= MAX_ORIGINAL_MESSAGES) {
+        const oldest = originalMessages.keys().next().value;
+        if (oldest !== undefined) originalMessages.delete(oldest);
+    }
     originalMessages.set(message.id, message.content);
 
     const stored = MessageStore.getMessage(message.channel_id, message.id);
@@ -175,6 +180,7 @@ export default definePlugin({
     stop() {
         removeContextMenuPatch("user-context", userContextPatch);
         removeContextMenuPatch("message", messageContextPatch);
+        originalMessages.clear();
     },
 });
 
