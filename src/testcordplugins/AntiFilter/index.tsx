@@ -6,6 +6,7 @@
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { findOption, RequiredMessageOption } from "@api/Commands";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { addMessagePreSendListener, removeMessagePreSendListener } from "@api/MessageEvents";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
@@ -223,6 +224,17 @@ const mapCharactersFinalBoss = (text: string): string => {
 };
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     enabled: {
         type: OptionType.BOOLEAN,
         description: "Enable AntiFilter bypass",
@@ -307,10 +319,16 @@ function handleMessageSend(channelId: string, messageObj: any, options: any): vo
     }
 }
 
+const AntiFilterIcon = ({ width = 20, height = 20 }: { width?: number; height?: number; }) => (
+    <svg width={width} height={height} viewBox="0 0 24 24">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" />
+    </svg>
+);
+
 const AntiFilterButton: ChatBarButtonFactory = ({ isMainChat }) => {
     const { isEnabled } = settings.use(["isEnabled"]);
 
-    if (!isMainChat) return null;
+    if (!isMainChat || settings.store.location !== "chatbar") return null;
 
     return (
         <ChatBarButton
@@ -358,13 +376,36 @@ export default definePlugin({
         }
     ],
 
+    chatBarButton: {
+        icon: AntiFilterIcon as any,
+        render: AntiFilterButton,
+    },
+
     start() {
         addMessagePreSendListener(handleMessageSend);
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("AntiFilter", () => (
+                <HeaderBarButton
+                    icon={() => <AntiFilterIcon />}
+                    tooltip={settings.store.isEnabled ? "AntiFilter: ON" : "AntiFilter: OFF"}
+                    onClick={() => { settings.store.isEnabled = !settings.store.isEnabled; }}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("AntiFilter", () => (
+                <ChannelToolbarButton
+                    icon={() => <AntiFilterIcon />}
+                    tooltip={settings.store.isEnabled ? "AntiFilter: ON" : "AntiFilter: OFF"}
+                    onClick={() => { settings.store.isEnabled = !settings.store.isEnabled; }}
+                />
+            ), 5);
+        }
     },
 
     stop() {
         removeMessagePreSendListener(handleMessageSend);
+        removeHeaderBarButton("AntiFilter");
+        removeChannelToolbarButton("AntiFilter");
     },
-
-    renderChatBarButton: AntiFilterButton as any
 });
