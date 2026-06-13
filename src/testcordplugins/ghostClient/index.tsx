@@ -50,6 +50,7 @@ interface GhostState { active: boolean; connecting: boolean; error: string | nul
 
 const ghostStates = new Map<string, GhostState>();
 let ghostListeners: Array<() => void> = [];
+let ipcHandlerRegistered = false;
 function notify() { ghostListeners.forEach(f => f()); }
 
 function useGhostStates() {
@@ -760,7 +761,8 @@ export default definePlugin({
         const allAccs = await getAllSavedAccounts();
         if (allAccs.length > 0) savedAccounts = allAccs;
 
-        setTimeout(() => {
+        this._preConnectTimer = setTimeout(() => {
+            this._preConnectTimer = null;
             Native.init().catch(() => { });
 
             (async () => {
@@ -775,9 +777,15 @@ export default definePlugin({
             })();
         }, 10000);
 
+        // Register the IPC disconnect listener only once for the lifetime of the
+        // module. VencordNative.ipc does not currently exist in this build, so the
+        // guard keeps this future-proof: if a build ever exposes ipc.on, the
+        // handler still cannot stack across enable/disable cycles.
         try {
-            if (typeof (VencordNative as any)?.ipc?.on === "function") {
-                (VencordNative as any).ipc.on("ghost-client-disconnected", (_: any, userId: string, code: number, reason: string) => {
+            const ipc = (VencordNative as any)?.ipc;
+            if (!ipcHandlerRegistered && typeof ipc?.on === "function") {
+                ipcHandlerRegistered = true;
+                ipc.on("ghost-client-disconnected", (_: any, userId: string, code: number, reason: string) => {
                     console.error(`[GhostClient] ${userId} forcefully disconnected (code=${code} reason=${reason})`);
                     ghostStates.set(userId, { active: false, connecting: false, error: `Disconnected (${code})` });
                     notify();
@@ -788,5 +796,14 @@ export default definePlugin({
         }
     },
 
-    stop() { ghostDeactivateAll(); stopFollowing(); },
+    _preConnectTimer: null as ReturnType<typeof setTimeout> | null,
+
+    stop() {
+        if (this._preConnectTimer) {
+            clearTimeout(this._preConnectTimer);
+            this._preConnectTimer = null;
+        }
+        ghostDeactivateAll();
+        stopFollowing();
+    },
 });
