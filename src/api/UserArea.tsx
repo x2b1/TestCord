@@ -7,6 +7,7 @@
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Logger } from "@utils/Logger";
 import { findComponentByCodeLazy } from "@webpack";
+import { useEffect, useState } from "@webpack/common";
 import type { ComponentType, MouseEventHandler, ReactNode } from "react";
 
 const PanelButton = findComponentByCodeLazy("tooltipPositionKey", "positionKeyStemOverride") as ComponentType<UserAreaButtonProps>;
@@ -51,15 +52,28 @@ const logger = new Logger("UserArea");
 
 export const buttons = new Map<string, ButtonEntry>();
 
+const userAreaListeners = new Set<() => void>();
+function notifyUserAreaChange() { userAreaListeners.forEach(l => l()); }
+
 export function addUserAreaButton(id: string, render: UserAreaButtonFactory, priority = 0) {
     buttons.set(id, { render, priority });
+    notifyUserAreaChange();
 }
 
 export function removeUserAreaButton(id: string) {
     buttons.delete(id);
+    notifyUserAreaChange();
 }
 
 function UserAreaButtons({ props }: { props: UserAreaRenderProps; }) {
+    const [, forceUpdate] = useState(0);
+
+    useEffect(() => {
+        const listener = () => forceUpdate(n => n + 1);
+        userAreaListeners.add(listener);
+        return () => { userAreaListeners.delete(listener); };
+    }, []);
+
     return (
         <>
             {Array.from(buttons)
