@@ -22,22 +22,45 @@ interface PresenceStatus {
 }
 
 const recentlyOnlineList: Map<string, PresenceStatus> = new Map();
+const MAX_DISPLAY_AGE = 604800000; // 7 days, matches the display window
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getFilePath() {
     if (!fs || !os || !pathModule) return null;
     return pathModule.join(os.homedir(), "Downloads", "onlinelist.json");
 }
 
-function saveOnlineList() {
+function pruneOnlineList() {
+    const now = Date.now();
+    for (const [userId, status] of recentlyOnlineList) {
+        if (status.lastOffline !== null && now - status.lastOffline > MAX_DISPLAY_AGE) {
+            recentlyOnlineList.delete(userId);
+        }
+    }
+}
+
+function writeOnlineList() {
     const data = Object.fromEntries(recentlyOnlineList);
     const filePath = getFilePath();
     if (fs && filePath) {
         try {
-            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+            fs.writeFile(filePath, JSON.stringify(data, null, 2), (e: any) => {
+                if (e) log.error("Failed to save online list to file:", e);
+            });
         } catch (e) {
             log.error("Failed to save online list to file:", e);
         }
     }
+}
+
+// Debounce writes so a burst of presence updates results in a single async write
+function saveOnlineList() {
+    if (saveTimer !== null) return;
+    saveTimer = setTimeout(() => {
+        saveTimer = null;
+        pruneOnlineList();
+        writeOnlineList();
+    }, 2000);
 }
 
 function loadOnlineList() {
@@ -57,21 +80,28 @@ function loadOnlineList() {
 }
 
 function handlePresenceUpdate(status: string, userId: string) {
+    let changed = false;
     if (recentlyOnlineList.has(userId)) {
         const presenceStatus = recentlyOnlineList.get(userId)!;
         if (status !== "offline") {
-            presenceStatus.hasBeenOnline = true;
-            presenceStatus.lastOffline = null;
+            if (!presenceStatus.hasBeenOnline || presenceStatus.lastOffline !== null) {
+                presenceStatus.hasBeenOnline = true;
+                presenceStatus.lastOffline = null;
+                changed = true;
+            }
         } else if (presenceStatus.hasBeenOnline && presenceStatus.lastOffline == null) {
             presenceStatus.lastOffline = Date.now();
+            changed = true;
         }
     } else {
         recentlyOnlineList.set(userId, {
             hasBeenOnline: status !== "offline",
             lastOffline: status === "offline" ? Date.now() : null
         });
+        changed = true;
     }
-    saveOnlineList();
+    // Only schedule a write when something actually changed
+    if (changed) saveOnlineList();
 }
 
 function formatTime(time: number) {
@@ -137,6 +167,13 @@ export default definePlugin({
             removeMemberListDecorator("last-online-indicator");
         } catch (e) {
             log.error("Failed to remove member list decorator:", e);
+        }
+        // Flush any pending debounced write so data isn't lost, and clear the timer
+        if (saveTimer !== null) {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            pruneOnlineList();
+            writeOnlineList();
         }
     },
     shouldShowRecentlyOffline(user: User) {
