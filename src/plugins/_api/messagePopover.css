@@ -1,0 +1,6 @@
+/* Ensure message toolbar doesn't clip under the message above */
+[class*="messageListItem_"]:hover,
+[class*="message_"]:hover {
+    z-index: 1;
+    position: relative;
+}
