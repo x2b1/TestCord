@@ -42,8 +42,8 @@ export class Queue {
         const func = this.queue.shift();
         if (func) {
             if (this.yieldBetween) {
-                this.promise = new Promise<void>(r => setTimeout(() => r(), 0))
-                    .then(() => Promise.resolve().then(func))
+                this.promise = new Promise<void>(r => setTimeout(r, 0))
+                    .then(func)
                     .finally(() => this.next());
             } else {
                 this.promise = Promise.resolve()
