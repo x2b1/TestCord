@@ -94,6 +94,8 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
 
+    _patchedConns: new Set<any>(),
+
     patches: [
         // Basic static codec patches
         {
@@ -134,11 +136,11 @@ export default definePlugin({
         if (!settings.store.enableStereo) return;
 
         const { conn } = thisObj;
-        if (!conn?.setTransportOptions || conn.setTransportOptions._hooked) return;
-
-        conn.setTransportOptions._hooked = true;
+        if (!conn?.setTransportOptions || conn._unifiedStereoOrig) return;
 
         const original = conn.setTransportOptions;
+        conn._unifiedStereoOrig = original;
+        this._patchedConns.add(conn);
         conn.setTransportOptions = function (obj: any) {
             const channels = settings.store.stereoChannels;
             if (obj.audioEncoder) {
@@ -193,23 +195,50 @@ export default definePlugin({
         this.checkSettings();
 
         if (settings.store.enableScreenshareFix) {
-            origRTCPeerConnection.SRD = (RTCPeerConnection.prototype.setRemoteDescription as any);
-            origRTCPeerConnection.SLD = (RTCPeerConnection.prototype.setLocalDescription as any);
+            const SRD = RTCPeerConnection.prototype.setRemoteDescription as any;
+            const SLD = RTCPeerConnection.prototype.setLocalDescription as any;
 
-            RTCPeerConnection.prototype.setRemoteDescription = function (desc: any, ...args: any[]) {
-                return origRTCPeerConnection.SRD!.call(this, patchDesc(desc), ...args);
-            };
-            RTCPeerConnection.prototype.setLocalDescription = function (desc: any, ...args: any[]) {
-                return origRTCPeerConnection.SLD!.call(this, patchDesc(desc), ...args);
-            };
+            if (!SRD._unifiedStereoPatched) {
+                origRTCPeerConnection.SRD = SRD;
+                const wrappedSRD = function (this: RTCPeerConnection, desc: any, ...args: any[]) {
+                    return SRD.call(this, patchDesc(desc), ...args);
+                };
+                (wrappedSRD as any)._unifiedStereoPatched = true;
+                RTCPeerConnection.prototype.setRemoteDescription = wrappedSRD as any;
+            }
+
+            if (!SLD._unifiedStereoPatched) {
+                origRTCPeerConnection.SLD = SLD;
+                const wrappedSLD = function (this: RTCPeerConnection, desc: any, ...args: any[]) {
+                    return SLD.call(this, patchDesc(desc), ...args);
+                };
+                (wrappedSLD as any)._unifiedStereoPatched = true;
+                RTCPeerConnection.prototype.setLocalDescription = wrappedSLD as any;
+            }
         }
     },
 
     stop() {
-        if (origRTCPeerConnection.SRD) {
+        const srd = RTCPeerConnection.prototype.setRemoteDescription as any;
+        if (srd?._unifiedStereoPatched && origRTCPeerConnection.SRD) {
             RTCPeerConnection.prototype.setRemoteDescription = origRTCPeerConnection.SRD;
+        }
+        const sld = RTCPeerConnection.prototype.setLocalDescription as any;
+        if (sld?._unifiedStereoPatched && origRTCPeerConnection.SLD) {
             RTCPeerConnection.prototype.setLocalDescription = origRTCPeerConnection.SLD;
         }
+        origRTCPeerConnection.SRD = undefined;
+        origRTCPeerConnection.SLD = undefined;
+
+        for (const conn of this._patchedConns) {
+            try {
+                if (conn._unifiedStereoOrig) {
+                    conn.setTransportOptions = conn._unifiedStereoOrig;
+                    delete conn._unifiedStereoOrig;
+                }
+            } catch { }
+        }
+        this._patchedConns.clear();
         console.log("[UnifiedStereo] Unloaded");
     }
 });
