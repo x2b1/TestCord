@@ -176,29 +176,25 @@ function getCurrentToken(): string | null {
         // Method 4: Try to retrieve the token via request headers
         try {
             console.log("[Token Display] Attempting via fetch interception");
-            // This method uses a dummy request to retrieve the token from the headers
-            const originalFetch = window.fetch;
-            let capturedToken: string | null = null;
+            // Guard against re-entry: if a wrapper is already installed, don't
+            // capture it as "original" (that would leave fetch permanently wrapped
+            // when the two pending restores race).
+            if (!(window.fetch as any)._tokenDisplayPatched) {
+                const originalFetch = window.fetch;
 
-            window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
-                const headers = init?.headers as HeadersInit;
-                if (headers && typeof headers === "object") {
-                    const authHeader = (headers as any).Authorization || (headers as any).authorization;
-                    if (authHeader && typeof authHeader === "string") {
-                        capturedToken = authHeader;
+                const wrapped = function (this: any, input: RequestInfo | URL, init?: RequestInit) {
+                    return originalFetch.call(this, input, init);
+                };
+                (wrapped as any)._tokenDisplayPatched = true;
+                window.fetch = wrapped as any;
+
+                // Restore fetch after a short delay, but only if our wrapper is
+                // still the active one.
+                setTimeout(() => {
+                    if ((window.fetch as any)._tokenDisplayPatched) {
+                        window.fetch = originalFetch;
                     }
-                }
-                return originalFetch.call(this, input, init);
-            };
-
-            // Restore fetch after a short delay
-            setTimeout(() => {
-                window.fetch = originalFetch;
-            }, 100);
-
-            if (capturedToken) {
-                console.log("[Token Display] Token found via fetch interception");
-                return capturedToken;
+                }, 100);
             }
         } catch (e) {
             console.log("[Token Display] Fetch interception failed:", e);
