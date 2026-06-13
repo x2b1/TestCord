@@ -59,6 +59,8 @@ export default definePlugin({
             },
         },
     ],
+    _patchRestores: [] as Array<() => void>,
+
     start() {
         const safeFindByProps = (...props: string[]) =>
             find(filters.byProps(...props), { isIndirect: true }) as Record<string, any> | null;
@@ -66,6 +68,8 @@ export default definePlugin({
         const UserStore = safeFindByProps("getCurrentUser");
         const InviteStore = safeFindByProps("getInvite", "resolveInvite");
         const StageStore = safeFindByProps("isStageSpeakerAllowed");
+
+        const restores: Array<() => void> = (this as any)._patchRestores = [];
 
 
         const applyMasterMask = () => {
@@ -97,12 +101,19 @@ export default definePlugin({
         (this as any)._interval = interval;
 
         if (StageStore) {
+            const origIsStageSpeakerAllowed = StageStore.isStageSpeakerAllowed;
+            const origGetStageSpeakerVerificationStatus = StageStore.getStageSpeakerVerificationStatus;
             StageStore.isStageSpeakerAllowed = () => true;
             StageStore.getStageSpeakerVerificationStatus = () => ({ verified: true });
+            restores.push(() => {
+                StageStore.isStageSpeakerAllowed = origIsStageSpeakerAllowed;
+                StageStore.getStageSpeakerVerificationStatus = origGetStageSpeakerVerificationStatus;
+            });
         }
 
         if (InviteStore) {
             const originalGetInvite = InviteStore.getInvite;
+            restores.push(() => { InviteStore.getInvite = originalGetInvite; });
             InviteStore.getInvite = function(...args: any[]) {
                 const invite = originalGetInvite.apply(this, args);
                 if (invite) {
@@ -119,14 +130,24 @@ export default definePlugin({
 
         const ChannelNSFW = safeFindByProps("isNSFW");
         if (ChannelNSFW) {
+            const origDescriptor = Object.getOwnPropertyDescriptor(ChannelNSFW, "isNSFW");
             Object.defineProperty(ChannelNSFW, "isNSFW", {
                 get: () => () => false,
                 configurable: true
+            });
+            restores.push(() => {
+                if (origDescriptor) Object.defineProperty(ChannelNSFW, "isNSFW", origDescriptor);
+                else delete ChannelNSFW.isNSFW;
             });
         }
     },
 
     stop() {
         if ((this as any)._interval) clearInterval((this as any)._interval);
+        const restores: Array<() => void> = (this as any)._patchRestores || [];
+        while (restores.length) {
+            const restore = restores.pop();
+            try { restore?.(); } catch { }
+        }
     }
 });
