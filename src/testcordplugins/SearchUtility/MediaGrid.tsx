@@ -13,6 +13,10 @@ const DiscordAPI = RestAPI;
 
 const cl = classNameFactory("vc-search-utility-");
 
+// Bound the persistent caches so they can't grow without limit across sessions
+const MAX_CACHED_MEDIA_ITEMS = 2000;
+const MAX_CACHED_MESSAGES = 5000;
+
 // Interfaces for the cache
 export interface MediaCache {
     channelId: string;
@@ -278,14 +282,18 @@ export async function searchMediaMessages(
                 }
             }
 
-            // Save in persistent cache (infinite cache)
+            // Save in persistent cache (bounded to the newest MAX_CACHED_MESSAGES)
             try {
+                let toCache = allMediaMessages;
+                if (toCache.length > MAX_CACHED_MESSAGES) {
+                    toCache = toCache.slice(toCache.length - MAX_CACHED_MESSAGES);
+                }
                 await DataStore.set(cacheKey, {
                     channelId,
-                    messages: allMediaMessages,
+                    messages: toCache,
                     lastUpdated: Date.now()
                 } as MediaCache);
-                console.log(`[Ultra Advanced Search] Cache saved for ${channelId} (${allMediaMessages.length} messages)`);
+                console.log(`[Ultra Advanced Search] Cache saved for ${channelId} (${toCache.length} messages)`);
             } catch (error) {
                 console.error("[Ultra Advanced Search] Error saving cache:", error);
             }
@@ -355,12 +363,19 @@ export async function searchMediaMessages(
             const newItems = mediaItems.filter(item => !existingUrls.has(`${item.messageId}-${item.url}`));
 
             if (newItems.length > 0 || existingItems.length === 0) {
+                // Bound cache growth: keep only the newest MAX_CACHED_MEDIA_ITEMS entries
+                let merged = [...existingItems, ...newItems];
+                if (merged.length > MAX_CACHED_MEDIA_ITEMS) {
+                    merged = merged
+                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                        .slice(0, MAX_CACHED_MEDIA_ITEMS);
+                }
                 await DataStore.set(mediaItemsCacheKey, {
                     channelId,
-                    items: [...existingItems, ...newItems],
+                    items: merged,
                     lastUpdated: Date.now()
                 } as MediaItemsCache);
-                console.log(`[Ultra Advanced Search] Media items cache saved for ${channelId} (${existingItems.length + newItems.length} items)`);
+                console.log(`[Ultra Advanced Search] Media items cache saved for ${channelId} (${merged.length} items)`);
             }
         } catch (error) {
             console.error("[Ultra Advanced Search] Error while saving the media item cache:", error);

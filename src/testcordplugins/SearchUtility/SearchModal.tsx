@@ -19,6 +19,26 @@ const PrivateChannelSortStore = findStoreLazy("PrivateChannelSortStore") as { ge
 
 const cl = classNameFactory("vc-search-utility-");
 
+// Bound the per-query results cache: track written keys and evict oldest when over the cap
+const SEARCH_CACHE_INDEX_KEY = "ultra-search-results-index";
+const MAX_SEARCH_RESULT_KEYS = 100;
+
+async function recordSearchCacheKey(key: string) {
+    try {
+        const index = (await DataStore.get(SEARCH_CACHE_INDEX_KEY) as string[] | null | undefined) ?? [];
+        const existing = index.indexOf(key);
+        if (existing !== -1) index.splice(existing, 1);
+        index.push(key);
+        while (index.length > MAX_SEARCH_RESULT_KEYS) {
+            const oldest = index.shift();
+            if (oldest) await DataStore.del(oldest);
+        }
+        await DataStore.set(SEARCH_CACHE_INDEX_KEY, index);
+    } catch (error) {
+        console.error("[Ultra Advanced Search] Error updating search cache index:", error);
+    }
+}
+
 enum SearchFilter {
     RECENT = "recent",
     MESSAGES = "messages",
@@ -562,6 +582,7 @@ export function SearchModal({ modalProps }: { modalProps: ModalProps; }) {
                             results: finalResults,
                             lastUpdated: Date.now()
                         } as SearchResultsCache);
+                        await recordSearchCacheKey(cacheKey);
                         console.log(`[Ultra Advanced Search] Search cache saved for "${searchQuery}" (${finalResults.length} results)`);
                     } catch (error) {
                         console.error("[Ultra Advanced Search] Error saving search cache:", error);
