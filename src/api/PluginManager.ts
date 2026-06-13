@@ -50,26 +50,6 @@ const logger = new Logger("PluginManager", "#a6d189");
 
 export const PMLogger = logger;
 
-function scheduleBatch(tasks: Array<() => void>, yieldMs = 0, chunkSize = 5): Promise<void> {
-    return new Promise(resolve => {
-        let i = 0;
-        if (tasks.length === 0) { resolve(); return; }
-        function next() {
-            const end = Math.min(i + chunkSize, tasks.length);
-            while (i < end) {
-                try { tasks[i](); } catch (e) { logger.error("Scheduled task failed", e); }
-                i++;
-            }
-            if (i < tasks.length) {
-                setTimeout(next, yieldMs);
-            } else {
-                resolve();
-            }
-        }
-        setTimeout(next, yieldMs);
-    });
-}
-
 /** Whether we have subscribed to flux events of all the enabled plugins when FluxDispatcher was ready */
 let enabledPluginsSubscribedFlux = false;
 const subscribedFluxEventsPlugins = new Set<string>();
@@ -163,7 +143,9 @@ export const startAllPlugins = traceFunction("startAllPlugins", function startAl
             pending.push(() => startPlugin(Plugins[name]));
         }
     }
-    scheduleBatch(pending);
+    for (const start of pending) {
+        try { start(); } catch (e) { logger.error("Failed to start plugin", e); }
+    }
 });
 
 export function startDependenciesRecursive(p: Plugin) {

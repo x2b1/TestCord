@@ -335,6 +335,7 @@ type colorStringsType = { primaryColor: string | null, secondaryColor: string | 
 
 function getTypingMemberListProfilesReactionsVoiceName(
     props: memberListProfileReactionProps,
+    forceHookless = false,
 ): [string | null, JSX.Element | null, string | null] {
     const { user, type } = props;
     // props.guildId for member list & preview profile, props.tags.props.displayProfile.guildId
@@ -342,12 +343,15 @@ function getTypingMemberListProfilesReactionsVoiceName(
     const guildId = props.guildId || props.tags?.props?.displayProfile?.guildId || null;
     const member = guildId && user ? GuildMemberStore.getMember(guildId, user.id) : null;
     const author = user && member ? { ...user, ...member } : user || member || null;
-    const shouldHookless = ["typingIndicator", "reactionsTooltip", "profilesTooltip"].includes(type);
+    // The text extractor produces a plain string and is invoked inside other components'
+    // render expressions (often within a .map), where renderUsername has no stable component
+    // identity. It must never call hooks, so force hookless for any text-only resolution.
+    const shouldHookless = forceHookless || ["typingIndicator", "reactionsTooltip", "profilesTooltip"].includes(type);
     return renderUsername(author, null, null, type, "", shouldHookless, !!guildId);
 }
 
 function getTypingMemberListProfilesReactionsVoiceNameText(props: memberListProfileReactionProps): string | null {
-    return getTypingMemberListProfilesReactionsVoiceName(props)[2];
+    return getTypingMemberListProfilesReactionsVoiceName(props, /* forceHookless */ true)[2];
 }
 
 function getTypingMemberListProfilesReactionsVoiceNameElement(props: memberListProfileReactionProps): JSX.Element | null {
@@ -490,15 +494,18 @@ function renderUsername(
     const effectCSSVars = authorDisplayNameStyles ? computeEffectCSSVars(authorDisplayNameStyles) : {};
     const hasEffect = !!effectType;
     const needsEffectDataAttr = effectType === "neon" || effectType === "toon" || effectType === "pop";
+    const reducedMotion = hookless ? false : AccessibilityStore.useReducedMotion;
     const shouldShowEffect = hasEffect && isHovering;
-    const shouldAnimateEffect = shouldShowEffect && !AccessibilityStore.useReducedMotion;
+    const shouldAnimateEffect = shouldShowEffect && !reducedMotion;
 
     const canUseGradient = ((author as GuildMember)?.guildId ? (GuildStore.getGuild((author as GuildMember).guildId) ?? {}).premiumFeatures?.features.includes("ENHANCED_ROLE_COLORS") : !inGuild);
     const useTopRoleStyle = isMention || isReactionsPopout || channel?.isDM() || channel?.isGroupDM();
     const topRoleStyle = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, "Role", canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;
     const hasGradient = !!topRoleStyle?.gradient && Object.keys(topRoleStyle.gradient).length > 0;
 
-    const textMutedValue = React.useMemo(() => getComputedStyle(document.documentElement)?.getPropertyValue("--text-muted")?.trim() || "#72767d", [triggerNameRerender]);
+    const textMutedValue = hookless
+        ? getComputedStyle(document.documentElement)?.getPropertyValue("--text-muted")?.trim() || "#72767d"
+        : React.useMemo(() => getComputedStyle(document.documentElement)?.getPropertyValue("--text-muted")?.trim() || "#72767d", [triggerNameRerender]);
     const options = splitTemplate(includedNames);
     const resolvedUsernameColor = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, usernameColor.trim(), canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;
     const resolvedDisplayNameColor = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, displayNameColor.trim(), canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;

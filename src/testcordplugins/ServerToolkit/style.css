@@ -1,0 +1,960 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * ServerToolkit — styles for X-Ray inspector and Duplicate modal
+ */
+
+/* ============================================================
+   Design tokens (scoped local fallbacks; Discord vars win)
+   ============================================================ */
+.guild-toolkit-modal {
+    --gt-radius: 10px;
+    --gt-radius-sm: 6px;
+    --gt-gap: 12px;
+    --gt-gap-sm: 8px;
+    --gt-pad: 16px;
+    --gt-row-bg: var(--background-secondary);
+    --gt-row-bg-hover: var(--background-modifier-hover);
+    --gt-border: var(--background-modifier-accent);
+    --gt-accent: var(--brand-experiment, #5865f2);
+    --gt-good: var(--status-positive, #23a559);
+    --gt-bad: var(--status-danger, #f23f43);
+    --gt-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --gt-text-normal: var(--text-default, var(--text-normal, #dbdee1));
+    --gt-text-muted: var(--text-muted, #949ba4);
+}
+
+/* ============================================================
+   Modal shell
+   ============================================================ */
+.guild-toolkit-modal {
+    overflow: hidden;
+}
+
+.guild-toolkit-modal,
+.guild-toolkit-modal * {
+    user-select: text !important;
+}
+
+.guild-toolkit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gt-gap);
+    padding: var(--gt-pad);
+    border-bottom: 1px solid var(--gt-border);
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--gt-accent) 8%, transparent),
+            transparent);
+}
+
+.guild-toolkit-header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--gt-gap);
+    min-width: 0;
+    flex: 1;
+}
+
+.guild-toolkit-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.guild-toolkit-content {
+    padding: var(--gt-pad);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   Tab bar
+   ============================================================ */
+.guild-toolkit-tabbar {
+    display: flex;
+    gap: 4px;
+    padding: 0 var(--gt-pad);
+    border-bottom: 1px solid var(--gt-border);
+    background: var(--background-secondary-alt);
+}
+
+.guild-toolkit-tab {
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--interactive-normal);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    border-radius: 4px 4px 0 0;
+}
+
+.guild-toolkit-tab:hover {
+    color: var(--interactive-hover);
+    background: var(--background-modifier-hover);
+}
+
+.guild-toolkit-tab.selected,
+.guild-toolkit-tab[aria-selected="true"] {
+    color: var(--interactive-active);
+    border-bottom-color: var(--gt-accent);
+}
+
+/* ============================================================
+   Generic search input alignment
+   ============================================================ */
+.gt-search {
+    margin-bottom: var(--gt-gap);
+}
+
+/* ============================================================
+   Overview tab — key/value rows + feature pills
+   ============================================================ */
+.gt-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gt-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    align-items: center;
+    gap: var(--gt-gap);
+    padding: 8px 12px;
+    border-radius: var(--gt-radius-sm);
+    transition: background 0.1s ease;
+}
+
+.gt-row + .gt-row {
+    margin-top: 2px;
+}
+
+.gt-row:hover {
+    background: var(--gt-row-bg-hover);
+}
+
+.gt-row-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.gt-row-value {
+    font-size: 14px;
+    color: var(--gt-text-normal);
+    word-break: break-word;
+    font-family: var(--gt-mono);
+}
+
+.gt-feature-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.gt-feature-pill {
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--gt-text-normal);
+    background: var(--gt-row-bg);
+    border: 1px solid var(--gt-border);
+    border-radius: 999px;
+}
+
+/* ============================================================
+   Generic pill (used in roles, perms, etc.)
+   ============================================================ */
+.gt-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    background: var(--gt-row-bg);
+    border: 1px solid var(--gt-border);
+    border-radius: 999px;
+    margin-right: 4px;
+}
+
+.gt-pill-good {
+    color: #111214;
+    background: var(--gt-good);
+    border-color: transparent;
+}
+
+/* ============================================================
+   Roles tab
+   ============================================================ */
+.gt-roles {
+    display: flex;
+    flex-direction: column;
+}
+
+.gt-role-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.gt-role-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: transparent;
+    border-radius: var(--gt-radius-sm);
+    cursor: default;
+    transition: background 0.1s ease, transform 0.05s ease;
+}
+
+.gt-role-row:hover {
+    background: var(--gt-row-bg-hover);
+}
+
+.gt-role-row:active {
+    transform: scale(0.998);
+}
+
+.gt-role-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15) inset;
+}
+
+.gt-role-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gt-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-role-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.gt-role-id {
+    font-family: var(--gt-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+/* ============================================================
+   Channels tab
+   ============================================================ */
+.gt-channels {
+    display: flex;
+    flex-direction: column;
+}
+
+.gt-channel-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.gt-channel-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gt-channel-cat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-muted) !important;
+    cursor: pointer;
+    border-radius: var(--gt-radius-sm);
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.gt-channel-cat-header span:first-child {
+    color: var(--text-muted) !important;
+    transition: color 0.1s ease;
+}
+
+.guild-toolkit-modal .gt-channel-cat-header:hover {
+    background-color: rgba(88, 101, 242, 0.15) !important;
+}
+
+.guild-toolkit-modal .gt-channel-cat-header:hover span,
+.guild-toolkit-modal .gt-channel-cat-header:hover .gt-channel-id {
+    color: #9598a6 !important;
+}
+
+.gt-channel-row {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    margin-left: 8px;
+    background: transparent;
+    border-radius: var(--gt-radius-sm);
+    cursor: default;
+    transition: background 0.1s ease;
+}
+
+.gt-channel-row.gt-has-type {
+    grid-template-columns: 80px 1fr auto;
+}
+
+.gt-channel-row.gt-no-type {
+    grid-template-columns: 1fr auto;
+}
+
+.gt-channel-type {
+    display: inline-block;
+    padding: 2px 6px;
+    font-family: var(--gt-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--gt-text-normal);
+    background: var(--background-tertiary);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.gt-channel-name {
+    font-size: 14px;
+    color: var(--gt-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-channel-id {
+    font-family: var(--gt-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Members tab
+   ============================================================ */
+.gt-members {
+    display: flex;
+    flex-direction: column;
+}
+
+.gt-member-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.gt-member-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: transparent;
+    border-radius: var(--gt-radius-sm);
+    cursor: default;
+    transition: background 0.1s ease;
+}
+
+.gt-member-row:hover {
+    background: var(--gt-row-bg-hover);
+}
+
+.gt-member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gt-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-member-tag {
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-member-id {
+    font-family: var(--gt-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Emojis & Stickers tab
+   ============================================================ */
+.gt-emojis {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gt-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.gt-emoji {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    background: var(--gt-row-bg);
+    border-radius: var(--gt-radius-sm);
+    cursor: pointer;
+    transition: background 0.1s ease, transform 0.05s ease;
+}
+
+.gt-emoji:hover {
+    background: var(--gt-row-bg-hover);
+    transform: translateY(-1px);
+}
+
+.gt-emoji img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.gt-emoji-name {
+    font-family: var(--gt-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-sticker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    max-height: 360px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.gt-sticker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    background: var(--gt-row-bg);
+    border-radius: var(--gt-radius-sm);
+    cursor: pointer;
+    transition: background 0.1s ease, transform 0.05s ease;
+}
+
+.gt-sticker:hover {
+    background: var(--gt-row-bg-hover);
+    transform: translateY(-1px);
+}
+
+.gt-sticker img {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
+.gt-sticker-name {
+    font-size: 12px;
+    color: var(--gt-text-normal);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Permissions tab
+   ============================================================ */
+.gt-perms {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gt-perm-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 0;
+}
+
+.gt-perm-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px;
+}
+
+.gt-perm-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--gt-row-bg);
+    border-radius: var(--gt-radius-sm);
+    border-left: 3px solid transparent;
+}
+
+.gt-perm-yes {
+    border-left-color: var(--gt-good);
+}
+
+.gt-perm-no {
+    border-left-color: var(--gt-bad);
+    opacity: 0.7;
+}
+
+.gt-perm-icon {
+    font-family: var(--gt-mono);
+    font-size: 14px;
+    font-weight: 700;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.gt-perm-yes .gt-perm-icon {
+    color: var(--gt-good);
+}
+
+.gt-perm-no .gt-perm-icon {
+    color: var(--gt-bad);
+}
+
+.gt-perm-label {
+    font-size: 13px;
+    color: var(--gt-text-normal);
+}
+
+/* ============================================================
+   Webhooks tab
+   ============================================================ */
+.gt-webhooks {
+    display: flex;
+    flex-direction: column;
+}
+
+.gt-webhook-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.gt-webhook-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: transparent;
+    border-radius: var(--gt-radius-sm);
+    cursor: default;
+    transition: background 0.1s ease;
+}
+
+.gt-webhook-row:hover {
+    background: var(--gt-row-bg-hover);
+}
+
+.gt-webhook-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gt-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-webhook-channel {
+    font-family: var(--gt-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gt-webhook-id {
+    font-family: var(--gt-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Copy modal — target toggles & log
+   ============================================================ */
+.gt-target-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--gt-row-bg);
+    border-radius: var(--gt-radius-sm);
+    margin-bottom: 6px;
+}
+
+.gt-target-toggle button {
+    flex: 1;
+}
+
+/* Mode toggle button custom states */
+.gt-target-toggle .gt-mode-btn {
+    transition: background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+    position: relative !important;
+}
+
+.gt-target-toggle .gt-mode-btn.gt-selected {
+    background-color: var(--gt-accent) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    border: 1px solid transparent !important;
+}
+
+.gt-target-toggle .gt-mode-btn.gt-selected * {
+    color: #1a1818 !important;
+}
+
+.gt-target-toggle .gt-mode-btn.gt-selected:hover {
+    background-color: color-mix(in srgb, var(--gt-accent) 85%, #000) !important;
+    opacity: 1 !important;
+}
+
+.gt-target-toggle .gt-mode-btn:not(.gt-selected) {
+    background-color: var(--background-tertiary) !important;
+    border: 1px solid var(--gt-border) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.70 !important;
+}
+
+.gt-target-toggle .gt-mode-btn:not(.gt-selected) * {
+    color: var(--text-muted) !important;
+}
+
+.gt-target-toggle .gt-mode-btn:not(.gt-selected):hover:not(:disabled) {
+    background-color: var(--background-secondary-alt) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.gt-target-toggle .gt-mode-btn:not(.gt-selected):hover:not(:disabled) * {
+    color: #ffffff !important;
+}
+
+.gt-target-toggle .gt-mode-btn:disabled {
+    background-color: var(--background-tertiary) !important;
+    border: 1px solid var(--gt-border) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
+}
+
+.gt-log {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    background: var(--background-tertiary);
+    border: 1px solid var(--gt-border);
+    border-radius: var(--gt-radius-sm);
+    font-family: var(--gt-mono);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.gt-log-line {
+    color: var(--gt-text-normal);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.gt-log-line:first-child {
+    color: var(--text-muted);
+}
+
+/* ============================================================
+   Scrollbar polish
+   ============================================================ */
+.gt-role-list::-webkit-scrollbar,
+.gt-channel-tree::-webkit-scrollbar,
+.gt-member-list::-webkit-scrollbar,
+.gt-emoji-grid::-webkit-scrollbar,
+.gt-sticker-grid::-webkit-scrollbar,
+.gt-webhook-list::-webkit-scrollbar,
+.gt-log::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.gt-role-list::-webkit-scrollbar-thumb,
+.gt-channel-tree::-webkit-scrollbar-thumb,
+.gt-member-list::-webkit-scrollbar-thumb,
+.gt-emoji-grid::-webkit-scrollbar-thumb,
+.gt-sticker-grid::-webkit-scrollbar-thumb,
+.gt-webhook-list::-webkit-scrollbar-thumb,
+.gt-log::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thin-thumb) !important;
+    border-radius: 4px;
+}
+
+.gt-role-list::-webkit-scrollbar-track,
+.gt-channel-tree::-webkit-scrollbar-track,
+.gt-member-list::-webkit-scrollbar-track,
+.gt-emoji-grid::-webkit-scrollbar-track,
+.gt-sticker-grid::-webkit-scrollbar-track,
+.gt-webhook-list::-webkit-scrollbar-track,
+.gt-log::-webkit-scrollbar-track {
+    background: var(--scrollbar-thin-track) !important;
+    border-radius: 4px;
+}
+
+/* Scoped list hover background & text highlights */
+.guild-toolkit-modal .gt-role-row:hover,
+.guild-toolkit-modal .gt-channel-row:hover,
+.guild-toolkit-modal .gt-member-row:hover,
+.guild-toolkit-modal .gt-webhook-row:hover {
+    background-color: rgba(88, 101, 242, 0.15) !important;
+}
+
+/* Scoped hovered text color highlight ONLY for Channels and Members */
+.guild-toolkit-modal .gt-channel-row:hover .gt-channel-name,
+.guild-toolkit-modal .gt-channel-row:hover .gt-channel-id,
+.guild-toolkit-modal .gt-member-row:hover .gt-member-name,
+.guild-toolkit-modal .gt-member-row:hover .gt-member-tag,
+.guild-toolkit-modal .gt-member-row:hover .gt-member-id {
+    color: #9598a6 !important;
+}
+
+.guild-toolkit-modal .gt-webhook-row:hover .gt-webhook-name {
+    color: var(--interactive-active) !important;
+}
+
+.guild-toolkit-modal .gt-webhook-row:hover .gt-webhook-channel,
+.guild-toolkit-modal .gt-webhook-row:hover .gt-webhook-id {
+    color: var(--interactive-hover) !important;
+}
+
+/* ============================================================
+   Redesigned, Unified Custom Input Boxes
+   ============================================================ */
+/* Neutralize the mana wrapper so it draws no box and lets the input
+   fill its full width. */
+.guild-toolkit-modal *:has(> input.gt-input) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+
+/* .gt-input IS the <input>: style it directly as the full box. */
+.guild-toolkit-modal input.gt-input {
+    box-sizing: border-box !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 var(--gt-gap) 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 14px !important;
+    background-color: #000 !important;
+    border: 1px solid var(--gt-border) !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: var(--gt-text-normal) !important;
+    font-size: 14px !important;
+    font-family: inherit !important;
+    line-height: 34px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+}
+
+.guild-toolkit-modal input.gt-input.gt-search {
+    max-width: 100% !important;
+}
+
+.guild-toolkit-modal input.gt-input:hover {
+    border-color: color-mix(in srgb, var(--gt-accent) 45%, var(--gt-border)) !important;
+    background-color: #000 !important;
+}
+
+.guild-toolkit-modal input.gt-input:focus {
+    border-color: var(--gt-accent) !important;
+    background-color: #000 !important;
+    box-shadow: none !important;
+}
+
+.guild-toolkit-modal input.gt-input::placeholder {
+    color: var(--gt-text-muted) !important;
+    opacity: 0.65 !important;
+}
+
+/* ============================================================
+   Collapsible & Bounded Panel Styles
+   ============================================================ */
+
+/* Bounded card panels for list containers */
+.gt-role-list,
+.gt-channel-tree,
+.gt-member-list,
+.gt-webhook-list {
+    background-color: var(--background-secondary) !important;
+    border: 1px solid var(--gt-border) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    max-height: 400px !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+    box-sizing: border-box !important;
+}
+
+/* Smooth collapse/uncollapse transition */
+.gt-collapsible-content {
+    max-height: 1000px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease;
+}
+
+.gt-collapsible-content.gt-collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Clickable role dots styling */
+.gt-role-dot.clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.gt-role-dot.clickable:hover {
+    transform: scale(1.35);
+}
+
+/* Limit click-to-copy hitboxes to exactly the text width in grid containers */
+.gt-member-name,
+.gt-member-tag,
+.gt-member-id,
+.gt-channel-name,
+.gt-channel-id,
+.gt-role-name,
+.gt-role-id,
+.gt-webhook-name,
+.gt-webhook-channel,
+.gt-webhook-id,
+.gt-row-value {
+    justify-self: start !important;
+    max-width: 100% !important;
+}
+
+/* Selected Role Perms Box */
+.gt-role-item-wrap {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--gt-radius-sm);
+    transition: background-color 0.2s ease;
+}
+
+.gt-role-item-wrap.active {
+    background-color: var(--background-tertiary) !important;
+}
+
+.gt-role-copy-btn {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.gt-role-row:hover .gt-role-copy-btn {
+    opacity: 0.8;
+}
+
+.gt-role-perms-box {
+    padding: 0 12px 12px 36px;
+    box-sizing: border-box;
+}
+
+.gt-role-perms-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+}
+
+.gt-role-perms-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gt-role-perm-none {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+}
