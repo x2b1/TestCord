@@ -37,8 +37,8 @@ const FLAG_BADGES: { flag: number; image: string; description: string; }[] = [
 
 const NITRO_TIER_NAMES = ["", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Emerald", "Ruby", "Opal"];
 
-function NitroBadgeTooltip({ icon, tierName, dateStr }: { icon: string; tierName: string; dateStr: string; }) {
-    const title = tierName ? `NITRO ${tierName.toUpperCase()}` : "NITRO";
+function NitroBadgeTooltip({ icon, tierName, dateStr, premiumType }: { icon: string; tierName: string; dateStr: string; premiumType: number; }) {
+    const accentColor = premiumType === 1 ? "#2dc770" : "#a970ff";
     return (
         <Tooltip
             text={
@@ -47,24 +47,67 @@ function NitroBadgeTooltip({ icon, tierName, dateStr }: { icon: string; tierName
                     flexDirection: "column",
                     alignItems: "center",
                     textAlign: "center",
-                    padding: "8px 12px",
+                    padding: "12px 16px",
                     gap: 2,
+                    position: "relative",
+                    overflow: "hidden",
+                    minWidth: 120,
                 }}>
+                    <div style={{
+                        position: "absolute",
+                        top: -20,
+                        left: -20,
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: accentColor,
+                        opacity: 0.25,
+                        filter: "blur(16px)",
+                        pointerEvents: "none",
+                    }} />
+                    <div style={{
+                        position: "absolute",
+                        top: -20,
+                        right: -20,
+                        width: 60,
+                        height: 60,
+                        borderRadius: "50%",
+                        background: accentColor,
+                        opacity: 0.25,
+                        filter: "blur(16px)",
+                        pointerEvents: "none",
+                    }} />
                     <img
                         src={icon}
                         alt=""
-                        style={{ width: 60, height: 60, objectFit: "contain", marginBottom: 4 }}
+                        style={{ width: 72, height: 72, objectFit: "contain", marginBottom: 6, position: "relative" }}
                     />
                     <div style={{
                         fontWeight: 700,
                         fontSize: 14,
-                        letterSpacing: "0.06em",
-                        lineHeight: 1.2,
+                        letterSpacing: "0.04em",
+                        lineHeight: 1.3,
+                        position: "relative",
+                        color: "#fff",
                     }}>
-                        {title}
+                        NITRO
                     </div>
-                    <div style={{ fontSize: 12, opacity: 0.8 }}>
-                        Subscriber since {dateStr}
+                    {tierName && (
+                        <div style={{
+                            fontWeight: 400,
+                            fontSize: 13,
+                            lineHeight: 1.2,
+                            position: "relative",
+                            color: "#fff",
+                        }}>
+                            {tierName.toUpperCase()}
+                        </div>
+                    )}
+                    <div style={{ fontSize: 12, opacity: 0.7, position: "relative", marginTop: 2 }}>
+                        Subscriber since
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.7, position: "relative" }}>
+                        {dateStr}
                     </div>
                 </div>
             }
@@ -73,8 +116,8 @@ function NitroBadgeTooltip({ icon, tierName, dateStr }: { icon: string; tierName
                 <img
                     {...tooltipProps}
                     src={icon}
-                    alt={title}
-                    style={{ borderRadius: "50%", width: "22px", height: "22px" }}
+                    alt="Nitro"
+                    style={{ borderRadius: "50%", width: "22px", height: "22px", cursor: "pointer" }}
                 />
             )}
         </Tooltip>
@@ -176,15 +219,18 @@ function mergeUser(base: any, overrides: Record<string, unknown>): any {
 }
 
 function useUserAvatarDecoration(user: User) {
+    logger.info("[DECO] useUserAvatarDecoration called", { userId: user?.id, isActive: isActive(), isCurrent: isCurrentUser(user?.id) });
     if (!isActive()) return undefined;
     if (!isCurrentUser(user?.id)) return undefined;
     const t = getTargetUser() as any;
     const manual = getCachedTarget()?.manualProfile;
     const decoAsset = t?.avatarDecorationData?.asset || manual?.avatarDecoration || manual?.decorationAsset;
+    logger.info("[DECO] useUserAvatarDecoration resolved", { targetAsset: t?.avatarDecorationData?.asset, manualDeco: manual?.avatarDecoration, manualDecoAsset: manual?.decorationAsset, resolved: decoAsset });
     if (!decoAsset) return undefined;
     return {
         asset: decoAsset,
         skuId: t?.avatarDecorationData?.skuId || decoAsset,
+        animated: t?.avatarDecorationData?.animated ?? decoAsset.startsWith("a_"),
     };
 }
 
@@ -611,6 +657,7 @@ const dynamicBadge: ProfileBadge = {
                         icon={icon}
                         tierName={tierName}
                         dateStr={dateStr}
+                        premiumType={premium}
                     />
                 ),
             });
@@ -791,7 +838,7 @@ export default definePlugin({
             find: "UserProfileStore",
             replacement: {
                 match: /(?<=getUserProfile\(\i\){return )(.+?)(?=})/,
-                replace: "$self.profileHook(arguments[0],$1)"
+                replace: "($self.logProfileCall(arguments[0]),$self.profileHook(arguments[0],$1))"
             }
         },
         {
@@ -835,6 +882,20 @@ export default definePlugin({
                 }
             ]
         },
+        {
+            find: "#{intl::GUILD_OWNER}),",
+            replacement: {
+                match: /(?<=user:(\i).{0,150}nameplate:)(\i)/,
+                replace: "$self.nameplateHook($1,$2)"
+            }
+        },
+        {
+            find: "\"ProfileEffectStore\"",
+            replacement: {
+                match: /getProfileEffectById\((\i)\){return null!=\i\?(\i)\[\i\]:void 0/,
+                replace: "getProfileEffectById($1){return $self.getProfileEffectById($1,$2)??(null!=$2?$2[$1]:void 0)"
+            }
+        },
         ...[
             '"Message Username"',
             ".nameplatePreview,{",
@@ -843,8 +904,8 @@ export default definePlugin({
             find,
             replacement: [
                 {
-                    match: /(?<=userValue.{0,25}void 0:)((\i)\.avatarDecoration)/,
-                    replace: "$self.useUserAvatarDecoration($2)??$1"
+                    match: /(\i)\.length>0\?void 0:(\i)\.avatarDecoration/,
+                    replace: "$self.useUserAvatarDecoration($2)??$2.avatarDecoration"
                 }
             ]
         })),
@@ -881,6 +942,22 @@ export default definePlugin({
 
     useUserAvatarDecoration,
 
+    getProfileEffectById(skuId: string, effects: Record<string, any>) {
+        if (!isActive() || !settings.store.spoofProfileEffect) return null;
+        const targetProfile = getTargetProfile();
+        const eff = targetProfile?.profileEffect;
+        if (eff && (eff.skuId === skuId || (eff as any).id === skuId)) return eff;
+        return (effects && effects[skuId]) || null;
+    },
+
+    nameplateHook(user: any, original: any) {
+        if (!isActive() || !settings.store.spoofNameplate) return original;
+        if (!isCurrentUser(user?.id)) return original;
+        const t = getTargetUser() as any;
+        const np = t?.collectibles?.nameplate;
+        return np ?? original;
+    },
+
     set DecorationGridItem(e: any) {
         DecorationGridItem = e;
         setCapturedComponents({ DecorationGridItem, DecorationGridDecoration, AvatarDecorationModalPreview });
@@ -906,19 +983,33 @@ export default definePlugin({
         };
     },
 
-    getAvatarDecorationURL({ user, canAnimate }: { user?: User; avatarDecoration?: any; canAnimate?: boolean; }) {
-        if (!isActive()) return undefined;
-        const targetUserId = user?.id;
-        if (!isCurrentUser(targetUserId)) return undefined;
+    getAvatarDecorationURL(args: { user?: User; avatarDecoration?: any; canAnimate?: boolean; }) {
+        logger.info("[DECO] getAvatarDecorationURL called", args);
+        if (!isActive()) { logger.info("[DECO] inactive, bail"); return undefined; }
+        const { user, avatarDecoration, canAnimate } = args ?? {};
         const t = getTargetUser() as any;
         const manual = getCachedTarget()?.manualProfile;
-        const decoAsset = t?.avatarDecorationData?.asset || manual?.avatarDecoration || manual?.decorationAsset;
-        if (!decoAsset) return undefined;
-        const asset = canAnimate && decoAsset.startsWith("a_") ? decoAsset : decoAsset.replace(/^a_/, "");
-        return `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png`;
+        const spoofedAsset = t?.avatarDecorationData?.asset || manual?.avatarDecoration || manual?.decorationAsset;
+        logger.info("[DECO] resolved", { userId: user?.id, callerAsset: avatarDecoration?.asset, spoofedAsset, canAnimate });
+        if (!spoofedAsset) { logger.info("[DECO] no spoofed asset, bail"); return undefined; }
+        const callerAsset: string | undefined = avatarDecoration?.asset;
+        const isOurUser = user?.id != null && isCurrentUser(user.id);
+        const isOurDecoration = callerAsset === spoofedAsset;
+        logger.info("[DECO] match", { isOurUser, isOurDecoration });
+        if (!isOurUser && !isOurDecoration) { logger.info("[DECO] not ours, bail"); return undefined; }
+        const asset = canAnimate && spoofedAsset.startsWith("a_") ? spoofedAsset : spoofedAsset.replace(/^a_/, "");
+        const passthrough = canAnimate && spoofedAsset.startsWith("a_") ? "" : "?passthrough=false";
+        const url = `https://cdn.discordapp.com/avatar-decoration-presets/${asset}.png${passthrough}`;
+        logger.info("[DECO] returning URL", url);
+        return url;
+    },
+
+    logProfileCall(userId: string) {
+        logger.info("[DECO] getUserProfile patched call", { userId, isActive: isActive(), isCurrent: isCurrentUser(userId) });
     },
 
     profileHook(userId: string, original: any) {
+        logger.info("[DECO] profileHook entry", { userId, isActive: isActive(), isCurrent: isCurrentUser(userId) });
         if (!isActive() || !isCurrentUser(userId)) return original;
         const targetProfile = getTargetProfile();
         const target = getTargetUser();
@@ -932,16 +1023,17 @@ export default definePlugin({
         // Always override banner / accentColor so a target without one actually clears ours.
         overrides.banner = targetProfile.banner ?? (target as any).banner ?? null;
         overrides.accentColor = targetProfile.accentColor ?? (target as any).accentColor ?? null;
-        if (targetProfile.profileEffect) overrides.profileEffect = targetProfile.profileEffect;
-        if (targetProfile.popoutAnimationParticleType != null) overrides.popoutAnimationParticleType = targetProfile.popoutAnimationParticleType;
-        if (targetProfile.profileEffectExpiresAt != null) overrides.profileEffectExpiresAt = targetProfile.profileEffectExpiresAt;
+        if (settings.store.spoofProfileEffect && targetProfile.profileEffect) overrides.profileEffect = targetProfile.profileEffect;
+        if (settings.store.spoofProfileEffect && targetProfile.popoutAnimationParticleType != null) overrides.popoutAnimationParticleType = targetProfile.popoutAnimationParticleType;
+        if (settings.store.spoofProfileEffect && targetProfile.profileEffectExpiresAt != null) overrides.profileEffectExpiresAt = targetProfile.profileEffectExpiresAt;
         if (targetProfile.premiumType != null) overrides.premiumType = targetProfile.premiumType;
         if (targetProfile.premiumSince != null) overrides.premiumSince = targetProfile.premiumSince;
         if (targetProfile.premiumGuildSince != null) overrides.premiumGuildSince = targetProfile.premiumGuildSince;
 
         // Gradient theme colors from accentColor2 in manual mode
-        if (manual?.accentColor2 && overrides.accentColor != null) {
-            overrides.themeColors = [overrides.accentColor, Number(manual.accentColor2)];
+        if (manual && overrides.accentColor != null) {
+            const c2 = manual.accentColor2 ? Number(manual.accentColor2) : overrides.accentColor;
+            overrides.themeColors = [overrides.accentColor, c2];
         }
 
         // Mirror the userProfile sub-object so the popout's display-name section reflects the target.
@@ -998,6 +1090,7 @@ export default definePlugin({
 
     onBeforeMessageSend(channelId, msg, options) {
         if (!isActive() || !settings.store.fakeMessages) return;
+        if (settings.store.sendRealToo) return;
         const target = getCachedTarget();
         if (!target) return;
 
@@ -1013,7 +1106,6 @@ export default definePlugin({
 
         ComponentDispatch.dispatchToLastSubscribed("CLEAR_TEXT");
 
-        if (settings.store.sendRealToo) return;
         return { cancel: true };
     },
 });

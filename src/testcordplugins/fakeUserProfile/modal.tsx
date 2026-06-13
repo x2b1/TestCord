@@ -15,6 +15,7 @@ import { Button, Forms, IconUtils, React, showToast, Text, Toasts, useEffect, us
 import { clearTarget, getCachedTarget, getManualProfile, loadTarget, logger, saveManualProfile, setEnabled, settings } from "./data";
 
 const DECORATIONS_API = "https://fakeprofile.sampath.me/decorations";
+const EFFECTS_API = "https://fakeprofile.sampath.me/profile-effects";
 
 let DecorationGridItem: React.ComponentType<any> | null = null;
 let DecorationGridDecoration: React.ComponentType<any> | null = null;
@@ -162,6 +163,31 @@ interface DecorationPreset {
     name?: string;
 }
 
+interface ProfileEffectPreset {
+    id: string;
+    skuId: string;
+    config: {
+        title: string;
+        description: string;
+        thumbnailPreviewSrc: string;
+        animationType: number;
+        type: number;
+        effects: Array<{
+            src: string;
+            loop: boolean;
+            height: number;
+            width: number;
+            duration: number;
+            start: number;
+            loopDelay: number;
+            position: { x: number; y: number; };
+            zIndex: number;
+        }>;
+    };
+}
+
+const NAMEPLATE_PALETTES = ["cobalt", "crimson", "green", "orange", "pink", "red", "sky", "violet", "yellow"];
+
 export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }) {
     const initial = getCachedTarget();
     const initialManual = getManualProfile();
@@ -175,12 +201,35 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const [target, setTarget] = useState(initial);
     const [mode, setMode] = useState(settings.store.targetMode ?? "lookup");
     const [decorations, setDecorations] = useState<DecorationPreset[]>([]);
+    const [effects, setEffects] = useState<ProfileEffectPreset[]>([]);
 
     useEffect(() => {
         fetch(DECORATIONS_API)
             .then(r => r.json())
-            .then((data: DecorationPreset[]) => setDecorations(data))
-            .catch(() => {});
+            .then((data: any) => {
+                let items: any[] = [];
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (data && typeof data === "object") {
+                    items = Object.values(data);
+                }
+                if (!items.length) logger.warn("Decorations API returned no usable data", data);
+                setDecorations(items as DecorationPreset[]);
+            })
+            .catch(e => logger.error("Failed to fetch decorations", e));
+        fetch(EFFECTS_API)
+            .then(r => r.json())
+            .then((data: any) => {
+                let items: any[] = [];
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (data && typeof data === "object") {
+                    items = Object.values(data);
+                }
+                if (!items.length) logger.warn("Effects API returned no usable data at fakeprofile.sampath.me/profile-effects", data);
+                setEffects(items as ProfileEffectPreset[]);
+            })
+            .catch(e => logger.error("Failed to fetch effects", e));
     }, []);
 
     const [manualId, setManualId] = useState(initialManual.id);
@@ -206,6 +255,14 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
     const [manualOldName, setManualOldName] = useState(initialManual.oldName);
     const [manualNitro, setManualNitro] = useState(initialManual.nitro);
     const [manualDecorationAsset, setManualDecorationAsset] = useState(initialManual.decorationAsset);
+    const [manualNameplateAsset, setManualNameplateAsset] = useState(initialManual.nameplateAsset);
+    const [manualNameplateSkuId, setManualNameplateSkuId] = useState(initialManual.nameplateSkuId);
+    const [manualNameplatePalette, setManualNameplatePalette] = useState(initialManual.nameplatePalette);
+    const [manualNameplateLabel, setManualNameplateLabel] = useState(initialManual.nameplateLabel);
+    const [manualProfileEffectId, setManualProfileEffectId] = useState(initialManual.profileEffectId);
+    const [manualProfileEffectAsset, setManualProfileEffectAsset] = useState(initialManual.profileEffectAsset);
+    const [spoofNameplate, setSpoofNameplate] = useState(settings.store.spoofNameplate);
+    const [spoofProfileEffect, setSpoofProfileEffect] = useState(settings.store.spoofProfileEffect);
 
     async function apply() {
         settings.store.targetMode = "lookup";
@@ -260,6 +317,12 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
             boostMonths: manualBoostMonths,
             avatarDecoration: manualAvatarDecoration,
             decorationAsset: manualDecorationAsset,
+            nameplateAsset: manualNameplateAsset,
+            nameplateSkuId: manualNameplateSkuId,
+            nameplatePalette: manualNameplatePalette,
+            nameplateLabel: manualNameplateLabel,
+            profileEffectId: manualProfileEffectId,
+            profileEffectAsset: manualProfileEffectAsset,
             createdAt: manualCreatedAt,
             email: manualEmail,
             phone: manualPhone,
@@ -474,6 +537,71 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
                         </div>
                         <Field label="Custom decoration asset ID" value={manualDecorationAsset} placeholder="1144307957425778779" onChange={v => { setManualDecorationAsset(v); setManualAvatarDecoration(v); }} />
 
+                        <div className="fup-divider" />
+
+                        <SectionLabel>Nameplate</SectionLabel>
+                        <Field label="Nameplate asset ID" value={manualNameplateAsset} placeholder="e.g. a_abc123" onChange={setManualNameplateAsset} />
+                        <Field label="SKU ID" value={manualNameplateSkuId} placeholder="Same as asset ID if unsure" onChange={setManualNameplateSkuId} />
+                        <div className="fup-field">
+                            <SectionLabel>Palette</SectionLabel>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                <button
+                                    className={`fup-badge ${!manualNameplatePalette ? "fup-badge--on" : ""}`}
+                                    onClick={() => setManualNameplatePalette("")}
+                                >None</button>
+                                {NAMEPLATE_PALETTES.map(p => (
+                                    <button
+                                        key={p}
+                                        className={`fup-badge ${manualNameplatePalette === p ? "fup-badge--on" : ""}`}
+                                        onClick={() => setManualNameplatePalette(p)}
+                                    >{p}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <Field label="Label (optional)" value={manualNameplateLabel} placeholder="Display name" onChange={setManualNameplateLabel} />
+
+                        <div className="fup-divider" />
+
+                        <SectionLabel>Profile effect</SectionLabel>
+                        <div className="fup-effect-grid">
+                            <div
+                                className={`fup-effect-item ${!manualProfileEffectId ? "fup-effect-item--selected" : ""}`}
+                                onClick={() => { setManualProfileEffectId(""); setManualProfileEffectAsset(""); }}
+                            >
+                                <div className="fup-effect-preview">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                    </svg>
+                                </div>
+                                <span className="fup-effect-label">None</span>
+                            </div>
+                            {effects.map(e => (
+                                <div
+                                    key={e.skuId}
+                                    className={`fup-effect-item ${manualProfileEffectId === e.skuId ? "fup-effect-item--selected" : ""}`}
+                                    onClick={() => {
+                                        const newval = manualProfileEffectId === e.skuId ? "" : e.skuId;
+                                        setManualProfileEffectId(newval);
+                                        setManualProfileEffectAsset(newval);
+                                    }}
+                                >
+                                    <div className="fup-effect-preview">
+                                        <img
+                                            src={e.config.thumbnailPreviewSrc}
+                                            alt={e.config.title || e.skuId}
+                                            className="fup-effect-img"
+                                            onError={ev => {
+                                                (ev.target as HTMLImageElement).style.display = "none";
+                                            }}
+                                        />
+                                    </div>
+                                    <span className="fup-effect-label">{e.config.title || e.skuId.slice(0, 8)}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <Field label="Custom effect SKU ID" value={manualProfileEffectAsset} placeholder="e.g. 1234567890" onChange={v => { setManualProfileEffectAsset(v); setManualProfileEffectId(v); }} />
+
                         <SectionLabel>Custom badges</SectionLabel>
                         <div className="fup-badges" style={{ marginBottom: 14 }}>
                             {[
@@ -531,7 +659,9 @@ export function FakeUserProfileModal({ modalProps }: { modalProps: ModalProps; }
                 <FormSwitch value={fakeMessages} onChange={v => { settings.store.fakeMessages = v; setFakeMessages(v); }} description="When you send a message, post a local fake one as the target instead of really sending it." title="Fake outgoing messages" />
                 <FormSwitch value={sendRealToo} onChange={v => { settings.store.sendRealToo = v; setSendRealToo(v); }} description="Also send the real message in addition to the local fake." disabled={!fakeMessages} title="Send real message too" />
                 <FormSwitch value={spoofBadges} onChange={v => { settings.store.spoofBadges = v; setSpoofBadges(v); }} description="Mirror the target's badges onto your client-side profile." title="Spoof badges" />
-                <FormSwitch value={spoofActivities} onChange={v => { settings.store.spoofActivities = v; setSpoofActivities(v); }} description="Mirror the target's connected accounts and game collection." hideBorder title="Spoof activities and connections" />
+                <FormSwitch value={spoofActivities} onChange={v => { settings.store.spoofActivities = v; setSpoofActivities(v); }} description="Mirror the target's connected accounts and game collection." title="Spoof activities and connections" />
+                <FormSwitch value={spoofNameplate} onChange={v => { settings.store.spoofNameplate = v; setSpoofNameplate(v); }} description="Mirror the chosen nameplate onto your client-side profile." title="Spoof nameplate" />
+                <FormSwitch value={spoofProfileEffect} onChange={v => { settings.store.spoofProfileEffect = v; setSpoofProfileEffect(v); }} description="Mirror the chosen profile effect onto your client-side profile." hideBorder title="Spoof profile effect" />
             </ModalContent>
             <ModalFooter className="fup-footer">
                 <button className="fup-btn fup-btn-danger" onClick={clear} disabled={!target}>Clear</button>

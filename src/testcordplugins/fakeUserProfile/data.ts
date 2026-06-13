@@ -19,6 +19,32 @@ const DS_ENABLED = "fakeUserProfile_enabled";
 const LS_KEY_DATA = "FakeUP_data";
 const LS_KEY_ENABLED = "FakeUP_enabled";
 
+const COLLECTIBLES_CDN = "https://cdn.discordapp.com/media/v1/collectibles-shop";
+
+function buildProfileEffectConfig(profile: ManualProfileData): any {
+    const id = profile.profileEffectId;
+    if (!id) return undefined;
+    const asset = profile.profileEffectAsset || id;
+    const src = `${COLLECTIBLES_CDN}/${asset}/static`;
+    return {
+        skuId: id,
+        type: 1,
+        effects: [{
+            src,
+            loop: true,
+            alt: null,
+            height: 1280,
+            width: 1280,
+            duration: 0,
+            start: 0,
+            loopDelay: 0,
+            position: { x: 0, y: 0 },
+            zIndex: 1,
+            randomizedSources: false,
+        }],
+    };
+}
+
 export const manualBadgeFlags = {
     DiscordStaff: 1 << 0,
     PartneredServerOwner: 1 << 1,
@@ -55,6 +81,12 @@ export interface ManualProfileData {
     boostMonths: number;
     avatarDecoration: string;
     decorationAsset: string;
+    nameplateAsset: string;
+    nameplateSkuId: string;
+    nameplatePalette: string;
+    nameplateLabel: string;
+    profileEffectId: string;
+    profileEffectAsset: string;
     createdAt: string;
     email: string;
     phone: string;
@@ -156,6 +188,12 @@ function getDefaultManualProfile(): ManualProfileData {
         boostMonths: -1,
         avatarDecoration: "",
         decorationAsset: "",
+        nameplateAsset: "",
+        nameplateSkuId: "",
+        nameplatePalette: "",
+        nameplateLabel: "",
+        profileEffectId: "",
+        profileEffectAsset: "",
         createdAt: "",
         email: "",
         phone: "",
@@ -238,8 +276,20 @@ function createManualUser(profile: ManualProfileData): User {
         usernameNormalized: (profile.username || (base as any)?.username || "").toLowerCase(),
         bot: profile.bot || (base as any)?.bot || false,
         avatarDecorationData: (profile.avatarDecoration || profile.decorationAsset)
-            ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset }
+            ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset, animated: (profile.avatarDecoration || profile.decorationAsset).startsWith("a_") }
             : ((base as any)?.avatarDecorationData ?? undefined),
+        collectibles: profile.nameplateAsset
+            ? {
+                nameplate: {
+                    asset: profile.nameplateAsset,
+                    skuId: profile.nameplateSkuId || profile.nameplateAsset,
+                    palette: profile.nameplatePalette || undefined,
+                    label: profile.nameplateLabel || undefined,
+                    type: 2,
+                    expires_at: null,
+                },
+            }
+            : ((base as any)?.collectibles ?? null),
         createdAt: profile.createdAt
             ? new Date(profile.createdAt + "T12:00:00Z")
             : (base as any)?.createdAt ?? new Date(SnowflakeUtils.extractTimestamp(id)),
@@ -262,7 +312,7 @@ function createManualTarget(profile: ManualProfileData): CachedTarget {
 
     const accentColor = profile.accentColor ? Number(profile.accentColor) : (realProfile.accentColor ?? null);
     const accentColor2 = profile.accentColor2 ? Number(profile.accentColor2) : null;
-    const themeColors = accentColor != null ? (accentColor2 != null ? [accentColor, accentColor2] : [accentColor]) : undefined;
+    const themeColors = accentColor != null ? [accentColor, accentColor2 ?? accentColor] : undefined;
 
     const hasNitro = profile.premiumType > 0 || (realProfile.premiumType ?? 0) > 0;
     const { nitroLevel } = profile;
@@ -297,8 +347,11 @@ function createManualTarget(profile: ManualProfileData): CachedTarget {
                 pronouns: profile.pronouns || realProfile.pronouns || null,
             },
             avatarDecorationData: (profile.avatarDecoration || profile.decorationAsset)
-                ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset }
+                ? { asset: profile.avatarDecoration || profile.decorationAsset, skuId: profile.avatarDecoration || profile.decorationAsset, animated: (profile.avatarDecoration || profile.decorationAsset).startsWith("a_") }
                 : undefined,
+            profileEffect: buildProfileEffectConfig(profile),
+            profileEffectId: profile.profileEffectId || undefined,
+            profileEffectExpiresAt: profile.profileEffectId ? null : undefined,
         },
         fetchedAt: Date.now(),
         manual: true,
@@ -432,6 +485,16 @@ export const settings = definePluginSettings({
     spoofActivities: {
         type: OptionType.BOOLEAN,
         description: "Mirror the target's connected accounts and game collection.",
+        default: true,
+    },
+    spoofNameplate: {
+        type: OptionType.BOOLEAN,
+        description: "Mirror the chosen nameplate onto your client-side profile.",
+        default: true,
+    },
+    spoofProfileEffect: {
+        type: OptionType.BOOLEAN,
+        description: "Mirror the chosen profile effect onto your client-side profile.",
         default: true,
     },
 });
