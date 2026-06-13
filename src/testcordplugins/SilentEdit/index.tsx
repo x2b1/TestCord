@@ -73,13 +73,15 @@ function deleteMessage(channelId: string, messageId: string) {
     });
 }
 
-export default definePlugin({
+const plugin = definePlugin({
     name: "SilentEdit",
     description: "\"Silently\" edit a message without showing the edit tag and bypass Vencord's message logger.",
     tags: ["Chat", "Privacy"],
     authors: [{ name: "Aurick", id: 1348025017233047634n }, TestcordDevs.nnenaza],
     dependencies: ["MessagePopoverAPI"],
     settings,
+
+    _pendingEdit: null as null | { restore: () => void; },
 
     start() {
         addButton("SilentEdit", msg => {
@@ -90,8 +92,13 @@ export default definePlugin({
 
                 const originalEditMessage = MessageActions.editMessage;
 
-                MessageActions.editMessage = async function (channelId: string, messageId: string, content: any) {
+                // Track the pending override so stop() can restore it if the user
+                // never submits the edit (e.g. cancels with Escape).
+                plugin._pendingEdit = { restore: () => { MessageActions.editMessage = originalEditMessage; } };
+
+                MessageActions.editMessage = async function (this: any, channelId: string, messageId: string, content: any) {
                     MessageActions.editMessage = originalEditMessage;
+                    plugin._pendingEdit = null;
 
                     if (messageId !== msg.id) {
                         return originalEditMessage.apply(this, arguments);
@@ -129,6 +136,12 @@ export default definePlugin({
 
     stop() {
         removeButton("SilentEdit");
+        if (this._pendingEdit) {
+            try { this._pendingEdit.restore(); } catch { }
+            this._pendingEdit = null;
+        }
     }
 });
+
+export default plugin;
 
