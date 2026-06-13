@@ -6,6 +6,7 @@
 
 import { enableStyle } from "@api/Styles";
 import { ErrorBoundary } from "@components/index";
+import { getUserSettingLazy } from "@api/UserSettings";
 import { copyWithToast } from "@utils/discord";
 import { Margins } from "@utils/margins";
 import definePlugin from "@utils/types";
@@ -22,6 +23,10 @@ import { decode, encode } from "./lib/utils/profile";
 import { settings } from "./settings";
 import { fakeProfileSection } from "./ui/fakeProfileSection";
 
+let customStatusGetter: (() => any) | null = null;
+let customStatusHook: (() => any) | null = null;
+const FAKE_STATUS_KEYS = ["fakeStatusEnabled", "fakeStatusText", "fakeStatusEmojiName", "fakeStatusEmojiId", "fakeStatusEmojiAnimated"] as const;
+
 export default definePlugin({
     name: "fakeProfile",
     description: "Unlock Discord profile effects, themes, avatar decorations, and custom badges without the need for Nitro.",
@@ -37,6 +42,51 @@ export default definePlugin({
         useUsersProfileStore.getState().fetchProfileEffects();
         useUsersProfileStore.getState().fetchDecorations();
         useUsersProfileStore.getState().fetch(UserStore.getCurrentUser().id, true);
+
+        const CustomStatus = getUserSettingLazy<{ text: string; emojiId: string; emojiName: string; }>("status", "customStatus");
+        if (CustomStatus) {
+            customStatusGetter = CustomStatus.getSetting.bind(CustomStatus);
+            customStatusHook = CustomStatus.useSetting.bind(CustomStatus);
+
+            CustomStatus.getSetting = () => {
+                const { fakeStatusEnabled, fakeStatusText, fakeStatusEmojiName, fakeStatusEmojiId } = settings.store;
+                if (!fakeStatusEnabled) return customStatusGetter!();
+                const text = fakeStatusText || "";
+                const emojiName = fakeStatusEmojiName || "";
+                const emojiId = fakeStatusEmojiId || "0";
+                if (!text && !emojiName) {
+                    const user = UserStore.getCurrentUser();
+                    if (user) return { text: user.username, emojiName: "", emojiId: "0", createdAtMs: Date.now().toString(), expiresAtMs: "0" };
+                }
+                return { text, emojiName, emojiId, createdAtMs: Date.now().toString(), expiresAtMs: "0" };
+            };
+
+            CustomStatus.useSetting = (() => {
+                const orig = customStatusHook!;
+                return function () {
+                    const { fakeStatusEnabled, fakeStatusText, fakeStatusEmojiName, fakeStatusEmojiId } = settings.use(FAKE_STATUS_KEYS as any);
+                    const realStatus = orig();
+                    if (!fakeStatusEnabled) return realStatus;
+                    const text = fakeStatusText || "";
+                    const emojiName = fakeStatusEmojiName || "";
+                    const emojiId = fakeStatusEmojiId || "0";
+                    if (!text && !emojiName) {
+                        const user = UserStore.getCurrentUser();
+                        if (user) return { text: user.username, emojiName: "", emojiId: "0", createdAtMs: Date.now().toString(), expiresAtMs: "0" };
+                    }
+                    return { text, emojiName, emojiId, createdAtMs: Date.now().toString(), expiresAtMs: "0" };
+                };
+            })();
+        }
+    },
+    stop() {
+        const CustomStatus = getUserSettingLazy("status", "customStatus");
+        if (CustomStatus) {
+            if (customStatusGetter) CustomStatus.getSetting = customStatusGetter;
+            if (customStatusHook) CustomStatus.useSetting = customStatusHook;
+            customStatusGetter = null;
+            customStatusHook = null;
+        }
     },
     flux: {
         USER_PROFILE_MODAL_OPEN: data => {
@@ -251,9 +301,10 @@ export default definePlugin({
     },
     getAvatarDecorationURL({ avatarDecoration, canAnimate }: { avatarDecoration: Decoration | null; canAnimate?: boolean; }) {
         if (!avatarDecoration || !avatarDecoration.asset || !settings.store.enableAvatarDecorations) return;
+        const isCustom = String(avatarDecoration.skuId) === SKU_ID;
         try {
             if (canAnimate && avatarDecoration.animated) {
-                if (avatarDecoration.skuId === SKU_ID) {
+                if (isCustom) {
                     const url = new URL(`${BASE_URL}/avatar-decoration-presets/a_${avatarDecoration.asset}.png`);
                     return url.toString();
                 } else {
@@ -261,7 +312,7 @@ export default definePlugin({
                     return url.toString();
                 }
             } else {
-                if (avatarDecoration.skuId === SKU_ID) {
+                if (isCustom) {
                     const assetName = typeof avatarDecoration.asset === "string" ? avatarDecoration.asset.replace("a_", "") : avatarDecoration.asset;
                     const url = new URL(`${BASE_URL}/avatar-decoration-presets/${assetName}.png`);
                     return url.toString();

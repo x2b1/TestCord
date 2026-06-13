@@ -6,13 +6,58 @@
 
 import { classNameFactory } from "@api/Styles";
 import { Flex } from "@components/Flex";
+import { Switch } from "@components/Switch";
 import { findComponentByCodeLazy } from "@webpack";
-import { Button, Toasts, UserStore } from "@webpack/common";
+import { Button, TextInput, Toasts, UserStore } from "@webpack/common";
 
 import { useUsersProfileStore } from "../lib/stores/UsersProfileStore";
+import { settings } from "../settings";
 
 const CustomizationSection = findComponentByCodeLazy(".customizationSectionBackground");
 export const cl = classNameFactory("vc-decor-");
+const STATUS_KEYS = ["fakeStatusEnabled", "fakeStatusText", "fakeStatusEmojiName", "fakeStatusEmojiId", "fakeStatusEmojiAnimated"] as const;
+
+function FakeStatusSection() {
+    const { fakeStatusEnabled, fakeStatusText, fakeStatusEmojiName, fakeStatusEmojiId, fakeStatusEmojiAnimated } = settings.use(STATUS_KEYS as any);
+
+    return (
+        <div style={{ marginTop: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span style={{ fontWeight: 600, fontSize: "14px" }}>Fake Custom Status</span>
+                <Switch
+                    checked={fakeStatusEnabled}
+                    onChange={v => settings.store.fakeStatusEnabled = v}
+                />
+            </div>
+            {fakeStatusEnabled && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <TextInput
+                        value={fakeStatusEmojiName}
+                        onChange={v => settings.store.fakeStatusEmojiName = v}
+                        placeholder="Emoji name (e.g. thonk)"
+                    />
+                    <TextInput
+                        value={fakeStatusEmojiId}
+                        onChange={v => settings.store.fakeStatusEmojiId = v}
+                        placeholder="Emoji ID (numbers only, optional)"
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "13px" }}>Animated</span>
+                        <Switch
+                            checked={fakeStatusEmojiAnimated}
+                            onChange={v => settings.store.fakeStatusEmojiAnimated = v}
+                        />
+                    </div>
+                    <TextInput
+                        value={fakeStatusText}
+                        onChange={v => settings.store.fakeStatusText = v}
+                        placeholder="Status text"
+                    />
+                </div>
+            )}
+        </div>
+    );
+}
 
 export function fakeProfileSection({ hideTitle = false, hideDivider = false, noMargin = false }: {
     hideTitle?: boolean;
@@ -44,5 +89,6 @@ export function fakeProfileSection({ hideTitle = false, hideDivider = false, noM
                 Refetch fakeProfile
             </Button>
         </Flex>
+        <FakeStatusSection />
     </CustomizationSection>;
 }

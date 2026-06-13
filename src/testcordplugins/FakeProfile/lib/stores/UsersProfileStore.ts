@@ -166,7 +166,10 @@ export const useUsersProfileStore = proxyLazy(() => zustandCreate((set: any, get
     },
     getDecorAsset(userId: string) {
         const user = get().users.get(userId);
-        return user && typeof user === "object" ? user.decoration : undefined;
+        if (!user || typeof user !== "object") return undefined;
+        const d = user.decoration;
+        if (!d) return undefined;
+        return typeof d === "string" ? d : d.asset;
     },
     getEffectAsset(userId: string) {
         const user = get().users.get(userId);

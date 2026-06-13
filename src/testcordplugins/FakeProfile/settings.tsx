@@ -48,5 +48,30 @@ export const settings = definePluginSettings({
         type: OptionType.BOOLEAN,
         default: true,
         restartNeeded: true
-    }
+    },
+    fakeStatusEnabled: {
+        description: "Show a fake custom status instead of your real one",
+        type: OptionType.BOOLEAN,
+        default: false,
+    },
+    fakeStatusText: {
+        description: "Custom status text",
+        type: OptionType.STRING,
+        default: "",
+    },
+    fakeStatusEmojiId: {
+        description: "Discord emoji ID (numbers only)",
+        type: OptionType.STRING,
+        default: "",
+    },
+    fakeStatusEmojiName: {
+        description: "Discord emoji name (e.g. thonk)",
+        type: OptionType.STRING,
+        default: "",
+    },
+    fakeStatusEmojiAnimated: {
+        description: "Whether the emoji is animated",
+        type: OptionType.BOOLEAN,
+        default: false,
+    },
 });

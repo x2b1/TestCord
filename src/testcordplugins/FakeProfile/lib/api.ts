@@ -76,7 +76,7 @@ export const getBadges = async (): Promise<Badge[]> => fetch(BASE_URL + "/badges
 
 export const getPresets = async (): Promise<Decors[]> => fetch(BASE_URL + "/decorations").then(c => c.json());
 
-export const getUsers = async (ids?: string[]): Promise<Record<string, string | null>> => {
+export const getUsers = async (ids?: string[]): Promise<Record<string, UserProfile | null>> => {
     if (ids?.length === 0) return {};
 
     const url = new URL(BASE_URL + "/users");
