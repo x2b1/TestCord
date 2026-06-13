@@ -19,11 +19,16 @@
 export function makeLazy<T>(factory: () => T, attempts = 5): () => T {
     let tries = 0;
     let cache: T;
+    let resolved = false;
     return () => {
-        if (cache === undefined && attempts > tries++) {
+        if (!resolved && attempts > tries++) {
             cache = factory();
-            if (cache === undefined && attempts === tries)
+            if (cache !== undefined) {
+                resolved = true;
+            } else if (attempts === tries) {
+                resolved = true;
                 console.error("Lazy factory failed:", factory);
+            }
         }
         return cache;
     };
@@ -91,13 +96,18 @@ export function proxyLazy<T>(factory: () => T, attempts = 5, isChild = false): T
         setTimeout(() => isSameTick = false, 0);
 
     let tries = 0;
+    let resolved = false;
     const proxyDummy = Object.assign(function () { }, {
         [SYM_LAZY_CACHED]: void 0 as T | undefined,
         [SYM_LAZY_GET]() {
-            if (!proxyDummy[SYM_LAZY_CACHED] && attempts > tries++) {
+            if (!resolved && attempts > tries++) {
                 proxyDummy[SYM_LAZY_CACHED] = factory();
-                if (!proxyDummy[SYM_LAZY_CACHED] && attempts === tries)
+                if (proxyDummy[SYM_LAZY_CACHED] != null) {
+                    resolved = true;
+                } else if (attempts === tries) {
+                    resolved = true;
                     console.error("Lazy factory failed:", factory);
+                }
             }
             return proxyDummy[SYM_LAZY_CACHED];
         }
