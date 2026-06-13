@@ -139,6 +139,7 @@ function normalizeSingleLineKey(key: string): string {
 let openpgp: any = null;
 let openpgpLoaded = false;
 let openpgpLoadPromise: Promise<void> | null = null;
+const injectedScripts: HTMLScriptElement[] = [];
 const logger = new Logger("VGP");
 
 async function loadOpenPGP(): Promise<void> {
@@ -179,8 +180,10 @@ async function loadOpenPGP(): Promise<void> {
             script2.onerror = () => {
                 reject(new Error("Failed to load OpenPGP.js from both CDNs"));
             };
+            injectedScripts.push(script2);
             document.head.appendChild(script2);
         };
+        injectedScripts.push(script);
         document.head.appendChild(script);
     });
 
@@ -681,6 +684,17 @@ export default definePlugin({
 
     renderChatBarButton: ChatBarIcon as any,
     decryptMessageIcon: () => <DecryptMessageIcon />,
+
+    stop() {
+        for (const script of injectedScripts) {
+            try { script.remove(); } catch { }
+        }
+        injectedScripts.length = 0;
+        openpgp = null;
+        openpgpLoaded = false;
+        openpgpLoadPromise = null;
+        try { delete (window as any).openpgp; } catch { }
+    },
 
     GPG_REGEX: /-----BEGIN PGP MESSAGE-----[A-Za-z0-9+/=\r\n]+?-----END PGP MESSAGE-----/g,
     renderMessagePopoverButton(message) {
