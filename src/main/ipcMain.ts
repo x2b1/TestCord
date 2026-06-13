@@ -189,11 +189,15 @@ app.on("before-quit", async event => {
 ipcMain.handle(IpcEvents.GET_RENDERER_CSS, () => readFile(RENDERER_CSS_PATH, "utf-8"));
 
 if (IS_DISCORD_DESKTOP) {
+    let rendererJsCache: string | undefined;
     ipcMain.on(IpcEvents.PRELOAD_GET_RENDERER_JS, e => {
-        e.returnValue = readFileSync(join(__dirname, "renderer.js"), "utf-8");
+        rendererJsCache ??= readFileSync(join(__dirname, "renderer.js"), "utf-8");
+        e.returnValue = rendererJsCache;
     });
 }
 
+const SUPPORTS_WINDOWS_MATERIAL = process.platform === "win32" && Number(release().split(".")[2]) >= 22621;
+
 ipcMain.on(IpcEvents.SUPPORTS_WINDOWS_MATERIAL, e => {
-    e.returnValue = process.platform === "win32" && Number(release().split(".")[2]) >= 22621;
+    e.returnValue = SUPPORTS_WINDOWS_MATERIAL;
 });
