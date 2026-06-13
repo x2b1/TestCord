@@ -6,9 +6,9 @@
 
 import "./style.css";
 
-import { Devs, TestcordDevs } from "@utils/constants";
+import { TestcordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import {ChannelStore, DateUtils, GuildStore, IconUtils, NavigationRouter, Popout, SelectedGuildStore, SnowflakeUtils, Text, useRef, UserStore, useStateFromStores} from "@webpack/common";
+import { ChannelStore, DateUtils, GuildStore, IconUtils, NavigationRouter, Popout, SelectedGuildStore, SnowflakeUtils, Text, useRef, UserStore, useStateFromStores } from "@webpack/common";
 
 import { ArrowSvg, checkForIconExistence, cl, ServerProfileComponent } from "./utils";
 
@@ -64,13 +64,13 @@ export default definePlugin({
                         if ([0, 2, 5, 13, 15, 16].includes(channel.type)) return `#${channel.name}`;
                         // DMs
                         if (channel.type === 1) return `@${(() => {
-                            const user = UserStore.getUser(channel.recipients[0]);
-                            return user.globalName || user.username;
+                            const user = channel.recipients?.[0] ? UserStore.getUser(channel.recipients[0]) : null;
+                            return user?.globalName || user?.username || "Unknown";
                         })()}`;
                         // GDMs
                         if (channel.type === 3) return channel.name || (() => {
-                            const users = channel.recipients.map(r => UserStore.getUser(r));
-                            return users.map(u => u.globalName || u.username).join(", ");
+                            const users = channel.recipients?.map(r => UserStore.getUser(r)).filter(Boolean) ?? [];
+                            return users.map(u => u!.globalName || u!.username).join(", ") || "Unknown";
                         })();
                         // Threads
                         if ([10, 11, 12].includes(channel.type)) return channel.name;
@@ -97,8 +97,3 @@ export default definePlugin({
         }
     ]
 });
-
-
-
-
-
