@@ -452,10 +452,7 @@ function fireCloseKeepalive(): void {
     }
 }
 
-if (!(window as any)._rsCloseReg) {
-    window.addEventListener("beforeunload", () => { loadCloseConfigSync(); void applyOnCloseAll(); fireCloseKeepalive(); });
-    (window as any)._rsCloseReg = true;
-}
+function rsBeforeUnloadHandler() { loadCloseConfigSync(); void applyOnCloseAll(); fireCloseKeepalive(); }
 
 async function applyCloseStatus(): Promise<void> {
     if (!closeStatusEnabled) return;
@@ -5070,6 +5067,10 @@ export default definePlugin({
 
     async start() {
         injectCSS();
+        if (!(window as any)._rsCloseReg) {
+            window.addEventListener("beforeunload", rsBeforeUnloadHandler);
+            (window as any)._rsCloseReg = true;
+        }
         cachedToken = null; cachedGuildStore = null; cachedClanGuilds = []; lastClanFetch = 0;
         statusLastVal = null; clanLastVal = null; bioLastVal = null; prLastVal = null;
         pluginActive = true;
@@ -5176,5 +5177,7 @@ export default definePlugin({
         bcrCurrentColor = null; bcrOnColorApplied = null;
         Vencord.Api.UserArea.removeUserAreaButton("rotator-suite");
         document.getElementById("rs-css")?.remove();
+        window.removeEventListener("beforeunload", rsBeforeUnloadHandler);
+        (window as any)._rsCloseReg = false;
     },
 });
