@@ -1368,10 +1368,6 @@ export const TestcordDevs = /* #__PURE__*/ Object.freeze({
         name: "0gfm",
         id: 209389868080562176n
     },
-    nerdful: {
-        name: "nerdful",
-        id: 1499523183794061563n
-    },
     deracul: {
         name: "deracul",
         id: 1454268753629024529n

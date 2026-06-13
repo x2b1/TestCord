@@ -45,10 +45,6 @@ export const TestcordAdmins = Object.freeze({
     DemonBoobs: {
         name: "DemonBoobs",
         id: 569582579829964850n
-    },
-    racify: {
-        name: "racify",
-        id: 1186067973547495498n
     }
 } satisfies Record<string, TestcordAdmin>);
 

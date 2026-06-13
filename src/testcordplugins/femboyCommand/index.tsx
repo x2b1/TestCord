@@ -112,7 +112,7 @@ async function fetchFemboy(): Promise<{ url: string; source: string; } | null> {
 export default definePlugin({
     name: "FemboyCommand",
     description: "Sends a random femboy picture via /femboy. Uses 7 APIs with random order and automatic fallback.",
-    authors: [TestcordDevs.x2b, TestcordDevs.racify],
+    authors: [TestcordDevs.x2b],
     commands: [
         {
             name: "femboy",
