@@ -435,6 +435,8 @@ function computeEffectCSSVars(styles: any): Record<string, string> {
     };
 }
 
+const SMYN_SETTINGS_KEYS = ["messages", "replies", "mentions", "typingIndicator", "memberList", "profilePopout", "reactions", "friendNameOnlyInDirectMessages", "customNameOnlyInDirectMessages", "discriminators", "hideDefaultAtSign", "truncateAllNamesWithStreamerMode", "removeDuplicates", "ignoreGradients", "ignoreFonts", "animateGradients", "includedNames", "customNameColor", "friendNameColor", "nicknameColor", "displayNameColor", "usernameColor", "nameSeparator", "triggerNameRerender"];
+
 function renderUsername(
     author: User | GuildMember | null,
     channelId: string | null,
@@ -457,7 +459,7 @@ function renderUsername(
     const isReaction = isReactionsTooltip || isReactionsPopout;
     const isVoice = type === "voiceChannel";
 
-    const config = hookless ? settings.store : settings.use(["messages", "replies", "mentions", "typingIndicator", "memberList", "profilePopout", "reactions", "friendNameOnlyInDirectMessages", "customNameOnlyInDirectMessages", "discriminators", "hideDefaultAtSign", "truncateAllNamesWithStreamerMode", "removeDuplicates", "ignoreGradients", "ignoreFonts", "animateGradients", "includedNames", "customNameColor", "friendNameColor", "nicknameColor", "displayNameColor", "usernameColor", "nameSeparator", "triggerNameRerender"]);
+    const config = hookless ? settings.store : settings.use(SMYN_SETTINGS_KEYS);
     const { messages, replies, mentions, typingIndicator, memberList, profilePopout, reactions, friendNameOnlyInDirectMessages, customNameOnlyInDirectMessages, discriminators, truncateAllNamesWithStreamerMode, removeDuplicates, ignoreGradients, ignoreFonts, animateGradients, includedNames, customNameColor, friendNameColor, nicknameColor, displayNameColor, usernameColor, nameSeparator, triggerNameRerender } = config;
 
     const channel = channelId ? ChannelStore.getChannel(channelId) || null : null;
@@ -496,7 +498,7 @@ function renderUsername(
     const topRoleStyle = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, "Role", canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;
     const hasGradient = !!topRoleStyle?.gradient && Object.keys(topRoleStyle.gradient).length > 0;
 
-    const textMutedValue = getComputedStyle(document.documentElement)?.getPropertyValue("--text-muted")?.trim() || "#72767d";
+    const textMutedValue = React.useMemo(() => getComputedStyle(document.documentElement)?.getPropertyValue("--text-muted")?.trim() || "#72767d", [triggerNameRerender]);
     const options = splitTemplate(includedNames);
     const resolvedUsernameColor = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, usernameColor.trim(), canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;
     const resolvedDisplayNameColor = author ? resolveColor(authorColorStrings, authorDisplayNameStyles, displayNameColor.trim(), canUseGradient, inGuild, ircColorsEnabled, isHovering) : null;
