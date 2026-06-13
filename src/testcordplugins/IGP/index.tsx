@@ -5,17 +5,29 @@
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { ChannelStore, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
+import { ChannelStore, React, SelectedChannelStore, showToast, Toasts, UserStore } from "@webpack/common";
 
 import { buildDecryptModal } from "./decryptModal";
 import { buildModal } from "./modal";
 
+const IGPIcon = () => (
+    <svg version="1.1" width="20" height="20" viewBox="0 0 47 47">
+        <g>
+            <path fill="currentColor" d="M23.5,0C10.522,0,0,10.522,0,23.5C0,36.479,10.522,47,23.5,47C36.479,47,47,36.479,47,23.5C47,10.522,36.479,0,23.5,0z
+            M30.07,34.686L30.07,34.686c0,2.53-2.941,4.58-6.573,4.58c-3.631,0-6.577-2.05-6.577-4.58c0-0.494,3.648-14.979,3.648-14.979
+            c-2.024-1.06-3.418-3.161-3.418-5.609c0-3.515,2.838-6.362,6.361-6.362c3.514,0,6.35,2.848,6.35,6.362
+            c0,2.448-1.391,4.55-3.416,5.609c0,0,3.598,14.455,3.611,14.88l0.022,0.099H30.07z" />
+        </g>
+    </svg>
+);
+
 const ChatBarIcon: ChatBarButtonFactory = ({ isMainChat, channel }) => {
-    if (!isMainChat) return null;
+    if (!isMainChat || settings.store.location !== "chatbar") return null;
 
     if (!channel || (channel.type !== 1 && channel.type !== 3)) {
         return null; // not a DM or Group DM → don't render
@@ -639,6 +651,17 @@ function formatFingerprint(fp: string): string {
 }
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     pgpPrivateKey: {
         type: OptionType.STRING,
         description: "Your PGP private key (armored format)",
@@ -682,10 +705,36 @@ export default definePlugin({
     authors: [{ name: "irritably", id: 928787166916640838n }], 
     settings,
 
-    renderChatBarButton: ChatBarIcon as any,
+    chatBarButton: {
+        icon: IGPIcon as any,
+        render: ChatBarIcon,
+    },
     decryptMessageIcon: () => <DecryptMessageIcon />,
 
+    start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("IGP", () => (
+                <HeaderBarButton
+                    icon={IGPIcon}
+                    tooltip="PGP/GPG Encrypt"
+                    onClick={() => buildModal()}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("IGP", () => (
+                <ChannelToolbarButton
+                    icon={IGPIcon}
+                    tooltip="PGP/GPG Encrypt"
+                    onClick={() => buildModal()}
+                />
+            ), 5);
+        }
+    },
+
     stop() {
+        removeHeaderBarButton("IGP");
+        removeChannelToolbarButton("IGP");
         for (const script of injectedScripts) {
             try { script.remove(); } catch { }
         }
