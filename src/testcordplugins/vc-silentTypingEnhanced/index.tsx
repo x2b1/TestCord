@@ -18,12 +18,24 @@
 
 import { addChatBarButton, ChatBarButton, removeChatBarButton } from "@api/ChatButtons";
 import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { TestcordDevs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, FluxDispatcher, React } from "@webpack/common";
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     showIcon: {
         type: OptionType.BOOLEAN,
         default: true,
@@ -47,6 +59,13 @@ const settings = definePluginSettings({
         default: "",
     },
 });
+
+const SilentTypingIcon = ({ width = 24, height = 24 }: { width?: number; height?: number; }) => (
+    <svg width={width} height={height} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+        <path fill="currentColor"
+            d="M528 448H48c-26.51 0-48-21.49-48-48V112c0-26.51 21.49-48 48-48h480c26.51 0 48 21.49 48 48v288c0 26.51-21.49 48-48 48zM128 180v-40c0-6.627-5.373-12-12-12H76c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm-336 96v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm-336 96v-40c0-6.627-5.373-12-12-12H76c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12zm288 0v-40c0-6.627-5.373-12-12-12H172c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h232c6.627 0 12-5.373 12-12zm96 0v-40c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12z" />
+    </svg>
+);
 
 const SilentTypingToggle: any = ({ isMainChat, channel }: any) => {
     const { isEnabled, showIcon, specificChats, disabledFor } = settings.use(["isEnabled", "showIcon", "specificChats", "disabledFor"]);
@@ -85,7 +104,7 @@ const SilentTypingToggle: any = ({ isMainChat, channel }: any) => {
         }
     }
 
-    if (!isMainChat || !showIcon) return null;
+    if (!isMainChat || !showIcon || settings.store.location !== "chatbar") return null;
 
     return (
         <ChatBarButton
@@ -173,8 +192,37 @@ export default definePlugin({
         FluxDispatcher.dispatch({ type: "TYPING_START_LOCAL", channelId });
     },
 
-    start: () => addChatBarButton("SilentTyping", SilentTypingToggle as any, 0 as any),
-    stop: () => removeChatBarButton("SilentTyping"),
+    chatBarButton: {
+        icon: SilentTypingIcon as any,
+        render: SilentTypingToggle,
+    },
+
+    start() {
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("SilentTyping", () => (
+                <HeaderBarButton
+                    icon={SilentTypingIcon}
+                    tooltip={settings.store.isEnabled ? "Silent Typing: ON" : "Silent Typing: OFF"}
+                    onClick={() => { settings.store.isEnabled = !settings.store.isEnabled; }}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("SilentTyping", () => (
+                <ChannelToolbarButton
+                    icon={SilentTypingIcon}
+                    tooltip={settings.store.isEnabled ? "Silent Typing: ON" : "Silent Typing: OFF"}
+                    onClick={() => { settings.store.isEnabled = !settings.store.isEnabled; }}
+                />
+            ), 5);
+        }
+    },
+
+    stop() {
+        removeChatBarButton("SilentTyping");
+        removeHeaderBarButton("SilentTyping");
+        removeChannelToolbarButton("SilentTyping");
+    },
 });
 
 
