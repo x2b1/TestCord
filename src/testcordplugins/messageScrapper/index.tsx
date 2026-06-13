@@ -5,6 +5,7 @@
  */
 
 import { ChatBarButton } from "@api/ChatButtons";
+import { addChannelToolbarButton, addHeaderBarButton, ChannelToolbarButton, HeaderBarButton, removeChannelToolbarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { definePluginSettings } from "@api/Settings";
 import { Card } from "@components/Card";
 import { IpcEvents } from "@shared/IpcEvents";
@@ -35,6 +36,17 @@ let shouldStopProcess = false;
 let currentProgressRef: { current: any; } | null = null;
 
 const settings = definePluginSettings({
+    location: {
+        type: OptionType.SELECT,
+        description: "Where to show the button",
+        options: [
+            { label: "Chat bar", value: "chatbar", default: true },
+            { label: "Header bar", value: "headerbar" },
+            { label: "Channel toolbar", value: "channeltoolbar" },
+            { label: "Disabled", value: "disabled" },
+        ],
+        restartNeeded: true,
+    },
     whitelist: {
         type: OptionType.STRING,
         description: "Comma-separated user IDs to keep (whitelist)",
@@ -986,14 +998,41 @@ export default definePlugin({
     authors: [TestcordDevs.x2b],
     settings,
     start() {
-        // Listen for custom event from separate window
         window.addEventListener("vencord:openMessageScrapper", handleOpenMessageScrapper);
+        const { location } = settings.store;
+        if (location === "headerbar") {
+            addHeaderBarButton("MessagesScrapper", () => (
+                <HeaderBarButton
+                    icon={() => (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M9 3h6a1 1 0 0 1 1 1v1h4v2H4V5h4V4a1 1 0 0 1 1-1Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Z" />
+                        </svg>
+                    )}
+                    tooltip="Messages Scrapper"
+                    onClick={openMessageScrapperModal}
+                />
+            ), 5);
+        } else if (location === "channeltoolbar") {
+            addChannelToolbarButton("MessagesScrapper", () => (
+                <ChannelToolbarButton
+                    icon={() => (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M9 3h6a1 1 0 0 1 1 1v1h4v2H4V5h4V4a1 1 0 0 1 1-1Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Z" />
+                        </svg>
+                    )}
+                    tooltip="Messages Scrapper"
+                    onClick={openMessageScrapperModal}
+                />
+            ), 5);
+        }
     },
     stop() {
         window.removeEventListener("vencord:openMessageScrapper", handleOpenMessageScrapper);
+        removeHeaderBarButton("MessagesScrapper");
+        removeChannelToolbarButton("MessagesScrapper");
     },
     renderChatBarButton: (({ isMainChat }) => {
-        if (!isMainChat) return null;
+        if (!isMainChat || settings.store.location !== "chatbar") return null;
         return (
             <ChatBarButton
                 tooltip="Messages Scrapper"
