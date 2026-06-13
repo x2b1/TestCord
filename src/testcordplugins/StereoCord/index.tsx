@@ -55,6 +55,8 @@ export default definePlugin({
     tags: ["Voice", "Utility"],
     settings,
 
+    _patchedConns: new Set<any>(),
+
     patches: [
         {
             find: "updateVideoQuality",
@@ -78,7 +80,11 @@ export default definePlugin({
                 return;
             }
 
+            if (thisObj.conn._stereoSoundOrig) return;
+
             const originalSetTransportOptions = thisObj.conn.setTransportOptions;
+            thisObj.conn._stereoSoundOrig = originalSetTransportOptions;
+            this._patchedConns.add(thisObj.conn);
             console.log("[StereoSound] Successfully hooked setTransportOptions");
             
             thisObj.conn.setTransportOptions = function(obj: any) {
@@ -174,7 +180,15 @@ export default definePlugin({
     },
 
     stop() {
+        for (const conn of this._patchedConns) {
+            try {
+                if (conn._stereoSoundOrig) {
+                    conn.setTransportOptions = conn._stereoSoundOrig;
+                    delete conn._stereoSoundOrig;
+                }
+            } catch { }
+        }
+        this._patchedConns.clear();
         console.log("[StereoSound] Plugin stopped");
-        // Cleanup if needed
     }
 });
